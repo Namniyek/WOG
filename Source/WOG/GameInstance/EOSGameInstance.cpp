@@ -253,7 +253,7 @@ void UEOSGameInstance::OnFindSessionsComplete(bool bWasSuccessful)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Amount sessions found: %d"), SearchSettings->SearchResults.Num());
 		TArray<FOnlineSessionSearchResult> SearchResults = SearchSettings->SearchResults;
-		int8 ArrayIndex = 0;
+		int8 ArrayIndex = -1;
 
 		if (SessionPtr)
 		{
@@ -292,7 +292,7 @@ void UEOSGameInstance::JoinServer(int32 ServerIndex)
 	{
 		GEngine->AddOnScreenDebugMessage(0, 2.f, FColor::Cyan, FString("SearchResults not empty"));
 		SessionPtr.Get()->OnJoinSessionCompleteDelegates.AddUObject(this, &ThisClass::OnJoinSessionComplete);
-		SessionPtr.Get()->JoinSession(0, SESSION_NAME, SearchSettings->SearchResults[ServerIndex-1]);
+		SessionPtr.Get()->JoinSession(0, SESSION_NAME, SearchSettings->SearchResults[ServerIndex]);
 		GEngine->AddOnScreenDebugMessage(1, 2.f, FColor::Cyan, FString::Printf(TEXT("Joining SearchResults at index: %d"), ServerIndex));
 	}
 }

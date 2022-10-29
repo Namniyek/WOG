@@ -35,7 +35,7 @@ public:
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FServerFoundDelegate, FServerItem, ServerInfo);
 
 /**
- * 
+ *
  */
 UCLASS()
 class WOG_API UEOSGameInstance : public UGameInstance
@@ -51,32 +51,32 @@ public:
 	void OnLoginComplete(int ControllerIndex, bool bWasSuccessful, const FUniqueNetId& UserId, const FString& ErrorString);
 
 	UFUNCTION(BlueprintCallable)
-	void CreateSession();
+		void CreateSession();
 	void OnCreateSessionComplete(FName SessionName, bool bSuccessful);
-	
+
 	UFUNCTION(BlueprintCallable)
-	void DestroySession();
+		void DestroySession();
 	void OnDestroySessionComplete(FName SessionName, bool bSuccessful);
 
 
 	UFUNCTION(BlueprintCallable)
-	void GetAllFriends();
+		void GetAllFriends();
 	void OnGetAllFriendsComplete(int32 LocalUserNum, bool bWasSuccessful, const FString& ListName, const FString& ErrorStr);
-	
-	UFUNCTION(BlueprintCallable)
-	void ShowInviteUI();
 
 	UFUNCTION(BlueprintCallable)
-	void ShowFriendsUI();
+		void ShowInviteUI();
+
+	UFUNCTION(BlueprintCallable)
+		void ShowFriendsUI();
 
 	TSharedPtr <class FOnlineSessionSearch> SearchSettings;
 
 	UFUNCTION(BlueprintCallable)
-	void FindSessions();
+		void FindSessions();
 	void OnFindSessionsComplete(bool bWasSuccessful);
 
 	UFUNCTION(BlueprintCallable)
-	void JoinServer(int32 ServerIndex);
+		void JoinServer(int32 ServerIndex);
 	void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
 
 protected:
@@ -85,6 +85,6 @@ protected:
 	bool bIsLoggedIn;
 
 	UPROPERTY(BlueprintAssignable)
-	FServerFoundDelegate ServerFoundDelegate;
-	
+		FServerFoundDelegate ServerFoundDelegate;
+
 };
