@@ -233,6 +233,7 @@ void UEOSGameInstance::FindSessions()
 			SearchSettings->QuerySettings.Set(SEARCH_KEYWORDS, FString("WOG_dev_lobby"), EOnlineComparisonOp::Equals);
 			SearchSettings->QuerySettings.Set(SEARCH_LOBBIES, true, EOnlineComparisonOp::Equals);
 			SearchSettings->MaxSearchResults = 10000;
+			SearchSettings->bIsLanQuery = false;
 
 			SessionPtr.Get()->OnFindSessionsCompleteDelegates.AddUObject(this, &ThisClass::OnFindSessionsComplete);
 			SessionPtr.Get()->FindSessions(0, SearchSettings.ToSharedRef());
@@ -321,4 +322,9 @@ void UEOSGameInstance::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCo
 			}
 		}
 	}
+}
+
+void UEOSGameInstance::BPServerTravel(FString Address)
+{
+	GetWorld()->ServerTravel(Address, true);
 }

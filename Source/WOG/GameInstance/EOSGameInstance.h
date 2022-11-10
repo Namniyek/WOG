@@ -79,6 +79,9 @@ public:
 		void JoinServer(int32 ServerIndex);
 	void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
 
+	UFUNCTION(BlueprintCallable)
+	void BPServerTravel(FString Address);
+
 protected:
 	class IOnlineSubsystem* OnlineSubsystem;
 
