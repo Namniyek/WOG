@@ -9,6 +9,13 @@
 #include "GameFramework/Controller.h"
 #include "GameFramework/SpringArmComponent.h"
 
+
+void ABasePlayerCharacter::OnConstruction(const FTransform& Transform)
+{
+	Super::OnConstruction(Transform);
+	CharacterMI = UMaterialInstanceDynamic::Create(Material, this);
+}
+
 // Sets default values
 ABasePlayerCharacter::ABasePlayerCharacter()
 {
@@ -50,34 +57,40 @@ ABasePlayerCharacter::ABasePlayerCharacter()
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
 	//Create the modular meshes
-	MeshTorso = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Torso Mesh"));
-	MeshTorso->SetupAttachment(GetMesh());
-	MeshHips = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Hips Mesh"));
-	MeshHips->SetupAttachment(GetMesh());
-	MeshLegLeft = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Leg Left Mesh"));
-	MeshLegLeft->SetupAttachment(GetMesh());
-	MeshLegRight = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Leg Right Mesh"));
-	MeshLegRight->SetupAttachment(GetMesh());
-	MeshArmUpperLeft = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("ArmUpper Left Mesh"));
-	MeshArmUpperLeft->SetupAttachment(GetMesh());
-	MeshArmUpperRight = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("ArmUpper Right Mesh"));
-	MeshArmUpperRight->SetupAttachment(GetMesh());
-	MeshArmLowerLeft = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("ArmLower Left Mesh"));
-	MeshArmLowerLeft->SetupAttachment(GetMesh());
-	MeshArmLowerRight = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("ArmLower Right Mesh"));
-	MeshArmLowerRight->SetupAttachment(GetMesh());
-	MeshHandLeft = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Hand Left Mesh"));
-	MeshHandLeft->SetupAttachment(GetMesh());
-	MeshHandRight = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Hand Right Mesh"));
-	MeshHandRight->SetupAttachment(GetMesh());
-	MeshEyebrows = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Eyebrows Mesh"));
-	MeshEyebrows->SetupAttachment(GetMesh());
-	MeshBeard = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Beard Mesh"));
-	MeshBeard->SetupAttachment(GetMesh());
-	MeshEars = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Ears Mesh"));
-	MeshEars->SetupAttachment(GetMesh());
-	MeshHair = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Hair Mesh"));
-	MeshHair->SetupAttachment(GetMesh());
+	GetMesh()->bHiddenInGame = true;
+
+	Head = CreateDefaultSubobject< USkeletalMeshComponent>(TEXT("Head"));
+	Head->SetupAttachment(GetMesh());
+	Torso = CreateDefaultSubobject< USkeletalMeshComponent>(TEXT("Torso"));
+	Torso->SetupAttachment(GetMesh());
+	Hips = CreateDefaultSubobject< USkeletalMeshComponent>(TEXT("Hips"));
+	Hips->SetupAttachment(GetMesh());
+	ArmUpperLeft = CreateDefaultSubobject< USkeletalMeshComponent>(TEXT("ArmUpperLeft"));
+	ArmUpperLeft->SetupAttachment(GetMesh());
+	ArmUpperRight = CreateDefaultSubobject< USkeletalMeshComponent>(TEXT("ArmUpperRight"));
+	ArmUpperRight->SetupAttachment(GetMesh());
+	ArmLowerLeft = CreateDefaultSubobject< USkeletalMeshComponent>(TEXT("ArmLowerLeft"));
+	ArmLowerLeft->SetupAttachment(GetMesh());
+	ArmLowerRight = CreateDefaultSubobject< USkeletalMeshComponent>(TEXT("ArmLowerRight"));
+	ArmLowerRight->SetupAttachment(GetMesh());
+	HandLeft = CreateDefaultSubobject< USkeletalMeshComponent>(TEXT("HandLeft"));
+	HandLeft->SetupAttachment(GetMesh());
+	HandRight = CreateDefaultSubobject< USkeletalMeshComponent>(TEXT("HandRight"));
+	HandRight->SetupAttachment(GetMesh());
+	LegLeft = CreateDefaultSubobject< USkeletalMeshComponent>(TEXT("LegLeft"));
+	LegLeft->SetupAttachment(GetMesh());
+	LegRight = CreateDefaultSubobject< USkeletalMeshComponent>(TEXT("LegRight"));
+	LegRight->SetupAttachment(GetMesh());
+	Hair = CreateDefaultSubobject< USkeletalMeshComponent>(TEXT("Hair"));
+	Hair->SetupAttachment(GetMesh());
+	Beard = CreateDefaultSubobject< USkeletalMeshComponent>(TEXT("Beard"));
+	Beard->SetupAttachment(GetMesh());
+	Ears = CreateDefaultSubobject< USkeletalMeshComponent>(TEXT("Ears"));
+	Ears->SetupAttachment(GetMesh());
+	Eyebrows = CreateDefaultSubobject< USkeletalMeshComponent>(TEXT("Eyebrows"));
+	Eyebrows->SetupAttachment(GetMesh());
+	Helmet = CreateDefaultSubobject< USkeletalMeshComponent>(TEXT("Helmet"));
+	Helmet->SetupAttachment(GetMesh());
 }
 
 // Called to bind functionality to input

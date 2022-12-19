@@ -1,0 +1,24 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "GameFramework/HUD.h"
+#include "WOGLobbyHUD.generated.h"
+
+/**
+ * 
+ */
+UCLASS()
+class WOG_API AWOGLobbyHUD : public AHUD
+{
+	GENERATED_BODY()
+
+public:
+	AWOGLobbyHUD();
+
+protected:
+
+	virtual void BeginPlay() override;
+	
+};

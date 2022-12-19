@@ -4,12 +4,16 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "WOG/Data/PlayerProfileSaveGame.h"
 #include "BasePlayerCharacter.generated.h"
 
 UCLASS()
 class WOG_API ABasePlayerCharacter : public ACharacter
 {
 	GENERATED_BODY()
+
+	virtual void OnConstruction(const FTransform& Transform) override;
+
 public:
 	// Sets default values for this character's properties
 	ABasePlayerCharacter();
@@ -20,6 +24,15 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Input)
 	float TurnRateGamepad; //Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	FPlayerData PlayerProfile;
+
+	UPROPERTY(EditAnywhere)
+	UMaterialInterface* Material;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	UMaterialInstanceDynamic* CharacterMI;
 
 	/*
 	** Functions
@@ -41,47 +54,53 @@ protected:
 	class UCameraComponent* FollowCamera;
 
 	//Meshes
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Meshes)
-	class USkeletalMeshComponent* MeshTorso;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	USkeletalMeshComponent* Head;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Meshes)
-	USkeletalMeshComponent* MeshHips;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	USkeletalMeshComponent* ArmUpperLeft;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Meshes)
-	USkeletalMeshComponent* MeshLegLeft;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	USkeletalMeshComponent* ArmUpperRight;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Meshes)
-	USkeletalMeshComponent* MeshLegRight;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	USkeletalMeshComponent* ArmLowerLeft;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Meshes)
-	USkeletalMeshComponent* MeshArmUpperLeft;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	USkeletalMeshComponent* ArmLowerRight;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Meshes)
-	USkeletalMeshComponent* MeshArmUpperRight;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	USkeletalMeshComponent* HandLeft;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Meshes)
-	USkeletalMeshComponent* MeshArmLowerLeft;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	USkeletalMeshComponent* HandRight;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Meshes)
-	USkeletalMeshComponent* MeshArmLowerRight;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	USkeletalMeshComponent* Torso;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Meshes)
-	USkeletalMeshComponent* MeshHandLeft;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	USkeletalMeshComponent* Hips;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Meshes)
-	USkeletalMeshComponent* MeshHandRight;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	USkeletalMeshComponent* LegLeft;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Meshes)
-	USkeletalMeshComponent* MeshEyebrows;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	USkeletalMeshComponent* LegRight;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Meshes)
-	USkeletalMeshComponent* MeshEars;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	USkeletalMeshComponent* Beard;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Meshes)
-	USkeletalMeshComponent* MeshHair;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	USkeletalMeshComponent* Eyebrows;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Meshes)
-	USkeletalMeshComponent* MeshBeard;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	USkeletalMeshComponent* Hair;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	USkeletalMeshComponent* Helmet;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	USkeletalMeshComponent* Ears;
 
 	/*
 	** Functions

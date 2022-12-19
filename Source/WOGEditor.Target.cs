@@ -10,5 +10,6 @@ public class WOGEditorTarget : TargetRules
 		Type = TargetType.Editor;
 		DefaultBuildSettings = BuildSettingsVersion.V2;
 		ExtraModuleNames.Add("WOG");
-	}
+        IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_1;
+    }
 }
