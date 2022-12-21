@@ -17,6 +17,8 @@ class WOG_API ABasePlayerCharacter : public ACharacter
 public:
 	// Sets default values for this character's properties
 	ABasePlayerCharacter();
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	
 	/*
 	** Variables
@@ -25,7 +27,7 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Input)
 	float TurnRateGamepad; //Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	UPROPERTY(ReplicatedUsing = OnRep_PlayerProfile, EditDefaultsOnly, BlueprintReadWrite)
 	FPlayerData PlayerProfile;
 
 	UPROPERTY(EditAnywhere)
@@ -124,9 +126,18 @@ protected:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	UFUNCTION()
+	void OnRep_PlayerProfile();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void UpdatePlayerProfile(FPlayerData NewPlayerProfile);
+
 
 public:
 	FORCEINLINE USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+
+	UFUNCTION(Server, reliable, BlueprintCallable)
+	void Server_SetPlayerProfile(FPlayerData NewPlayerProfile);
 
 };

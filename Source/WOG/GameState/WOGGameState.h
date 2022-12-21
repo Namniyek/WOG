@@ -20,5 +20,9 @@ public:
 
 protected:
 	virtual void HandleMatchHasStarted() override;
+
+	UFUNCTION(BlueprintCallable)
+	virtual int32 UpdateCurrentTime();
+
 	
 };

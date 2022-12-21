@@ -8,6 +8,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Net/UnrealNetwork.h"
 
 
 void ABasePlayerCharacter::OnConstruction(const FTransform& Transform)
@@ -93,6 +94,13 @@ ABasePlayerCharacter::ABasePlayerCharacter()
 	Helmet->SetupAttachment(GetMesh());
 }
 
+void ABasePlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	
+	DOREPLIFETIME(ABasePlayerCharacter, PlayerProfile);
+}
+
 // Called to bind functionality to input
 void ABasePlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
@@ -165,4 +173,15 @@ void ABasePlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+}
+
+void ABasePlayerCharacter::OnRep_PlayerProfile()
+{
+	UpdatePlayerProfile(PlayerProfile);
+}
+
+void ABasePlayerCharacter::Server_SetPlayerProfile_Implementation(FPlayerData NewPlayerProfile)
+{
+	PlayerProfile = NewPlayerProfile;
+	UpdatePlayerProfile(PlayerProfile);
 }

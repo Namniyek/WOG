@@ -14,9 +14,6 @@ class WOG_API AWOGLobbyHUD : public AHUD
 {
 	GENERATED_BODY()
 
-public:
-	AWOGLobbyHUD();
-
 protected:
 
 	virtual void BeginPlay() override;
