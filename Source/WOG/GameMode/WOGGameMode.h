@@ -32,6 +32,7 @@ protected:
 private:
 	void HandleStartingPlayer(APlayerController* NewPlayer);
 	void HandleDropIn(APlayerController* NewPlayer);
+	void CreateRandomCharacter(APlayerController* NewPlayer);
 
 	class UWOGGameInstance* GameInstance;
 
@@ -41,4 +42,5 @@ private:
 public:
 
 	virtual void HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer) override;
+	virtual void Logout(AController* Exiting) override;
 };
