@@ -4,6 +4,7 @@
 #include "TimeOfDay.h"
 #include "Net/UnrealNetwork.h"
 #include "GameFramework/GameState.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "Misc/Timespan.h"
 
 // Sets default values
@@ -13,14 +14,15 @@ ATimeOfDay::ATimeOfDay()
 	PrimaryActorTick.bCanEverTick = true;
 	bReplicates = true;
 	SetReplicateMovement(false);
-
+	StartingTime = 1060;
+	UpdateFrequency = 0.5f;
 
 }
 
 void ATimeOfDay::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME(ATimeOfDay, CurrentTime);
+	DOREPLIFETIME(ATimeOfDay, RepCurrentTime);
 }
 
 // Called when the game starts or when spawned
@@ -29,20 +31,17 @@ void ATimeOfDay::BeginPlay()
 	Super::BeginPlay();
 	if (HasAuthority())
 	{
+		CurrentTime = StartingTime;
 		FTimerHandle UpdateTimeHandle;
-		GetWorldTimerManager().SetTimer(UpdateTimeHandle, this, &ThisClass::UpdateTime, 0.5f, true);
-		GEngine->AddOnScreenDebugMessage(-1, 1, FColor::Green, FString("Event Bound"));
+		GetWorldTimerManager().SetTimer(UpdateTimeHandle, this, &ThisClass::UpdateTime, UpdateFrequency, true);
 	}
 }
 
 void ATimeOfDay::OnRep_CurrentTime()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 1, FColor::Green, FString::FromInt(CurrentTime));
-	int32 Minute = CurrentTime % 60;
-	int32 Hour = (CurrentTime/60) % 24;
-	FString CurrentTimeStr = FString::FromInt(Hour) + FString(" : ") + FString::FromInt(Minute);
-	GEngine->AddOnScreenDebugMessage(-1, 1, FColor::Green, FString(CurrentTimeStr));
+	ConvertTimeFormat(RepCurrentTime);
 
+	TimeUpdated(RepCurrentTime, CurrentHour, CurrentMinute);
 }
 
 void ATimeOfDay::UpdateTime()
@@ -50,13 +49,30 @@ void ATimeOfDay::UpdateTime()
 	AGameStateBase* GameState = GetWorld()->GetGameState<AGameStateBase>();
 	if (!GameState)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 1, FColor::Green, FString("NoGameState"));
 		return;
 	}
-	float ServerTime =  GameState->GetServerWorldTimeSeconds();
-	CurrentTime = StartingTime + (ServerTime * 2.f);
-	if (CurrentTime >= 2400) CurrentTime = 0;
 
+	float ServerTime =  GameState->GetServerWorldTimeSeconds()/2;
+	CurrentTime +=(1);
+	
+	RepCurrentTime = CurrentTime; 
+
+	if (RepCurrentTime >= 1440)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Cyan, FString("NewDay"));
+		RepCurrentTime = 0;
+		CurrentTime = 0;
+	}
+	ConvertTimeFormat(RepCurrentTime);
+
+	TimeUpdated(RepCurrentTime, CurrentHour, CurrentMinute);
+}
+
+void ATimeOfDay::ConvertTimeFormat(int32 MinutesToConvert)
+{
+	CurrentHour = FMath::Floor(MinutesToConvert / 60);
+	CurrentMinute = MinutesToConvert % 60;
+	return;
 }
 
 // Called every frame

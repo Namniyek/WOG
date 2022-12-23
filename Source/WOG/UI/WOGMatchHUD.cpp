@@ -6,9 +6,9 @@
 
 void AWOGMatchHUD::BeginPlay()
 {
-	Super::BeginPlay();
-
 	UWidgetLayoutLibrary::RemoveAllWidgets(this);
+
+	Super::BeginPlay();
 
 	auto OwnerPC = GetOwningPlayerController();
 	if (OwnerPC)

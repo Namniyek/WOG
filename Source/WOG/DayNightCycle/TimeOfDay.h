@@ -17,10 +17,14 @@ public:
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-	UPROPERTY(ReplicatedUsing = OnRep_CurrentTime, VisibleAnywhere)
-	int32 CurrentTime = 0;
-	int32 StartingTime = 1800;
+	UPROPERTY(ReplicatedUsing = OnRep_CurrentTime, VisibleAnywhere, BlueprintReadOnly, Category = "Day/Night cycle")
+	int32 RepCurrentTime = 0;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Day/Night cycle")
+	int32 StartingTime;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Day/Night cycle")
+	float UpdateFrequency;
 
 protected:
 	// Called when the game starts or when spawned
@@ -31,9 +35,20 @@ protected:
 
 	void UpdateTime();
 
+	float CurrentTime;
+
+private:
+	void ConvertTimeFormat(int32 MinutesToConvert);
+
+	int32 CurrentHour = 0;
+	int32 CurrentMinute = 0;
+
 
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void TimeUpdated(int32 SyncedCurrentTime, int32 Hours, int32 Minutes);
 
 };
