@@ -37,12 +37,12 @@ void ATimeOfDay::BeginPlay()
 	}
 }
 
-void ATimeOfDay::OnRep_CurrentTime()
-{
-	ConvertTimeFormat(RepCurrentTime);
-
-	TimeUpdated(RepCurrentTime, CurrentHour, CurrentMinute);
-}
+//void ATimeOfDay::OnRep_CurrentTime()
+//{
+//	ConvertTimeFormat(RepCurrentTime);
+//
+//	TimeUpdated(RepCurrentTime, CurrentHour, CurrentMinute);
+//}
 
 void ATimeOfDay::UpdateTime()
 {
@@ -52,7 +52,7 @@ void ATimeOfDay::UpdateTime()
 		return;
 	}
 
-	float ServerTime =  GameState->GetServerWorldTimeSeconds()/2;
+	//float ServerTime =  GameState->GetServerWorldTimeSeconds()/2;
 	CurrentTime +=(1);
 	
 	RepCurrentTime = CurrentTime; 
@@ -63,9 +63,8 @@ void ATimeOfDay::UpdateTime()
 		RepCurrentTime = 0;
 		CurrentTime = 0;
 	}
-	ConvertTimeFormat(RepCurrentTime);
 
-	TimeUpdated(RepCurrentTime, CurrentHour, CurrentMinute);
+	Multicast_SyncCurrentTime(RepCurrentTime);
 }
 
 void ATimeOfDay::ConvertTimeFormat(int32 MinutesToConvert)
@@ -79,5 +78,13 @@ void ATimeOfDay::ConvertTimeFormat(int32 MinutesToConvert)
 void ATimeOfDay::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+}
+
+void ATimeOfDay::Multicast_SyncCurrentTime_Implementation(int32 TimeToSync)
+{
+	ConvertTimeFormat(RepCurrentTime);
+
+	TimeUpdated(RepCurrentTime, CurrentHour, CurrentMinute);
+	GEngine->AddOnScreenDebugMessage(1, 1, FColor::Green, FString("MC called"));
 }
 
