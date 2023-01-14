@@ -81,12 +81,11 @@ void AWOGLobbyPlayerController::SaveGame()
 		SaveGameObject->PlayerProfile = PlayerProfile;
 		if (UGameplayStatics::SaveGameToSlot(SaveGameObject, PlayerProfile.PlayerName, PlayerProfile.UserIndex))
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Cyan, FString("SaveGame sucessful"));
-			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Orange, FString::Printf(TEXT("Player Name: %s, PLayerIndex: %d"), *PlayerProfile.PlayerName, PlayerProfile.UserIndex));
+			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Orange, FString::Printf(TEXT("Player Name: %s, PlayerIndex: %d"), *PlayerProfile.PlayerName, PlayerProfile.UserIndex));
 		}
 		else
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString("SaveGame failed"));
+			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("SaveGame failed"));
 		}
 	}
 }

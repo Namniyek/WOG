@@ -375,7 +375,6 @@ void UWOGGameInstance::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCo
 			if (PlayerController)
 			{
 				PlayerController->ClientTravel(ConnectionInfo, ETravelType::TRAVEL_Absolute);
-				GEngine->AddOnScreenDebugMessage(0, 5.f, FColor::Green, FString("ClientTravel"));
 			}
 			else
 			{

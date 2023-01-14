@@ -16,6 +16,9 @@ class WOG_API AWOGGameMode : public AGameMode
 	
 public:
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	bool bDebugMode = false;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	bool bHandleDropIn = false;
 
@@ -27,7 +30,6 @@ public:
 
 protected:
 
-	virtual void BeginPlay() override;
 
 private:
 	void HandleStartingPlayer(APlayerController* NewPlayer);
@@ -38,9 +40,11 @@ private:
 
 	FTransform GetPlayerStart(FString StartIndex);
 
-
 public:
 
 	virtual void HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer) override;
 	virtual void Logout(AController* Exiting) override;
+
+	UFUNCTION(BlueprintCallable)
+	void RestartMatch();
 };

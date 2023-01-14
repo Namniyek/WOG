@@ -263,7 +263,6 @@ void AWOGLobbyAvatar::RaiseArm()
 	UAnimInstance* AnimInstance = BaseMesh->GetAnimInstance();
 	if (!AnimInstance || !LobbyMontage)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString("SomethingWrong"));
 		return;
 	}
 
@@ -279,7 +278,6 @@ void AWOGLobbyAvatar::LowerArm()
 	UAnimInstance* AnimInstance = BaseMesh->GetAnimInstance();
 	if (!AnimInstance || !LobbyMontage)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString("SomethingWrong"));
 		return;
 	}
 

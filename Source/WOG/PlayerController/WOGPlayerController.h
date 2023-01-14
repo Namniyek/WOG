@@ -18,12 +18,29 @@ public:
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	int32 UserIndex;
 
+	UFUNCTION(Client, Reliable)
+	void Client_CreateAnnouncementWidget(ETimeOfDay NewTOD);
+
+	UFUNCTION(Client, Reliable)
+	void Client_CreateEndgameWidget();
+
 protected:
 	virtual void OnPossess(APawn* aPawn) override;
+	virtual void BeginPlay() override;
 
 private:
 	UFUNCTION(Server, reliable)
 	void Server_SetPlayerIndex(int32 NewIndex);
+
+	class AWOGMatchHUD* MatchHUD;
+
+	UPROPERTY()
+	ETimeOfDay TOD;
+
+	void SetTODString(ETimeOfDay CurrentTOD, FString &StringMain, FString &StringSec);
+
+	UPROPERTY(VisibleAnywhere)
+	bool bIsAttacker = false; 
 
 
 	

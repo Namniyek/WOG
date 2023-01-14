@@ -5,17 +5,18 @@
 #include "Net/UnrealNetwork.h"
 #include "GameFramework/GameState.h"
 #include "Kismet/KismetMathLibrary.h"
-#include "Misc/Timespan.h"
+#include "GameFramework/HUD.h"
 
 // Sets default values
 ATimeOfDay::ATimeOfDay()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 	bReplicates = true;
 	SetReplicateMovement(false);
 	StartingTime = 1060;
 	UpdateFrequency = 0.5f;
+	TimeOfDay = ETimeOfDay::TOD_Start;
 
 }
 
@@ -23,6 +24,7 @@ void ATimeOfDay::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifeti
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(ATimeOfDay, RepCurrentTime);
+	DOREPLIFETIME(ATimeOfDay, TimeOfDay);
 }
 
 // Called when the game starts or when spawned
@@ -32,7 +34,6 @@ void ATimeOfDay::BeginPlay()
 	if (HasAuthority())
 	{
 		CurrentTime = StartingTime;
-		FTimerHandle UpdateTimeHandle;
 		GetWorldTimerManager().SetTimer(UpdateTimeHandle, this, &ThisClass::UpdateTime, UpdateFrequency, true);
 	}
 }
@@ -59,12 +60,25 @@ void ATimeOfDay::UpdateTime()
 
 	if (RepCurrentTime >= 1440)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 3, FColor::Cyan, FString("NewDay"));
 		RepCurrentTime = 0;
 		CurrentTime = 0;
 	}
-	ConvertTimeFormat(RepCurrentTime);
 
+	if (RepCurrentTime == 360)
+	{
+		++CurrentDay;
+		DayChanged.Broadcast(CurrentDay);
+		UpdateTimeOfDay(RepCurrentTime);
+		TimeOfDayChanged.Broadcast(TimeOfDay);
+	}
+
+	if (RepCurrentTime == 1080)
+	{
+		UpdateTimeOfDay(RepCurrentTime);
+		TimeOfDayChanged.Broadcast(TimeOfDay);
+	}
+
+	ConvertTimeFormat(RepCurrentTime);
 	TimeUpdated(RepCurrentTime, CurrentHour, CurrentMinute);
 }
 
@@ -75,9 +89,28 @@ void ATimeOfDay::ConvertTimeFormat(int32 MinutesToConvert)
 	return;
 }
 
-// Called every frame
-void ATimeOfDay::Tick(float DeltaTime)
+void ATimeOfDay::UpdateTimeOfDay(int32 Time)
 {
-	Super::Tick(DeltaTime);
+	switch (Time)
+	{
+		case 360:
+			if (CurrentDay == 2) TimeOfDay = ETimeOfDay::TOD_Dawn2;
+			if (CurrentDay == 3) TimeOfDay = ETimeOfDay::TOD_Dawn3;
+			if (CurrentDay == 4) TimeOfDay = ETimeOfDay::TOD_Dawn4;
+			break;
+
+		case 1080:
+			if (CurrentDay == 1) TimeOfDay = ETimeOfDay::TOD_Dusk1;
+			if (CurrentDay == 2) TimeOfDay = ETimeOfDay::TOD_Dusk2;
+			if (CurrentDay == 3) TimeOfDay = ETimeOfDay::TOD_Dusk3;
+			break;
+	}
+
+
+}
+
+void ATimeOfDay::StopCycle()
+{
+	GetWorldTimerManager().ClearTimer(UpdateTimeHandle);
 }
 

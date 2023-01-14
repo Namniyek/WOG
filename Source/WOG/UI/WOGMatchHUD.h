@@ -18,4 +18,29 @@ protected:
 
 	virtual void BeginPlay() override;
 
+public:
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UUserWidget> AnnouncementClass;
+
+	UPROPERTY()
+	class UMainAnnouncementWidget* Announcement;
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UUserWidget> EndgameClass;
+
+	UPROPERTY()
+	class UEndgameWidget* Endgame;
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UUserWidget> RestartClass;
+
+	UPROPERTY()
+	class URestartWidget* Restart;
+
+	UFUNCTION()
+	void AddEndgameWidget();
+
+	UFUNCTION()
+	void AddAnnouncementWidget(FString AnnouncementStringMain, FString AnnouncementStringSec);
+
 };

@@ -9,16 +9,14 @@
 #include "Kismet/GameplayStatics.h"
 #include "WOG/PlayerCharacter/BasePlayerCharacter.h"
 #include "WOG/PlayerController/WOGPlayerController.h"
+#include "WOG/UI/WOGMatchHUD.h"
+#include "Engine/Engine.h"
 
-void AWOGGameMode::BeginPlay()
-{
-
-}
 
 void AWOGGameMode::HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer)
 {
-	GEngine->AddOnScreenDebugMessage(5, 5.f, FColor::Yellow, FString::Printf(TEXT("NewPlayerJoined")));
 	Super::HandleStartingNewPlayer_Implementation(NewPlayer);
+	if (bDebugMode) bHandleDropIn = true;
 
 	if (!bHandleDropIn)
 	{
@@ -33,18 +31,27 @@ void AWOGGameMode::HandleStartingNewPlayer_Implementation(APlayerController* New
 void AWOGGameMode::HandleStartingPlayer(APlayerController* NewPlayer)
 {
 	GameInstance = GetGameInstance<UWOGGameInstance>();
-	if (!GameInstance) return;
+	if (!GameInstance)
+	{
+		return;
+	}
 
 	TArray <FString> PlayerNameArray;
 	GameInstance->PlayersMap.GenerateValueArray(PlayerNameArray);
 	FString DesiredPlayerName = NewPlayer->PlayerState->GetPlayerName();
 
-	if (PlayerNameArray.IsEmpty()) return;
+	if (PlayerNameArray.IsEmpty())
+	{
+		return;
+	}
 
 	for (int32 i = 0; i < PlayerNameArray.Num(); i++)
 	{
 		FString PlayerName = PlayerNameArray[i];
-		if (PlayerName != DesiredPlayerName) continue;
+		if (PlayerName != DesiredPlayerName)
+		{
+			continue;
+		}
 
 		if (i <= 2)
 		{
@@ -53,11 +60,10 @@ void AWOGGameMode::HandleStartingPlayer(APlayerController* NewPlayer)
 			SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 			ABasePlayerCharacter* Defender = 
 				GetWorld()->SpawnActor<ABasePlayerCharacter>(DefenderCharacter, GetPlayerStart(FString::FromInt(i)), SpawnParams);
-			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, FString::Printf(TEXT("UserIndex: %d"), i));
-			UE_LOG(LogTemp, Warning, TEXT("UserIndex: %d"), i);
 			if (Defender)
 			{
 				NewPlayer->Possess(Cast<APawn>(Defender));
+				InitializeHUDForPlayer(NewPlayer);
 			}
 		}
 		else
@@ -67,11 +73,10 @@ void AWOGGameMode::HandleStartingPlayer(APlayerController* NewPlayer)
 			SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 			ABasePlayerCharacter* Attacker = 
 				GetWorld()->SpawnActor<ABasePlayerCharacter>(AttackerCharacter, GetPlayerStart(FString::FromInt(i)), SpawnParams);
-			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, FString::Printf(TEXT("UserIndex: %d"), i));
-			UE_LOG(LogTemp, Warning, TEXT("UserIndex: %d"), i);
 			if (Attacker)
 			{
 				NewPlayer->Possess(Cast<APawn>(Attacker));
+				InitializeHUDForPlayer(NewPlayer);
 			}
 		}
 	}
@@ -99,7 +104,7 @@ void AWOGGameMode::CreateRandomCharacter(APlayerController* NewPlayer)
 		FString PlayerName = PlayerNameArray[i];
 		if (PlayerName == FString("empty"))
 		{
-			GameInstance->PlayersMap.Add(i, NewPlayer->PlayerState->GetPlayerName());
+			GameInstance->PlayersMap.Add(i, DesiredPlayerName);
 			UPlayerProfileSaveGame* SaveGameObject = Cast<UPlayerProfileSaveGame>(UGameplayStatics::CreateSaveGameObject(UPlayerProfileSaveGame::StaticClass()));
 			if (SaveGameObject)
 			{
@@ -112,7 +117,7 @@ void AWOGGameMode::CreateRandomCharacter(APlayerController* NewPlayer)
 				SaveGameObject->PlayerProfile.Rune = "0";
 				SaveGameObject->PlayerProfile.SkinColor = "0";
 				SaveGameObject->PlayerProfile.UserIndex = i;
-				SaveGameObject->PlayerProfile.PlayerName = NewPlayer->PlayerState->GetPlayerName();
+				SaveGameObject->PlayerProfile.PlayerName = DesiredPlayerName;
 
 				UGameplayStatics::SaveGameToSlot(SaveGameObject, SaveGameObject->PlayerProfile.PlayerName, SaveGameObject->PlayerProfile.UserIndex);
 			}
@@ -125,7 +130,6 @@ void AWOGGameMode::CreateRandomCharacter(APlayerController* NewPlayer)
 FTransform AWOGGameMode::GetPlayerStart(FString StartIndex)
 {
 	FName StartIndexName = (*StartIndex);
-	GEngine->AddOnScreenDebugMessage(5, 5.f, FColor::Yellow, StartIndex);
 	TArray<AActor*> PlayerStartArray;
 	UGameplayStatics::GetAllActorsOfClass(this, APlayerStart::StaticClass(), PlayerStartArray);
 
@@ -149,6 +153,8 @@ void AWOGGameMode::Logout(AController* Exiting)
 {
 	Super::Logout(Exiting);
 
+	if (GetMatchState() != MatchState::InProgress) return;
+
 	GameInstance = GetGameInstance<UWOGGameInstance>();
 	if (!GameInstance) return;
 
@@ -157,6 +163,10 @@ void AWOGGameMode::Logout(AController* Exiting)
 	{
 		GameInstance->PlayersMap.Add(PlayerController->UserIndex, FString("empty"));
 	}
-
 	bHandleDropIn = true;
+}
+
+void AWOGGameMode::RestartMatch()
+{
+	RestartGame();
 }
