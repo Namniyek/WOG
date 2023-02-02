@@ -8,6 +8,8 @@
 #include "GameFramework/PlayerStart.h"
 #include "Kismet/GameplayStatics.h"
 #include "WOG/PlayerCharacter/BasePlayerCharacter.h"
+#include "WOG/PlayerCharacter/WOGAttacker.h"
+#include "WOG/PlayerCharacter/WOGDefender.h"
 #include "WOG/PlayerController/WOGPlayerController.h"
 #include "WOG/UI/WOGMatchHUD.h"
 #include "Engine/Engine.h"
@@ -16,7 +18,7 @@
 void AWOGGameMode::HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer)
 {
 	Super::HandleStartingNewPlayer_Implementation(NewPlayer);
-	if (bDebugMode) bHandleDropIn = true;
+	bHandleDropIn = bDebugMode;
 
 	if (!bHandleDropIn)
 	{
@@ -59,7 +61,7 @@ void AWOGGameMode::HandleStartingPlayer(APlayerController* NewPlayer)
 			SpawnParams.Owner = NewPlayer;
 			SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 			ABasePlayerCharacter* Defender = 
-				GetWorld()->SpawnActor<ABasePlayerCharacter>(DefenderCharacter, GetPlayerStart(FString::FromInt(i)), SpawnParams);
+				GetWorld()->SpawnActor<AWOGDefender>(DefenderCharacter, GetPlayerStart(FString::FromInt(i)), SpawnParams);
 			if (Defender)
 			{
 				NewPlayer->Possess(Cast<APawn>(Defender));
@@ -72,7 +74,7 @@ void AWOGGameMode::HandleStartingPlayer(APlayerController* NewPlayer)
 			SpawnParams.Owner = NewPlayer;
 			SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 			ABasePlayerCharacter* Attacker = 
-				GetWorld()->SpawnActor<ABasePlayerCharacter>(AttackerCharacter, GetPlayerStart(FString::FromInt(i)), SpawnParams);
+				GetWorld()->SpawnActor<AWOGAttacker>(AttackerCharacter, GetPlayerStart(FString::FromInt(i)), SpawnParams);
 			if (Attacker)
 			{
 				NewPlayer->Possess(Cast<APawn>(Attacker));
@@ -108,10 +110,10 @@ void AWOGGameMode::CreateRandomCharacter(APlayerController* NewPlayer)
 			UPlayerProfileSaveGame* SaveGameObject = Cast<UPlayerProfileSaveGame>(UGameplayStatics::CreateSaveGameObject(UPlayerProfileSaveGame::StaticClass()));
 			if (SaveGameObject)
 			{
-				SaveGameObject->PlayerProfile.bIsAttacker = (i > 2);
+				SaveGameObject->PlayerProfile.bIsAttacker = FMath::RandBool(); //(i>2);
 				SaveGameObject->PlayerProfile.bIsMale = FMath::RandBool();
 				SaveGameObject->PlayerProfile.BodyPaintColor = "0";
-				SaveGameObject->PlayerProfile.CharacterIndex = "0";
+				SaveGameObject->PlayerProfile.CharacterIndex = "2";
 				SaveGameObject->PlayerProfile.HairColor = "0";
 				SaveGameObject->PlayerProfile.PrimaryColor = "0";
 				SaveGameObject->PlayerProfile.Rune = "0";

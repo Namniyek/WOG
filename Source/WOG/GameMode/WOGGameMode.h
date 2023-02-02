@@ -23,10 +23,10 @@ public:
 	bool bHandleDropIn = false;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TSubclassOf<class ABasePlayerCharacter> DefenderCharacter;
+	TSubclassOf<class AWOGDefender> DefenderCharacter;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TSubclassOf<ABasePlayerCharacter> AttackerCharacter;
+	TSubclassOf<class AWOGAttacker> AttackerCharacter;
 
 protected:
 

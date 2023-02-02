@@ -9,6 +9,8 @@
 #include "GameFramework/Controller.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "EnhancedInputComponent.h"
+#include "EnhancedInputSubsystems.h"
 
 
 void ABasePlayerCharacter::OnConstruction(const FTransform& Transform)
@@ -25,9 +27,6 @@ ABasePlayerCharacter::ABasePlayerCharacter()
 
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
-
-	// set our turn rate for input
-	TurnRateGamepad = 50.f;
 
 	// Don't rotate when the controller rotates. Let that just affect the camera.
 	bUseControllerRotationPitch = false;
@@ -60,38 +59,44 @@ ABasePlayerCharacter::ABasePlayerCharacter()
 	//Create the modular meshes
 	GetMesh()->bHiddenInGame = true;
 
+	MainMesh = CreateDefaultSubobject< USkeletalMeshComponent>(TEXT("MainMesh"));
+	MainMesh->SetupAttachment(GetRootComponent());
+	MainMesh->bHiddenInGame = true;
+
 	Head = CreateDefaultSubobject< USkeletalMeshComponent>(TEXT("Head"));
-	Head->SetupAttachment(GetMesh());
+	Head->SetupAttachment(MainMesh);
 	Torso = CreateDefaultSubobject< USkeletalMeshComponent>(TEXT("Torso"));
-	Torso->SetupAttachment(GetMesh());
+	Torso->SetupAttachment(MainMesh);
 	Hips = CreateDefaultSubobject< USkeletalMeshComponent>(TEXT("Hips"));
-	Hips->SetupAttachment(GetMesh());
+	Hips->SetupAttachment(MainMesh);
 	ArmUpperLeft = CreateDefaultSubobject< USkeletalMeshComponent>(TEXT("ArmUpperLeft"));
-	ArmUpperLeft->SetupAttachment(GetMesh());
+	ArmUpperLeft->SetupAttachment(MainMesh);
 	ArmUpperRight = CreateDefaultSubobject< USkeletalMeshComponent>(TEXT("ArmUpperRight"));
-	ArmUpperRight->SetupAttachment(GetMesh());
+	ArmUpperRight->SetupAttachment(MainMesh);
 	ArmLowerLeft = CreateDefaultSubobject< USkeletalMeshComponent>(TEXT("ArmLowerLeft"));
-	ArmLowerLeft->SetupAttachment(GetMesh());
+	ArmLowerLeft->SetupAttachment(MainMesh);
 	ArmLowerRight = CreateDefaultSubobject< USkeletalMeshComponent>(TEXT("ArmLowerRight"));
-	ArmLowerRight->SetupAttachment(GetMesh());
+	ArmLowerRight->SetupAttachment(MainMesh);
 	HandLeft = CreateDefaultSubobject< USkeletalMeshComponent>(TEXT("HandLeft"));
-	HandLeft->SetupAttachment(GetMesh());
+	HandLeft->SetupAttachment(MainMesh);
 	HandRight = CreateDefaultSubobject< USkeletalMeshComponent>(TEXT("HandRight"));
-	HandRight->SetupAttachment(GetMesh());
+	HandRight->SetupAttachment(MainMesh);
 	LegLeft = CreateDefaultSubobject< USkeletalMeshComponent>(TEXT("LegLeft"));
-	LegLeft->SetupAttachment(GetMesh());
+	LegLeft->SetupAttachment(MainMesh);
 	LegRight = CreateDefaultSubobject< USkeletalMeshComponent>(TEXT("LegRight"));
-	LegRight->SetupAttachment(GetMesh());
+	LegRight->SetupAttachment(MainMesh);
 	Hair = CreateDefaultSubobject< USkeletalMeshComponent>(TEXT("Hair"));
-	Hair->SetupAttachment(GetMesh());
+	Hair->SetupAttachment(MainMesh);
 	Beard = CreateDefaultSubobject< USkeletalMeshComponent>(TEXT("Beard"));
-	Beard->SetupAttachment(GetMesh());
+	Beard->SetupAttachment(MainMesh);
 	Ears = CreateDefaultSubobject< USkeletalMeshComponent>(TEXT("Ears"));
-	Ears->SetupAttachment(GetMesh());
+	Ears->SetupAttachment(MainMesh);
 	Eyebrows = CreateDefaultSubobject< USkeletalMeshComponent>(TEXT("Eyebrows"));
-	Eyebrows->SetupAttachment(GetMesh());
+	Eyebrows->SetupAttachment(MainMesh);
 	Helmet = CreateDefaultSubobject< USkeletalMeshComponent>(TEXT("Helmet"));
-	Helmet->SetupAttachment(GetMesh());
+	Helmet->SetupAttachment(MainMesh);
+
+	CharacterState = ECharacterState::ECS_Unnoccupied;
 }
 
 void ABasePlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -99,6 +104,20 @@ void ABasePlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	
 	DOREPLIFETIME(ABasePlayerCharacter, PlayerProfile);
+	DOREPLIFETIME(ABasePlayerCharacter, CharacterState);
+}
+
+void ABasePlayerCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+	if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
+	{
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+		{
+			Subsystem->AddMappingContext(DefaultMappingContext, 0);
+		}
+	}
+
 }
 
 // Called to bind functionality to input
@@ -107,66 +126,96 @@ void ABasePlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 	check(PlayerInputComponent);
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
-	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
-
-	PlayerInputComponent->BindAxis("Move Forward / Backward", this, &ThisClass::MoveForward);
-	PlayerInputComponent->BindAxis("Move Right / Left", this, &ThisClass::MoveRight);
-
-	// We have 2 versions of the rotation bindings to handle different kinds of devices differently
-	// "turn" handles devices that provide an absolute delta, such as a mouse.
-	// "turnrate" is for devices that we choose to treat as a rate of change, such as an analog joystick
-	PlayerInputComponent->BindAxis("Turn Right / Left Mouse", this, &APawn::AddControllerYawInput);
-	PlayerInputComponent->BindAxis("Turn Right / Left Gamepad", this, &ThisClass::TurnAtRate);
-	PlayerInputComponent->BindAxis("Look Up / Down Mouse", this, &APawn::AddControllerPitchInput);
-	PlayerInputComponent->BindAxis("Look Up / Down Gamepad", this, &ThisClass::LookUpAtRate);
+	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent))
+	{
+		//Move:
+		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ThisClass::Move);
+		//Look:
+		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ThisClass::Look);
+		//Jump
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &ACharacter::Jump);
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
+		//Dodge
+		EnhancedInputComponent->BindAction(DodgeAction, ETriggerEvent::Completed, this, &ThisClass::Dodge);
+		//Sprint
+		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Triggered, this, &ThisClass::Sprint);
+		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &ThisClass::StopSprinting);
+		//Target
+		EnhancedInputComponent->BindAction(TargetAction, ETriggerEvent::Completed, this, &ThisClass::Target);
+	}
 }
 
-void ABasePlayerCharacter::MoveForward(float Value)
+void ABasePlayerCharacter::Move(const FInputActionValue& Value)
 {
-	if ((Controller != nullptr) && (Value != 0.0f))
+	FVector2D MovementVector = Value.Get<FVector2D>();
+	if (Controller != nullptr)
 	{
 		// find out which way is forward
 		const FRotator Rotation = Controller->GetControlRotation();
 		const FRotator YawRotation(0, Rotation.Yaw, 0);
 
 		// get forward vector
-		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-		AddMovementInput(Direction, Value);
-	}
-}
-
-void ABasePlayerCharacter::MoveRight(float Value)
-{
-	if ((Controller != nullptr) && (Value != 0.0f))
-	{
-		// find out which way is right
-		const FRotator Rotation = Controller->GetControlRotation();
-		const FRotator YawRotation(0, Rotation.Yaw, 0);
+		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
 
 		// get right vector 
-		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-		// add movement in that direction
-		AddMovementInput(Direction, Value);
+		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+
+		// add movement 
+		AddMovementInput(ForwardDirection, MovementVector.Y);
+		AddMovementInput(RightDirection, MovementVector.X);
 	}
 }
 
-void ABasePlayerCharacter::TurnAtRate(float Rate)
+void ABasePlayerCharacter::Look(const FInputActionValue& Value)
 {
-	// calculate delta for this frame from the rate information
-	AddControllerYawInput(Rate * TurnRateGamepad * GetWorld()->GetDeltaSeconds());
+	FVector2D LookAxisVector = Value.Get<FVector2D>();
+	if (Controller != nullptr)
+	{
+		// add yaw and pitch input to controller
+		AddControllerYawInput(LookAxisVector.X);
+		AddControllerPitchInput(LookAxisVector.Y);
+	}
 }
 
-void ABasePlayerCharacter::LookUpAtRate(float Rate)
+void ABasePlayerCharacter::Dodge(const FInputActionValue& Value)
 {
-	// calculate delta for this frame from the rate information
-	AddControllerPitchInput(Rate * TurnRateGamepad * GetWorld()->GetDeltaSeconds());
+	if (CharacterState!=ECharacterState::ECS_Dodging)
+	{
+		Server_SetCharacterState(ECharacterState::ECS_Dodging);
+	}
 }
 
-void ABasePlayerCharacter::BeginPlay()
+void ABasePlayerCharacter::StopDodging()
 {
-	Super::BeginPlay();
-	
+	if (CharacterState == ECharacterState::ECS_Dodging)
+	{
+		Server_SetCharacterState(ECharacterState::ECS_Unnoccupied);
+	}
+}
+
+void ABasePlayerCharacter::Sprint()
+{
+	if (CharacterState != ECharacterState::ECS_Targeting)
+	{
+		Server_SetCharacterState(ECharacterState::ECS_Sprinting);
+	}
+}
+
+void ABasePlayerCharacter::StopSprinting()
+{
+	Server_SetCharacterState(ECharacterState::ECS_Unnoccupied);
+}
+
+void ABasePlayerCharacter::Target(const FInputActionValue& Value)
+{
+	if (CharacterState != ECharacterState::ECS_Targeting)
+	{
+		Server_SetCharacterState(ECharacterState::ECS_Targeting);
+	}
+	else
+	{
+		Server_SetCharacterState(ECharacterState::ECS_Unnoccupied);
+	}
 }
 
 void ABasePlayerCharacter::Tick(float DeltaTime)
@@ -175,13 +224,206 @@ void ABasePlayerCharacter::Tick(float DeltaTime)
 
 }
 
+void ABasePlayerCharacter::Server_SetPlayerProfile_Implementation(const FPlayerData& NewPlayerProfile)
+{
+	PlayerProfile = NewPlayerProfile;
+	UpdatePlayerProfile(PlayerProfile);
+}
+
 void ABasePlayerCharacter::OnRep_PlayerProfile()
 {
 	UpdatePlayerProfile(PlayerProfile);
 }
 
-void ABasePlayerCharacter::Server_SetPlayerProfile_Implementation(FPlayerData NewPlayerProfile)
+void ABasePlayerCharacter::UpdatePlayerProfile_Implementation(const FPlayerData& NewPlayerProfile)
 {
-	PlayerProfile = NewPlayerProfile;
-	UpdatePlayerProfile(PlayerProfile);
+	//Set the character meshes
+	SetMeshes(NewPlayerProfile.bIsMale, NewPlayerProfile.CharacterIndex);
+
+	//Set the character colors
+	SetColors(NewPlayerProfile.PrimaryColor, NewPlayerProfile.SkinColor, NewPlayerProfile.BodyPaintColor, NewPlayerProfile.HairColor);
+
+	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Purple, FString("UpdatePlayerProfile()")); //just a debug string. 
+}
+
+void ABasePlayerCharacter::SetColors(FName Primary, FName Skin, FName BodyPaint, FName HairColor)
+{
+	UDataTable* PrimaryColorTable = CharacterDataTables.PrimaryColors;
+	UDataTable* SkinColorTable = CharacterDataTables.SkinColor;
+	UDataTable* BodyPaintColorTable = CharacterDataTables.BodyPaintColor;
+	UDataTable* HairColorTable = CharacterDataTables.HairColor;
+
+	if (
+		!PrimaryColorTable ||
+		!SkinColorTable ||
+		!BodyPaintColorTable ||
+		!HairColorTable
+		)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, "Error with data tables");
+		return;
+	}
+
+	FMaterialColors* PrimaryRow = PrimaryColorTable->FindRow<FMaterialColors>(Primary, FString());
+	FMaterialColors* SkinRow = SkinColorTable->FindRow<FMaterialColors>(Skin, FString());
+	FMaterialColors* BodyPaintRow = BodyPaintColorTable->FindRow<FMaterialColors>(BodyPaint, FString());
+	FMaterialColors* HairRow = HairColorTable->FindRow<FMaterialColors>(HairColor, FString());
+
+	if (
+		!PrimaryRow ||
+		!SkinRow ||
+		!BodyPaintRow ||
+		!HairRow
+		)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, "Error with data table rows");
+		return;
+	}
+
+	CharacterMI->SetVectorParameterValue(FName("Color_Primary"), PrimaryRow->ColorVector);
+	CharacterMI->SetVectorParameterValue(FName("Color_Secondary"), PrimaryRow->ColorVectorSec);
+	CharacterMI->SetVectorParameterValue(FName("Color_Skin"), SkinRow->ColorVector);
+	CharacterMI->SetVectorParameterValue(FName("Color_Stubble"), (SkinRow->ColorVector*FLinearColor(0.57f, 0.57f, 0.57f, 1.0f)));
+	CharacterMI->SetVectorParameterValue(FName("Color_BodyArt"), BodyPaintRow->ColorVector);
+	CharacterMI->SetVectorParameterValue(FName("Color_Hair"), HairRow->ColorVector);
+}
+
+void ABasePlayerCharacter::SetMeshes(bool bIsMale, FName RowName)
+{
+	UDataTable* MeshTable = bIsMale ? CharacterDataTables.MaleBody : CharacterDataTables.FemaleBody;
+
+	if (!MeshTable)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, "Error with data tables");
+		return;
+	}
+
+	FCharacterMesh* MeshRow = MeshTable->FindRow<FCharacterMesh>(RowName, FString());
+
+	if (!MeshRow)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, "Error with data table rows");
+		return;
+	}
+
+	MainMesh->SetSkinnedAssetAndUpdate(MeshRow->BaseMesh, true);
+	MainMesh->SetAnimInstanceClass(MeshRow->AnimBP);
+
+	Head->SetSkinnedAssetAndUpdate(MeshRow->Head, true);
+	Head->SetMaterial(0, CharacterMI);
+
+	Torso->SetSkinnedAssetAndUpdate(MeshRow->Torso, true);
+	Torso->SetMaterial(0, CharacterMI);
+
+	Hips->SetSkinnedAssetAndUpdate(MeshRow->Hips, true);
+	Hips->SetMaterial(0, CharacterMI);
+
+	ArmUpperLeft->SetSkinnedAssetAndUpdate(MeshRow->ArmUpperLeft, true);
+	ArmUpperLeft->SetMaterial(0, CharacterMI);
+
+	ArmUpperRight->SetSkinnedAssetAndUpdate(MeshRow->ArmUpperRight, true);
+	ArmUpperRight->SetMaterial(0, CharacterMI);
+
+	ArmLowerLeft->SetSkinnedAssetAndUpdate(MeshRow->ArmLowerLeft, true);
+	ArmLowerLeft->SetMaterial(0, CharacterMI);
+
+	ArmLowerRight->SetSkinnedAssetAndUpdate(MeshRow->ArmLowerRight, true);
+	ArmLowerRight->SetMaterial(0, CharacterMI);
+
+	HandLeft->SetSkinnedAssetAndUpdate(MeshRow->HandLeft, true);
+	HandLeft->SetMaterial(0, CharacterMI);
+
+	HandRight->SetSkinnedAssetAndUpdate(MeshRow->HandRight, true);
+	HandRight->SetMaterial(0, CharacterMI);
+
+	LegLeft->SetSkinnedAssetAndUpdate(MeshRow->LegLeft, true);
+	LegLeft->SetMaterial(0, CharacterMI);
+
+	LegRight->SetSkinnedAssetAndUpdate(MeshRow->LegRight, true);
+	LegRight->SetMaterial(0, CharacterMI);
+
+	Hair->SetSkinnedAssetAndUpdate(MeshRow->Hair, true);
+	Hair->SetMaterial(0, CharacterMI);
+
+	Beard->SetSkinnedAssetAndUpdate(MeshRow->Beard, true);
+	Beard->SetMaterial(0, CharacterMI);
+
+	Ears->SetSkinnedAssetAndUpdate(MeshRow->Ears, true);
+	Ears->SetMaterial(0, CharacterMI);
+
+	Eyebrows->SetSkinnedAssetAndUpdate(MeshRow->Eyebrows, true);
+	Eyebrows->SetMaterial(0, CharacterMI);
+
+	Helmet->SetSkinnedAssetAndUpdate(MeshRow->Helmet, true);
+	Helmet->SetMaterial(0, CharacterMI);
+
+}
+
+void ABasePlayerCharacter::Server_SetCharacterState_Implementation(ECharacterState NewState)
+{
+	Multicast_SetCharacterState(NewState);
+	SetCharacterState(NewState);
+}
+
+void ABasePlayerCharacter::Multicast_SetCharacterState_Implementation(ECharacterState NewState)
+{
+	if (!HasAuthority())
+	{
+		SetCharacterState(NewState);
+	}
+}
+
+void ABasePlayerCharacter::SetCharacterState(ECharacterState NewState)
+{
+	CharacterState = NewState;
+
+	switch (CharacterState)
+	{
+
+	case ECharacterState::ECS_Unnoccupied:
+		HandleStateUnnoccupied();
+		break;
+
+	case ECharacterState::ECS_Dodging:
+		HandleStateDodging();
+		break;
+
+	case ECharacterState::ECS_Sprinting:
+		HandleStateSprinting();
+		break;
+
+	case ECharacterState::ECS_Targeting:
+		HandleStateTargeting();
+		break;
+	}
+}
+
+void ABasePlayerCharacter::HandleStateUnnoccupied()
+{
+	if (!GetCharacterMovement()) return;
+
+	GetCharacterMovement()->MaxWalkSpeed = 500.f;	//Sets the maximum run speed
+	//GetCharacterMovement()->bOrientRotationToMovement = true; // Character doesn't move in the direction of input...
+}
+
+void ABasePlayerCharacter::HandleStateDodging()
+{
+	GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Purple, FString("Dodge()"));
+}
+
+void ABasePlayerCharacter::HandleStateSprinting()
+{
+	if (!GetCharacterMovement()) return;
+
+	//Sets the maximum run speed
+	GetCharacterMovement()->MaxWalkSpeed = 800.f;
+}
+
+void ABasePlayerCharacter::HandleStateTargeting()
+{
+	if (!GetCharacterMovement()) return;
+
+	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Purple, FString("Targeting()"));
+	//GetCharacterMovement()->bOrientRotationToMovement = false; // Character doesn't move in the direction of input...
+	GetCharacterMovement()->MaxWalkSpeed = 500;	//Sets the maximum run speed
 }

@@ -5,7 +5,97 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "WOG/Data/PlayerProfileSaveGame.h"
+#include "InputActionValue.h"
+#include "Engine/DataTable.h"
+#include "WOG/Types/CharacterTypes.h"
+#include "LockOnTargetComponent.h"
 #include "BasePlayerCharacter.generated.h"
+
+USTRUCT(BlueprintType)
+struct FMeshDataTables 
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly)
+	class UDataTable* MaleBody;
+
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly)
+	UDataTable* FemaleBody;
+
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly)
+	UDataTable* PrimaryColors;
+
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly)
+	UDataTable* BodyPaintColor;
+
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly)
+	UDataTable* SkinColor;
+
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly)
+	UDataTable* HairColor;
+};
+
+USTRUCT(BlueprintType)
+struct FMaterialColors : public FTableRowBase
+{
+	GENERATED_USTRUCT_BODY()
+
+public:
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	FLinearColor ColorVector;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	FLinearColor ColorVectorSec;
+};
+
+USTRUCT(BlueprintType)
+struct FCharacterMesh : public FTableRowBase
+{
+	GENERATED_USTRUCT_BODY()
+
+public:
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	USkeletalMesh* BaseMesh;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	USkeletalMesh* Head;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	USkeletalMesh* ArmUpperLeft;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	USkeletalMesh* ArmUpperRight;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	USkeletalMesh* ArmLowerLeft;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	USkeletalMesh* ArmLowerRight;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	USkeletalMesh* HandLeft;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	USkeletalMesh* HandRight;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	USkeletalMesh* Torso;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	USkeletalMesh* Hips;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	USkeletalMesh* LegLeft;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	USkeletalMesh* LegRight;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	USkeletalMesh* Beard;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	USkeletalMesh* Eyebrows;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	USkeletalMesh* Hair;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	USkeletalMesh* Helmet;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	USkeletalMesh* Ears;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	TSubclassOf<UAnimInstance> AnimBP;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	TSubclassOf<UAnimInstance> AnimBPLobby;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UAnimMontage* RaiseHandMontage;
+};
+
 
 UCLASS()
 class WOG_API ABasePlayerCharacter : public ACharacter
@@ -19,43 +109,68 @@ public:
 	ABasePlayerCharacter();
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	
-	/*
-	** Variables
-	*/
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Input)
-	float TurnRateGamepad; //Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
+	virtual void Tick(float DeltaTime) override;
 
 	UPROPERTY(ReplicatedUsing = OnRep_PlayerProfile, EditDefaultsOnly, BlueprintReadWrite)
 	FPlayerData PlayerProfile;
 
+	#pragma region Material variables
 	UPROPERTY(EditAnywhere)
 	UMaterialInterface* Material;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	UMaterialInstanceDynamic* CharacterMI;
 
-	/*
-	** Functions
-	*/
+	#pragma endregion
 
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+	#pragma region Player Input Variables
+	//Input
+	/** MappingContext */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	class UInputMappingContext* DefaultMappingContext;
+
+	/** Jump Input Action */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	class UInputAction* JumpAction;
+
+	/** Move Input Action */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* MoveAction;
+
+	/** Look Input Action */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* LookAction;
+
+	/** Dodge Input Action */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* DodgeAction;
+
+	/** Sprint Input Action */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* SprintAction;
+
+	/** Target Input Action */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* TargetAction;
+
+	#pragma endregion
 
 protected:
 
-	/*
-	** Variables
-	*/
+	// Called when the game starts or when spawned
+	virtual void BeginPlay() override;
 
+	#pragma region Components variables
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class USpringArmComponent* CameraBoom;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* FollowCamera;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	USkeletalMeshComponent* MainMesh;
 
-	//Meshes
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	USkeletalMeshComponent* Head;
 
@@ -104,40 +219,79 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	USkeletalMeshComponent* Ears;
 
-	/*
-	** Functions
-	*/
+	#pragma endregion
 
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-
-	/*
-	**Player Input Section 
-	*/
-
-	void MoveForward(float Value);
-
-	void MoveRight(float Value);
-
-	void TurnAtRate(float Rate); //@param Rate	This is a normalized rate, i.e. 1.0 means 100% of desired turn rate
-
-	void LookUpAtRate(float Rate); //@param Rate	This is a normalized rate, i.e. 1.0 means 100% of desired turn rate
+	#pragma region Player Input Functions
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	/** Called for movement input */
+	void Move(const FInputActionValue& Value);
+
+	/** Called for looking input */
+	void Look(const FInputActionValue& Value);
+
+	/**Called for dodge input*/
+	void Dodge(const FInputActionValue& Value);
+	UFUNCTION(BlueprintCallable)
+	void StopDodging();
+
+	/**Called for sprint input*/
+	void Sprint();
+	void StopSprinting();
+
+	/**Called for dodge input*/
+	void Target(const FInputActionValue& Value);
+
+	#pragma endregion
+
+	#pragma region Player Profile Section
 	UFUNCTION()
 	void OnRep_PlayerProfile();
 
-	UFUNCTION(BlueprintImplementableEvent)
-	void UpdatePlayerProfile(FPlayerData NewPlayerProfile);
+	UFUNCTION(BlueprintNativeEvent)
+	void UpdatePlayerProfile(const FPlayerData& NewPlayerProfile);
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Mesh")
+	FMeshDataTables CharacterDataTables;
+
+	void SetColors(FName Primary, FName Skin, FName BodyPaint, FName HairColor);
+	void SetMeshes(bool bIsMale, FName RowName);
+
+
+	#pragma endregion
+
+	#pragma region Character State variables
+
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly)
+	ECharacterState CharacterState;
+
+	void SetCharacterState(ECharacterState NewState);
+
+	virtual void HandleStateUnnoccupied();
+	virtual void HandleStateDodging();
+	virtual void HandleStateSprinting();
+	virtual void HandleStateTargeting();
+
+	#pragma endregion
 
 
 public:
+	//public Getters and Setters 
 	FORCEINLINE USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 
+	UFUNCTION(BlueprintPure)
+	FORCEINLINE ECharacterState GetCharacterState() const { return CharacterState; }
+
 	UFUNCTION(Server, reliable, BlueprintCallable)
-	void Server_SetPlayerProfile(FPlayerData NewPlayerProfile);
+	void Server_SetPlayerProfile(const FPlayerData& NewPlayerProfile);
+
+	UFUNCTION(Server, reliable)
+	void Server_SetCharacterState(ECharacterState NewState);
+
+	UFUNCTION(NetMulticast, reliable)
+	void Multicast_SetCharacterState(ECharacterState NewState);
 
 };
