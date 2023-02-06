@@ -25,6 +25,7 @@ void ATimeOfDay::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifeti
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(ATimeOfDay, RepCurrentTime);
 	DOREPLIFETIME(ATimeOfDay, TimeOfDay);
+	DOREPLIFETIME(ATimeOfDay, CurrentDay);
 }
 
 // Called when the game starts or when spawned
@@ -41,7 +42,7 @@ void ATimeOfDay::BeginPlay()
 void ATimeOfDay::OnRep_CurrentTime()
 {
 	ConvertTimeFormat(RepCurrentTime);
-
+	DayChanged.Broadcast(CurrentDay);
 	TimeUpdated(RepCurrentTime, CurrentHour, CurrentMinute);
 }
 

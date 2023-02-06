@@ -11,6 +11,9 @@
 #include "Net/UnrealNetwork.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "LockOnTargetComponent.h"
+#include "TargetingHelperComponent.h"
+#include "WOG/ActorComponents/WOGAttributesComponent.h"
 
 
 void ABasePlayerCharacter::OnConstruction(const FTransform& Transform)
@@ -24,6 +27,18 @@ ABasePlayerCharacter::ABasePlayerCharacter()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+
+	/**
+	*Actor components
+	*/
+
+	LockOnTarget = CreateDefaultSubobject<ULockOnTargetComponent>(TEXT("LockOnTargetComponent"));
+	LockOnTarget->SetIsReplicated(true);
+	TargetAttractor = CreateDefaultSubobject<UTargetingHelperComponent>(TEXT("TargetAttractor"));
+	TargetAttractor->SetIsReplicated(true);
+	Attributes = CreateDefaultSubobject<UWOGAttributesComponent>(TEXT("AttributesComponent"));
+	Attributes->SetIsReplicated(true);
+
 
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
@@ -97,6 +112,13 @@ ABasePlayerCharacter::ABasePlayerCharacter()
 	Helmet->SetupAttachment(MainMesh);
 
 	CharacterState = ECharacterState::ECS_Unnoccupied;
+
+	if (LockOnTarget)
+	{
+		LockOnTarget->OnTargetLocked.AddDynamic(this, &ThisClass::TargetLocked);
+		LockOnTarget->OnTargetUnlocked.AddDynamic(this, &ThisClass::TargetUnlocked);
+		LockOnTarget->OnTargetNotFound.AddDynamic(this, &ThisClass::TargetNotFound);
+	}
 }
 
 void ABasePlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -117,7 +139,17 @@ void ABasePlayerCharacter::BeginPlay()
 			Subsystem->AddMappingContext(DefaultMappingContext, 0);
 		}
 	}
+	//if (TargetAttractor)
+	//{
+	//	TargetAttractor->UpdateDesiredMesh(Head);
+	//	TargetAttractor->AddSocket(FName("head"));
+	//	TargetAttractor->RemoveSocket();
+	//}
 
+	if (HasAuthority())
+	{
+		OnTakeAnyDamage.AddDynamic(this, &ThisClass::ReceiveDamage);
+	}
 }
 
 // Called to bind functionality to input
@@ -169,11 +201,19 @@ void ABasePlayerCharacter::Move(const FInputActionValue& Value)
 void ABasePlayerCharacter::Look(const FInputActionValue& Value)
 {
 	FVector2D LookAxisVector = Value.Get<FVector2D>();
-	if (Controller != nullptr)
+
+	if (CharacterState == ECharacterState::ECS_Targeting)
 	{
-		// add yaw and pitch input to controller
-		AddControllerYawInput(LookAxisVector.X);
-		AddControllerPitchInput(LookAxisVector.Y);
+		//Disable mouse input if character is targeting
+	}
+	else
+	{
+		if (Controller != nullptr)
+		{
+			// add yaw and pitch input to controller
+			AddControllerYawInput(LookAxisVector.X);
+			AddControllerPitchInput(LookAxisVector.Y);
+		}
 	}
 }
 
@@ -208,20 +248,34 @@ void ABasePlayerCharacter::StopSprinting()
 
 void ABasePlayerCharacter::Target(const FInputActionValue& Value)
 {
-	if (CharacterState != ECharacterState::ECS_Targeting)
-	{
-		Server_SetCharacterState(ECharacterState::ECS_Targeting);
-	}
-	else
-	{
-		Server_SetCharacterState(ECharacterState::ECS_Unnoccupied);
-	}
+	if (!LockOnTarget) return;
+	LockOnTarget->EnableTargeting();
 }
 
 void ABasePlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+}
+
+void ABasePlayerCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser)
+{
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("%s Damaged by: %s"),
+		*GetName(), *DamageCauser->GetName()));
+	if (!Attributes) return;
+	Attributes->Server_UpdateHealth(Damage, InstigatedBy);
+}
+
+void ABasePlayerCharacter::Elim(bool bPlayerLeftGame)
+{
+	Multicast_Elim(bPlayerLeftGame);
+}
+
+void ABasePlayerCharacter::Multicast_Elim_Implementation(bool bPlayerLeftGame)
+{
+	//GetCharacterMovement()->DisableMovement();
+	Jump();
+	GEngine->AddOnScreenDebugMessage(-1, 4.f, FColor::Purple, FString("Multicast_Elim()"));
 }
 
 void ABasePlayerCharacter::Server_SetPlayerProfile_Implementation(const FPlayerData& NewPlayerProfile)
@@ -242,8 +296,6 @@ void ABasePlayerCharacter::UpdatePlayerProfile_Implementation(const FPlayerData&
 
 	//Set the character colors
 	SetColors(NewPlayerProfile.PrimaryColor, NewPlayerProfile.SkinColor, NewPlayerProfile.BodyPaintColor, NewPlayerProfile.HairColor);
-
-	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Purple, FString("UpdatePlayerProfile()")); //just a debug string. 
 }
 
 void ABasePlayerCharacter::SetColors(FName Primary, FName Skin, FName BodyPaint, FName HairColor)
@@ -403,7 +455,7 @@ void ABasePlayerCharacter::HandleStateUnnoccupied()
 	if (!GetCharacterMovement()) return;
 
 	GetCharacterMovement()->MaxWalkSpeed = 500.f;	//Sets the maximum run speed
-	//GetCharacterMovement()->bOrientRotationToMovement = true; // Character doesn't move in the direction of input...
+	GetCharacterMovement()->bOrientRotationToMovement = true; // Character doesn't move in the direction of input...
 }
 
 void ABasePlayerCharacter::HandleStateDodging()
@@ -423,7 +475,34 @@ void ABasePlayerCharacter::HandleStateTargeting()
 {
 	if (!GetCharacterMovement()) return;
 
-	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Purple, FString("Targeting()"));
-	//GetCharacterMovement()->bOrientRotationToMovement = false; // Character doesn't move in the direction of input...
+	GetCharacterMovement()->bOrientRotationToMovement = false; // Character doesn't move in the direction of input...
 	GetCharacterMovement()->MaxWalkSpeed = 500;	//Sets the maximum run speed
+}
+
+void ABasePlayerCharacter::TargetLocked(UTargetingHelperComponent* Target, FName Socket)
+{
+	if (Target)
+	{
+		AActor* TargetOwner = Target->GetOwner();
+		if (!TargetOwner)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 4.f, FColor::Red, FString::Printf(TEXT("Target invalid")));
+			return;
+		}
+		if (CharacterState != ECharacterState::ECS_Targeting)
+		{
+			Server_SetCharacterState(ECharacterState::ECS_Targeting);
+		}
+	}
+}
+
+void ABasePlayerCharacter::TargetUnlocked(UTargetingHelperComponent* UnlockedTarget, FName Socket)
+{
+	Server_SetCharacterState(ECharacterState::ECS_Unnoccupied);
+	GEngine->AddOnScreenDebugMessage(-1, 4.f, FColor::Red, FString::Printf(TEXT("Target unlocked")));
+}
+
+void ABasePlayerCharacter::TargetNotFound()
+{
+	GEngine->AddOnScreenDebugMessage(-1, 4.f, FColor::Red, FString::Printf(TEXT("Target not found")));
 }

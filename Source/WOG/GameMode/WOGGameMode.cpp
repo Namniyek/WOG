@@ -19,7 +19,6 @@ void AWOGGameMode::HandleStartingNewPlayer_Implementation(APlayerController* New
 {
 	Super::HandleStartingNewPlayer_Implementation(NewPlayer);
 	bHandleDropIn = bDebugMode;
-
 	if (!bHandleDropIn)
 	{
 		HandleStartingPlayer(NewPlayer);
@@ -27,6 +26,14 @@ void AWOGGameMode::HandleStartingNewPlayer_Implementation(APlayerController* New
 	else
 	{
 		HandleDropIn(NewPlayer);
+	}
+}
+
+void AWOGGameMode::PlayerEliminated(ABasePlayerCharacter* ElimmedCharacter, AWOGPlayerController* VictimController, AWOGPlayerController* AttackerController)
+{
+	if (ElimmedCharacter)
+	{
+		ElimmedCharacter->Elim(false);
 	}
 }
 
@@ -93,13 +100,19 @@ void AWOGGameMode::HandleDropIn(APlayerController* NewPlayer)
 void AWOGGameMode::CreateRandomCharacter(APlayerController* NewPlayer)
 {
 	GameInstance = GetGameInstance<UWOGGameInstance>();
-	if (!GameInstance) return;
+	if (!GameInstance)
+	{
+		return;
+	}
 
 	TArray <FString> PlayerNameArray;
 	GameInstance->PlayersMap.GenerateValueArray(PlayerNameArray);
 	FString DesiredPlayerName = NewPlayer->PlayerState->GetPlayerName();
 
-	if (PlayerNameArray.IsEmpty()) return;
+	if (PlayerNameArray.IsEmpty())
+	{
+		return;
+	}
 
 	for (int32 i = 0; i < PlayerNameArray.Num(); i++)
 	{
@@ -110,7 +123,7 @@ void AWOGGameMode::CreateRandomCharacter(APlayerController* NewPlayer)
 			UPlayerProfileSaveGame* SaveGameObject = Cast<UPlayerProfileSaveGame>(UGameplayStatics::CreateSaveGameObject(UPlayerProfileSaveGame::StaticClass()));
 			if (SaveGameObject)
 			{
-				SaveGameObject->PlayerProfile.bIsAttacker = FMath::RandBool(); //(i>2);
+				SaveGameObject->PlayerProfile.bIsAttacker = (i>2);
 				SaveGameObject->PlayerProfile.bIsMale = FMath::RandBool();
 				SaveGameObject->PlayerProfile.BodyPaintColor = "0";
 				SaveGameObject->PlayerProfile.CharacterIndex = "2";
@@ -122,9 +135,9 @@ void AWOGGameMode::CreateRandomCharacter(APlayerController* NewPlayer)
 				SaveGameObject->PlayerProfile.PlayerName = DesiredPlayerName;
 
 				UGameplayStatics::SaveGameToSlot(SaveGameObject, SaveGameObject->PlayerProfile.PlayerName, SaveGameObject->PlayerProfile.UserIndex);
+				break;
 			}
 		}
-		return;
 	}
 	return;
 }

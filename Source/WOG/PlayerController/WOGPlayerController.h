@@ -24,6 +24,8 @@ public:
 	UFUNCTION(Client, Reliable)
 	void Client_CreateEndgameWidget();
 
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 protected:
 	virtual void OnPossess(APawn* aPawn) override;
 	virtual void BeginPlay() override;
@@ -39,8 +41,12 @@ private:
 
 	void SetTODString(ETimeOfDay CurrentTOD, FString &StringMain, FString &StringSec);
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Replicated)
 	bool bIsAttacker = false; 
+
+public:
+	UFUNCTION(BlueprintPure)
+	FORCEINLINE bool GetIsAttacker() { return bIsAttacker; }
 
 
 	

@@ -7,6 +7,7 @@
 
 #include "Components/MeshComponent.h"
 #include "Engine/SimpleConstructionScript.h"
+//#include "WOG/PlayerCharacter/BasePlayerCharacter.h"
 
 UTargetingHelperComponent::UTargetingHelperComponent()
 	: bCanBeCaptured(true)
@@ -55,6 +56,14 @@ bool UTargetingHelperComponent::CanBeCaptured(const ULockOnTargetComponent* Inst
 
 bool UTargetingHelperComponent::CanBeCapturedCustom_Implementation(const ULockOnTargetComponent* Instigator) const
 {
+	if (!Instigator) return false;
+	FName Tag = ComponentHasTag(FName("defender")) ? FName("defender") : FName("attacker");
+	FName InstigatorTag = Instigator->ComponentHasTag(FName("defender")) ? FName("defender") : FName("attacker");
+
+	if (Tag != InstigatorTag)
+	{
+		return false;
+	}
 	return true;
 }
 

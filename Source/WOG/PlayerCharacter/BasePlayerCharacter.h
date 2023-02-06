@@ -8,7 +8,6 @@
 #include "InputActionValue.h"
 #include "Engine/DataTable.h"
 #include "WOG/Types/CharacterTypes.h"
-#include "LockOnTargetComponent.h"
 #include "BasePlayerCharacter.generated.h"
 
 USTRUCT(BlueprintType)
@@ -107,6 +106,7 @@ class WOG_API ABasePlayerCharacter : public ACharacter
 public:
 	// Sets default values for this character's properties
 	ABasePlayerCharacter();
+	friend class UWOGAttributesComponent;
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
@@ -115,6 +115,20 @@ public:
 	UPROPERTY(ReplicatedUsing = OnRep_PlayerProfile, EditDefaultsOnly, BlueprintReadWrite)
 	FPlayerData PlayerProfile;
 
+#pragma region Handle Damage
+
+	UFUNCTION()
+	void ReceiveDamage(AActor* DamagedActor, float Damage, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser);
+
+	void Elim(bool bPlayerLeftGame);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_Elim(bool bPlayerLeftGame);
+
+
+#pragma endregion
+
+	
 	#pragma region Material variables
 	UPROPERTY(EditAnywhere)
 	UMaterialInterface* Material;
@@ -275,6 +289,33 @@ protected:
 	virtual void HandleStateTargeting();
 
 	#pragma endregion
+
+	#pragma region Actor Components
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	class ULockOnTargetComponent* LockOnTarget;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	class UTargetingHelperComponent* TargetAttractor;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	class UWOGAttributesComponent* Attributes;
+
+	#pragma endregion
+
+	UFUNCTION()
+	void TargetLocked(UTargetingHelperComponent* Target, FName Socket);
+
+	UFUNCTION()
+	void TargetUnlocked(UTargetingHelperComponent* UnlockedTarget, FName Socket);
+
+	UFUNCTION()
+	void TargetNotFound();
+
+private:
+
+	UPROPERTY()
+	class AWOGGameMode* WOGGameMode;
 
 
 public:

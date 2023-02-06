@@ -12,7 +12,14 @@
 #include "WOG/UI/MainAnnouncementWidget.h"
 #include "WOG/Data/TODEnum.h"
 #include "WOG/UI/EndgameWidget.h"
+#include "Net/UnrealNetwork.h"
 
+
+void AWOGPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AWOGPlayerController, bIsAttacker);
+}
 
 void AWOGPlayerController::OnPossess(APawn* aPawn)
 {
@@ -42,9 +49,10 @@ void AWOGPlayerController::OnPossess(APawn* aPawn)
 	ABasePlayerCharacter* PlayerCharacter = Cast<ABasePlayerCharacter>(aPawn);
 	if (!WOGSavegame || !PlayerCharacter) return;
 
-	PlayerCharacter->PlayerProfile = WOGSavegame->PlayerProfile;
+	//PlayerCharacter->PlayerProfile = WOGSavegame->PlayerProfile;
 	PlayerCharacter->Server_SetPlayerProfile(WOGSavegame->PlayerProfile);
 	bIsAttacker = PlayerCharacter->PlayerProfile.bIsAttacker;
+	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Cyan, FString::Printf(TEXT("Is attacker: %d"), bIsAttacker));
 
 	Server_SetPlayerIndex(WOGSavegame->PlayerProfile.UserIndex);
 }

@@ -34,6 +34,9 @@ protected:
 	FVector Velocity;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Character|General", meta = (AllowPrivateAccess = "true"))
+	FRotator Rotation;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Character|General", meta = (AllowPrivateAccess = "true"))
 	float GroundSpeed;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Character|General", meta = (AllowPrivateAccess = "true"))

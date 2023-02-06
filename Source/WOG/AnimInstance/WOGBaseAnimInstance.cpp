@@ -50,6 +50,9 @@ void UWOGBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 	//Check if the character is falling
 	bIsFalling = CharacterMovementComponent->IsFalling();
+
+	//Get the character rotation
+	Rotation = PlayerCharacter->GetActorRotation();
 	#pragma endregion
 
 

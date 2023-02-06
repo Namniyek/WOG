@@ -24,16 +24,18 @@ public class LockOnTarget : ModuleRules
 		PublicDefinitions.Add("LOT_INSIGHTS = 0");
 
 		PublicIncludePaths.AddRange(
-			new string[] 
+			new string[]
 			{
-				Path.Combine(ModuleDirectory, "Public/Utilities"),
+                Path.Combine(ModuleDirectory, "Public/Utilities"),
+
+
 			}
 			);
 				
 		PrivateIncludePaths.AddRange(
 			new string[] 
 			{
-
+				
 			}
 			);
 			

@@ -37,7 +37,6 @@ public:
 	FDayChanged DayChanged;
 
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 	UFUNCTION()
@@ -55,6 +54,7 @@ private:
 
 	int32 CurrentHour = 0;
 	int32 CurrentMinute = 0;
+	UPROPERTY(Replicated)
 	int32 CurrentDay = 1;
 
 	void UpdateTimeOfDay(int32 Time);

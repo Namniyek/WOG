@@ -137,16 +137,7 @@ void UWOGGameInstance::DestroySession()
 		{
 			SessionPtr.Get()->OnDestroySessionCompleteDelegates.AddUObject(this, &ThisClass::OnDestroySessionComplete);
 			bool DestroyedSession = SessionPtr.Get()->DestroySession(SESSION_NAME);
-			GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Green, FString::Printf(TEXT("Session Destroyed: %d"), DestroyedSession));
 		}
-		else
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Red, FString("No Session interface"));
-		}
-	}
-	else
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Red, FString("No online subsystem"));
 	}
 }
 
