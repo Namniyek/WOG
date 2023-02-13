@@ -43,4 +43,7 @@ public:
 	UFUNCTION()
 	void AddAnnouncementWidget(FString AnnouncementStringMain, FString AnnouncementStringSec);
 
+	UFUNCTION(BlueprintNativeEvent)
+	void ResetHUDAfterRespawn();
+
 };

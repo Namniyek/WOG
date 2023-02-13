@@ -23,6 +23,7 @@ void UWOGAttributesComponent::GetLifetimeReplicatedProps(TArray<FLifetimePropert
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(UWOGAttributesComponent, MaxHealth);
 	DOREPLIFETIME(UWOGAttributesComponent, Health);
+	DOREPLIFETIME(UWOGAttributesComponent, HealthPercent);
 	DOREPLIFETIME(UWOGAttributesComponent, MaxMana);
 	DOREPLIFETIME(UWOGAttributesComponent, Mana);
 	DOREPLIFETIME(UWOGAttributesComponent, MaxAdrenaline);
@@ -48,15 +49,16 @@ void UWOGAttributesComponent::Server_UpdateHealth_Implementation(float Value, AC
 
 void UWOGAttributesComponent::UpdateHealth(float Value, AController* InstigatedBy)
 {
+	OwnerCharacter = OwnerCharacter == nullptr ? Cast<ABasePlayerCharacter>(GetOwner()) : OwnerCharacter;
+	if (!OwnerCharacter || OwnerCharacter->CharacterState == ECharacterState::ECS_Elimmed) return;
+
 	if (Health + Value >= MaxHealth)
 	{
 		Health = MaxHealth;
-		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Magenta, FString("You have full health"));
 	}
 	else if (Health + Value <= 0.f)
 	{
 		Health = 0.f;
-		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Magenta, FString("You dieded"));
 
 		OwnerCharacter = OwnerCharacter == nullptr ? Cast<ABasePlayerCharacter>(GetOwner()) : OwnerCharacter;
 		if (!OwnerCharacter) return;
@@ -68,14 +70,15 @@ void UWOGAttributesComponent::UpdateHealth(float Value, AController* InstigatedB
 		AWOGPlayerController* Attacker = Cast<AWOGPlayerController>(InstigatedBy);
 		if (!OwnerCharacter->WOGGameMode || !OwnerPC || !Attacker) return;
 
+		OwnerCharacter->Server_SetCharacterState(ECharacterState::ECS_Elimmed);
 		OwnerCharacter->WOGGameMode->PlayerEliminated(OwnerCharacter, OwnerPC, Attacker);
 	}
 	else
 	{
 		Health = Health + Value;
-		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Magenta, FString::Printf(TEXT("Character health is: %d"), Health));
 	}
 
+	HealthPercent = Health / MaxHealth;
 }
 
 void UWOGAttributesComponent::UpdateMana(float Value)

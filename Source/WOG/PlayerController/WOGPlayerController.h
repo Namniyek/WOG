@@ -44,6 +44,9 @@ private:
 	UPROPERTY(VisibleAnywhere, Replicated)
 	bool bIsAttacker = false; 
 
+	UFUNCTION(Client, Reliable)
+	void Client_ResetHUD();
+
 public:
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE bool GetIsAttacker() { return bIsAttacker; }

@@ -11,7 +11,9 @@
 #include "WOG/PlayerCharacter/WOGAttacker.h"
 #include "WOG/PlayerCharacter/WOGDefender.h"
 #include "WOG/PlayerController/WOGPlayerController.h"
+#include "WOG/PlayerState/WOGPlayerState.h"
 #include "WOG/UI/WOGMatchHUD.h"
+#include "WOG/GameState/WOGGameState.h"
 #include "Engine/Engine.h"
 
 
@@ -26,14 +28,6 @@ void AWOGGameMode::HandleStartingNewPlayer_Implementation(APlayerController* New
 	else
 	{
 		HandleDropIn(NewPlayer);
-	}
-}
-
-void AWOGGameMode::PlayerEliminated(ABasePlayerCharacter* ElimmedCharacter, AWOGPlayerController* VictimController, AWOGPlayerController* AttackerController)
-{
-	if (ElimmedCharacter)
-	{
-		ElimmedCharacter->Elim(false);
 	}
 }
 
@@ -72,7 +66,7 @@ void AWOGGameMode::HandleStartingPlayer(APlayerController* NewPlayer)
 			if (Defender)
 			{
 				NewPlayer->Possess(Cast<APawn>(Defender));
-				InitializeHUDForPlayer(NewPlayer);
+				//InitializeHUDForPlayer(NewPlayer);
 			}
 		}
 		else
@@ -85,7 +79,7 @@ void AWOGGameMode::HandleStartingPlayer(APlayerController* NewPlayer)
 			if (Attacker)
 			{
 				NewPlayer->Possess(Cast<APawn>(Attacker));
-				InitializeHUDForPlayer(NewPlayer);
+				//InitializeHUDForPlayer(NewPlayer);
 			}
 		}
 	}
@@ -185,3 +179,42 @@ void AWOGGameMode::RestartMatch()
 {
 	RestartGame();
 }
+
+void AWOGGameMode::PlayerEliminated(ABasePlayerCharacter* ElimmedCharacter, AWOGPlayerController* VictimController, AWOGPlayerController* AttackerController)
+{
+	if (!VictimController || !AttackerController) return;
+	AWOGPlayerState* AttackerPlayerState = AttackerController ? AttackerController->GetPlayerState<AWOGPlayerState>() : nullptr;
+	AWOGPlayerState* VictimPlayerState = VictimController ? VictimController->GetPlayerState<AWOGPlayerState>() : nullptr;
+
+	if (!AttackerPlayerState || !VictimPlayerState) return;
+	AttackerPlayerState->IncreaseTotalElimms();
+	VictimPlayerState->IncreaseTimesElimmed();
+
+	AWOGGameState* WOGGameState = GetGameState<AWOGGameState>();
+	if (!WOGGameState) return;
+	WOGGameState->Server_SetEndgamePlayerStats();
+
+	if (ElimmedCharacter)
+	{
+		ElimmedCharacter->Elim(false);
+	}
+}
+
+void AWOGGameMode::RequestRespawn(ABasePlayerCharacter* ElimmedCharacter, APlayerController* ElimmedController)
+{
+	if (ElimmedCharacter)
+	{
+		//ElimmedCharacter->Reset();
+		//ElimmedCharacter->Destroy();
+		ElimmedCharacter->Multicast_HandleElimination();
+	}
+
+	if (ElimmedController)
+	{
+		TArray<AActor*> PlayerStarts;
+		UGameplayStatics::GetAllActorsOfClass(this, APlayerStart::StaticClass(), PlayerStarts);
+		int32 Selection = FMath::RandRange(0, PlayerStarts.Num() - 1);
+		RestartPlayerAtPlayerStart(ElimmedController, PlayerStarts[Selection]);
+	}
+}
+

@@ -115,7 +115,7 @@ public:
 	UPROPERTY(ReplicatedUsing = OnRep_PlayerProfile, EditDefaultsOnly, BlueprintReadWrite)
 	FPlayerData PlayerProfile;
 
-#pragma region Handle Damage
+	#pragma region Handle Damage
 
 	UFUNCTION()
 	void ReceiveDamage(AActor* DamagedActor, float Damage, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser);
@@ -126,8 +126,7 @@ public:
 	void Multicast_Elim(bool bPlayerLeftGame);
 
 
-#pragma endregion
-
+	#pragma endregion
 	
 	#pragma region Material variables
 	UPROPERTY(EditAnywhere)
@@ -312,11 +311,24 @@ protected:
 	UFUNCTION()
 	void TargetNotFound();
 
+	//UFUNCTION()
+	//void 
+
 private:
 
 	UPROPERTY()
 	class AWOGGameMode* WOGGameMode;
 
+	#pragma region Handle Respawn
+	FTimerHandle ElimTimer;
+	FTimerDelegate ElimDelegate;
+
+	UPROPERTY(EditDefaultsOnly)
+	float ElimDelay = 6.f;
+
+	UFUNCTION()
+	void ElimTimerFinished();
+	#pragma endregion
 
 public:
 	//public Getters and Setters 
@@ -334,5 +346,11 @@ public:
 
 	UFUNCTION(NetMulticast, reliable)
 	void Multicast_SetCharacterState(ECharacterState NewState);
+
+	UFUNCTION(NetMulticast, reliable)
+	void Multicast_HandleElimination();
+
+	UFUNCTION(BlueprintNativeEvent)
+	void HandleElimination();
 
 };

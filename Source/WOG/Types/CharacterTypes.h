@@ -7,6 +7,7 @@ enum class ECharacterState : uint8
 	ECS_Dodging UMETA(DisplayName = "Dodging"),
 	ECS_Sprinting UMETA(DisplayName = "Sprinting"),
 	ECS_Targeting UMETA(DisplayName = "Targeting"),
+	ECS_Elimmed UMETA(DisplayName = "Eliminated"),
 
 	ECS_MAX UMETA(DisplayName = "DefaultMAX")
 };

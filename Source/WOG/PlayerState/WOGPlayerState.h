@@ -12,14 +12,17 @@ struct FPlayerStats
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	int32 TimesElimmed = 10;
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	int32 TotalElimms = 4;
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	FString MostElimmedPlayer = FString("your mom");
+
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+		FString PlayerWithMostElimms = FString("Player0");
 };
 
 /**
@@ -30,11 +33,21 @@ class WOG_API AWOGPlayerState : public APlayerState
 {
 	GENERATED_BODY()
 
+public:
+	AWOGPlayerState();
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 private:
+
+	UPROPERTY(Replicated, VisibleAnywhere)
 	FPlayerStats PlayerStats;
 
 public:
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE FPlayerStats GetPlayerStats() { return PlayerStats; }
+	void IncreaseTimesElimmed();
+	void IncreaseTotalElimms();
+	void SetMostElimmedPlayer(FString Player);
+	void SetPlayerWithMostElimms(FString Player);
 
 };

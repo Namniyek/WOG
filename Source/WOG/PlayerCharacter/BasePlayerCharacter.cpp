@@ -14,6 +14,8 @@
 #include "LockOnTargetComponent.h"
 #include "TargetingHelperComponent.h"
 #include "WOG/ActorComponents/WOGAttributesComponent.h"
+#include "WOG/GameMode/WOGGameMode.h"
+#include "WOG/PlayerController/WOGPlayerController.h"
 
 
 void ABasePlayerCharacter::OnConstruction(const FTransform& Transform)
@@ -258,26 +260,6 @@ void ABasePlayerCharacter::Tick(float DeltaTime)
 
 }
 
-void ABasePlayerCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser)
-{
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("%s Damaged by: %s"),
-		*GetName(), *DamageCauser->GetName()));
-	if (!Attributes) return;
-	Attributes->Server_UpdateHealth(Damage, InstigatedBy);
-}
-
-void ABasePlayerCharacter::Elim(bool bPlayerLeftGame)
-{
-	Multicast_Elim(bPlayerLeftGame);
-}
-
-void ABasePlayerCharacter::Multicast_Elim_Implementation(bool bPlayerLeftGame)
-{
-	//GetCharacterMovement()->DisableMovement();
-	Jump();
-	GEngine->AddOnScreenDebugMessage(-1, 4.f, FColor::Purple, FString("Multicast_Elim()"));
-}
-
 void ABasePlayerCharacter::Server_SetPlayerProfile_Implementation(const FPlayerData& NewPlayerProfile)
 {
 	PlayerProfile = NewPlayerProfile;
@@ -499,10 +481,62 @@ void ABasePlayerCharacter::TargetLocked(UTargetingHelperComponent* Target, FName
 void ABasePlayerCharacter::TargetUnlocked(UTargetingHelperComponent* UnlockedTarget, FName Socket)
 {
 	Server_SetCharacterState(ECharacterState::ECS_Unnoccupied);
-	GEngine->AddOnScreenDebugMessage(-1, 4.f, FColor::Red, FString::Printf(TEXT("Target unlocked")));
 }
 
 void ABasePlayerCharacter::TargetNotFound()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 4.f, FColor::Red, FString::Printf(TEXT("Target not found")));
+
+}
+
+void ABasePlayerCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser)
+{
+	if (!Attributes) return;
+	Attributes->Server_UpdateHealth(Damage, InstigatedBy);
+}
+
+void ABasePlayerCharacter::Elim(bool bPlayerLeftGame)
+{
+	Multicast_Elim(bPlayerLeftGame);
+}
+
+void ABasePlayerCharacter::Multicast_Elim_Implementation(bool bPlayerLeftGame)
+{
+	APlayerController* PlayerController = Cast<APlayerController>(Controller);
+	WOGGameMode = WOGGameMode == nullptr ? GetWorld()->GetAuthGameMode<AWOGGameMode>() : WOGGameMode;
+	if (WOGGameMode && PlayerController)
+	{
+
+		WOGGameMode->RequestRespawn(this, PlayerController);
+	}
+
+	/*
+	**Handle respawn
+	*/
+	GetWorld()->GetTimerManager().SetTimer(ElimTimer, this, &ThisClass::ElimTimerFinished, ElimDelay);
+}
+
+void ABasePlayerCharacter::Multicast_HandleElimination_Implementation()
+{
+	HandleElimination();
+
+}
+
+void ABasePlayerCharacter::HandleElimination_Implementation()
+{
+	MainMesh->SetHiddenInGame(true);
+	Head->SetHiddenInGame(true);
+
+}
+
+void ABasePlayerCharacter::ElimTimerFinished()
+{
+	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("ElimTimerFinsihed"));
+	WOGGameMode = WOGGameMode == nullptr ? GetWorld()->GetAuthGameMode<AWOGGameMode>() : WOGGameMode;
+	APlayerController* PlayerController = Cast<APlayerController>(Controller);
+	if (WOGGameMode && PlayerController)
+	{
+		WOGGameMode->HandleStartingPlayer(PlayerController);
+	}
+
+	Destroy();
 }

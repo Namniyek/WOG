@@ -29,6 +29,9 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* MostElimmedPlayer;
 
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* PlayerWithMostElimms;
+	
 	UPROPERTY(BlueprintReadOnly)
 	FPlayerStats PlayerStats;
 

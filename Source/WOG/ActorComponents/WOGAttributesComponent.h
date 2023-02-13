@@ -25,6 +25,8 @@ protected:
 	float MaxHealth;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Attributes, meta = (AllowPrivateAccess = "true"), ReplicatedUsing = "OnRep_Health")
 	float Health;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Attributes, meta = (AllowPrivateAccess = "true"), Replicated)
+	float HealthPercent;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Attributes, meta = (AllowPrivateAccess = "true"), Replicated)
 	float MaxMana;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Attributes, meta = (AllowPrivateAccess = "true"), ReplicatedUsing = "OnRep_Mana")

@@ -8,7 +8,17 @@
 #include "GameFramework/HUD.h"
 #include "GameFramework/GameMode.h"
 #include "Kismet/GameplayStatics.h"
+#include "Net/UnrealNetwork.h"
+#include "WOG/PlayerState/WOGPlayerState.h"
 
+
+void AWOGGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AWOGGameState, bAttackersWon);
+	DOREPLIFETIME(AWOGGameState, MostElimmedPlayer);
+	DOREPLIFETIME(AWOGGameState, PlayerWithMostElimms);
+}
 
 void AWOGGameState::HandleMatchHasStarted()
 {
@@ -57,7 +67,7 @@ void AWOGGameState::DayChanged(int32 DayNumber)
 {
 	if (DayNumber == FinishMatchDayNumber)
 	{
-		HandleEndGame();
+		Server_HandleEndGame();
 	}
 }
 
@@ -76,7 +86,7 @@ void AWOGGameState::HandleTODAnnouncement(ETimeOfDay TOD)
 	}
 }
 
-void AWOGGameState::HandleEndGame()
+void AWOGGameState::Server_HandleEndGame_Implementation()
 {
 	if (TODActor)
 	{
@@ -92,18 +102,56 @@ void AWOGGameState::HandleEndGame()
 
 	for (auto PlayerState : PlayerArray)
 	{
-		if (PlayerState)
+		if (!PlayerState) break;
+
+		AWOGPlayerState* WOGPlayerState = Cast<AWOGPlayerState>(PlayerState);
+		if (!WOGPlayerState) break;
+
+		AWOGPlayerController* PC = Cast<AWOGPlayerController>(WOGPlayerState->GetPlayerController());
+		if (PC)
 		{
-			AWOGPlayerController* PC = Cast<AWOGPlayerController>(PlayerState->GetPlayerController());
-			if (PC)
+			PC->Client_CreateEndgameWidget();
+			if (PC->GetPawn())
 			{
-				PC->Client_CreateEndgameWidget();
-				if (PC->GetPawn())
-				{
-					PC->GetPawn()->Destroy();
-				}
+				PC->GetPawn()->Destroy();
 			}
 		}
+	}
+}
+
+void AWOGGameState::Server_SetEndgamePlayerStats_Implementation()
+{
+	Multicast_SetEndgamePlayerStats();
+}
+
+void AWOGGameState::Multicast_SetEndgamePlayerStats_Implementation()
+{
+	SetEndgamePlayerStats();
+}
+
+void AWOGGameState::SetEndgamePlayerStats()
+{
+	for (auto PlayerState : PlayerArray)
+	{
+		if (!PlayerState) break;
+
+		AWOGPlayerState* WOGPlayerState = Cast<AWOGPlayerState>(PlayerState);
+		if (!WOGPlayerState) break;
+
+		if (WOGPlayerState->GetPlayerStats().TimesElimmed > MostElimmed)
+		{
+			MostElimmedPlayer = WOGPlayerState->GetPlayerName();
+			MostElimmed = WOGPlayerState->GetPlayerStats().TimesElimmed;
+		}
+
+		if (WOGPlayerState->GetPlayerStats().TotalElimms > MostElimms)
+		{
+			PlayerWithMostElimms = WOGPlayerState->GetPlayerName();
+			MostElimms = WOGPlayerState->GetPlayerStats().TotalElimms;
+		}
+
+		WOGPlayerState->SetMostElimmedPlayer(MostElimmedPlayer);
+		WOGPlayerState->SetPlayerWithMostElimms(PlayerWithMostElimms);
 	}
 }
 

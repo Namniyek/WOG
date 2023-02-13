@@ -17,8 +17,11 @@ class WOG_API AWOGGameState : public AGameState
 	GENERATED_BODY()
 
 public:
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 	void HandleTODAnnouncement(ETimeOfDay TOD);
-	void HandleEndGame();
+	UFUNCTION(Server, Reliable)
+	void Server_HandleEndGame();
 
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<class AActor> TimeOfDayClass;
@@ -41,10 +44,25 @@ private:
 
 	class ATimeOfDay* TODActor;
 
+	UPROPERTY(Replicated)
 	bool bAttackersWon = false;
+
+	UPROPERTY(Replicated)
+	FString MostElimmedPlayer = FString();
+	UPROPERTY(Replicated)
+	FString PlayerWithMostElimms = FString();
+	int32 MostElimms = 0;
+	int32 MostElimmed = 0;
 
 public:
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE bool IsWinnerAttacker() { return bAttackersWon; }
+
+	UFUNCTION(Server, Reliable)
+	void Server_SetEndgamePlayerStats();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_SetEndgamePlayerStats();
+	void SetEndgamePlayerStats();
 
 };

@@ -50,3 +50,8 @@ void AWOGMatchHUD::AddAnnouncementWidget(FString AnnouncementStringMain, FString
 	Announcement->AddToViewport();
 
 }
+
+void AWOGMatchHUD::ResetHUDAfterRespawn_Implementation()
+{
+
+}

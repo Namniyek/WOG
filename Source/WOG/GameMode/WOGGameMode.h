@@ -34,7 +34,6 @@ protected:
 
 
 private:
-	void HandleStartingPlayer(APlayerController* NewPlayer);
 	void HandleDropIn(APlayerController* NewPlayer);
 	void CreateRandomCharacter(APlayerController* NewPlayer);
 
@@ -44,9 +43,13 @@ private:
 
 public:
 
+	void HandleStartingPlayer(APlayerController* NewPlayer);
 	virtual void HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer) override;
 	virtual void Logout(AController* Exiting) override;
 
 	UFUNCTION(BlueprintCallable)
 	void RestartMatch();
+
+	UFUNCTION()
+	void RequestRespawn(ABasePlayerCharacter* ElimmedCharacter, APlayerController* ElimmedController);
 };

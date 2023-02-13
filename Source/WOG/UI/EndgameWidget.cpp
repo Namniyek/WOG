@@ -57,4 +57,5 @@ void UEndgameWidget::SetResults()
     TimesElimmed->SetText(FText::FromString(LocalTimesElimmed));
     TotalElimms->SetText(FText::FromString(LocalTotalElimms));
     MostElimmedPlayer->SetText(FText::FromString(PlayerStats.MostElimmedPlayer));
+    PlayerWithMostElimms->SetText(FText::FromString(PlayerStats.PlayerWithMostElimms));
 }

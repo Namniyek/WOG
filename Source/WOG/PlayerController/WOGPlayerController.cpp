@@ -49,12 +49,13 @@ void AWOGPlayerController::OnPossess(APawn* aPawn)
 	ABasePlayerCharacter* PlayerCharacter = Cast<ABasePlayerCharacter>(aPawn);
 	if (!WOGSavegame || !PlayerCharacter) return;
 
-	//PlayerCharacter->PlayerProfile = WOGSavegame->PlayerProfile;
 	PlayerCharacter->Server_SetPlayerProfile(WOGSavegame->PlayerProfile);
 	bIsAttacker = PlayerCharacter->PlayerProfile.bIsAttacker;
-	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Cyan, FString::Printf(TEXT("Is attacker: %d"), bIsAttacker));
+	SetPawn(PlayerCharacter);
 
 	Server_SetPlayerIndex(WOGSavegame->PlayerProfile.UserIndex);
+
+	Client_ResetHUD();
 }
 
 void AWOGPlayerController::BeginPlay()
@@ -141,4 +142,13 @@ void AWOGPlayerController::Client_CreateEndgameWidget_Implementation()
 	if (!MatchHUD) return;
 
 	MatchHUD->AddEndgameWidget();	
+}
+
+void AWOGPlayerController::Client_ResetHUD_Implementation()
+{
+	MatchHUD == nullptr ? Cast<AWOGMatchHUD>(GetHUD()) : MatchHUD;
+	if (MatchHUD)
+	{
+		MatchHUD->ResetHUDAfterRespawn();
+	}
 }
