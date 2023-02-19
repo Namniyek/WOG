@@ -13,5 +13,8 @@ UCLASS()
 class WOG_API AWOGAttacker : public ABasePlayerCharacter
 {
 	GENERATED_BODY()
+
+protected:
+	virtual void BeginPlay() override;
 	
 };

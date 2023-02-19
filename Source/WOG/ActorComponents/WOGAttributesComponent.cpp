@@ -15,6 +15,9 @@ UWOGAttributesComponent::UWOGAttributesComponent()
 	Mana = 100.f;
 	MaxAdrenaline = 100.f;
 	Adrenaline = 0.f;
+	HealthPercent = Health / MaxHealth;
+	ManaPercent = Mana / MaxMana;
+	AdrenalinePercent = Adrenaline / MaxAdrenaline;
 
 }
 
@@ -26,20 +29,10 @@ void UWOGAttributesComponent::GetLifetimeReplicatedProps(TArray<FLifetimePropert
 	DOREPLIFETIME(UWOGAttributesComponent, HealthPercent);
 	DOREPLIFETIME(UWOGAttributesComponent, MaxMana);
 	DOREPLIFETIME(UWOGAttributesComponent, Mana);
+	DOREPLIFETIME(UWOGAttributesComponent, ManaPercent);
 	DOREPLIFETIME(UWOGAttributesComponent, MaxAdrenaline);
 	DOREPLIFETIME(UWOGAttributesComponent, Adrenaline);
-}
-
-void UWOGAttributesComponent::OnRep_Health()
-{
-}
-
-void UWOGAttributesComponent::OnRep_Mana()
-{
-}
-
-void UWOGAttributesComponent::OnRep_Adrenaline()
-{
+	DOREPLIFETIME(UWOGAttributesComponent, AdrenalinePercent);
 }
 
 void UWOGAttributesComponent::Server_UpdateHealth_Implementation(float Value, AController* InstigatedBy)
@@ -59,6 +52,7 @@ void UWOGAttributesComponent::UpdateHealth(float Value, AController* InstigatedB
 	else if (Health + Value <= 0.f)
 	{
 		Health = 0.f;
+		OwnerCharacter->Server_SetCharacterState(ECharacterState::ECS_Elimmed);
 
 		OwnerCharacter = OwnerCharacter == nullptr ? Cast<ABasePlayerCharacter>(GetOwner()) : OwnerCharacter;
 		if (!OwnerCharacter) return;
@@ -70,21 +64,96 @@ void UWOGAttributesComponent::UpdateHealth(float Value, AController* InstigatedB
 		AWOGPlayerController* Attacker = Cast<AWOGPlayerController>(InstigatedBy);
 		if (!OwnerCharacter->WOGGameMode || !OwnerPC || !Attacker) return;
 
-		OwnerCharacter->Server_SetCharacterState(ECharacterState::ECS_Elimmed);
 		OwnerCharacter->WOGGameMode->PlayerEliminated(OwnerCharacter, OwnerPC, Attacker);
 	}
 	else
 	{
-		Health = Health + Value;
+		Health += Value;
 	}
 
 	HealthPercent = Health / MaxHealth;
 }
 
+void UWOGAttributesComponent::Server_UpdateMana_Implementation(float Value)
+{
+	UpdateMana(Value);
+}
+
 void UWOGAttributesComponent::UpdateMana(float Value)
 {
+	OwnerCharacter = OwnerCharacter == nullptr ? Cast<ABasePlayerCharacter>(GetOwner()) : OwnerCharacter;
+	if (!OwnerCharacter || OwnerCharacter->CharacterState == ECharacterState::ECS_Elimmed) return;
+
+	if (Mana + Value >= MaxMana)
+	{
+		Mana = MaxMana;
+	}
+	else if (Mana + Value <= 0)
+	{
+		Mana = 0.f;
+	}
+	else
+	{
+		Mana += Value;
+	}
+	ManaPercent = Mana / MaxMana;
+}
+
+void UWOGAttributesComponent::Server_UpdateAdrenaline_Implementation(float Value)
+{
+	UpdateAdranaline(Value);
 }
 
 void UWOGAttributesComponent::UpdateAdranaline(float Value)
 {
+	OwnerCharacter = OwnerCharacter == nullptr ? Cast<ABasePlayerCharacter>(GetOwner()) : OwnerCharacter;
+	if (!OwnerCharacter || OwnerCharacter->CharacterState == ECharacterState::ECS_Elimmed) return;
+
+	if (Adrenaline + Value >= MaxAdrenaline)
+	{
+		Adrenaline = MaxAdrenaline;
+	}
+	else if (Adrenaline + Value <= 0)
+	{
+		Adrenaline = 0.f;
+	}
+	else
+	{
+		Adrenaline += Value;
+	}
+	AdrenalinePercent = Adrenaline / MaxAdrenaline;
+}
+
+void UWOGAttributesComponent::Server_PassiveAttributeUpdate_Implementation(EAttributeType AttributeToUpdate, float Value)
+{
+	OwnerCharacter = OwnerCharacter == nullptr ? Cast<ABasePlayerCharacter>(GetOwner()) : OwnerCharacter;
+	if (!OwnerCharacter) return;
+
+	AController* Controller = OwnerCharacter->GetController();
+
+	switch (AttributeToUpdate)
+	{
+	case EAttributeType::AT_Health:
+
+		if (!Controller) return;
+
+		PassiveUpdateTimerDelegate.BindUFunction(this, FName("UpdateHealth"), Value, Controller);
+		GetWorld()->GetTimerManager().SetTimer(PassiveUpdateTimer, PassiveUpdateTimerDelegate, UpdateFrequency, true);
+
+		break;
+
+	case EAttributeType::AT_Mana:
+
+		PassiveUpdateTimerDelegate.BindUFunction(this, FName("UpdateMana"), Value);
+		GetWorld()->GetTimerManager().SetTimer(PassiveUpdateTimer, PassiveUpdateTimerDelegate, UpdateFrequency, true);
+
+		break;
+
+	case EAttributeType::AT_Adrenaline:
+
+		PassiveUpdateTimerDelegate.BindUFunction(this, FName("UpdateAdrenaline"), Value);
+		GetWorld()->GetTimerManager().SetTimer(PassiveUpdateTimer, PassiveUpdateTimerDelegate, UpdateFrequency, true);
+
+		break;
+	}
 }

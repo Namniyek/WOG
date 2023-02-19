@@ -53,6 +53,10 @@ void UWOGBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 	//Get the character rotation
 	Rotation = PlayerCharacter->GetActorRotation();
+
+	//Get the bool bIsTargeting
+	bIsTargeting = PlayerCharacter->GetIsTargeting();
+
 	#pragma endregion
 
 

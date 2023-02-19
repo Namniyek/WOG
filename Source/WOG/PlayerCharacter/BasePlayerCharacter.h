@@ -8,7 +8,9 @@
 #include "InputActionValue.h"
 #include "Engine/DataTable.h"
 #include "WOG/Types/CharacterTypes.h"
+#include "WOG/FunctionLibrary/MeshMergeFunctionLibrary.h"
 #include "BasePlayerCharacter.generated.h"
+
 
 USTRUCT(BlueprintType)
 struct FMeshDataTables 
@@ -93,6 +95,10 @@ public:
 	TSubclassOf<UAnimInstance> AnimBPLobby;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	UAnimMontage* RaiseHandMontage;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	USkeleton* Skeleton;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPhysicsAsset* PhysicsAsset;
 };
 
 
@@ -107,6 +113,7 @@ public:
 	// Sets default values for this character's properties
 	ABasePlayerCharacter();
 	friend class UWOGAttributesComponent;
+	friend class UWOGCombatComponent;
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
@@ -167,6 +174,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* TargetAction;
 
+	/** TO-DO Fix this: 
+	** Target Equip Action
+	*/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* EquipAction;
+
 	#pragma endregion
 
 protected:
@@ -180,57 +193,6 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* FollowCamera;
-	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	USkeletalMeshComponent* MainMesh;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	USkeletalMeshComponent* Head;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	USkeletalMeshComponent* ArmUpperLeft;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	USkeletalMeshComponent* ArmUpperRight;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	USkeletalMeshComponent* ArmLowerLeft;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	USkeletalMeshComponent* ArmLowerRight;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	USkeletalMeshComponent* HandLeft;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	USkeletalMeshComponent* HandRight;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	USkeletalMeshComponent* Torso;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	USkeletalMeshComponent* Hips;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	USkeletalMeshComponent* LegLeft;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	USkeletalMeshComponent* LegRight;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	USkeletalMeshComponent* Beard;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	USkeletalMeshComponent* Eyebrows;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	USkeletalMeshComponent* Hair;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	USkeletalMeshComponent* Helmet;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	USkeletalMeshComponent* Ears;
 
 	#pragma endregion
 
@@ -254,8 +216,11 @@ protected:
 	void Sprint();
 	void StopSprinting();
 
-	/**Called for dodge input*/
+	/**Called for Target input*/
 	void Target(const FInputActionValue& Value);
+
+	/**Called for equip input*/
+	void Equip(const FInputActionValue& Value);
 
 	#pragma endregion
 
@@ -269,6 +234,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Mesh")
 	FMeshDataTables CharacterDataTables;
 
+	UPROPERTY()
+	FSkeletalMeshMergeParams MergeParams;
+
 	void SetColors(FName Primary, FName Skin, FName BodyPaint, FName HairColor);
 	void SetMeshes(bool bIsMale, FName RowName);
 
@@ -276,6 +244,9 @@ protected:
 	#pragma endregion
 
 	#pragma region Character State variables
+
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly)
+	bool bIsTargeting;
 
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly)
 	ECharacterState CharacterState;
@@ -286,6 +257,7 @@ protected:
 	virtual void HandleStateDodging();
 	virtual void HandleStateSprinting();
 	virtual void HandleStateTargeting();
+	virtual void HandleStateElimmed();
 
 	#pragma endregion
 
@@ -298,7 +270,11 @@ protected:
 	class UTargetingHelperComponent* TargetAttractor;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	class UWOGAttributesComponent* Attributes;
+	UWOGAttributesComponent* Attributes;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	UWOGCombatComponent* Combat;
+
 
 	#pragma endregion
 
@@ -334,9 +310,13 @@ public:
 	//public Getters and Setters 
 	FORCEINLINE USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+	FORCEINLINE UWOGAttributesComponent* GetAttributes() const { return Attributes; }
+	FORCEINLINE ULockOnTargetComponent* GetLockOnTarget() const { return LockOnTarget; }
+	FORCEINLINE bool GetIsTargeting() const { return bIsTargeting; }
 
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE ECharacterState GetCharacterState() const { return CharacterState; }
+
 
 	UFUNCTION(Server, reliable, BlueprintCallable)
 	void Server_SetPlayerProfile(const FPlayerData& NewPlayerProfile);
@@ -346,11 +326,5 @@ public:
 
 	UFUNCTION(NetMulticast, reliable)
 	void Multicast_SetCharacterState(ECharacterState NewState);
-
-	UFUNCTION(NetMulticast, reliable)
-	void Multicast_HandleElimination();
-
-	UFUNCTION(BlueprintNativeEvent)
-	void HandleElimination();
 
 };

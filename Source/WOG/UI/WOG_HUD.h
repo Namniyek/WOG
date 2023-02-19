@@ -29,5 +29,13 @@ protected:
 private:
 	UPROPERTY(meta = (BindWidget))
 	class UProgressBar* HealthBar;
-	
+
+public:
+	UFUNCTION(BlueprintPure)
+	float GetHealthPercent();
+	UFUNCTION(BlueprintPure)
+	float GetManaPercent();
+	UFUNCTION(BlueprintPure)
+	float GetAdrenalinePercent();
+
 };

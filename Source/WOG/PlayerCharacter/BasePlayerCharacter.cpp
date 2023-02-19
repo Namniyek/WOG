@@ -16,6 +16,8 @@
 #include "WOG/ActorComponents/WOGAttributesComponent.h"
 #include "WOG/GameMode/WOGGameMode.h"
 #include "WOG/PlayerController/WOGPlayerController.h"
+#include "WOG/Weapons/WOGBaseWeapon.h"
+#include "WOG/ActorComponents/WOGCombatComponent.h"
 
 
 void ABasePlayerCharacter::OnConstruction(const FTransform& Transform)
@@ -40,6 +42,8 @@ ABasePlayerCharacter::ABasePlayerCharacter()
 	TargetAttractor->SetIsReplicated(true);
 	Attributes = CreateDefaultSubobject<UWOGAttributesComponent>(TEXT("AttributesComponent"));
 	Attributes->SetIsReplicated(true);
+	Combat = CreateDefaultSubobject<UWOGCombatComponent>(TEXT("CombatComponent"));
+	Combat->SetIsReplicated(true);
 
 
 	// Set size for collision capsule
@@ -73,47 +77,8 @@ ABasePlayerCharacter::ABasePlayerCharacter()
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
-	//Create the modular meshes
-	GetMesh()->bHiddenInGame = true;
-
-	MainMesh = CreateDefaultSubobject< USkeletalMeshComponent>(TEXT("MainMesh"));
-	MainMesh->SetupAttachment(GetRootComponent());
-	MainMesh->bHiddenInGame = true;
-
-	Head = CreateDefaultSubobject< USkeletalMeshComponent>(TEXT("Head"));
-	Head->SetupAttachment(MainMesh);
-	Torso = CreateDefaultSubobject< USkeletalMeshComponent>(TEXT("Torso"));
-	Torso->SetupAttachment(MainMesh);
-	Hips = CreateDefaultSubobject< USkeletalMeshComponent>(TEXT("Hips"));
-	Hips->SetupAttachment(MainMesh);
-	ArmUpperLeft = CreateDefaultSubobject< USkeletalMeshComponent>(TEXT("ArmUpperLeft"));
-	ArmUpperLeft->SetupAttachment(MainMesh);
-	ArmUpperRight = CreateDefaultSubobject< USkeletalMeshComponent>(TEXT("ArmUpperRight"));
-	ArmUpperRight->SetupAttachment(MainMesh);
-	ArmLowerLeft = CreateDefaultSubobject< USkeletalMeshComponent>(TEXT("ArmLowerLeft"));
-	ArmLowerLeft->SetupAttachment(MainMesh);
-	ArmLowerRight = CreateDefaultSubobject< USkeletalMeshComponent>(TEXT("ArmLowerRight"));
-	ArmLowerRight->SetupAttachment(MainMesh);
-	HandLeft = CreateDefaultSubobject< USkeletalMeshComponent>(TEXT("HandLeft"));
-	HandLeft->SetupAttachment(MainMesh);
-	HandRight = CreateDefaultSubobject< USkeletalMeshComponent>(TEXT("HandRight"));
-	HandRight->SetupAttachment(MainMesh);
-	LegLeft = CreateDefaultSubobject< USkeletalMeshComponent>(TEXT("LegLeft"));
-	LegLeft->SetupAttachment(MainMesh);
-	LegRight = CreateDefaultSubobject< USkeletalMeshComponent>(TEXT("LegRight"));
-	LegRight->SetupAttachment(MainMesh);
-	Hair = CreateDefaultSubobject< USkeletalMeshComponent>(TEXT("Hair"));
-	Hair->SetupAttachment(MainMesh);
-	Beard = CreateDefaultSubobject< USkeletalMeshComponent>(TEXT("Beard"));
-	Beard->SetupAttachment(MainMesh);
-	Ears = CreateDefaultSubobject< USkeletalMeshComponent>(TEXT("Ears"));
-	Ears->SetupAttachment(MainMesh);
-	Eyebrows = CreateDefaultSubobject< USkeletalMeshComponent>(TEXT("Eyebrows"));
-	Eyebrows->SetupAttachment(MainMesh);
-	Helmet = CreateDefaultSubobject< USkeletalMeshComponent>(TEXT("Helmet"));
-	Helmet->SetupAttachment(MainMesh);
-
 	CharacterState = ECharacterState::ECS_Unnoccupied;
+	bIsTargeting = false;
 
 	if (LockOnTarget)
 	{
@@ -176,11 +141,14 @@ void ABasePlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &ThisClass::StopSprinting);
 		//Target
 		EnhancedInputComponent->BindAction(TargetAction, ETriggerEvent::Completed, this, &ThisClass::Target);
+		//Equip
+		EnhancedInputComponent->BindAction(EquipAction, ETriggerEvent::Triggered, this, &ThisClass::Equip);
 	}
 }
 
 void ABasePlayerCharacter::Move(const FInputActionValue& Value)
 {
+	if (CharacterState == ECharacterState::ECS_Elimmed) return;
 	FVector2D MovementVector = Value.Get<FVector2D>();
 	if (Controller != nullptr)
 	{
@@ -204,7 +172,7 @@ void ABasePlayerCharacter::Look(const FInputActionValue& Value)
 {
 	FVector2D LookAxisVector = Value.Get<FVector2D>();
 
-	if (CharacterState == ECharacterState::ECS_Targeting)
+	if (bIsTargeting)
 	{
 		//Disable mouse input if character is targeting
 	}
@@ -221,6 +189,7 @@ void ABasePlayerCharacter::Look(const FInputActionValue& Value)
 
 void ABasePlayerCharacter::Dodge(const FInputActionValue& Value)
 {
+	if (CharacterState == ECharacterState::ECS_Elimmed) return;
 	if (CharacterState!=ECharacterState::ECS_Dodging)
 	{
 		Server_SetCharacterState(ECharacterState::ECS_Dodging);
@@ -237,7 +206,8 @@ void ABasePlayerCharacter::StopDodging()
 
 void ABasePlayerCharacter::Sprint()
 {
-	if (CharacterState != ECharacterState::ECS_Targeting)
+	if (CharacterState == ECharacterState::ECS_Elimmed) return;
+	if (!bIsTargeting)
 	{
 		Server_SetCharacterState(ECharacterState::ECS_Sprinting);
 	}
@@ -250,8 +220,19 @@ void ABasePlayerCharacter::StopSprinting()
 
 void ABasePlayerCharacter::Target(const FInputActionValue& Value)
 {
+	if (CharacterState == ECharacterState::ECS_Elimmed) return;
 	if (!LockOnTarget) return;
 	LockOnTarget->EnableTargeting();
+}
+
+void ABasePlayerCharacter::Equip(const FInputActionValue& Value)
+{
+	if (!Combat)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Combat component invalid"));
+		return;
+	}
+	Combat->EquipWeapon();
 }
 
 void ABasePlayerCharacter::Tick(float DeltaTime)
@@ -340,56 +321,35 @@ void ABasePlayerCharacter::SetMeshes(bool bIsMale, FName RowName)
 		return;
 	}
 
-	MainMesh->SetSkinnedAssetAndUpdate(MeshRow->BaseMesh, true);
-	MainMesh->SetAnimInstanceClass(MeshRow->AnimBP);
+	MergeParams.MeshesToMerge.Add(MeshRow->Head);
+	MergeParams.MeshesToMerge.Add(MeshRow->Torso);
+	MergeParams.MeshesToMerge.Add(MeshRow->Hips);
+	MergeParams.MeshesToMerge.Add(MeshRow->ArmUpperLeft);
+	MergeParams.MeshesToMerge.Add(MeshRow->ArmUpperRight);
+	MergeParams.MeshesToMerge.Add(MeshRow->ArmLowerLeft);
+	MergeParams.MeshesToMerge.Add(MeshRow->ArmLowerRight);
+	MergeParams.MeshesToMerge.Add(MeshRow->HandLeft);
+	MergeParams.MeshesToMerge.Add(MeshRow->HandRight);
+	MergeParams.MeshesToMerge.Add(MeshRow->LegLeft);
+	MergeParams.MeshesToMerge.Add(MeshRow->LegRight);
+	MergeParams.MeshesToMerge.Add(MeshRow->Hair);
+	MergeParams.MeshesToMerge.Add(MeshRow->Beard);
+	MergeParams.MeshesToMerge.Add(MeshRow->Ears);
+	MergeParams.MeshesToMerge.Add(MeshRow->Eyebrows);
+	MergeParams.MeshesToMerge.Add(MeshRow->Helmet);
 
-	Head->SetSkinnedAssetAndUpdate(MeshRow->Head, true);
-	Head->SetMaterial(0, CharacterMI);
+	MergeParams.Skeleton = MeshRow->Skeleton;
 
-	Torso->SetSkinnedAssetAndUpdate(MeshRow->Torso, true);
-	Torso->SetMaterial(0, CharacterMI);
-
-	Hips->SetSkinnedAssetAndUpdate(MeshRow->Hips, true);
-	Hips->SetMaterial(0, CharacterMI);
-
-	ArmUpperLeft->SetSkinnedAssetAndUpdate(MeshRow->ArmUpperLeft, true);
-	ArmUpperLeft->SetMaterial(0, CharacterMI);
-
-	ArmUpperRight->SetSkinnedAssetAndUpdate(MeshRow->ArmUpperRight, true);
-	ArmUpperRight->SetMaterial(0, CharacterMI);
-
-	ArmLowerLeft->SetSkinnedAssetAndUpdate(MeshRow->ArmLowerLeft, true);
-	ArmLowerLeft->SetMaterial(0, CharacterMI);
-
-	ArmLowerRight->SetSkinnedAssetAndUpdate(MeshRow->ArmLowerRight, true);
-	ArmLowerRight->SetMaterial(0, CharacterMI);
-
-	HandLeft->SetSkinnedAssetAndUpdate(MeshRow->HandLeft, true);
-	HandLeft->SetMaterial(0, CharacterMI);
-
-	HandRight->SetSkinnedAssetAndUpdate(MeshRow->HandRight, true);
-	HandRight->SetMaterial(0, CharacterMI);
-
-	LegLeft->SetSkinnedAssetAndUpdate(MeshRow->LegLeft, true);
-	LegLeft->SetMaterial(0, CharacterMI);
-
-	LegRight->SetSkinnedAssetAndUpdate(MeshRow->LegRight, true);
-	LegRight->SetMaterial(0, CharacterMI);
-
-	Hair->SetSkinnedAssetAndUpdate(MeshRow->Hair, true);
-	Hair->SetMaterial(0, CharacterMI);
-
-	Beard->SetSkinnedAssetAndUpdate(MeshRow->Beard, true);
-	Beard->SetMaterial(0, CharacterMI);
-
-	Ears->SetSkinnedAssetAndUpdate(MeshRow->Ears, true);
-	Ears->SetMaterial(0, CharacterMI);
-
-	Eyebrows->SetSkinnedAssetAndUpdate(MeshRow->Eyebrows, true);
-	Eyebrows->SetMaterial(0, CharacterMI);
-
-	Helmet->SetSkinnedAssetAndUpdate(MeshRow->Helmet, true);
-	Helmet->SetMaterial(0, CharacterMI);
+	USkeletalMesh* NewMesh = UMeshMergeFunctionLibrary::MergeMeshes(MergeParams);
+	if (NewMesh)
+	{
+		GetMesh()->SetSkinnedAssetAndUpdate(NewMesh, true);
+		GetMesh()->SetMaterial(0, CharacterMI);
+		GetMesh()->SetMaterial(1, CharacterMI);
+		GetMesh()->SetMaterial(2, CharacterMI);
+		GetMesh()->SetAnimClass(MeshRow->AnimBP);
+		GetMesh()->SetPhysicsAsset(MeshRow->PhysicsAsset);
+	}
 
 }
 
@@ -426,8 +386,8 @@ void ABasePlayerCharacter::SetCharacterState(ECharacterState NewState)
 		HandleStateSprinting();
 		break;
 
-	case ECharacterState::ECS_Targeting:
-		HandleStateTargeting();
+	case ECharacterState::ECS_Elimmed:
+		HandleStateElimmed();
 		break;
 	}
 }
@@ -461,6 +421,11 @@ void ABasePlayerCharacter::HandleStateTargeting()
 	GetCharacterMovement()->MaxWalkSpeed = 500;	//Sets the maximum run speed
 }
 
+void ABasePlayerCharacter::HandleStateElimmed()
+{
+
+}
+
 void ABasePlayerCharacter::TargetLocked(UTargetingHelperComponent* Target, FName Socket)
 {
 	if (Target)
@@ -471,16 +436,22 @@ void ABasePlayerCharacter::TargetLocked(UTargetingHelperComponent* Target, FName
 			GEngine->AddOnScreenDebugMessage(-1, 4.f, FColor::Red, FString::Printf(TEXT("Target invalid")));
 			return;
 		}
-		if (CharacterState != ECharacterState::ECS_Targeting)
-		{
-			Server_SetCharacterState(ECharacterState::ECS_Targeting);
-		}
+
+		bIsTargeting = true;
+		if (!GetCharacterMovement()) return;
+
+		GetCharacterMovement()->bOrientRotationToMovement = false; // Character doesn't move in the direction of input...
+		GetCharacterMovement()->MaxWalkSpeed = 500;	//Sets the maximum run speed
 	}
 }
 
 void ABasePlayerCharacter::TargetUnlocked(UTargetingHelperComponent* UnlockedTarget, FName Socket)
 {
-	Server_SetCharacterState(ECharacterState::ECS_Unnoccupied);
+	bIsTargeting = false;
+	if (!GetCharacterMovement()) return;
+
+	GetCharacterMovement()->MaxWalkSpeed = 500.f;	//Sets the maximum run speed
+	GetCharacterMovement()->bOrientRotationToMovement = true; // Character doesn't move in the direction of input...
 }
 
 void ABasePlayerCharacter::TargetNotFound()
@@ -501,42 +472,27 @@ void ABasePlayerCharacter::Elim(bool bPlayerLeftGame)
 
 void ABasePlayerCharacter::Multicast_Elim_Implementation(bool bPlayerLeftGame)
 {
-	APlayerController* PlayerController = Cast<APlayerController>(Controller);
-	WOGGameMode = WOGGameMode == nullptr ? GetWorld()->GetAuthGameMode<AWOGGameMode>() : WOGGameMode;
-	if (WOGGameMode && PlayerController)
-	{
 
-		WOGGameMode->RequestRespawn(this, PlayerController);
-	}
+	GetMesh()->SetCollisionProfileName(FName("Ragdoll"));
+	GetMesh()->SetAllBodiesSimulatePhysics(true);
+	GetCharacterMovement()->DisableMovement();
+	GetCharacterMovement()->StopMovementImmediately();
+	GetMesh()->AddImpulse(FVector(100.f), FName("pelvis"), true);
+	LockOnTarget->ClearTargetManual();
+	TargetAttractor->bCanBeCaptured = false;
 
 	/*
-	**Handle respawn
+	**Handle respawn timer
 	*/
 	GetWorld()->GetTimerManager().SetTimer(ElimTimer, this, &ThisClass::ElimTimerFinished, ElimDelay);
 }
 
-void ABasePlayerCharacter::Multicast_HandleElimination_Implementation()
-{
-	HandleElimination();
-
-}
-
-void ABasePlayerCharacter::HandleElimination_Implementation()
-{
-	MainMesh->SetHiddenInGame(true);
-	Head->SetHiddenInGame(true);
-
-}
-
 void ABasePlayerCharacter::ElimTimerFinished()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("ElimTimerFinsihed"));
 	WOGGameMode = WOGGameMode == nullptr ? GetWorld()->GetAuthGameMode<AWOGGameMode>() : WOGGameMode;
 	APlayerController* PlayerController = Cast<APlayerController>(Controller);
 	if (WOGGameMode && PlayerController)
 	{
-		WOGGameMode->HandleStartingPlayer(PlayerController);
+		WOGGameMode->RequestRespawn(this, PlayerController);
 	}
-
-	Destroy();
 }

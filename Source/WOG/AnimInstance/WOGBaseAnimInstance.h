@@ -44,5 +44,8 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, Category = "Character|General", meta = (AllowPrivateAccess = "true"))
 	bool bIsFalling;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Character|General", meta = (AllowPrivateAccess = "true"))
+	bool bIsTargeting;
 	
 };

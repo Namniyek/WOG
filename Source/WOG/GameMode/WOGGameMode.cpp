@@ -120,7 +120,7 @@ void AWOGGameMode::CreateRandomCharacter(APlayerController* NewPlayer)
 				SaveGameObject->PlayerProfile.bIsAttacker = (i>2);
 				SaveGameObject->PlayerProfile.bIsMale = FMath::RandBool();
 				SaveGameObject->PlayerProfile.BodyPaintColor = "0";
-				SaveGameObject->PlayerProfile.CharacterIndex = "2";
+				SaveGameObject->PlayerProfile.CharacterIndex = "1";
 				SaveGameObject->PlayerProfile.HairColor = "0";
 				SaveGameObject->PlayerProfile.PrimaryColor = "0";
 				SaveGameObject->PlayerProfile.Rune = "0";
@@ -204,17 +204,12 @@ void AWOGGameMode::RequestRespawn(ABasePlayerCharacter* ElimmedCharacter, APlaye
 {
 	if (ElimmedCharacter)
 	{
-		//ElimmedCharacter->Reset();
-		//ElimmedCharacter->Destroy();
-		ElimmedCharacter->Multicast_HandleElimination();
+		ElimmedCharacter->Destroy();
 	}
 
 	if (ElimmedController)
 	{
-		TArray<AActor*> PlayerStarts;
-		UGameplayStatics::GetAllActorsOfClass(this, APlayerStart::StaticClass(), PlayerStarts);
-		int32 Selection = FMath::RandRange(0, PlayerStarts.Num() - 1);
-		RestartPlayerAtPlayerStart(ElimmedController, PlayerStarts[Selection]);
+		HandleStartingPlayer(ElimmedController);
 	}
 }
 

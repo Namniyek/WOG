@@ -54,8 +54,7 @@ void ATimeOfDay::UpdateTime()
 		return;
 	}
 
-	float ServerTime =  GameState->GetServerWorldTimeSeconds()/2;
-	CurrentTime +=(1);
+	CurrentTime += 1;
 	
 	RepCurrentTime = CurrentTime; 
 

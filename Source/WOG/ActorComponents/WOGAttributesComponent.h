@@ -10,53 +10,76 @@
  * 
  */
 
+UENUM(BlueprintType)
+enum class EAttributeType : uint8
+{
+	AT_Health UMETA(DisplayName = "Health"),
+	AT_Mana UMETA(DisplayName = "Mana"),
+	AT_Adrenaline UMETA(DisplayName = "Adrenaline"),
+
+	AT_MAX UMETA(DisplayName = "DefaultMAX")
+};
+
+
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class WOG_API UWOGAttributesComponent : public UWOGBaseActorComponent
 {
 	GENERATED_BODY()
 public:
 	UWOGAttributesComponent();
-	friend class ABasePlayerCharacter;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Attributes, meta = (AllowPrivateAccess = "true"), Replicated)
 	float MaxHealth;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Attributes, meta = (AllowPrivateAccess = "true"), ReplicatedUsing = "OnRep_Health")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Attributes, meta = (AllowPrivateAccess = "true"), Replicated)
 	float Health;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Attributes, meta = (AllowPrivateAccess = "true"), Replicated)
 	float HealthPercent;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Attributes, meta = (AllowPrivateAccess = "true"), Replicated)
 	float MaxMana;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Attributes, meta = (AllowPrivateAccess = "true"), ReplicatedUsing = "OnRep_Mana")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Attributes, meta = (AllowPrivateAccess = "true"), Replicated)
 	float Mana;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Attributes, meta = (AllowPrivateAccess = "true"), Replicated)
+	float ManaPercent;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Attributes, meta = (AllowPrivateAccess = "true"), Replicated)
 	float MaxAdrenaline;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Attributes, meta = (AllowPrivateAccess = "true"), ReplicatedUsing = "OnRep_Adrenaline")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Attributes, meta = (AllowPrivateAccess = "true"), Replicated)
 	float Adrenaline;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Attributes, meta = (AllowPrivateAccess = "true"), Replicated)
+	float AdrenalinePercent;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Attributes, meta = (AllowPrivateAccess = "true"))
+	float UpdateFrequency = 1.f;
 
 private:
-	UFUNCTION()
-	void OnRep_Health();
-	
-	UFUNCTION()
-	void OnRep_Mana();
 
 	UFUNCTION()
-	void OnRep_Adrenaline();
-
 	void UpdateHealth(float Value, AController* InstigatedBy);
+	UFUNCTION()
 	void UpdateMana(float Value);
+	UFUNCTION()
 	void UpdateAdranaline(float Value);
 
-	UPROPERTY()
-	ABasePlayerCharacter* OwnerCharacter;
-
-	UPROPERTY()
-	class AWOGPlayerController* OwnerPC;
+	FTimerHandle PassiveUpdateTimer;
+	FTimerDelegate PassiveUpdateTimerDelegate;
 
 public:
 	UFUNCTION(BlueprintCallable, Server, reliable)
 	void Server_UpdateHealth(float Value, AController* InstigatedBy);
+
+	UFUNCTION(BlueprintCallable, Server, reliable)
+	void Server_UpdateMana(float Value);
+
+	UFUNCTION(BlueprintCallable, Server, reliable)
+	void Server_UpdateAdrenaline(float Value);
+
+	UFUNCTION(BlueprintCallable, Server, reliable)
+	void Server_PassiveAttributeUpdate(EAttributeType AttributeToUpdate, float Value);
+
+
+	FORCEINLINE float GetHealthPercent() const { return HealthPercent; }
+	FORCEINLINE float GetManaPercent() const { return ManaPercent; }
+	FORCEINLINE float GetAdrenalinePercent() const { return AdrenalinePercent; }
 };
