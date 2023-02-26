@@ -128,25 +128,28 @@ void ABasePlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent))
 	{
 		//Move:
-		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ThisClass::Move);
+		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ThisClass::MoveActionPressed);
 		//Look:
-		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ThisClass::Look);
+		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ThisClass::LookActionPressed);
 		//Jump
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &ACharacter::Jump);
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &ThisClass::JumpActionPressed);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 		//Dodge
-		EnhancedInputComponent->BindAction(DodgeAction, ETriggerEvent::Completed, this, &ThisClass::Dodge);
+		EnhancedInputComponent->BindAction(DodgeAction, ETriggerEvent::Completed, this, &ThisClass::DodgeActionPressed);
 		//Sprint
-		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Triggered, this, &ThisClass::Sprint);
+		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Triggered, this, &ThisClass::SprintActionPressed);
 		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &ThisClass::StopSprinting);
 		//Target
-		EnhancedInputComponent->BindAction(TargetAction, ETriggerEvent::Completed, this, &ThisClass::Target);
+		EnhancedInputComponent->BindAction(TargetAction, ETriggerEvent::Completed, this, &ThisClass::TargetActionPressed);
 		//Equip
-		EnhancedInputComponent->BindAction(EquipAction, ETriggerEvent::Triggered, this, &ThisClass::Equip);
+		EnhancedInputComponent->BindAction(AbilitiesAction, ETriggerEvent::Triggered, this, &ThisClass::AbilitiesButtonPressed);
+		//Attack
+		EnhancedInputComponent->BindAction(AttackLightAction, ETriggerEvent::Triggered, this, TEXT("AttackLightButtonPressed"));
+		EnhancedInputComponent->BindAction(AttackLightAction, ETriggerEvent::Ongoing, this, TEXT("AttackArmHeavyAttack"));
 	}
 }
 
-void ABasePlayerCharacter::Move(const FInputActionValue& Value)
+void ABasePlayerCharacter::MoveActionPressed(const FInputActionValue& Value)
 {
 	if (CharacterState == ECharacterState::ECS_Elimmed) return;
 	FVector2D MovementVector = Value.Get<FVector2D>();
@@ -168,7 +171,7 @@ void ABasePlayerCharacter::Move(const FInputActionValue& Value)
 	}
 }
 
-void ABasePlayerCharacter::Look(const FInputActionValue& Value)
+void ABasePlayerCharacter::LookActionPressed(const FInputActionValue& Value)
 {
 	FVector2D LookAxisVector = Value.Get<FVector2D>();
 
@@ -187,13 +190,24 @@ void ABasePlayerCharacter::Look(const FInputActionValue& Value)
 	}
 }
 
-void ABasePlayerCharacter::Dodge(const FInputActionValue& Value)
+void ABasePlayerCharacter::JumpActionPressed(const FInputActionValue& Value)
 {
-	if (CharacterState == ECharacterState::ECS_Elimmed) return;
-	if (CharacterState!=ECharacterState::ECS_Dodging)
+	if (CharacterState == ECharacterState::ECS_Attacking) return;
+	
+	ACharacter::Jump();
+}
+
+void ABasePlayerCharacter::DodgeActionPressed(const FInputActionValue& Value)
+{
+	if (CharacterState == ECharacterState::ECS_Unnoccupied)
 	{
 		Server_SetCharacterState(ECharacterState::ECS_Dodging);
 	}
+	else
+	{
+		return;
+	}
+
 }
 
 void ABasePlayerCharacter::StopDodging()
@@ -204,9 +218,9 @@ void ABasePlayerCharacter::StopDodging()
 	}
 }
 
-void ABasePlayerCharacter::Sprint()
+void ABasePlayerCharacter::SprintActionPressed()
 {
-	if (CharacterState == ECharacterState::ECS_Elimmed) return;
+	if (CharacterState != ECharacterState::ECS_Unnoccupied) return;
 	if (!bIsTargeting)
 	{
 		Server_SetCharacterState(ECharacterState::ECS_Sprinting);
@@ -218,21 +232,106 @@ void ABasePlayerCharacter::StopSprinting()
 	Server_SetCharacterState(ECharacterState::ECS_Unnoccupied);
 }
 
-void ABasePlayerCharacter::Target(const FInputActionValue& Value)
+void ABasePlayerCharacter::TargetActionPressed(const FInputActionValue& Value)
 {
 	if (CharacterState == ECharacterState::ECS_Elimmed) return;
 	if (!LockOnTarget) return;
 	LockOnTarget->EnableTargeting();
 }
 
-void ABasePlayerCharacter::Equip(const FInputActionValue& Value)
+void ABasePlayerCharacter::AbilitiesButtonPressed(const FInputActionValue& Value)
 {
-	if (!Combat)
+	FVector2D AbilitiesVector = Value.Get<FVector2D>();
+
+	if (AbilitiesVector.X > 0)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Combat component invalid"));
-		return;
+		//Button 4/Right pressed
+
+
 	}
-	Combat->EquipWeapon();
+	if (AbilitiesVector.X < 0)
+	{
+		//Button 1/Left pressed
+		if (!Combat)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Combat component invalid"));
+			return;
+		}
+
+		if (!Combat->EquippedWeapon)
+		{
+			Combat->EquipMainWeapon();
+		}
+		else if(Combat->EquippedWeapon == Combat->SecondaryWeapon)
+		{
+			Combat->SwapWeapons();
+		}
+		else if (Combat->EquippedWeapon == Combat->MainWeapon)
+		{
+			Combat->UnequipMainWeapon();
+		}
+	}
+	if (AbilitiesVector.Y > 0)
+	{
+		//Button 2/Up pressed
+		if (!Combat)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Combat component invalid"));
+			return;
+		}
+		if (!Combat->SecondaryWeapon)
+		{
+			Combat->Server_CreateSecondaryWeapon(Combat->SecondaryWeaponClass);
+		}
+		else if(!Combat->EquippedWeapon)
+		{
+			Combat->EquipSecondaryWeapon();
+		}
+		else if (Combat->EquippedWeapon == Combat->MainWeapon)
+		{
+			Combat->SwapWeapons();
+		}
+		else if (Combat->EquippedWeapon == Combat->SecondaryWeapon)
+		{
+			Combat->UnequipSecondaryWeapon();
+		}
+
+	}
+	if (AbilitiesVector.Y < 0)
+	{
+		//Button 3/Down pressed
+
+	}
+}
+
+void ABasePlayerCharacter::AttackLightButtonPressed(FInputActionValue ActionValue, float ElapsedTime, float TriggeredTime)
+{
+	if (!Combat) return;
+
+	if (ElapsedTime < 0.2)
+	{
+		Combat->AttackLight();
+	}
+}
+
+void ABasePlayerCharacter::AttackArmHeavyAttack(FInputActionValue ActionValue, float ElapsedTime, float TriggeredTime)
+{
+	if (!Combat) return;
+	if (ElapsedTime >= 0.2 && ElapsedTime <= 0.22)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Blue, FString("Starting HeavyAttack()"));
+	}
+	if (ElapsedTime >= 0.95 && ElapsedTime <= 0.97)
+	{
+		Combat->AttackHeavy();
+	}
+}
+
+void ABasePlayerCharacter::AttackHeavyButtonPressed(const FInputActionValue& Value)
+{
+	if (!Combat) return;
+
+	Combat->AttackHeavy();
 }
 
 void ABasePlayerCharacter::Tick(float DeltaTime)
@@ -259,6 +358,8 @@ void ABasePlayerCharacter::UpdatePlayerProfile_Implementation(const FPlayerData&
 
 	//Set the character colors
 	SetColors(NewPlayerProfile.PrimaryColor, NewPlayerProfile.SkinColor, NewPlayerProfile.BodyPaintColor, NewPlayerProfile.HairColor);
+
+	
 }
 
 void ABasePlayerCharacter::SetColors(FName Primary, FName Skin, FName BodyPaint, FName HairColor)
@@ -351,6 +452,7 @@ void ABasePlayerCharacter::SetMeshes(bool bIsMale, FName RowName)
 		GetMesh()->SetPhysicsAsset(MeshRow->PhysicsAsset);
 	}
 
+	Combat->SetDefaultWeaponClass(MeshRow->DefaultWeapon);
 }
 
 void ABasePlayerCharacter::Server_SetCharacterState_Implementation(ECharacterState NewState)
@@ -389,6 +491,10 @@ void ABasePlayerCharacter::SetCharacterState(ECharacterState NewState)
 	case ECharacterState::ECS_Elimmed:
 		HandleStateElimmed();
 		break;
+
+	case ECharacterState::ECS_Attacking:
+		HandleStateAttacking();
+		break;
 	}
 }
 
@@ -413,17 +519,14 @@ void ABasePlayerCharacter::HandleStateSprinting()
 	GetCharacterMovement()->MaxWalkSpeed = 800.f;
 }
 
-void ABasePlayerCharacter::HandleStateTargeting()
-{
-	if (!GetCharacterMovement()) return;
-
-	GetCharacterMovement()->bOrientRotationToMovement = false; // Character doesn't move in the direction of input...
-	GetCharacterMovement()->MaxWalkSpeed = 500;	//Sets the maximum run speed
-}
-
 void ABasePlayerCharacter::HandleStateElimmed()
 {
 
+}
+
+void ABasePlayerCharacter::HandleStateAttacking()
+{
+	//TO-DO What happens when character attacks. 
 }
 
 void ABasePlayerCharacter::TargetLocked(UTargetingHelperComponent* Target, FName Socket)

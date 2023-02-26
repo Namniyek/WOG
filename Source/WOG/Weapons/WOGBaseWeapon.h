@@ -77,7 +77,7 @@ struct FWeaponDataTable : public FTableRowBase
 	float ComboDamageMultiplier;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int MaxComboStreak;
+	int32 MaxComboStreak;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float MaxParryThreshold;
@@ -93,6 +93,20 @@ struct FWeaponDataTable : public FTableRowBase
 
 	//TO-DO SFX particles for weapon trail && hit FX
 
+};
+
+UENUM(BlueprintType)
+enum class EWeaponState : uint8
+{
+	EWS_Equipped UMETA(DisplayName = "Equipped"),
+	EWS_Stored UMETA(DisplayName = "Stored"),
+	EWS_BeingEquipped UMETA(DisplayName = "Being Equipped"),
+	EWS_BeingStored UMETA(DisplayName = "Being Stored"),
+	EWS_Dropped UMETA(DisplayName = "Dropped"),
+	EWS_AttackLight UMETA(DisplayName = "AttackLight"),
+	EWS_AttackHeavy UMETA(DisplayName = "AttackHeavy"),
+
+	EWS_MAX UMETA(DisplayName = "DefaultMAX")
 };
 
 UCLASS()
@@ -167,7 +181,7 @@ protected:
 	float ComboDamageMultiplier;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	int MaxComboStreak;
+	int32 MaxComboStreak;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	float MaxParryThreshold;
@@ -185,30 +199,65 @@ private:
 	void InitWeapon();
 
 	float TimeSinceBlockStarted;
-
 	void Equip();
+	void Unequip();
+	void AttachToHands();
+	void Drop();
+	void HandleHit();
+	void AttackLight();
+	void AttackHeavy();
 
-public:	
+	UPROPERTY(Replicated, VisibleAnywhere)
+	int32 ComboStreak;
+	UPROPERTY(Replicated, VisibleAnywhere)
+	bool bIsInCombo;
+
+	UPROPERTY(ReplicatedUsing = OnRep_WeaponStateChanged, VisibleAnywhere)
+	EWeaponState WeaponState;
 
 	UFUNCTION()
+	void OnRep_WeaponStateChanged();
+
+	FORCEINLINE void SetWeaponState(EWeaponState NewWeaponState) { WeaponState = NewWeaponState; }
+
+public:	
 	void AttachToBack();
+
+	UFUNCTION(BlueprintCallable)
+	void FinishAttacking();
 
 	UFUNCTION(Server, reliable, BlueprintCallable)
 	void Server_Equip();
 
+	UFUNCTION(Server, reliable, BlueprintCallable)
+	void Server_Unequip();
+
+	UFUNCTION(Server, reliable)
+	void Server_Swap();
+
+	UFUNCTION(Server, reliable, BlueprintCallable)
+	void Server_SetWeaponState(EWeaponState NewWeaponState);
+
+	UFUNCTION(Server, reliable)
+	void Server_AttackLight();
+
 	UFUNCTION(NetMulticast, reliable)
-	void Multicast_Equip();
+	void Multicast_AttackLight();
 
-	UFUNCTION()
-	void Unequip();
+	UFUNCTION(Server, reliable)
+	void Server_AttackHeavy();
 
-	UFUNCTION()
-	void Drop();
+	UFUNCTION(BlueprintCallable)
+	void IncreaseCombo();
 
-	UFUNCTION()
-	void HandleHit();
+	UFUNCTION(BlueprintCallable)
+	void ResetCombo();
 
-	UPROPERTY(Replicated)
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly)
 	ABasePlayerCharacter* OwnerCharacter;
 
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE EWeaponState GetWeaponState() const { return WeaponState; }
+	FORCEINLINE int32 GetComboStreak() const { return ComboStreak; }
+	FORCEINLINE bool GetIsInCombo() const { return bIsInCombo; }
 };

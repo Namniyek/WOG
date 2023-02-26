@@ -4,6 +4,7 @@
 #include "WOGBaseWeapon.h"
 #include "Net/UnrealNetwork.h"
 #include "WOG/PlayerCharacter/BasePlayerCharacter.h"
+#include "WOG/ActorComponents/WOGCombatComponent.h"
 
 // Sets default values
 AWOGBaseWeapon::AWOGBaseWeapon()
@@ -23,15 +24,16 @@ AWOGBaseWeapon::AWOGBaseWeapon()
 void AWOGBaseWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
 	DOREPLIFETIME(AWOGBaseWeapon, OwnerCharacter);
+	DOREPLIFETIME(AWOGBaseWeapon, WeaponState);
+	DOREPLIFETIME(AWOGBaseWeapon, ComboStreak);
+	DOREPLIFETIME(AWOGBaseWeapon, bIsInCombo);
 }
 
 void AWOGBaseWeapon::Tick(float DeltaSeconds)
 {
 }
 
-// Called when the game starts or when spawned
 void AWOGBaseWeapon::BeginPlay()
 {
 	Super::BeginPlay();
@@ -89,56 +91,223 @@ void AWOGBaseWeapon::InitWeapon()
 		BackSecondarySocket = WeaponDataRow->BackSecondarySocket;
 
 	}
+
+	WeaponState = EWeaponState::EWS_Stored;
+	ComboStreak = 0;
+	bIsInCombo = false;
 }
 
-void AWOGBaseWeapon::AttachToBack()
+void AWOGBaseWeapon::Server_SetWeaponState_Implementation(EWeaponState NewWeaponState)
 {
-	if (OwnerCharacter)
-	{
-		FAttachmentTransformRules AttachmentRules = FAttachmentTransformRules(
-			EAttachmentRule::SnapToTarget,
-			EAttachmentRule::SnapToTarget,
-			EAttachmentRule::KeepWorld,
-			false
-		);
+	SetWeaponState(NewWeaponState);
 
-		MeshMain->AttachToComponent(OwnerCharacter->GetMesh(), AttachmentRules, BackMainSocket);
-		MeshSecondary->AttachToComponent(OwnerCharacter->GetMesh(), AttachmentRules, BackSecondarySocket);
+	switch (WeaponState)
+	{
+	case EWeaponState::EWS_Equipped:
+		AttachToHands();
+		break;
+	case EWeaponState::EWS_Stored:
+		AttachToBack();
+		break;
+	case EWeaponState::EWS_BeingEquipped:
+		break;
+	case EWeaponState::EWS_BeingStored:
+		break;
+	case EWeaponState::EWS_Dropped:
+		break;
+	case EWeaponState::EWS_AttackLight:
+		break;
+	case EWeaponState::EWS_AttackHeavy:
+		break;
+	default:
+		break;
+	}
+
+}
+
+void AWOGBaseWeapon::OnRep_WeaponStateChanged()
+{
+	switch (WeaponState)
+	{
+	case EWeaponState::EWS_Equipped:
+		AttachToHands();
+		break;
+	case EWeaponState::EWS_Stored:
+		AttachToBack();
+		break;
+	case EWeaponState::EWS_BeingEquipped:
+		Equip();
+		break;
+	case EWeaponState::EWS_BeingStored:
+		Unequip();
+		break;
+	case EWeaponState::EWS_Dropped:
+		break;
+	case EWeaponState::EWS_AttackLight:
+		//AttackLight();
+		break;
+	case EWeaponState::EWS_AttackHeavy:
+		AttackHeavy();
+		break;
+	default:
+		break;
 	}
 }
 
 void AWOGBaseWeapon::Server_Equip_Implementation()
 {
-	Multicast_Equip();
-}
-
-void AWOGBaseWeapon::Multicast_Equip_Implementation()
-{
+	SetWeaponState(EWeaponState::EWS_BeingEquipped);
 	Equip();
 }
 
 void AWOGBaseWeapon::Equip()
 {	
-	if (OwnerCharacter)
-	{
-		FAttachmentTransformRules AttachmentRules = FAttachmentTransformRules(
-			EAttachmentRule::SnapToTarget, 
-			EAttachmentRule::SnapToTarget, 
-			EAttachmentRule::KeepWorld, 
-			false
-		);
+	if (!OwnerCharacter) return;
 
-		MeshMain->AttachToComponent(OwnerCharacter->GetMesh(), AttachmentRules, MeshMainSocket);
-		MeshSecondary->AttachToComponent(OwnerCharacter->GetMesh(), AttachmentRules, MeshSecondarySocket);
-	}
-	else
+	UAnimInstance* CharacterAnimInstance = OwnerCharacter->GetMesh()->GetAnimInstance();
+	if (CharacterAnimInstance && EquipMontage)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, FString("no Owner character"));
+		CharacterAnimInstance->Montage_Play(EquipMontage, 2.f);
 	}
+}
+
+void AWOGBaseWeapon::AttachToHands()
+{
+	if (!OwnerCharacter) return;
+
+	if (OwnerCharacter->GetCombatComponent())
+	{
+		OwnerCharacter->GetCombatComponent()->SetEquippedWeapon(this);
+	}
+
+	FAttachmentTransformRules AttachmentRules = FAttachmentTransformRules(
+		EAttachmentRule::SnapToTarget,
+		EAttachmentRule::SnapToTarget,
+		EAttachmentRule::KeepWorld,
+		false
+	);
+
+	MeshMain->AttachToComponent(OwnerCharacter->GetMesh(), AttachmentRules, MeshMainSocket);
+	MeshSecondary->AttachToComponent(OwnerCharacter->GetMesh(), AttachmentRules, MeshSecondarySocket);
+
+	if (HasAuthority())
+	{
+		SetWeaponState(EWeaponState::EWS_Equipped);
+	}
+}
+
+void AWOGBaseWeapon::Server_Unequip_Implementation()
+{
+	SetWeaponState(EWeaponState::EWS_BeingStored);
+	Unequip();
+}
+
+void AWOGBaseWeapon::Server_Swap_Implementation()
+{
+	SetWeaponState(EWeaponState::EWS_Stored);
+	AttachToBack();
 }
 
 void AWOGBaseWeapon::Unequip()
 {
+	if (!OwnerCharacter) return;
+
+	UAnimInstance* CharacterAnimInstance = OwnerCharacter->GetMesh()->GetAnimInstance();
+	if (CharacterAnimInstance && UnequipMontage)
+	{
+		CharacterAnimInstance->Montage_Play(UnequipMontage, 2.f);
+	}
+}
+
+void AWOGBaseWeapon::AttachToBack()
+{
+	if (!OwnerCharacter) return;
+
+	if (OwnerCharacter->GetCombatComponent())
+	{
+		OwnerCharacter->GetCombatComponent()->SetEquippedWeapon(nullptr);
+	}
+
+	FAttachmentTransformRules AttachmentRules = FAttachmentTransformRules(
+		EAttachmentRule::SnapToTarget,
+		EAttachmentRule::SnapToTarget,
+		EAttachmentRule::KeepWorld,
+		false
+	);
+
+	MeshMain->AttachToComponent(OwnerCharacter->GetMesh(), AttachmentRules, BackMainSocket);
+	MeshSecondary->AttachToComponent(OwnerCharacter->GetMesh(), AttachmentRules, BackSecondarySocket);
+
+	if (HasAuthority())
+	{
+		SetWeaponState(EWeaponState::EWS_Stored);
+	}
+}
+
+void AWOGBaseWeapon::FinishAttacking()
+{
+	Server_SetWeaponState(EWeaponState::EWS_Equipped);
+	if (OwnerCharacter)
+	{
+		OwnerCharacter->Server_SetCharacterState(ECharacterState::ECS_Unnoccupied);
+	}
+}
+
+void AWOGBaseWeapon::Server_AttackLight_Implementation()
+{
+	if (ComboStreak < MaxComboStreak)
+	{
+		AttackLight();
+		SetWeaponState(EWeaponState::EWS_AttackLight);
+		Multicast_AttackLight();
+		bIsInCombo = false;
+	}
+	if (ComboStreak == MaxComboStreak)
+	{
+		AttackHeavy();
+		SetWeaponState(EWeaponState::EWS_AttackHeavy);
+	}
+}
+
+void AWOGBaseWeapon::Multicast_AttackLight_Implementation()
+{
+	if (!HasAuthority())
+	{
+		AttackLight();
+	}
+}
+
+void AWOGBaseWeapon::Server_AttackHeavy_Implementation()
+{
+	AttackHeavy();
+	SetWeaponState(EWeaponState::EWS_AttackHeavy);
+}
+
+void AWOGBaseWeapon::AttackLight()
+{
+	if (!OwnerCharacter) return;
+
+	UAnimInstance* CharacterAnimInstance = OwnerCharacter->GetMesh()->GetAnimInstance();
+	if (CharacterAnimInstance && AttackLightMontage)
+	{
+		FString SectionName = FString::FromInt(GetComboStreak());
+		CharacterAnimInstance->Montage_Play(AttackLightMontage, 1.f);
+		CharacterAnimInstance->Montage_JumpToSection(FName(*SectionName));
+		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Purple, SectionName);
+	}
+}
+
+void AWOGBaseWeapon::AttackHeavy()
+{
+	if (!OwnerCharacter) return;
+
+	UAnimInstance* CharacterAnimInstance = OwnerCharacter->GetMesh()->GetAnimInstance();
+	if (CharacterAnimInstance && AttackHeavyMontage)
+	{
+		CharacterAnimInstance->Montage_Play(AttackHeavyMontage, 1.f);
+	}
+	ComboStreak = 0;
+	bIsInCombo = false;
 }
 
 void AWOGBaseWeapon::Drop()
@@ -149,4 +318,21 @@ void AWOGBaseWeapon::HandleHit()
 {
 }
 
+void AWOGBaseWeapon::IncreaseCombo()
+{
+	if (HasAuthority())
+	{
+		++ComboStreak;
+		bIsInCombo = true;
+	}
+}
 
+void AWOGBaseWeapon::ResetCombo()
+{
+	if (HasAuthority())
+	{
+		ComboStreak = 0;
+		bIsInCombo = false;
+
+	}
+}

@@ -38,23 +38,23 @@ protected:
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly)
 	EWeaponType EquippedWeaponType;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	TSubclassOf<class AWOGBaseWeapon> DefaultWeaponClass;
-
 private:
 
-	void CreateDefaultWeapon();
+	TSubclassOf<class AWOGBaseWeapon> DefaultWeaponClass;
+	void CreateMainWeapon(TSubclassOf<AWOGBaseWeapon> WeaponToCreate);
+	void CreateSecondaryWeapon(TSubclassOf<AWOGBaseWeapon> WeaponToCreate);
 
-	void EquipWeapon();
+	void EquipMainWeapon();
+	void EquipSecondaryWeapon();
+	void UnequipMainWeapon();
+	void UnequipSecondaryWeapon();
+	void DropWeapons();
 	void SwapWeapons();
-	void UnequipWeapon();
-	void DropWeapon();
 
 	void AttackLight();
 	void AttackHeavy();
 	void Block();
 	void StopBlocking();
-
 
 
 	UFUNCTION()
@@ -64,13 +64,18 @@ private:
 
 
 public:
-	
 	UFUNCTION(Server, reliable)
-	void Server_CreateDefaultWeapon();
+	void Server_CreateMainWeapon(TSubclassOf<AWOGBaseWeapon> WeaponToCreate);
+	UFUNCTION(Server, reliable)
+	void Server_CreateSecondaryWeapon(TSubclassOf<AWOGBaseWeapon> WeaponToCreate);
 
-
-
-
-
+	FORCEINLINE void SetDefaultWeaponClass(TSubclassOf<AWOGBaseWeapon> NewDefaultWeapon) { DefaultWeaponClass = NewDefaultWeapon; }
+	FORCEINLINE void SetEquippedWeapon(AWOGBaseWeapon* NewEquippedWeapon) { EquippedWeapon = NewEquippedWeapon; }
 	
+	/*
+	* TEST SECTION
+	*/
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TSubclassOf<class AWOGBaseWeapon> SecondaryWeaponClass;
+
 };

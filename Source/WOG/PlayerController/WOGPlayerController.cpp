@@ -13,6 +13,7 @@
 #include "WOG/Data/TODEnum.h"
 #include "WOG/UI/EndgameWidget.h"
 #include "Net/UnrealNetwork.h"
+#include "WOG/ActorComponents/WOGCombatComponent.h"
 
 
 void AWOGPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

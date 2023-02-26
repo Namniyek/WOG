@@ -99,6 +99,8 @@ public:
 	USkeleton* Skeleton;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	UPhysicsAsset* PhysicsAsset;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	TSubclassOf<class AWOGBaseWeapon> DefaultWeapon;
 };
 
 
@@ -174,12 +176,15 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* TargetAction;
 
-	/** TO-DO Fix this: 
-	** Target Equip Action
-	*/
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputAction* EquipAction;
+	UInputAction* AbilitiesAction;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* AttackLightAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* AttackHeavyAction;
 	#pragma endregion
 
 protected:
@@ -202,26 +207,36 @@ protected:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	/** Called for movement input */
-	void Move(const FInputActionValue& Value);
+	void MoveActionPressed(const FInputActionValue& Value);
 
 	/** Called for looking input */
-	void Look(const FInputActionValue& Value);
+	void LookActionPressed(const FInputActionValue& Value);
+
+	/** Called for jumping input */
+	void JumpActionPressed(const FInputActionValue& Value);
 
 	/**Called for dodge input*/
-	void Dodge(const FInputActionValue& Value);
+	void DodgeActionPressed(const FInputActionValue& Value);
 	UFUNCTION(BlueprintCallable)
 	void StopDodging();
 
 	/**Called for sprint input*/
-	void Sprint();
+	void SprintActionPressed();
 	void StopSprinting();
 
 	/**Called for Target input*/
-	void Target(const FInputActionValue& Value);
+	void TargetActionPressed(const FInputActionValue& Value);
 
 	/**Called for equip input*/
-	void Equip(const FInputActionValue& Value);
+	void AbilitiesButtonPressed(const FInputActionValue& Value);
 
+	UFUNCTION()
+	void AttackLightButtonPressed(FInputActionValue ActionValue, float ElapsedTime, float TriggeredTime);
+
+	UFUNCTION()
+	void AttackArmHeavyAttack(FInputActionValue ActionValue, float ElapsedTime, float TriggeredTime);
+
+	void AttackHeavyButtonPressed(const FInputActionValue& Value);
 	#pragma endregion
 
 	#pragma region Player Profile Section
@@ -256,8 +271,8 @@ protected:
 	virtual void HandleStateUnnoccupied();
 	virtual void HandleStateDodging();
 	virtual void HandleStateSprinting();
-	virtual void HandleStateTargeting();
 	virtual void HandleStateElimmed();
+	virtual void HandleStateAttacking();
 
 	#pragma endregion
 
@@ -287,9 +302,6 @@ protected:
 	UFUNCTION()
 	void TargetNotFound();
 
-	//UFUNCTION()
-	//void 
-
 private:
 
 	UPROPERTY()
@@ -312,6 +324,7 @@ public:
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 	FORCEINLINE UWOGAttributesComponent* GetAttributes() const { return Attributes; }
 	FORCEINLINE ULockOnTargetComponent* GetLockOnTarget() const { return LockOnTarget; }
+	FORCEINLINE UWOGCombatComponent* GetCombatComponent() const { return Combat; }
 	FORCEINLINE bool GetIsTargeting() const { return bIsTargeting; }
 
 	UFUNCTION(BlueprintPure)
