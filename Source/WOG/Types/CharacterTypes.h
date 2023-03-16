@@ -26,10 +26,13 @@ enum class EWeaponType : uint8
 	EWT_MAX UMETA(DisplayName = "DefaultMAX")
 };
 
-//namespace WeaponName
-//{
-//	const FName SwordAndShield = FName(TEXT("SwordAndShield"));
-//	const FName AxeAndShield = FName(TEXT("AxeAndShield"));
-//
-//}
+UENUM(BlueprintType)
+enum class ECosmeticHit : uint8
+{
+	ECH_BodyHit UMETA(DisplayName = "Body Hit"),
+	ECH_BlockingWeapon UMETA(DisplayName = "Blocking Weapon"),
+	ECH_AttackingWeapon UMETA(DisplayName = "Attacking Weapon"),
+
+	ECH_MAX UMETA(DisplayName = "DefaultMAX")
+};
 

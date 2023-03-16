@@ -143,9 +143,12 @@ void ABasePlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 		EnhancedInputComponent->BindAction(TargetAction, ETriggerEvent::Completed, this, &ThisClass::TargetActionPressed);
 		//Equip
 		EnhancedInputComponent->BindAction(AbilitiesAction, ETriggerEvent::Triggered, this, &ThisClass::AbilitiesButtonPressed);
-		//Attack
-		EnhancedInputComponent->BindAction(AttackLightAction, ETriggerEvent::Triggered, this, TEXT("AttackLightButtonPressed"));
-		EnhancedInputComponent->BindAction(AttackLightAction, ETriggerEvent::Ongoing, this, TEXT("AttackArmHeavyAttack"));
+		//PrimaryAction
+		EnhancedInputComponent->BindAction(PrimaryAction, ETriggerEvent::Triggered, this, TEXT("AttackLightButtonPressed"));
+		EnhancedInputComponent->BindAction(PrimaryAction, ETriggerEvent::Ongoing, this, TEXT("AttackArmHeavyAttack"));
+		//SecondaryAction
+		EnhancedInputComponent->BindAction(SecondaryAction, ETriggerEvent::Started, this, &ThisClass::BlockButtonPressed);
+		EnhancedInputComponent->BindAction(SecondaryAction, ETriggerEvent::Triggered, this, &ThisClass::BlockButtonReleased);
 	}
 }
 
@@ -216,6 +219,10 @@ void ABasePlayerCharacter::StopDodging()
 	{
 		Server_SetCharacterState(ECharacterState::ECS_Unnoccupied);
 	}
+}
+
+void ABasePlayerCharacter::Dodge_Implementation()
+{
 }
 
 void ABasePlayerCharacter::SprintActionPressed()
@@ -332,6 +339,20 @@ void ABasePlayerCharacter::AttackHeavyButtonPressed(const FInputActionValue& Val
 	if (!Combat) return;
 
 	Combat->AttackHeavy();
+}
+
+void ABasePlayerCharacter::BlockButtonPressed(const FInputActionValue& Value)
+{
+	if (!Combat) return;
+	Combat->Block();
+	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Purple, FString("StartBlocking"));
+}
+
+void ABasePlayerCharacter::BlockButtonReleased(const FInputActionValue& Value)
+{
+	if (!Combat) return;
+	Combat->StopBlocking();
+	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Purple, FString("StopBlocking"));
 }
 
 void ABasePlayerCharacter::Tick(float DeltaTime)
@@ -509,6 +530,7 @@ void ABasePlayerCharacter::HandleStateUnnoccupied()
 void ABasePlayerCharacter::HandleStateDodging()
 {
 	GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Purple, FString("Dodge()"));
+	Dodge();
 }
 
 void ABasePlayerCharacter::HandleStateSprinting()
@@ -521,7 +543,14 @@ void ABasePlayerCharacter::HandleStateSprinting()
 
 void ABasePlayerCharacter::HandleStateElimmed()
 {
-
+	if (Combat->MainWeapon)
+	{
+		Combat->MainWeapon->Destroy();
+	}
+	if (Combat->SecondaryWeapon)
+	{
+		Combat->SecondaryWeapon->Destroy();
+	}
 }
 
 void ABasePlayerCharacter::HandleStateAttacking()
@@ -580,7 +609,8 @@ void ABasePlayerCharacter::Multicast_Elim_Implementation(bool bPlayerLeftGame)
 	GetMesh()->SetAllBodiesSimulatePhysics(true);
 	GetCharacterMovement()->DisableMovement();
 	GetCharacterMovement()->StopMovementImmediately();
-	GetMesh()->AddImpulse(FVector(100.f), FName("pelvis"), true);
+	FVector ImpulseDirection = Combat->LastHitDirection.GetSafeNormal() * 30000.f;
+	GetMesh()->AddImpulse(ImpulseDirection);
 	LockOnTarget->ClearTargetManual();
 	TargetAttractor->bCanBeCaptured = false;
 

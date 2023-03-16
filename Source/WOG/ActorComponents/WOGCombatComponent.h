@@ -56,6 +56,19 @@ private:
 	void Block();
 	void StopBlocking();
 
+	#pragma region Cosmetic Hits
+	//Handle cosmetic body hit
+	void HandleCosmeticBodyHit(const FHitResult& Hit, const FVector& WeaponLocation, const AWOGBaseWeapon* InstigatorWeapon);
+	FName CalculateHitDirection(const FHitResult& Hit, const FVector& WeaponLocation);
+	void PlayHitReactMontage(FName Section);
+
+	//Handle cosmetic block
+	void HandleCosmeticBlock(const AWOGBaseWeapon* InstigatorWeapon);
+
+	//Handle cosmetic weapon clash
+	void HandleCosmeticWeaponClash();
+	#pragma endregion
+
 
 	UFUNCTION()
 	void OnRep_MainWeapon();
@@ -64,13 +77,24 @@ private:
 
 
 public:
+	FVector LastHitDirection;
+
 	UFUNCTION(Server, reliable)
 	void Server_CreateMainWeapon(TSubclassOf<AWOGBaseWeapon> WeaponToCreate);
 	UFUNCTION(Server, reliable)
 	void Server_CreateSecondaryWeapon(TSubclassOf<AWOGBaseWeapon> WeaponToCreate);
 
+	UFUNCTION(NetMulticast, reliable)
+	void Multicast_HandleCosmeticHit(const ECosmeticHit& HitType,  const FHitResult& Hit, const FVector& WeaponLocation, const AWOGBaseWeapon* InstigatorWeapon);
+
+	//To - do remove
+	/*UFUNCTION(NetMulticast, reliable)
+	void Multicast_HandleCosmeticBlock( const AWOGBaseWeapon* InstigatorWeapon);*/
+
 	FORCEINLINE void SetDefaultWeaponClass(TSubclassOf<AWOGBaseWeapon> NewDefaultWeapon) { DefaultWeaponClass = NewDefaultWeapon; }
-	FORCEINLINE void SetEquippedWeapon(AWOGBaseWeapon* NewEquippedWeapon) { EquippedWeapon = NewEquippedWeapon; }
+	void SetEquippedWeapon(AWOGBaseWeapon* NewEquippedWeapon);
+	FORCEINLINE AWOGBaseWeapon* GetEquippedWeapon() const { return EquippedWeapon; }
+	FORCEINLINE TSubclassOf<AWOGBaseWeapon> GetDefaultWeaponClass() const { return DefaultWeaponClass; }
 	
 	/*
 	* TEST SECTION

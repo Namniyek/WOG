@@ -118,7 +118,7 @@ void AWOGGameMode::CreateRandomCharacter(APlayerController* NewPlayer)
 			if (SaveGameObject)
 			{
 				SaveGameObject->PlayerProfile.bIsAttacker = (i>2);
-				SaveGameObject->PlayerProfile.bIsMale = FMath::RandBool();
+				SaveGameObject->PlayerProfile.bIsMale = true; //FMath::RandBool();
 				SaveGameObject->PlayerProfile.BodyPaintColor = "0";
 				SaveGameObject->PlayerProfile.CharacterIndex = "1";
 				SaveGameObject->PlayerProfile.HairColor = "0";

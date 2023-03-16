@@ -47,13 +47,11 @@ void UWOGAttributesComponent::UpdateHealth(float Value, AController* InstigatedB
 
 	if (Health + Value >= MaxHealth)
 	{
+
 		Health = MaxHealth;
 	}
 	else if (Health + Value <= 0.f)
 	{
-		Health = 0.f;
-		OwnerCharacter->Server_SetCharacterState(ECharacterState::ECS_Elimmed);
-
 		OwnerCharacter = OwnerCharacter == nullptr ? Cast<ABasePlayerCharacter>(GetOwner()) : OwnerCharacter;
 		if (!OwnerCharacter) return;
 
@@ -62,9 +60,27 @@ void UWOGAttributesComponent::UpdateHealth(float Value, AController* InstigatedB
 
 		OwnerPC = OwnerPC ==nullptr ? Cast<AWOGPlayerController>(OwnerCharacter->GetController()) : OwnerPC;
 		AWOGPlayerController* Attacker = Cast<AWOGPlayerController>(InstigatedBy);
-		if (!OwnerCharacter->WOGGameMode || !OwnerPC || !Attacker) return;
-
+		if (!OwnerCharacter->WOGGameMode || !OwnerPC || !Attacker)
+		{
+			if (!OwnerCharacter->WOGGameMode)
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, FString("NoGameMode"));
+			}
+			if (!OwnerPC)
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, FString("NoOwnerPC"));
+			}
+			if (!Attacker)
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, FString("NoAttackerPC"));
+			}
+			return;
+		}
+		
 		OwnerCharacter->WOGGameMode->PlayerEliminated(OwnerCharacter, OwnerPC, Attacker);
+
+		Health = 0.f;
+		OwnerCharacter->Server_SetCharacterState(ECharacterState::ECS_Elimmed);
 	}
 	else
 	{

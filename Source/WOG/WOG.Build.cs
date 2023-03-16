@@ -8,7 +8,7 @@ public class WOG : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "LockOnTarget", "OnlineSubsystem", "OnlineSubsystemSteam", "OnlineSubsystemEOS", "EnhancedInput" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "LockOnTarget", "OnlineSubsystem", "OnlineSubsystemSteam", "OnlineSubsystemEOS", "EnhancedInput", "DidItHit" });
 
 		PrivateDependencyModuleNames.AddRange(new string[] { });
 

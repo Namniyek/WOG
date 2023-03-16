@@ -3,3 +3,10 @@
 
 #include "WOGDefender.h"
 
+void AWOGDefender::DestroyComponent(UActorComponent* ComponentToDestroy)
+{
+	if (ComponentToDestroy)
+	{
+		ComponentToDestroy->DestroyComponent();
+	}
+}

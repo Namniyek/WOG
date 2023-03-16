@@ -60,7 +60,7 @@ USkeletalMesh* UMeshMergeFunctionLibrary::MergeMeshes(const FSkeletalMeshMergePa
     USkeletalMesh* BaseMesh = NewObject<USkeletalMesh>();
     if (Params.Skeleton && Params.bSkeletonBefore)
     {
-        BaseMesh->Skeleton = Params.Skeleton;
+        BaseMesh->SetSkeleton(Params.Skeleton);
         bRunDuplicateCheck = true;
         for (USkeletalMeshSocket* Socket : BaseMesh->GetMeshOnlySocketList())
         {
@@ -85,7 +85,7 @@ USkeletalMesh* UMeshMergeFunctionLibrary::MergeMeshes(const FSkeletalMeshMergePa
     }
     if (Params.Skeleton && !Params.bSkeletonBefore)
     {
-        BaseMesh->Skeleton = Params.Skeleton;
+        BaseMesh->SetSkeleton(Params.Skeleton);
     }
     if (bRunDuplicateCheck)
     {

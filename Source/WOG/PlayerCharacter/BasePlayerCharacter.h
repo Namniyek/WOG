@@ -181,10 +181,12 @@ public:
 	UInputAction* AbilitiesAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputAction* AttackLightAction;
+	UInputAction* PrimaryAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputAction* AttackHeavyAction;
+	UInputAction* SecondaryAction;
+
+
 	#pragma endregion
 
 protected:
@@ -220,6 +222,9 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void StopDodging();
 
+	UFUNCTION(BlueprintNativeEvent)
+	void Dodge();
+
 	/**Called for sprint input*/
 	void SprintActionPressed();
 	void StopSprinting();
@@ -237,6 +242,9 @@ protected:
 	void AttackArmHeavyAttack(FInputActionValue ActionValue, float ElapsedTime, float TriggeredTime);
 
 	void AttackHeavyButtonPressed(const FInputActionValue& Value);
+	void BlockButtonPressed(const FInputActionValue& Value);
+	void BlockButtonReleased(const FInputActionValue& Value);
+	
 	#pragma endregion
 
 	#pragma region Player Profile Section

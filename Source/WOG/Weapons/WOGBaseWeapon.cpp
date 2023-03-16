@@ -5,6 +5,9 @@
 #include "Net/UnrealNetwork.h"
 #include "WOG/PlayerCharacter/BasePlayerCharacter.h"
 #include "WOG/ActorComponents/WOGCombatComponent.h"
+#include "DidItHitActorComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "Sound/SoundCue.h"
 
 // Sets default values
 AWOGBaseWeapon::AWOGBaseWeapon()
@@ -14,11 +17,23 @@ AWOGBaseWeapon::AWOGBaseWeapon()
 
 	MeshMain = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Main Mesh"));
 	MeshMain->SetupAttachment(GetRootComponent());
-	MeshMain->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	MeshMain->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	MeshMain->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	MeshMain->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Overlap);
 
 	MeshSecondary = CreateDefaultSubobject <UStaticMeshComponent>(TEXT("Secondary Mesh"));
 	MeshSecondary->SetupAttachment(GetRootComponent());
-	MeshSecondary->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	MeshSecondary->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	MeshSecondary->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	MeshSecondary->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Overlap);
+
+	TraceComponent = CreateDefaultSubobject <UDidItHitActorComponent>(TEXT("TraceComponent"));
+}
+
+void AWOGBaseWeapon::OnConstruction(const FTransform& Transform)
+{
+	Super::OnConstruction(Transform);
+	InitWeapon();
 }
 
 void AWOGBaseWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -28,6 +43,7 @@ void AWOGBaseWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 	DOREPLIFETIME(AWOGBaseWeapon, WeaponState);
 	DOREPLIFETIME(AWOGBaseWeapon, ComboStreak);
 	DOREPLIFETIME(AWOGBaseWeapon, bIsInCombo);
+	DOREPLIFETIME(AWOGBaseWeapon, bIsBlocking);
 }
 
 void AWOGBaseWeapon::Tick(float DeltaSeconds)
@@ -37,7 +53,7 @@ void AWOGBaseWeapon::Tick(float DeltaSeconds)
 void AWOGBaseWeapon::BeginPlay()
 {
 	Super::BeginPlay();
-	InitWeapon();
+	//InitWeapon();
 
 }
 
@@ -70,9 +86,9 @@ void AWOGBaseWeapon::InitWeapon()
 		AttackLightMontage = WeaponDataRow->AttackLightMontage;
 		AttackHeavyMontage = WeaponDataRow->AttackHeavyMontage;
 		BlockMontage = WeaponDataRow->BlockMontage;
-		ParryMontage = WeaponDataRow->ParryMontage;
 		EquipMontage = WeaponDataRow->EquipMontage;
 		UnequipMontage = WeaponDataRow->UnequipMontage;
+		HurtMontage = WeaponDataRow->HurtMontage;
 
 		BaseDamage = WeaponDataRow->BaseDamage;
 		HeavyDamageMultiplier = WeaponDataRow->HeavyDamageMultiplier;
@@ -95,6 +111,9 @@ void AWOGBaseWeapon::InitWeapon()
 	WeaponState = EWeaponState::EWS_Stored;
 	ComboStreak = 0;
 	bIsInCombo = false;
+
+	AttachToBack();
+
 }
 
 void AWOGBaseWeapon::Server_SetWeaponState_Implementation(EWeaponState NewWeaponState)
@@ -134,6 +153,7 @@ void AWOGBaseWeapon::OnRep_WeaponStateChanged()
 		break;
 	case EWeaponState::EWS_Stored:
 		AttachToBack();
+		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, FString("OnRep Called()"));
 		break;
 	case EWeaponState::EWS_BeingEquipped:
 		Equip();
@@ -144,10 +164,12 @@ void AWOGBaseWeapon::OnRep_WeaponStateChanged()
 	case EWeaponState::EWS_Dropped:
 		break;
 	case EWeaponState::EWS_AttackLight:
-		//AttackLight();
 		break;
 	case EWeaponState::EWS_AttackHeavy:
 		AttackHeavy();
+		break;
+	case EWeaponState::EWS_Blocking:
+		//Block();
 		break;
 	default:
 		break;
@@ -175,7 +197,7 @@ void AWOGBaseWeapon::AttachToHands()
 {
 	if (!OwnerCharacter) return;
 
-	if (OwnerCharacter->GetCombatComponent())
+	if (HasAuthority() && OwnerCharacter->GetCombatComponent())
 	{
 		OwnerCharacter->GetCombatComponent()->SetEquippedWeapon(this);
 	}
@@ -219,13 +241,33 @@ void AWOGBaseWeapon::Unequip()
 	}
 }
 
+void AWOGBaseWeapon::InitTraceComponent()
+{
+	if (TraceComponent)
+	{
+		TraceComponent->SetupVariables(MeshMain, OwnerCharacter);
+		if (!TraceComponent->MyActorsToIgnore.Contains(OwnerCharacter))
+		{
+			TraceComponent->MyActorsToIgnore.Add(OwnerCharacter);
+		}
+		TraceComponent->ToggleTraceCheck(false);
+		TraceComponent->MyWorldContextObject = this;
+		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString("SetupVariables() called"));
+		TraceComponent->OnItemAdded.AddDynamic(this, &ThisClass::HitDetected);
+	}
+}
+
 void AWOGBaseWeapon::AttachToBack()
 {
 	if (!OwnerCharacter) return;
 
-	if (OwnerCharacter->GetCombatComponent())
+	if (HasAuthority() && OwnerCharacter->GetCombatComponent() && OwnerCharacter->GetCombatComponent()->GetEquippedWeapon())
 	{
-		OwnerCharacter->GetCombatComponent()->SetEquippedWeapon(nullptr);
+		if (OwnerCharacter->GetCombatComponent()->GetEquippedWeapon()->GetWeaponState() == EWeaponState::EWS_BeingStored
+			|| OwnerCharacter->GetCombatComponent()->GetEquippedWeapon()->GetWeaponState() == EWeaponState::EWS_Stored)
+		{
+			OwnerCharacter->GetCombatComponent()->SetEquippedWeapon(nullptr);
+		}
 	}
 
 	FAttachmentTransformRules AttachmentRules = FAttachmentTransformRules(
@@ -250,6 +292,10 @@ void AWOGBaseWeapon::FinishAttacking()
 	if (OwnerCharacter)
 	{
 		OwnerCharacter->Server_SetCharacterState(ECharacterState::ECS_Unnoccupied);
+	}
+	if (TraceComponent)
+	{
+		TraceComponent->ToggleTraceCheck(false);
 	}
 }
 
@@ -293,7 +339,17 @@ void AWOGBaseWeapon::AttackLight()
 		FString SectionName = FString::FromInt(GetComboStreak());
 		CharacterAnimInstance->Montage_Play(AttackLightMontage, 1.f);
 		CharacterAnimInstance->Montage_JumpToSection(FName(*SectionName));
-		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Purple, SectionName);
+	}
+	if (TraceComponent)
+	{
+		TraceComponent->ToggleTraceCheck(false);
+		HitActorsToIgnore.Empty();
+		TraceComponent->ToggleTraceCheck(true);
+	}
+
+	if (SwingSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, SwingSound, GetActorLocation());
 	}
 }
 
@@ -308,14 +364,163 @@ void AWOGBaseWeapon::AttackHeavy()
 	}
 	ComboStreak = 0;
 	bIsInCombo = false;
+
+	if (TraceComponent)
+	{
+		TraceComponent->ToggleTraceCheck(false);
+		HitActorsToIgnore.Empty();
+		TraceComponent->ToggleTraceCheck(true);
+	}
+
+	if (SwingSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, SwingSound, GetActorLocation());
+	}
 }
 
 void AWOGBaseWeapon::Drop()
 {
 }
 
-void AWOGBaseWeapon::HandleHit()
+void AWOGBaseWeapon::Server_Block_Implementation()
 {
+	Multicast_Block();
+	SetWeaponState(EWeaponState::EWS_Blocking);
+	Block();
+}
+
+void AWOGBaseWeapon::Multicast_Block_Implementation()
+{
+	if (!HasAuthority())
+	{
+		Block();
+	}
+}
+
+void AWOGBaseWeapon::Block()
+{
+	if (!OwnerCharacter) return;
+
+	UAnimInstance* CharacterAnimInstance = OwnerCharacter->GetMesh()->GetAnimInstance();
+	if (CharacterAnimInstance && BlockMontage)
+	{
+		CharacterAnimInstance->Montage_Play(BlockMontage, 1.f);
+		CharacterAnimInstance->Montage_JumpToSection(FName("Start"));
+	}
+}
+
+void AWOGBaseWeapon::Server_StopBlocking_Implementation()
+{
+	Multicast_StopBlocking();
+	StopBlocking();
+	//bIsBlocking = false;
+	SetWeaponState(EWeaponState::EWS_Equipped);
+}
+
+void AWOGBaseWeapon::Multicast_StopBlocking_Implementation()
+{
+	if (!HasAuthority())
+	{
+		StopBlocking();
+	}
+}
+
+void AWOGBaseWeapon::StopBlocking()
+{
+	if (!OwnerCharacter) return;
+
+	UAnimInstance* CharacterAnimInstance = OwnerCharacter->GetMesh()->GetAnimInstance();
+	if (CharacterAnimInstance && BlockMontage)
+	{
+		//FString SectionName = FString::FromInt(GetComboStreak());
+		CharacterAnimInstance->Montage_Play(BlockMontage, 1.f);
+		CharacterAnimInstance->Montage_JumpToSection(FName("Stop"));
+	}
+}
+
+void AWOGBaseWeapon::HitDetected(FHitResult Hit)
+{
+	ABasePlayerCharacter* HitPlayer = Cast<ABasePlayerCharacter>(Hit.GetActor());
+	AWOGBaseWeapon* HitWeapon = Cast<AWOGBaseWeapon>(Hit.GetActor());
+
+	if (HitWeapon)
+	{
+		if (HitActorsToIgnore.Contains(HitWeapon->OwnerCharacter) || HitActorsToIgnore.Contains(HitPlayer))
+		{
+			//HitPlayer already hit
+			return;
+		}
+		//Hit weapon was hit 1st and the other player is blocking
+		if (HitWeapon->GetWeaponState() == EWeaponState::EWS_Blocking)
+		{
+			if (!HitWeapon->OwnerCharacter || HitWeapon->OwnerCharacter->GetCharacterState() == ECharacterState::ECS_Elimmed) return;
+
+			HitActorsToIgnore.AddUnique(HitWeapon->OwnerCharacter);
+			HitWeapon->OwnerCharacter->GetCombatComponent()->Multicast_HandleCosmeticHit(ECosmeticHit::ECH_BlockingWeapon, Hit, GetActorLocation(), this);
+			return;
+		}
+		//Hit weapon was hit 1st and the other player is attacking as well
+		if (HitWeapon->GetWeaponState() == EWeaponState::EWS_AttackLight || HitWeapon->GetWeaponState() == EWeaponState::EWS_AttackHeavy)
+		{
+			if (!HitWeapon->OwnerCharacter || HitWeapon->OwnerCharacter->GetCharacterState() == ECharacterState::ECS_Elimmed) return;
+
+			HitActorsToIgnore.AddUnique(HitWeapon->OwnerCharacter);
+			HitWeapon->OwnerCharacter->GetCombatComponent()->Multicast_HandleCosmeticHit(ECosmeticHit::ECH_AttackingWeapon, Hit, GetActorLocation(), this);
+			return;
+		}
+
+		//Hit weapon was hit 1st but the other player is just idle
+		if (!HitWeapon->OwnerCharacter || HitWeapon->OwnerCharacter->GetCharacterState() == ECharacterState::ECS_Elimmed) return;
+		HitActorsToIgnore.AddUnique(HitWeapon->OwnerCharacter);
+		HitWeapon->OwnerCharacter->GetCombatComponent()->Multicast_HandleCosmeticHit(ECosmeticHit::ECH_BodyHit, Hit, GetActorLocation(), this);
+			
+		float DamageToApply = 0.f;
+		switch (WeaponState)
+		{
+		case EWeaponState::EWS_AttackLight:
+			DamageToApply = BaseDamage + (BaseDamage * DamageMultiplier) + (BaseDamage * (ComboStreak * ComboDamageMultiplier));
+			break;
+		case EWeaponState::EWS_AttackHeavy:
+			DamageToApply = BaseDamage + (BaseDamage * DamageMultiplier) + (BaseDamage * HeavyDamageMultiplier);
+			break;
+		}
+			
+		UGameplayStatics::ApplyDamage(HitWeapon->OwnerCharacter, -DamageToApply, OwnerCharacter->GetController(), this, UDamageType::StaticClass());
+		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, FString::FromInt(DamageToApply));
+		return;
+	}
+
+	// Player was hit 1st
+	if (HitPlayer)
+	{
+		if (HitActorsToIgnore.Contains(HitPlayer) || HitActorsToIgnore.Contains(HitWeapon->OwnerCharacter))
+		{
+			//HitPlayer already hit
+			return;
+		}
+		else
+		{
+			if(HitPlayer->GetCharacterState() == ECharacterState::ECS_Elimmed) return;
+
+			HitActorsToIgnore.AddUnique(HitPlayer);
+			HitPlayer->GetCombatComponent()->Multicast_HandleCosmeticHit(ECosmeticHit::ECH_BodyHit, Hit, GetActorLocation(), this);
+
+			float DamageToApply = 0.f;
+			switch (WeaponState)
+			{
+			case EWeaponState::EWS_AttackLight:
+				DamageToApply = BaseDamage + (BaseDamage * DamageMultiplier) + (BaseDamage * (ComboStreak * ComboDamageMultiplier));
+				break;
+			case EWeaponState::EWS_AttackHeavy:
+				DamageToApply = BaseDamage + (BaseDamage * DamageMultiplier) + (BaseDamage * HeavyDamageMultiplier);
+				break;
+			}
+
+			UGameplayStatics::ApplyDamage(HitPlayer, -DamageToApply, OwnerCharacter->GetController(), this, UDamageType::StaticClass());
+			GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, FString::FromInt(DamageToApply));
+			return;
+		}
+	}
 }
 
 void AWOGBaseWeapon::IncreaseCombo()

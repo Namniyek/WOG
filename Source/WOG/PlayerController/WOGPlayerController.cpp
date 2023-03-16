@@ -57,6 +57,8 @@ void AWOGPlayerController::OnPossess(APawn* aPawn)
 	Server_SetPlayerIndex(WOGSavegame->PlayerProfile.UserIndex);
 
 	Client_ResetHUD();
+
+	PlayerCharacter->GetCombatComponent()->Server_CreateMainWeapon(PlayerCharacter->GetCombatComponent()->GetDefaultWeaponClass());
 }
 
 void AWOGPlayerController::BeginPlay()

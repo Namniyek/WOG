@@ -9,9 +9,11 @@
 #include "Components/StaticMeshComponent.h"
 #include "WOGBaseWeapon.generated.h"
 
+
 class UAnimMontage;
 class USoundCue;
 class ABasePlayerCharacter;
+class UDidItHitActorComponent;
 
 
 USTRUCT(BlueprintType)
@@ -56,13 +58,13 @@ struct FWeaponDataTable : public FTableRowBase
 	UAnimMontage* BlockMontage;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UAnimMontage* ParryMontage;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UAnimMontage* EquipMontage;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UAnimMontage* UnequipMontage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UAnimMontage* HurtMontage;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float BaseDamage;
@@ -105,6 +107,7 @@ enum class EWeaponState : uint8
 	EWS_Dropped UMETA(DisplayName = "Dropped"),
 	EWS_AttackLight UMETA(DisplayName = "AttackLight"),
 	EWS_AttackHeavy UMETA(DisplayName = "AttackHeavy"),
+	EWS_Blocking UMETA(DisplayName = "Blocking"),
 
 	EWS_MAX UMETA(DisplayName = "DefaultMAX")
 };
@@ -116,12 +119,20 @@ class WOG_API AWOGBaseWeapon : public AActor
 	
 public:	
 	AWOGBaseWeapon();
+	virtual void OnConstruction(const FTransform& Transform) override;
 	virtual void Tick(float DeltaSeconds);
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 protected:
 	virtual void BeginPlay() override;
 
+	#pragma region ActorComponents
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	UDidItHitActorComponent* TraceComponent;
+	#pragma endregion
+
+	#pragma region WeaponVariables
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	UStaticMeshComponent* MeshMain;
@@ -160,13 +171,13 @@ protected:
 	UAnimMontage* BlockMontage;
 
 	UPROPERTY()
-	UAnimMontage* ParryMontage;
-
-	UPROPERTY()
 	UAnimMontage* EquipMontage;
 
 	UPROPERTY()
 	UAnimMontage* UnequipMontage;
+
+	UPROPERTY()
+	UAnimMontage* HurtMontage;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	float BaseDamage;
@@ -195,6 +206,8 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	USoundCue* BlockSound;
 
+	#pragma endregion
+
 private:
 	void InitWeapon();
 
@@ -203,14 +216,17 @@ private:
 	void Unequip();
 	void AttachToHands();
 	void Drop();
-	void HandleHit();
 	void AttackLight();
 	void AttackHeavy();
+	void Block();
+	void StopBlocking();
 
 	UPROPERTY(Replicated, VisibleAnywhere)
 	int32 ComboStreak;
 	UPROPERTY(Replicated, VisibleAnywhere)
 	bool bIsInCombo;
+	UPROPERTY(Replicated, VisibleAnywhere)
+	bool bIsBlocking;
 
 	UPROPERTY(ReplicatedUsing = OnRep_WeaponStateChanged, VisibleAnywhere)
 	EWeaponState WeaponState;
@@ -220,7 +236,11 @@ private:
 
 	FORCEINLINE void SetWeaponState(EWeaponState NewWeaponState) { WeaponState = NewWeaponState; }
 
+	TArray<AActor*> HitActorsToIgnore;
+
 public:	
+	void InitTraceComponent();
+
 	void AttachToBack();
 
 	UFUNCTION(BlueprintCallable)
@@ -247,6 +267,21 @@ public:
 	UFUNCTION(Server, reliable)
 	void Server_AttackHeavy();
 
+	UFUNCTION(Server, reliable, BlueprintCallable)
+	void Server_Block();
+
+	UFUNCTION(NetMulticast, reliable)
+	void Multicast_Block();
+
+	UFUNCTION(Server, reliable)
+	void Server_StopBlocking();
+
+	UFUNCTION(NetMulticast, reliable)
+	void Multicast_StopBlocking();
+
+	UFUNCTION()
+	void HitDetected(FHitResult Hit);
+
 	UFUNCTION(BlueprintCallable)
 	void IncreaseCombo();
 
@@ -258,6 +293,16 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	FORCEINLINE EWeaponState GetWeaponState() const { return WeaponState; }
+
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE bool GetIsBlocking() const { return bIsBlocking; }
+
+	FORCEINLINE EWeaponType GetWeaponType() const { return WeaponType; }
 	FORCEINLINE int32 GetComboStreak() const { return ComboStreak; }
 	FORCEINLINE bool GetIsInCombo() const { return bIsInCombo; }
+	FORCEINLINE UDidItHitActorComponent* GetTraceComponent() const { return TraceComponent; }
+	FORCEINLINE USoundCue* GetHitSound() const { return HitSound; }
+	FORCEINLINE USoundCue* GetBlockSound() const { return BlockSound; }
+	FORCEINLINE UAnimMontage* GetHurtMontage() const { return HurtMontage; }
+	FORCEINLINE UAnimMontage* GetBlockMontage() const { return BlockMontage; }
 };

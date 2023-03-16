@@ -13,5 +13,10 @@ UCLASS()
 class WOG_API AWOGDefender : public ABasePlayerCharacter
 {
 	GENERATED_BODY()
+
+public:
+
+	UFUNCTION(BlueprintCallable)
+	void DestroyComponent(UActorComponent* ComponentToDestroy);
 	
 };
