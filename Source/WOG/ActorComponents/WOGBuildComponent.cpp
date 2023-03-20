@@ -1,0 +1,301 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+
+#include "WOGBuildComponent.h"
+#include "WOG/PlayerCharacter/WOGDefender.h"
+#include "Engine/World.h"
+#include "WOG/Interfaces/BuildingInterface.h"
+#include "Engine/EngineTypes.h"
+#include "Camera/CameraComponent.h"
+#include "WOG/ActorComponents/WOGCombatComponent.h"
+#include "Kismet/KismetSystemLibrary.h"
+#include "Components/BoxComponent.h"
+#include "TimerManager.h"
+#include "WOG/Weapons/WOGBaseWeapon.h"
+
+UWOGBuildComponent::UWOGBuildComponent()
+{
+	bCanBuild = false;
+	bIsBuildModeOn = false;
+	BuildID = 0;
+	BuildTransform = FTransform();
+	HeightOffset = FVector();
+
+	BuildGhost = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BuidGhost"));
+	BuildGhost->SetStaticMesh(nullptr);
+}
+
+void UWOGBuildComponent::BeginPlay()
+{
+	Super::BeginPlay();
+	DefenderCharacter = OwnerCharacter == nullptr ? Cast<AWOGDefender>(GetOwner()) : Cast<AWOGDefender>(OwnerCharacter);
+
+	if (DefenderCharacter)
+	{
+		Camera = DefenderCharacter->GetFollowCamera();
+	}
+
+	if (BuildablesDataTable)
+	{
+		BuildablesDataTable->GetAllRows<FBuildables>(TEXT("Buildables"), Buildables);
+		LastIndexDataTable = Buildables.Num() - 1;
+	}
+}
+
+void UWOGBuildComponent::LaunchBuildMode()
+{
+	if (bIsBuildModeOn)
+	{
+		StopBuildMode();
+	}
+	else
+	{
+		bIsBuildModeOn = true;
+		HeightOffset = FVector();
+		BuildCycle();
+	}
+}
+
+void UWOGBuildComponent::StopBuildMode()
+{
+	bIsBuildModeOn = false;
+	bCanBuild = false;
+	GetWorld()->GetTimerManager().ClearTimer(BuildTimerHandle);
+	if (BuildGhost->GetStaticMesh())
+	{
+		BuildGhost->SetStaticMesh(nullptr);
+	}
+}
+
+void UWOGBuildComponent::BuildDelay()
+{
+	if (bIsBuildModeOn)
+	{
+		float BuildDelayTime = 0.05f;
+		GetWorld()->GetTimerManager().SetTimer(BuildTimerHandle, this, &ThisClass::BuildCycle, BuildDelayTime);
+	}
+	else
+	{
+		StopBuildMode();
+	}
+}
+
+void UWOGBuildComponent::SpawnBuildGhost()
+{
+	if (BuildGhost)
+	{
+		BuildGhost->SetStaticMesh(Buildables[BuildID]->Mesh);
+		BuildGhost->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
+}
+
+void UWOGBuildComponent::GiveBuildColor(bool IsAllowed)
+{
+	if (!AllowedGhostMaterial || !ForbiddenGhostMaterial || !BuildGhost) return;
+
+	bCanBuild = IsAllowed;
+
+	for (int32 i = 0; i < BuildGhost->GetNumMaterials(); i++)
+	{
+		BuildGhost->SetMaterial(i, IsAllowed == true ? AllowedGhostMaterial : ForbiddenGhostMaterial); // Determine what material to use based on the bCnaBuild bool.
+	}
+
+	BuildGhost->SetWorldTransform(BuildTransform);
+}
+
+void UWOGBuildComponent::BuildCycle()
+{
+	if (!DefenderCharacter)
+	{
+		UE_LOG(LogTemp, Error, TEXT("DefenderCharacter invalid"));
+		return;
+	}
+
+	FHitResult HitResult;
+	FVector ForwardVector = Camera->GetForwardVector();
+	FVector Start = (Camera->GetComponentLocation()) + (ForwardVector*350);
+	FVector End = (Camera->GetComponentLocation()) + (ForwardVector * 1500);
+
+	ECollisionChannel Channel = UEngineTypes::ConvertToCollisionChannel(Buildables[BuildID]->TraceChannel);
+	FCollisionQueryParams Params;
+
+	TArray<AActor*> ActorsToIgnore;
+	TObjectPtr<UWOGCombatComponent> Combat =  DefenderCharacter->GetCombatComponent();
+	ActorsToIgnore.AddUnique(Combat->GetMainWeapon());
+	ActorsToIgnore.AddUnique(Combat->GetSecondaryWeapon());
+
+	Params.AddIgnoredActors(ActorsToIgnore);
+	Params.bTraceComplex = false;
+
+	bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, Channel, Params);
+
+	BuildTransform.SetLocation((bHit == true ? HitResult.ImpactPoint : HitResult.TraceEnd) + HeightOffset);
+
+	if (bHit)
+	{
+		CurrentHitComponent = HitResult.GetComponent();
+		CurrentHitActor = HitResult.GetActor();
+
+		if (BuildGhost->GetStaticMesh())
+		{
+			bool bFound = false;
+			FTransform Transform;
+			DetectBuildBoxes(bFound, Transform);
+
+			if (bFound)
+			{
+				BuildTransform.SetLocation(Transform.GetLocation() + HeightOffset);
+				BuildTransform.SetRotation(Transform.GetRotation());
+				BuildTransform.SetScale3D(Transform.GetScale3D());
+			}
+			else
+			{
+				CurrentHitActor = nullptr;
+			}
+
+			bool bIsAllowed = !CheckForOverlap() && IsBuildFloating();
+			
+			GiveBuildColor(bIsAllowed);
+			BuildDelay();
+		}
+		else 
+		{
+			SpawnBuildGhost();
+			BuildDelay();
+		}
+	}
+
+	if(!bHit)
+	{
+		if (BuildGhost->GetStaticMesh())
+		{
+			GiveBuildColor(false);
+			BuildDelay();
+		}
+		else
+		{
+			SpawnBuildGhost();
+			BuildDelay();
+		}
+	}
+}
+
+void UWOGBuildComponent::ChangeMesh()
+{
+	if (!BuildGhost) return;
+
+	BuildGhost->SetStaticMesh(Buildables[BuildID]->Mesh);
+	HeightOffset = FVector();
+}
+
+void UWOGBuildComponent::SpawnBuild(FTransform Transform, int32 ID, AActor* Hit, UPrimitiveComponent* HitComponent)
+{
+	TObjectPtr<AActor> SpawnedBuild =  GetWorld()->SpawnActor<AActor>(Buildables[ID]->Actor, Transform);
+	HeightOffset = FVector();
+
+	if (!SpawnedBuild)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Nothing Spawned"));
+		return;
+	}
+
+	if (SpawnedBuild->GetClass()->ImplementsInterface(UBuildingInterface::StaticClass()))
+	{
+		IBuildingInterface::Execute_SetProperties(SpawnedBuild, Buildables[ID]->Mesh, Buildables[ID]->ExtensionMesh, Buildables[ID]->Health, Buildables[ID]->MaxHeightOffset);
+	}
+
+	if (Hit && HitComponent && Hit->GetClass()->ImplementsInterface(UBuildingInterface::StaticClass()))
+	{
+		IBuildingInterface::Execute_HandleBuildWalls(Hit, HitComponent->GetName(), SpawnedBuild);
+
+		if (!Buildables[ID]->AvoidAddingAsChild)
+		{
+			IBuildingInterface::Execute_AddBuildChild(Hit, SpawnedBuild);
+		}
+	}
+}
+
+void UWOGBuildComponent::DetectBuildBoxes(bool& OutFound, FTransform& OutTransform)
+{
+	bool bLocalFound = false;
+
+	if (CurrentHitActor->GetClass()->ImplementsInterface(UBuildingInterface::StaticClass()))
+	{
+		TArray<UBoxComponent*> CollisionBoxArray = IBuildingInterface::Execute_ReturnCollisionBoxes(CurrentHitActor);
+
+		for (auto Box : CollisionBoxArray)
+		{
+			if (Box == Cast<UBoxComponent>(CurrentHitComponent))
+			{
+				bLocalFound = true;
+				break;
+			}
+		}
+		OutFound = bLocalFound;
+		OutTransform = CurrentHitComponent->GetComponentTransform();
+	}
+}
+
+bool UWOGBuildComponent::CheckForOverlap()
+{
+	if (!BuildGhost) return false;
+
+	FVector Origin = FVector();
+	FVector _BoxExtents = FVector();
+	float _SphereRadius = 0.f;
+	UKismetSystemLibrary::GetComponentBounds(BuildGhost, Origin, _BoxExtents, _SphereRadius);
+
+	FBoxSphereBounds Bounds = Buildables[BuildID]->Mesh->GetBounds();
+	TArray<AActor*> ActorsToIgnore = {};
+	FHitResult HitResult;
+
+	bool bHit = UKismetSystemLibrary::BoxTraceSingle(this, 
+		Origin, 
+		Origin, 
+		Bounds.BoxExtent / 2, 
+		BuildTransform.GetRotation().Rotator(),
+		UEngineTypes::ConvertToTraceType(ECollisionChannel::ECC_Visibility), //Custom trace channel BuildingOverlapTrace
+		false, 
+		ActorsToIgnore, 
+		EDrawDebugTrace::Type::None, 
+		HitResult,
+		true
+	);
+
+	return bHit;
+}
+
+bool UWOGBuildComponent::IsBuildFloating()
+{
+	if (!BuildGhost) return false;
+
+	FVector Start = FVector();
+	FVector _BoxExtents = FVector();
+	float _SphereRadius = 0.f;
+	UKismetSystemLibrary::GetComponentBounds(BuildGhost, Start, _BoxExtents, _SphereRadius);
+
+	FBoxSphereBounds Bounds = Buildables[BuildID]->Mesh->GetBounds();
+	FVector End = Start;
+	End.Z = End.Z - Buildables[BuildID]->MaxHeightOffset;
+	TArray<AActor*> ActorsToIgnore = {};
+	FHitResult HitResult;
+
+	bool bHit = UKismetSystemLibrary::BoxTraceSingle(this,
+		Start,
+		End,
+		Bounds.BoxExtent / 1.2,
+		BuildTransform.GetRotation().Rotator(),
+		UEngineTypes::ConvertToTraceType(ECollisionChannel::ECC_Visibility),
+		false,
+		ActorsToIgnore,
+		EDrawDebugTrace::Type::None,
+		HitResult,
+		true
+	);
+
+	return bHit;
+}
+
+
+
+

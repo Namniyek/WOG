@@ -94,6 +94,8 @@ public:
 	FORCEINLINE void SetDefaultWeaponClass(TSubclassOf<AWOGBaseWeapon> NewDefaultWeapon) { DefaultWeaponClass = NewDefaultWeapon; }
 	void SetEquippedWeapon(AWOGBaseWeapon* NewEquippedWeapon);
 	FORCEINLINE AWOGBaseWeapon* GetEquippedWeapon() const { return EquippedWeapon; }
+	FORCEINLINE AWOGBaseWeapon* GetMainWeapon() const { return MainWeapon; }
+	FORCEINLINE AWOGBaseWeapon* GetSecondaryWeapon() const { return SecondaryWeapon; }
 	FORCEINLINE TSubclassOf<AWOGBaseWeapon> GetDefaultWeaponClass() const { return DefaultWeaponClass; }
 	
 	/*

@@ -2,6 +2,13 @@
 
 
 #include "WOGDefender.h"
+#include "WOG/ActorComponents/WOGBuildComponent.h"
+
+AWOGDefender::AWOGDefender()
+{
+	BuildComponent = CreateDefaultSubobject<UWOGBuildComponent>(TEXT("BuildingComponent"));
+	BuildComponent->SetIsReplicated(true);
+}
 
 void AWOGDefender::DestroyComponent(UActorComponent* ComponentToDestroy)
 {
@@ -9,4 +16,16 @@ void AWOGDefender::DestroyComponent(UActorComponent* ComponentToDestroy)
 	{
 		ComponentToDestroy->DestroyComponent();
 	}
+}
+
+void AWOGDefender::Server_SpawnBuild_Implementation()
+{
+	if (!BuildComponent) return;
+
+	BuildComponent->SpawnBuild(
+		BuildComponent->BuildTransform,
+		BuildComponent->BuildID,
+		BuildComponent->CurrentHitActor,
+		BuildComponent->CurrentHitComponent
+	);
 }
