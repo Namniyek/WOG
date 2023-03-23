@@ -54,7 +54,7 @@ void AWOGBaseBuildable::AddBuildChild_Implementation(AActor* Actor)
 
 void AWOGBaseBuildable::DealDamage_Implementation(const float& Damage)
 {
-	if (bIsDead) return;
+	if (bIsDead || !HasAuthority()) return;
 
 	BuildHealth -= Damage;
 
@@ -137,6 +137,11 @@ bool AWOGBaseBuildable::Trace(const TObjectPtr<UPrimitiveComponent> Component, f
 	return HitResult.bBlockingHit;
 }
 
+void AWOGBaseBuildable::Server_BuildExtensions_Implementation()
+{
+	BuildExtensions();
+}
+
 void AWOGBaseBuildable::BuildExtensions()
 {
 	TArray<TObjectPtr<UArrowComponent>> Arrows;
@@ -177,6 +182,7 @@ void AWOGBaseBuildable::BuildExtensions()
 		{
 			BuildExtensionsMeshes.AddUnique(Extension);
 			Extension->SetStaticMesh(BuildExtensionMesh);
+			Extension->SetIsReplicated(true);
 			UE_LOG(LogTemp, Warning, TEXT("ExtensionBuilt"));
 		}
 	}

@@ -103,6 +103,14 @@ void UWOGBuildComponent::GiveBuildColor(bool IsAllowed)
 	BuildGhost->SetWorldTransform(BuildTransform);
 }
 
+void UWOGBuildComponent::ChangeMesh()
+{
+	if (!BuildGhost) return;
+
+	BuildGhost->SetStaticMesh(Buildables[BuildID]->Mesh);
+	HeightOffset = FVector();
+}
+
 void UWOGBuildComponent::BuildCycle()
 {
 	if (!DefenderCharacter)
@@ -180,41 +188,6 @@ void UWOGBuildComponent::BuildCycle()
 	}
 }
 
-void UWOGBuildComponent::ChangeMesh()
-{
-	if (!BuildGhost) return;
-
-	BuildGhost->SetStaticMesh(Buildables[BuildID]->Mesh);
-	HeightOffset = FVector();
-}
-
-void UWOGBuildComponent::SpawnBuild(FTransform Transform, int32 ID, AActor* Hit, UPrimitiveComponent* HitComponent)
-{
-	TObjectPtr<AActor> SpawnedBuild =  GetWorld()->SpawnActor<AActor>(Buildables[ID]->Actor, Transform);
-	HeightOffset = FVector();
-
-	if (!SpawnedBuild)
-	{
-		UE_LOG(LogTemp, Error, TEXT("Nothing Spawned"));
-		return;
-	}
-
-	if (SpawnedBuild->GetClass()->ImplementsInterface(UBuildingInterface::StaticClass()))
-	{
-		IBuildingInterface::Execute_SetProperties(SpawnedBuild, Buildables[ID]->Mesh, Buildables[ID]->ExtensionMesh, Buildables[ID]->Health, Buildables[ID]->MaxHeightOffset);
-	}
-
-	if (Hit && HitComponent && Hit->GetClass()->ImplementsInterface(UBuildingInterface::StaticClass()))
-	{
-		IBuildingInterface::Execute_HandleBuildWalls(Hit, HitComponent->GetName(), SpawnedBuild);
-
-		if (!Buildables[ID]->AvoidAddingAsChild)
-		{
-			IBuildingInterface::Execute_AddBuildChild(Hit, SpawnedBuild);
-		}
-	}
-}
-
 void UWOGBuildComponent::DetectBuildBoxes(bool& OutFound, FTransform& OutTransform)
 {
 	bool bLocalFound = false;
@@ -249,15 +222,15 @@ bool UWOGBuildComponent::CheckForOverlap()
 	TArray<AActor*> ActorsToIgnore = {};
 	FHitResult HitResult;
 
-	bool bHit = UKismetSystemLibrary::BoxTraceSingle(this, 
-		Origin, 
-		Origin, 
-		Bounds.BoxExtent / 2, 
+	bool bHit = UKismetSystemLibrary::BoxTraceSingle(this,
+		Origin,
+		Origin,
+		Bounds.BoxExtent / 2,
 		BuildTransform.GetRotation().Rotator(),
 		UEngineTypes::ConvertToTraceType(ECollisionChannel::ECC_Visibility), //Custom trace channel BuildingOverlapTrace
-		false, 
-		ActorsToIgnore, 
-		EDrawDebugTrace::Type::None, 
+		false,
+		ActorsToIgnore,
+		EDrawDebugTrace::Type::None,
 		HitResult,
 		true
 	);
@@ -295,6 +268,94 @@ bool UWOGBuildComponent::IsBuildFloating()
 
 	return bHit;
 }
+
+void UWOGBuildComponent::PlaceBuildable()
+{
+	if (bCanBuild && bIsBuildModeOn)
+	{
+		Server_SpawnBuild(BuildTransform, BuildID, CurrentHitActor, CurrentHitComponent);
+	}
+}
+
+void UWOGBuildComponent::Server_SpawnBuild_Implementation(FTransform Transform, int32 ID, AActor* Hit, UPrimitiveComponent* HitComponent)
+{
+	SpawnBuild(Transform, ID, Hit, HitComponent);
+	HeightOffset = FVector();
+	UE_LOG(LogTemp, Warning, TEXT("SpawnBuild() called"));
+}
+
+void UWOGBuildComponent::SpawnBuild(FTransform Transform, int32 ID, AActor* Hit, UPrimitiveComponent* HitComponent)
+{
+	TObjectPtr<AActor> SpawnedBuild =  GetWorld()->SpawnActor<AActor>(Buildables[ID]->Actor, Transform);
+	HeightOffset = FVector();
+
+	if (!SpawnedBuild)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Nothing Spawned"));
+		return;
+	}
+
+	if (SpawnedBuild->GetClass()->ImplementsInterface(UBuildingInterface::StaticClass()))
+	{
+		IBuildingInterface::Execute_SetProperties(SpawnedBuild, Buildables[ID]->Mesh, Buildables[ID]->ExtensionMesh, Buildables[ID]->Health, Buildables[ID]->MaxHeightOffset);
+	}
+
+	if (Hit && HitComponent && Hit->GetClass()->ImplementsInterface(UBuildingInterface::StaticClass()))
+	{
+		IBuildingInterface::Execute_HandleBuildWalls(Hit, HitComponent->GetName(), SpawnedBuild);
+
+		if (!Buildables[ID]->AvoidAddingAsChild)
+		{
+			IBuildingInterface::Execute_AddBuildChild(Hit, SpawnedBuild);
+		}
+	}
+}
+
+void UWOGBuildComponent::HandleBuildHeight(bool bShouldRise)
+{
+	FVector Increment = FVector();
+
+	if (bShouldRise)
+	{
+		Increment = HeightOffset + FVector(0.f, 0.f, 100.f);
+	}
+	else
+	{
+		Increment = HeightOffset - FVector(0.f, 0.f, 100.f);
+	}
+
+	Increment.Z = FMath::Clamp(Increment.Z, -600.f, 600.f);
+	HeightOffset = FVector(0.f, 0.f, Increment.Z);
+}
+
+void UWOGBuildComponent::HandleBuildRotation(bool bRotateLeft)
+{
+	if (!bIsBuildModeOn || !BuildGhost->GetStaticMesh()) return;
+
+	FRotator NewBuildRotation = FRotator();
+
+	if (bRotateLeft)
+	{
+		NewBuildRotation = BuildTransform.GetRotation().Rotator() - FRotator(0.f, 5.f, 0.f);
+	}
+	else
+	{
+		NewBuildRotation = BuildTransform.GetRotation().Rotator() + FRotator(0.f, 5.f, 0.f);
+	}
+
+	BuildTransform.SetRotation(FQuat::MakeFromRotator(NewBuildRotation));
+}
+
+void UWOGBuildComponent::Server_InteractWithBuild_Implementation(UObject* HitActor)
+{
+	IBuildingInterface* BuildInterface = Cast<IBuildingInterface>(HitActor);
+	if (BuildInterface)
+	{
+		BuildInterface->Execute_InteractWithBuild(HitActor);
+	}
+}
+
+
 
 
 

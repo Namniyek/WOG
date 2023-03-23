@@ -22,9 +22,6 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void DestroyComponent(UActorComponent* ComponentToDestroy);
 
-	UFUNCTION(BlueprintCallable, Server, reliable)
-	void Server_SpawnBuild();
-
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<UWOGBuildComponent> BuildComponent;

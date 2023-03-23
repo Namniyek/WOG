@@ -21,6 +21,7 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void BuildExtensions();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated, Category = "Build Properties")
 	float BuildHealth;
@@ -67,8 +68,8 @@ protected:
 
 public:
 
-	UFUNCTION(BlueprintCallable)
-	void BuildExtensions();
+	UFUNCTION(BlueprintCallable, Server, reliable)
+	void Server_BuildExtensions();
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void HandleChaosDestruction();

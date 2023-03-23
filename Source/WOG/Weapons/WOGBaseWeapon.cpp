@@ -8,6 +8,7 @@
 #include "DidItHitActorComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundCue.h"
+#include "WOG/Interfaces/BuildingInterface.h"
 
 // Sets default values
 AWOGBaseWeapon::AWOGBaseWeapon()
@@ -440,8 +441,39 @@ void AWOGBaseWeapon::StopBlocking()
 
 void AWOGBaseWeapon::HitDetected(FHitResult Hit)
 {
+	if (!Hit.bBlockingHit) return;
+
+	IBuildingInterface* BuildInterface = Cast<IBuildingInterface>(Hit.GetActor());
 	ABasePlayerCharacter* HitPlayer = Cast<ABasePlayerCharacter>(Hit.GetActor());
 	AWOGBaseWeapon* HitWeapon = Cast<AWOGBaseWeapon>(Hit.GetActor());
+	
+	if (BuildInterface)
+	{
+		if (HitActorsToIgnore.Contains(Hit.GetActor()))
+		{
+			//Build already hit
+			return;
+		}
+
+		float DamageToApply = 0.f;
+		switch (WeaponState)
+		{
+		case EWeaponState::EWS_AttackLight:
+			DamageToApply = BaseDamage + (BaseDamage * DamageMultiplier) + (BaseDamage * (ComboStreak * ComboDamageMultiplier));
+			UE_LOG(LogTemp, Warning, TEXT("LightDamage"));
+			break;
+		case EWeaponState::EWS_AttackHeavy:
+			DamageToApply = BaseDamage + (BaseDamage * DamageMultiplier) + (BaseDamage * HeavyDamageMultiplier);
+			UE_LOG(LogTemp, Warning, TEXT("HeavyDamage"));
+			break;
+		}
+
+		HitActorsToIgnore.AddUnique(Hit.GetActor());
+		BuildInterface->Execute_DealDamage(Hit.GetActor(), DamageToApply);
+		UE_LOG(LogTemp, Warning, TEXT("Build damaged with %f"), DamageToApply);
+		return;
+
+	}
 
 	if (HitWeapon)
 	{

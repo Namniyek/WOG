@@ -10,38 +10,39 @@
 /**
  * 
  */
- /** Please add a struct description */
+ /** Struct used to define the types of buildables available */
 USTRUCT(BlueprintType)
 struct FBuildables : public FTableRowBase
 {
 	GENERATED_BODY()
 public:
-	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Mesh", MakeStructureDefaultValue = "None"))
 	TObjectPtr<UStaticMesh> Mesh;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "ExtensionMesh", MakeStructureDefaultValue = "None"))
 	TObjectPtr<UStaticMesh> ExtensionMesh;
 
-	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "TraceChannel", MakeStructureDefaultValue = "TraceTypeQuery1"))
 	TEnumAsByte<ETraceTypeQuery> TraceChannel;
 
-	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Actor", MakeStructureDefaultValue = "None"))
 	TObjectPtr<UClass> Actor;
 
-	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Health", MakeStructureDefaultValue = "0.000000"))
 	double Health;
 
-	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "MaxHeightOffset", MakeStructureDefaultValue = "0.000000"))
 	double MaxHeightOffset;
 
-	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "AvoidAddingAsChild", MakeStructureDefaultValue = "False"))
 	bool AvoidAddingAsChild;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Name"))
+	FText Name;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Icon"))
+	TObjectPtr<UTexture2D> Icon;
+
 };
 
 class UCameraComponent;
@@ -71,95 +72,76 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Building Setting")
 	TObjectPtr<UMaterialInstance> ForbiddenGhostMaterial;
 
+	TArray<FBuildables*> Buildables;
 
 public:
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	int32 LastIndexDataTable = 0;
 
-	/** Please add a variable description */
-	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "Default")
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Default")
 	bool bIsBuildModeOn;
 
-	/** Please add a variable description */
-	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "Default")
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Default")
 	bool bCanBuild;
 
-	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "Default")
 	int32 BuildID;
 
-	/** Please add a variable description */
-	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "Default")
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Default")
 	FTransform BuildTransform;
 
-	/** Please add a variable description */
-	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "Default")
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Default")
 	TObjectPtr<UCameraComponent> Camera;
 
-	/** Please add a variable description */
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Default")
 	TObjectPtr<UStaticMeshComponent> BuildGhost;
 
-	/** Please add a variable description */
-	TArray<FBuildables*> Buildables;
-
-	/** Please add a variable description */
-	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "Default")
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Default")
 	TObjectPtr<AActor> CurrentHitActor;
 
-	/** Please add a variable description */
-	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "Default")
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Default")
 	TObjectPtr<UPrimitiveComponent> CurrentHitComponent;
 
-	/** Please add a variable description */
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "Default")
 	FVector HeightOffset;
 
 protected:
 	virtual void BeginPlay() override;
 
-	/** Please add a function description */
-	UFUNCTION(BlueprintCallable)
-	void SpawnBuildGhost();
-
-	/** Please add a function description */
-	UFUNCTION(BlueprintCallable)
-	void GiveBuildColor(bool IsAllowed);
-
-	/** Please add a function description */
-	UFUNCTION(BlueprintCallable)
+	void StopBuildMode();
+	void BuildDelay();
 	void BuildCycle();
 
-	/** Please add a function description */
+	void SpawnBuildGhost();
+	void GiveBuildColor(bool IsAllowed);
+
+	void DetectBuildBoxes(bool& OutFound, FTransform& OutTransform);
+	bool CheckForOverlap();
+	bool IsBuildFloating();
+
 	UFUNCTION(BlueprintCallable)
 	void ChangeMesh();
 
-	/** Please add a function description */
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(Server, reliable)
+	void Server_SpawnBuild(FTransform Transform, int32 ID, AActor* Hit, UPrimitiveComponent* HitComponent);
 	void SpawnBuild(FTransform Transform, int32 ID, AActor* Hit, UPrimitiveComponent* HitComponent);
-
-	/** Please add a function description */
-	UFUNCTION(BlueprintCallable)
-	void DetectBuildBoxes(bool& OutFound, FTransform& OutTransform);
-
-	/** Please add a function description */
-	UFUNCTION(BlueprintCallable)
-	bool CheckForOverlap();
-
-	/** Please add a function description */
-	UFUNCTION(BlueprintCallable)
-	bool IsBuildFloating();
-
-	UFUNCTION()
-	void StopBuildMode();
-
-	UFUNCTION()
-	void BuildDelay();
 
 public:
 
 	UFUNCTION(BlueprintCallable)
 	void LaunchBuildMode();
+
+	UFUNCTION(BlueprintCallable)
+	void PlaceBuildable();
+
+	UFUNCTION(BlueprintCallable)
+	void HandleBuildHeight(bool bShouldRise);
+
+	UFUNCTION(BlueprintCallable)
+	void HandleBuildRotation(bool bRotateLeft);
+
+	UFUNCTION(BlueprintCallable, Server, reliable)
+	void Server_InteractWithBuild(UObject* HitActor);
 
 };

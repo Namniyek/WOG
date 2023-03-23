@@ -17,15 +17,3 @@ void AWOGDefender::DestroyComponent(UActorComponent* ComponentToDestroy)
 		ComponentToDestroy->DestroyComponent();
 	}
 }
-
-void AWOGDefender::Server_SpawnBuild_Implementation()
-{
-	if (!BuildComponent) return;
-
-	BuildComponent->SpawnBuild(
-		BuildComponent->BuildTransform,
-		BuildComponent->BuildID,
-		BuildComponent->CurrentHitActor,
-		BuildComponent->CurrentHitComponent
-	);
-}
