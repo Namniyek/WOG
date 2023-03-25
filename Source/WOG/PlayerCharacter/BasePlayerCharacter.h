@@ -3,13 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Character.h"
+#include "WOG/Characters/WOGBaseCharacter.h"
 #include "WOG/Data/PlayerProfileSaveGame.h"
 #include "InputActionValue.h"
 #include "Engine/DataTable.h"
 #include "WOG/Types/CharacterTypes.h"
 #include "WOG/FunctionLibrary/MeshMergeFunctionLibrary.h"
 #include "BasePlayerCharacter.generated.h"
+
 
 
 USTRUCT(BlueprintType)
@@ -105,7 +106,7 @@ public:
 
 
 UCLASS()
-class WOG_API ABasePlayerCharacter : public ACharacter
+class WOG_API ABasePlayerCharacter : public AWOGBaseCharacter
 {
 	GENERATED_BODY()
 

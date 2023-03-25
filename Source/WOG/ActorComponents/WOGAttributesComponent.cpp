@@ -10,11 +10,11 @@
 UWOGAttributesComponent::UWOGAttributesComponent()
 {
 	MaxHealth = 100.f;
-	Health = 100.f;
+	Health = MaxHealth;
 	MaxMana = 100.f;
-	Mana = 100.f;
+	Mana = MaxMana;
 	MaxAdrenaline = 100.f;
-	Adrenaline = 0.f;
+	Adrenaline = MaxAdrenaline;
 	HealthPercent = Health / MaxHealth;
 	ManaPercent = Mana / MaxMana;
 	AdrenalinePercent = Adrenaline / MaxAdrenaline;
@@ -33,6 +33,18 @@ void UWOGAttributesComponent::GetLifetimeReplicatedProps(TArray<FLifetimePropert
 	DOREPLIFETIME(UWOGAttributesComponent, MaxAdrenaline);
 	DOREPLIFETIME(UWOGAttributesComponent, Adrenaline);
 	DOREPLIFETIME(UWOGAttributesComponent, AdrenalinePercent);
+}
+
+void UWOGAttributesComponent::BeginPlay()
+{
+	Server_InitStats();
+}
+
+void UWOGAttributesComponent::Server_InitStats_Implementation()
+{
+	Health = MaxHealth;
+	Mana = MaxMana;
+	Adrenaline = MaxAdrenaline;
 }
 
 void UWOGAttributesComponent::Server_UpdateHealth_Implementation(float Value, AController* InstigatedBy)
@@ -139,6 +151,8 @@ void UWOGAttributesComponent::UpdateAdranaline(float Value)
 	}
 	AdrenalinePercent = Adrenaline / MaxAdrenaline;
 }
+
+
 
 void UWOGAttributesComponent::Server_PassiveAttributeUpdate_Implementation(EAttributeType AttributeToUpdate, float Value)
 {

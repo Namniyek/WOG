@@ -4,11 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
-#include "SpawningInterface.generated.h"
+#include "SpawnInterface.generated.h"
 
 // This class does not need to be modified.
 UINTERFACE(MinimalAPI)
-class USpawningInterface : public UInterface
+class USpawnInterface : public UInterface
 {
 	GENERATED_BODY()
 };
@@ -16,7 +16,7 @@ class USpawningInterface : public UInterface
 /**
  * 
  */
-class WOG_API ISpawningInterface
+class WOG_API ISpawnInterface
 {
 	GENERATED_BODY()
 

@@ -30,6 +30,8 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 protected:
+	virtual void BeginPlay() override;
+
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Attributes, meta = (AllowPrivateAccess = "true"), Replicated)
 	float MaxHealth;
@@ -64,6 +66,9 @@ private:
 
 	FTimerHandle PassiveUpdateTimer;
 	FTimerDelegate PassiveUpdateTimerDelegate;
+
+	UFUNCTION(Server, reliable)
+	void Server_InitStats();
 
 public:
 	UFUNCTION(BlueprintCallable, Server, reliable)

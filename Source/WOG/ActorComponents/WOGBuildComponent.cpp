@@ -211,7 +211,7 @@ void UWOGBuildComponent::DetectBuildBoxes(bool& OutFound, FTransform& OutTransfo
 
 bool UWOGBuildComponent::CheckForOverlap()
 {
-	if (!BuildGhost) return false;
+	if (!BuildGhost) return true;
 
 	FVector Origin = FVector();
 	FVector _BoxExtents = FVector();
@@ -240,7 +240,7 @@ bool UWOGBuildComponent::CheckForOverlap()
 
 bool UWOGBuildComponent::IsBuildFloating()
 {
-	if (!BuildGhost) return false;
+	if (!BuildGhost) return true;
 
 	FVector Start = FVector();
 	FVector _BoxExtents = FVector();

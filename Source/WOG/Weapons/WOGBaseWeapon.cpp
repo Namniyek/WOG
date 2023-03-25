@@ -9,6 +9,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundCue.h"
 #include "WOG/Interfaces/BuildingInterface.h"
+#include "WOG/Interfaces/AttributesInterface.h"
 
 // Sets default values
 AWOGBaseWeapon::AWOGBaseWeapon()
@@ -443,9 +444,10 @@ void AWOGBaseWeapon::HitDetected(FHitResult Hit)
 {
 	if (!Hit.bBlockingHit) return;
 
-	IBuildingInterface* BuildInterface = Cast<IBuildingInterface>(Hit.GetActor());
-	ABasePlayerCharacter* HitPlayer = Cast<ABasePlayerCharacter>(Hit.GetActor());
-	AWOGBaseWeapon* HitWeapon = Cast<AWOGBaseWeapon>(Hit.GetActor());
+	TObjectPtr<IBuildingInterface> BuildInterface = Cast<IBuildingInterface>(Hit.GetActor());
+	TObjectPtr<IAttributesInterface> AttributesInterface = Cast<IAttributesInterface>(Hit.GetActor());
+	TObjectPtr<ABasePlayerCharacter> HitPlayer = Cast<ABasePlayerCharacter>(Hit.GetActor());
+	TObjectPtr<AWOGBaseWeapon> HitWeapon = Cast<AWOGBaseWeapon>(Hit.GetActor());
 	
 	if (BuildInterface)
 	{

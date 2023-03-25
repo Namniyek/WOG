@@ -25,6 +25,7 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	TObjectPtr<ABasePlayerCharacter> OwnerPlayerCharacter;
 
 	UPROPERTY(ReplicatedUsing = OnRep_MainWeapon, VisibleAnywhere, BlueprintReadOnly)
 	AWOGBaseWeapon* MainWeapon;

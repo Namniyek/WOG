@@ -13,7 +13,7 @@ class WOG_API UWOGBaseActorComponent : public UActorComponent
 	GENERATED_BODY()
 
 public:	
-	friend class ABasePlayerCharacter;
+	friend class AWOGBaseCharacter;
 	UWOGBaseActorComponent();
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
@@ -21,7 +21,7 @@ protected:
 	virtual void BeginPlay() override;
 
 	UPROPERTY(Replicated)
-	ABasePlayerCharacter* OwnerCharacter;
+	TObjectPtr<AWOGBaseCharacter> OwnerCharacter;
 
 	UPROPERTY()
 	class AWOGPlayerController* OwnerPC;

@@ -10,6 +10,7 @@
 /**
  * 
  */
+
  /** Struct used to define the types of buildables available */
 USTRUCT(BlueprintType)
 struct FBuildables : public FTableRowBase
@@ -56,7 +57,6 @@ class WOG_API UWOGBuildComponent : public UWOGBaseActorComponent
 public:
 	friend class AWOGDefender;
 	UWOGBuildComponent();
-
 
 private:
 

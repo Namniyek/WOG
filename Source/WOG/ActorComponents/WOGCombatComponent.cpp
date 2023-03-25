@@ -27,8 +27,8 @@ void UWOGCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 void UWOGCombatComponent::BeginPlay()
 {
 	Super::BeginPlay();
-	OwnerCharacter = OwnerCharacter == nullptr ? Cast<ABasePlayerCharacter>(GetOwner()) : OwnerCharacter;
-	/*if (OwnerCharacter->IsLocallyControlled() && DefaultWeaponClass)
+	OwnerPlayerCharacter = OwnerPlayerCharacter == nullptr ? Cast<ABasePlayerCharacter>(GetOwner()) : OwnerPlayerCharacter;
+	/*if (OwnerPlayerCharacter->IsLocallyControlled() && DefaultWeaponClass)
 	{
 		Server_CreateMainWeapon(DefaultWeaponClass);
 	}*/
@@ -41,18 +41,18 @@ void UWOGCombatComponent::Server_CreateMainWeapon_Implementation(TSubclassOf<AWO
 
 void UWOGCombatComponent::CreateMainWeapon(TSubclassOf<AWOGBaseWeapon> WeaponToCreate)
 {
-	OwnerCharacter = OwnerCharacter == nullptr ? Cast<ABasePlayerCharacter>(GetOwner()) : OwnerCharacter;
-	if (!OwnerCharacter) return;
+	OwnerPlayerCharacter = OwnerPlayerCharacter == nullptr ? Cast<ABasePlayerCharacter>(GetOwner()) : OwnerPlayerCharacter;
+	if (!OwnerPlayerCharacter) return;
 
 	FActorSpawnParameters SpawnParams;
-	SpawnParams.Owner = OwnerCharacter;
+	SpawnParams.Owner = OwnerPlayerCharacter;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-	MainWeapon = GetWorld()->SpawnActor<AWOGBaseWeapon>(WeaponToCreate, OwnerCharacter->GetActorTransform(), SpawnParams);
+	MainWeapon = GetWorld()->SpawnActor<AWOGBaseWeapon>(WeaponToCreate, OwnerPlayerCharacter->GetActorTransform(), SpawnParams);
 	
 	if (MainWeapon)
 	{
-		MainWeapon->SetOwner(OwnerCharacter);
-		MainWeapon->OwnerCharacter = OwnerCharacter;
+		MainWeapon->SetOwner(OwnerPlayerCharacter);
+		MainWeapon->OwnerCharacter = OwnerPlayerCharacter;
 		MainWeapon->Server_SetWeaponState(EWeaponState::EWS_Stored);
 		MainWeapon->InitTraceComponent();
 
@@ -76,18 +76,18 @@ void UWOGCombatComponent::Server_CreateSecondaryWeapon_Implementation(TSubclassO
 
 void UWOGCombatComponent::CreateSecondaryWeapon(TSubclassOf<AWOGBaseWeapon> WeaponToCreate)
 {
-	OwnerCharacter = OwnerCharacter == nullptr ? Cast<ABasePlayerCharacter>(GetOwner()) : OwnerCharacter;
-	if (!OwnerCharacter) return;
+	OwnerPlayerCharacter = OwnerPlayerCharacter == nullptr ? Cast<ABasePlayerCharacter>(GetOwner()) : OwnerPlayerCharacter;
+	if (!OwnerPlayerCharacter) return;
 
 	FActorSpawnParameters SpawnParams;
-	SpawnParams.Owner = OwnerCharacter;
+	SpawnParams.Owner = OwnerPlayerCharacter;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-	SecondaryWeapon = GetWorld()->SpawnActor<AWOGBaseWeapon>(WeaponToCreate, OwnerCharacter->GetActorTransform(), SpawnParams);
+	SecondaryWeapon = GetWorld()->SpawnActor<AWOGBaseWeapon>(WeaponToCreate, OwnerPlayerCharacter->GetActorTransform(), SpawnParams);
 
 	if (SecondaryWeapon)
 	{
-		SecondaryWeapon->SetOwner(OwnerCharacter);
-		SecondaryWeapon->OwnerCharacter = OwnerCharacter;
+		SecondaryWeapon->SetOwner(OwnerPlayerCharacter);
+		SecondaryWeapon->OwnerCharacter = OwnerPlayerCharacter;
 		SecondaryWeapon->Server_SetWeaponState(EWeaponState::EWS_Stored);
 		SecondaryWeapon->InitTraceComponent();
 
@@ -166,9 +166,9 @@ void UWOGCombatComponent::SwapWeapons()
 		SecondaryWeapon->Server_Swap();
 		MainWeapon->Server_Equip();
 	}
-	if (OwnerCharacter)
+	if (OwnerPlayerCharacter)
 	{
-		OwnerCharacter->Server_SetCharacterState(ECharacterState::ECS_Unnoccupied);
+		OwnerPlayerCharacter->Server_SetCharacterState(ECharacterState::ECS_Unnoccupied);
 	}
 }
 
@@ -178,32 +178,32 @@ void UWOGCombatComponent::DropWeapons()
 
 void UWOGCombatComponent::AttackLight()
 {
-	OwnerCharacter = OwnerCharacter == nullptr ? Cast<ABasePlayerCharacter>(GetOwner()) : OwnerCharacter;
-	if (!EquippedWeapon || !OwnerCharacter) return;
+	OwnerPlayerCharacter = OwnerPlayerCharacter == nullptr ? Cast<ABasePlayerCharacter>(GetOwner()) : OwnerPlayerCharacter;
+	if (!EquippedWeapon || !OwnerPlayerCharacter) return;
 
-	if (OwnerCharacter->CharacterState != ECharacterState::ECS_Attacking || EquippedWeapon->GetIsInCombo())
+	if (OwnerPlayerCharacter->CharacterState != ECharacterState::ECS_Attacking || EquippedWeapon->GetIsInCombo())
 	{
 		EquippedWeapon->Server_AttackLight();
-		OwnerCharacter->Server_SetCharacterState(ECharacterState::ECS_Attacking);
+		OwnerPlayerCharacter->Server_SetCharacterState(ECharacterState::ECS_Attacking);
 	}
 }
 
 void UWOGCombatComponent::AttackHeavy()
 {
-	OwnerCharacter = OwnerCharacter == nullptr ? Cast<ABasePlayerCharacter>(GetOwner()) : OwnerCharacter;
-	if (!EquippedWeapon || !OwnerCharacter) return;
-	OwnerCharacter->Server_SetCharacterState(ECharacterState::ECS_Attacking);
+	OwnerPlayerCharacter = OwnerPlayerCharacter == nullptr ? Cast<ABasePlayerCharacter>(GetOwner()) : OwnerPlayerCharacter;
+	if (!EquippedWeapon || !OwnerPlayerCharacter) return;
+	OwnerPlayerCharacter->Server_SetCharacterState(ECharacterState::ECS_Attacking);
 
 	EquippedWeapon->Server_AttackHeavy();
 }
 
 void UWOGCombatComponent::Block()
 {
-	OwnerCharacter = OwnerCharacter == nullptr ? Cast<ABasePlayerCharacter>(GetOwner()) : OwnerCharacter;
-	if (!OwnerCharacter) return;
-	if (OwnerCharacter->GetCharacterState() == ECharacterState::ECS_Unnoccupied)
+	OwnerPlayerCharacter = OwnerPlayerCharacter == nullptr ? Cast<ABasePlayerCharacter>(GetOwner()) : OwnerPlayerCharacter;
+	if (!OwnerPlayerCharacter) return;
+	if (OwnerPlayerCharacter->GetCharacterState() == ECharacterState::ECS_Unnoccupied)
 	{
-		OwnerCharacter->Server_SetCharacterState(ECharacterState::ECS_Blocking);
+		OwnerPlayerCharacter->Server_SetCharacterState(ECharacterState::ECS_Blocking);
 	}
 
 	if (!EquippedWeapon)
@@ -215,12 +215,12 @@ void UWOGCombatComponent::Block()
 
 void UWOGCombatComponent::StopBlocking()
 {
-	OwnerCharacter = OwnerCharacter == nullptr ? Cast<ABasePlayerCharacter>(GetOwner()) : OwnerCharacter;
-	if (!OwnerCharacter) return;
+	OwnerPlayerCharacter = OwnerPlayerCharacter == nullptr ? Cast<ABasePlayerCharacter>(GetOwner()) : OwnerPlayerCharacter;
+	if (!OwnerPlayerCharacter) return;
 
-	if (OwnerCharacter->GetCharacterState() == ECharacterState::ECS_Blocking)
+	if (OwnerPlayerCharacter->GetCharacterState() == ECharacterState::ECS_Blocking)
 	{
-		OwnerCharacter->Server_SetCharacterState(ECharacterState::ECS_Unnoccupied);
+		OwnerPlayerCharacter->Server_SetCharacterState(ECharacterState::ECS_Unnoccupied);
 	}
 
 	if (!EquippedWeapon)
@@ -254,7 +254,7 @@ void UWOGCombatComponent::HandleCosmeticBodyHit(const FHitResult& Hit, const FVe
 
 	if (InstigatorWeapon)
 	{
-		UGameplayStatics::PlaySoundAtLocation(this, InstigatorWeapon->GetHitSound(), OwnerCharacter->GetActorLocation());
+		UGameplayStatics::PlaySoundAtLocation(this, InstigatorWeapon->GetHitSound(), OwnerPlayerCharacter->GetActorLocation());
 	}
 }
 
@@ -267,7 +267,7 @@ FName UWOGCombatComponent::CalculateHitDirection(const FHitResult& Hit, const FV
 	FVector AttackDirection = (ImpactPoint - WeaponLocation).GetSafeNormal();
 
 	// Calculate the hit direction
-	FVector CharacterForward = OwnerCharacter->GetActorForwardVector();
+	FVector CharacterForward = OwnerPlayerCharacter->GetActorForwardVector();
 	LastHitDirection = FVector::CrossProduct(AttackDirection, CharacterForward);
 
 	// Determine the hit direction
@@ -303,9 +303,9 @@ FName UWOGCombatComponent::CalculateHitDirection(const FHitResult& Hit, const FV
 
 void UWOGCombatComponent::PlayHitReactMontage(FName Section)
 {
-	if (!OwnerCharacter) return;
+	if (!OwnerPlayerCharacter) return;
 
-	UAnimInstance* CharacterAnimInstance = OwnerCharacter->GetMesh()->GetAnimInstance();
+	UAnimInstance* CharacterAnimInstance = OwnerPlayerCharacter->GetMesh()->GetAnimInstance();
 	if (!CharacterAnimInstance) return;
 
 	if (EquippedWeapon && EquippedWeapon->GetHurtMontage())
@@ -317,16 +317,16 @@ void UWOGCombatComponent::PlayHitReactMontage(FName Section)
 
 void UWOGCombatComponent::HandleCosmeticBlock(const AWOGBaseWeapon* InstigatorWeapon)
 {
-	if (!OwnerCharacter || !EquippedWeapon) return;
+	if (!OwnerPlayerCharacter || !EquippedWeapon) return;
 
 	if (EquippedWeapon->GetBlockSound())
 	{
-		UGameplayStatics::PlaySoundAtLocation(this, EquippedWeapon->GetBlockSound(), OwnerCharacter->GetActorLocation());
+		UGameplayStatics::PlaySoundAtLocation(this, EquippedWeapon->GetBlockSound(), OwnerPlayerCharacter->GetActorLocation());
 	}
 
 	if (EquippedWeapon->GetBlockMontage())
 	{
-		UAnimInstance* CharacterAnimInstance = OwnerCharacter->GetMesh()->GetAnimInstance();
+		UAnimInstance* CharacterAnimInstance = OwnerPlayerCharacter->GetMesh()->GetAnimInstance();
 		if (!CharacterAnimInstance) return;
 
 		if (CharacterAnimInstance)

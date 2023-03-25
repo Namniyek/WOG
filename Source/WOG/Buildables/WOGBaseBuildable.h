@@ -45,8 +45,7 @@ protected:
 	TObjectPtr<UStaticMesh> BuildExtensionMesh;
 
 
-	//Interface functions
-	
+	#pragma region Interface functions
 	virtual TArray<UBoxComponent*> ReturnCollisionBoxes_Implementation() override;
 
 	virtual void SetProperties_Implementation(UStaticMesh* Mesh, UStaticMesh* ExtensionMesh, const float& Health, const float& MaxHeightOffset) override;
@@ -54,8 +53,8 @@ protected:
 	virtual void DealDamage_Implementation(const float& Damage) override;
 
 	virtual void AddBuildChild_Implementation(AActor* Actor) override;
-
-	//
+	#pragma endregion
+	
 
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_DestroyBuild();
