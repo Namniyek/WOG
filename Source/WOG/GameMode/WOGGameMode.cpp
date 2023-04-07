@@ -7,7 +7,7 @@
 #include "GameFramework/PlayerState.h"
 #include "GameFramework/PlayerStart.h"
 #include "Kismet/GameplayStatics.h"
-#include "WOG/PlayerCharacter/BasePlayerCharacter.h"
+#include "WOG/Characters/WOGBaseCharacter.h"
 #include "WOG/PlayerCharacter/WOGAttacker.h"
 #include "WOG/PlayerCharacter/WOGDefender.h"
 #include "WOG/PlayerController/WOGPlayerController.h"
@@ -178,7 +178,7 @@ void AWOGGameMode::RestartMatch()
 	RestartGame();
 }
 
-void AWOGGameMode::PlayerEliminated(ABasePlayerCharacter* ElimmedCharacter, AWOGPlayerController* VictimController, AWOGPlayerController* AttackerController)
+void AWOGGameMode::PlayerEliminated(AWOGBaseCharacter* ElimmedCharacter, AWOGPlayerController* VictimController, AWOGPlayerController* AttackerController)
 {
 	if (!VictimController || !AttackerController) return;
 	AWOGPlayerState* AttackerPlayerState = AttackerController ? AttackerController->GetPlayerState<AWOGPlayerState>() : nullptr;

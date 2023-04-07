@@ -4,6 +4,7 @@
 #include "WOGBaseWeapon.h"
 #include "Net/UnrealNetwork.h"
 #include "WOG/PlayerCharacter/BasePlayerCharacter.h"
+#include "WOG/Enemies/WOGBaseEnemy.h"
 #include "WOG/ActorComponents/WOGCombatComponent.h"
 #include "DidItHitActorComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -255,7 +256,11 @@ void AWOGBaseWeapon::InitTraceComponent()
 		TraceComponent->ToggleTraceCheck(false);
 		TraceComponent->MyWorldContextObject = this;
 		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString("SetupVariables() called"));
-		TraceComponent->OnItemAdded.AddDynamic(this, &ThisClass::HitDetected);
+
+		if (HasAuthority())
+		{
+			TraceComponent->OnItemAdded.AddDynamic(this, &ThisClass::HitDetected);
+		}
 	}
 }
 
@@ -346,6 +351,14 @@ void AWOGBaseWeapon::AttackLight()
 	{
 		TraceComponent->ToggleTraceCheck(false);
 		HitActorsToIgnore.Empty();
+		if (OwnerCharacter->GetCombatComponent()->GetSecondaryWeapon())
+		{
+			HitActorsToIgnore.Add(OwnerCharacter->GetCombatComponent()->GetSecondaryWeapon());
+		}
+		if (OwnerCharacter->GetCombatComponent()->GetMainWeapon())
+		{
+			HitActorsToIgnore.Add(OwnerCharacter->GetCombatComponent()->GetMainWeapon());
+		}
 		TraceComponent->ToggleTraceCheck(true);
 	}
 
@@ -442,12 +455,20 @@ void AWOGBaseWeapon::StopBlocking()
 
 void AWOGBaseWeapon::HitDetected(FHitResult Hit)
 {
-	if (!Hit.bBlockingHit) return;
+	if (!Hit.bBlockingHit || !Hit.GetActor()) return;
+
+	float DamageToApply = 0.f;
+	switch (WeaponState)
+	{
+	case EWeaponState::EWS_AttackLight:
+		DamageToApply = BaseDamage + (BaseDamage * DamageMultiplier) + (BaseDamage * (ComboStreak * ComboDamageMultiplier));
+		break;
+	case EWeaponState::EWS_AttackHeavy:
+		DamageToApply = BaseDamage + (BaseDamage * DamageMultiplier) + (BaseDamage * HeavyDamageMultiplier);
+		break;
+	}
 
 	TObjectPtr<IBuildingInterface> BuildInterface = Cast<IBuildingInterface>(Hit.GetActor());
-	TObjectPtr<IAttributesInterface> AttributesInterface = Cast<IAttributesInterface>(Hit.GetActor());
-	TObjectPtr<ABasePlayerCharacter> HitPlayer = Cast<ABasePlayerCharacter>(Hit.GetActor());
-	TObjectPtr<AWOGBaseWeapon> HitWeapon = Cast<AWOGBaseWeapon>(Hit.GetActor());
 	
 	if (BuildInterface)
 	{
@@ -457,19 +478,6 @@ void AWOGBaseWeapon::HitDetected(FHitResult Hit)
 			return;
 		}
 
-		float DamageToApply = 0.f;
-		switch (WeaponState)
-		{
-		case EWeaponState::EWS_AttackLight:
-			DamageToApply = BaseDamage + (BaseDamage * DamageMultiplier) + (BaseDamage * (ComboStreak * ComboDamageMultiplier));
-			UE_LOG(LogTemp, Warning, TEXT("LightDamage"));
-			break;
-		case EWeaponState::EWS_AttackHeavy:
-			DamageToApply = BaseDamage + (BaseDamage * DamageMultiplier) + (BaseDamage * HeavyDamageMultiplier);
-			UE_LOG(LogTemp, Warning, TEXT("HeavyDamage"));
-			break;
-		}
-
 		HitActorsToIgnore.AddUnique(Hit.GetActor());
 		BuildInterface->Execute_DealDamage(Hit.GetActor(), DamageToApply);
 		UE_LOG(LogTemp, Warning, TEXT("Build damaged with %f"), DamageToApply);
@@ -477,83 +485,26 @@ void AWOGBaseWeapon::HitDetected(FHitResult Hit)
 
 	}
 
-	if (HitWeapon)
+	TObjectPtr<AActor> HitActor;
+	if (Hit.GetActor()->GetClass()->IsChildOf<AWOGBaseCharacter>())
 	{
-		if (HitActorsToIgnore.Contains(HitWeapon->OwnerCharacter) || HitActorsToIgnore.Contains(HitPlayer))
+		HitActor = Hit.GetActor();
+	}
+	else
+	{
+		if (Hit.GetActor()->GetOwner() && Hit.GetActor()->GetOwner()->GetClass()->IsChildOf<AWOGBaseCharacter>())
 		{
-			//HitPlayer already hit
-			return;
+			HitActor = Hit.GetActor()->GetOwner();
 		}
-		//Hit weapon was hit 1st and the other player is blocking
-		if (HitWeapon->GetWeaponState() == EWeaponState::EWS_Blocking)
-		{
-			if (!HitWeapon->OwnerCharacter || HitWeapon->OwnerCharacter->GetCharacterState() == ECharacterState::ECS_Elimmed) return;
-
-			HitActorsToIgnore.AddUnique(HitWeapon->OwnerCharacter);
-			HitWeapon->OwnerCharacter->GetCombatComponent()->Multicast_HandleCosmeticHit(ECosmeticHit::ECH_BlockingWeapon, Hit, GetActorLocation(), this);
-			return;
-		}
-		//Hit weapon was hit 1st and the other player is attacking as well
-		if (HitWeapon->GetWeaponState() == EWeaponState::EWS_AttackLight || HitWeapon->GetWeaponState() == EWeaponState::EWS_AttackHeavy)
-		{
-			if (!HitWeapon->OwnerCharacter || HitWeapon->OwnerCharacter->GetCharacterState() == ECharacterState::ECS_Elimmed) return;
-
-			HitActorsToIgnore.AddUnique(HitWeapon->OwnerCharacter);
-			HitWeapon->OwnerCharacter->GetCombatComponent()->Multicast_HandleCosmeticHit(ECosmeticHit::ECH_AttackingWeapon, Hit, GetActorLocation(), this);
-			return;
-		}
-
-		//Hit weapon was hit 1st but the other player is just idle
-		if (!HitWeapon->OwnerCharacter || HitWeapon->OwnerCharacter->GetCharacterState() == ECharacterState::ECS_Elimmed) return;
-		HitActorsToIgnore.AddUnique(HitWeapon->OwnerCharacter);
-		HitWeapon->OwnerCharacter->GetCombatComponent()->Multicast_HandleCosmeticHit(ECosmeticHit::ECH_BodyHit, Hit, GetActorLocation(), this);
-			
-		float DamageToApply = 0.f;
-		switch (WeaponState)
-		{
-		case EWeaponState::EWS_AttackLight:
-			DamageToApply = BaseDamage + (BaseDamage * DamageMultiplier) + (BaseDamage * (ComboStreak * ComboDamageMultiplier));
-			break;
-		case EWeaponState::EWS_AttackHeavy:
-			DamageToApply = BaseDamage + (BaseDamage * DamageMultiplier) + (BaseDamage * HeavyDamageMultiplier);
-			break;
-		}
-			
-		UGameplayStatics::ApplyDamage(HitWeapon->OwnerCharacter, -DamageToApply, OwnerCharacter->GetController(), this, UDamageType::StaticClass());
-		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, FString::FromInt(DamageToApply));
-		return;
 	}
 
-	// Player was hit 1st
-	if (HitPlayer)
+	if (!HitActor || HitActorsToIgnore.Contains(HitActor)) return;
+	HitActorsToIgnore.AddUnique(HitActor);
+
+	TObjectPtr<IAttributesInterface> AttributesInterface = Cast<IAttributesInterface>(HitActor);
+	if (AttributesInterface)
 	{
-		if (HitActorsToIgnore.Contains(HitPlayer) || HitActorsToIgnore.Contains(HitWeapon->OwnerCharacter))
-		{
-			//HitPlayer already hit
-			return;
-		}
-		else
-		{
-			if(HitPlayer->GetCharacterState() == ECharacterState::ECS_Elimmed) return;
-
-			HitActorsToIgnore.AddUnique(HitPlayer);
-			HitPlayer->GetCombatComponent()->Multicast_HandleCosmeticHit(ECosmeticHit::ECH_BodyHit, Hit, GetActorLocation(), this);
-
-			float DamageToApply = 0.f;
-			switch (WeaponState)
-			{
-			case EWeaponState::EWS_AttackLight:
-				DamageToApply = BaseDamage + (BaseDamage * DamageMultiplier) + (BaseDamage * (ComboStreak * ComboDamageMultiplier));
-				break;
-			case EWeaponState::EWS_AttackHeavy:
-				DamageToApply = BaseDamage + (BaseDamage * DamageMultiplier) + (BaseDamage * HeavyDamageMultiplier);
-				break;
-			}
-
-			UGameplayStatics::ApplyDamage(HitPlayer, -DamageToApply, OwnerCharacter->GetController(), this, UDamageType::StaticClass());
-			GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, FString::FromInt(DamageToApply));
-			return;
-		}
+		AttributesInterface->Execute_BroadcastHit(HitActor, OwnerCharacter, Hit, DamageToApply, this);
 	}
 }
 

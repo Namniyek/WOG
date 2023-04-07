@@ -13,11 +13,11 @@
 #include "EnhancedInputSubsystems.h"
 #include "LockOnTargetComponent.h"
 #include "TargetingHelperComponent.h"
-#include "WOG/ActorComponents/WOGAttributesComponent.h"
 #include "WOG/GameMode/WOGGameMode.h"
 #include "WOG/PlayerController/WOGPlayerController.h"
 #include "WOG/Weapons/WOGBaseWeapon.h"
 #include "WOG/ActorComponents/WOGCombatComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 
 void ABasePlayerCharacter::OnConstruction(const FTransform& Transform)
@@ -40,8 +40,6 @@ ABasePlayerCharacter::ABasePlayerCharacter()
 	LockOnTarget->SetIsReplicated(true);
 	TargetAttractor = CreateDefaultSubobject<UTargetingHelperComponent>(TEXT("TargetAttractor"));
 	TargetAttractor->SetIsReplicated(true);
-	Attributes = CreateDefaultSubobject<UWOGAttributesComponent>(TEXT("AttributesComponent"));
-	Attributes->SetIsReplicated(true);
 	Combat = CreateDefaultSubobject<UWOGCombatComponent>(TEXT("CombatComponent"));
 	Combat->SetIsReplicated(true);
 
@@ -93,7 +91,6 @@ void ABasePlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	
 	DOREPLIFETIME(ABasePlayerCharacter, PlayerProfile);
-	DOREPLIFETIME(ABasePlayerCharacter, CharacterState);
 }
 
 void ABasePlayerCharacter::BeginPlay()
@@ -103,20 +100,16 @@ void ABasePlayerCharacter::BeginPlay()
 	{
 		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
 		{
-			Subsystem->AddMappingContext(DefaultMappingContext, 0);
+			Subsystem->AddMappingContext(MatchMappingContext, 0);
 		}
 	}
+
 	//if (TargetAttractor)
 	//{
 	//	TargetAttractor->UpdateDesiredMesh(Head);
 	//	TargetAttractor->AddSocket(FName("head"));
 	//	TargetAttractor->RemoveSocket();
 	//}
-
-	if (HasAuthority())
-	{
-		OnTakeAnyDamage.AddDynamic(this, &ThisClass::ReceiveDamage);
-	}
 }
 
 // Called to bind functionality to input
@@ -144,11 +137,11 @@ void ABasePlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 		//Equip
 		EnhancedInputComponent->BindAction(AbilitiesAction, ETriggerEvent::Triggered, this, &ThisClass::AbilitiesButtonPressed);
 		//PrimaryAction
-		EnhancedInputComponent->BindAction(PrimaryAction, ETriggerEvent::Triggered, this, TEXT("AttackLightButtonPressed"));
-		EnhancedInputComponent->BindAction(PrimaryAction, ETriggerEvent::Ongoing, this, TEXT("AttackArmHeavyAttack"));
+		EnhancedInputComponent->BindAction(PrimaryAction, ETriggerEvent::Triggered, this, TEXT("PrimaryLightButtonPressed"));
+		EnhancedInputComponent->BindAction(PrimaryAction, ETriggerEvent::Ongoing, this, TEXT("PrimaryArmHeavyAttack"));
 		//SecondaryAction
-		EnhancedInputComponent->BindAction(SecondaryAction, ETriggerEvent::Started, this, &ThisClass::BlockButtonPressed);
-		EnhancedInputComponent->BindAction(SecondaryAction, ETriggerEvent::Triggered, this, &ThisClass::BlockButtonReleased);
+		EnhancedInputComponent->BindAction(SecondaryAction, ETriggerEvent::Started, this, &ThisClass::SecondaryButtonPressed);
+		EnhancedInputComponent->BindAction(SecondaryAction, ETriggerEvent::Triggered, this, &ThisClass::SecondaryButtonReleased);
 	}
 }
 
@@ -311,7 +304,7 @@ void ABasePlayerCharacter::AbilitiesButtonPressed(const FInputActionValue& Value
 	}
 }
 
-void ABasePlayerCharacter::AttackLightButtonPressed(FInputActionValue ActionValue, float ElapsedTime, float TriggeredTime)
+void ABasePlayerCharacter::PrimaryLightButtonPressed(FInputActionValue ActionValue, float ElapsedTime, float TriggeredTime)
 {
 	if (!Combat) return;
 
@@ -321,7 +314,7 @@ void ABasePlayerCharacter::AttackLightButtonPressed(FInputActionValue ActionValu
 	}
 }
 
-void ABasePlayerCharacter::AttackArmHeavyAttack(FInputActionValue ActionValue, float ElapsedTime, float TriggeredTime)
+void ABasePlayerCharacter::PrimaryArmHeavyAttack(FInputActionValue ActionValue, float ElapsedTime, float TriggeredTime)
 {
 	if (!Combat) return;
 	if (ElapsedTime >= 0.2 && ElapsedTime <= 0.22)
@@ -334,21 +327,21 @@ void ABasePlayerCharacter::AttackArmHeavyAttack(FInputActionValue ActionValue, f
 	}
 }
 
-void ABasePlayerCharacter::AttackHeavyButtonPressed(const FInputActionValue& Value)
+void ABasePlayerCharacter::PrimaryHeavyButtonPressed(const FInputActionValue& Value)
 {
 	if (!Combat) return;
 
 	Combat->AttackHeavy();
 }
 
-void ABasePlayerCharacter::BlockButtonPressed(const FInputActionValue& Value)
+void ABasePlayerCharacter::SecondaryButtonPressed(const FInputActionValue& Value)
 {
 	if (!Combat) return;
 	Combat->Block();
 	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Purple, FString("StartBlocking"));
 }
 
-void ABasePlayerCharacter::BlockButtonReleased(const FInputActionValue& Value)
+void ABasePlayerCharacter::SecondaryButtonReleased(const FInputActionValue& Value)
 {
 	if (!Combat) return;
 	Combat->StopBlocking();
@@ -378,9 +371,7 @@ void ABasePlayerCharacter::UpdatePlayerProfile_Implementation(const FPlayerData&
 	SetMeshes(NewPlayerProfile.bIsMale, NewPlayerProfile.CharacterIndex);
 
 	//Set the character colors
-	SetColors(NewPlayerProfile.PrimaryColor, NewPlayerProfile.SkinColor, NewPlayerProfile.BodyPaintColor, NewPlayerProfile.HairColor);
-
-	
+	SetColors(NewPlayerProfile.PrimaryColor, NewPlayerProfile.SkinColor, NewPlayerProfile.BodyPaintColor, NewPlayerProfile.HairColor);	
 }
 
 void ABasePlayerCharacter::SetColors(FName Primary, FName Skin, FName BodyPaint, FName HairColor)
@@ -474,49 +465,7 @@ void ABasePlayerCharacter::SetMeshes(bool bIsMale, FName RowName)
 	}
 
 	Combat->SetDefaultWeaponClass(MeshRow->DefaultWeapon);
-}
-
-void ABasePlayerCharacter::Server_SetCharacterState_Implementation(ECharacterState NewState)
-{
-	Multicast_SetCharacterState(NewState);
-	SetCharacterState(NewState);
-}
-
-void ABasePlayerCharacter::Multicast_SetCharacterState_Implementation(ECharacterState NewState)
-{
-	if (!HasAuthority())
-	{
-		SetCharacterState(NewState);
-	}
-}
-
-void ABasePlayerCharacter::SetCharacterState(ECharacterState NewState)
-{
-	CharacterState = NewState;
-
-	switch (CharacterState)
-	{
-
-	case ECharacterState::ECS_Unnoccupied:
-		HandleStateUnnoccupied();
-		break;
-
-	case ECharacterState::ECS_Dodging:
-		HandleStateDodging();
-		break;
-
-	case ECharacterState::ECS_Sprinting:
-		HandleStateSprinting();
-		break;
-
-	case ECharacterState::ECS_Elimmed:
-		HandleStateElimmed();
-		break;
-
-	case ECharacterState::ECS_Attacking:
-		HandleStateAttacking();
-		break;
-	}
+	UnarmedHurtMontage = MeshRow->UnarmedHurtMontage;
 }
 
 void ABasePlayerCharacter::HandleStateUnnoccupied()
@@ -539,9 +488,10 @@ void ABasePlayerCharacter::HandleStateSprinting()
 
 	//Sets the maximum run speed
 	GetCharacterMovement()->MaxWalkSpeed = 800.f;
+	UE_LOG(LogTemp, Warning, TEXT("Sprinting()"));
 }
 
-void ABasePlayerCharacter::HandleStateElimmed()
+void ABasePlayerCharacter::HandleStateElimmed(AController* InstigatedBy)
 {
 	if (Combat->MainWeapon)
 	{
@@ -551,11 +501,122 @@ void ABasePlayerCharacter::HandleStateElimmed()
 	{
 		Combat->SecondaryWeapon->Destroy();
 	}
+
+	if (!HasAuthority()) return;
+
+	WOGGameMode = WOGGameMode == nullptr ?	GetWorld()->GetAuthGameMode<AWOGGameMode>() : WOGGameMode;
+
+	TObjectPtr<AWOGPlayerController> Victim = Cast<AWOGPlayerController>(GetController());
+	TObjectPtr<AWOGPlayerController> Attacker = Cast<AWOGPlayerController>(InstigatedBy);
+
+	if (!WOGGameMode || !Victim || !Attacker)
+	{
+		if (!WOGGameMode)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, FString("NoGameMode"));
+		}
+		if (!Victim)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, FString("NoOwnerPC"));
+		}
+		if (!Attacker)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, FString("NoAttackerPC"));
+		}
+		return;
+	}
+
+	WOGGameMode->PlayerEliminated(this, Victim, Attacker);
 }
 
 void ABasePlayerCharacter::HandleStateAttacking()
 {
 	//TO-DO What happens when character attacks. 
+}
+
+void ABasePlayerCharacter::BroadcastHit_Implementation(AActor* AgressorActor, const FHitResult& Hit, const float& DamageToApply, AActor* InstigatorWeapon)
+{
+	if (CharacterState == ECharacterState::ECS_Elimmed) return;
+
+	if (Combat->GetEquippedWeapon() && Combat->GetEquippedWeapon()->GetWeaponState() == EWeaponState::EWS_Blocking)
+	{
+		if (IsHitFrontal(60.f, this, AgressorActor))
+		{
+			TObjectPtr<AWOGBaseWeapon> Weapon = Cast<AWOGBaseWeapon>(InstigatorWeapon);
+			Multicast_HandleCosmeticHit(ECosmeticHit::ECH_BlockingWeapon, Hit, InstigatorWeapon->GetActorLocation(), Weapon);
+			return;
+		}
+	}
+	if (Combat->GetEquippedWeapon() && (Combat->GetEquippedWeapon()->GetWeaponState() == EWeaponState::EWS_AttackLight || Combat->GetEquippedWeapon()->GetWeaponState() == EWeaponState::EWS_AttackHeavy))
+	{
+		if (IsHitFrontal(60.f, this, AgressorActor))
+		{
+			TObjectPtr<AWOGBaseWeapon> Weapon = Cast<AWOGBaseWeapon>(InstigatorWeapon);
+			Multicast_HandleCosmeticHit(ECosmeticHit::ECH_AttackingWeapon, Hit, InstigatorWeapon->GetActorLocation(), Weapon);
+			return;
+		}
+	}
+
+	TObjectPtr<AWOGBaseWeapon> Weapon = Cast<AWOGBaseWeapon>(InstigatorWeapon);
+	Multicast_HandleCosmeticHit(ECosmeticHit::ECH_BodyHit, Hit, InstigatorWeapon->GetActorLocation(), Weapon);
+
+	TObjectPtr<AWOGBaseCharacter> AgressorCharacter = Cast<AWOGBaseCharacter>(AgressorActor);
+	if (AgressorCharacter)
+	{
+		UGameplayStatics::ApplyDamage(this, -DamageToApply, AgressorCharacter->GetController(), AgressorActor, UDamageType::StaticClass());
+	}
+}
+
+void ABasePlayerCharacter::HandleCosmeticBodyHit(const FHitResult& Hit, const FVector& WeaponLocation, const AWOGBaseWeapon* InstigatorWeapon)
+{
+	FName HitDirection = CalculateHitDirection(Hit, WeaponLocation);
+	PlayHitReactMontage(HitDirection);
+
+	//TO-DO - Play hit sound here
+}
+
+void ABasePlayerCharacter::PlayHitReactMontage(FName Section)
+{
+	UAnimInstance* CharacterAnimInstance = GetMesh()->GetAnimInstance();
+	if (!CharacterAnimInstance) return;
+
+	if (Combat->GetEquippedWeapon() && Combat->GetEquippedWeapon()->GetHurtMontage())
+	{
+		CharacterAnimInstance->Montage_Play(Combat->GetEquippedWeapon()->GetHurtMontage(), 1.f);
+		CharacterAnimInstance->Montage_JumpToSection(Section);
+	}
+	else if (UnarmedHurtMontage)
+	{
+		CharacterAnimInstance->Montage_Play(UnarmedHurtMontage, 1.f);
+		CharacterAnimInstance->Montage_JumpToSection(Section);
+	}
+}
+
+void ABasePlayerCharacter::HandleCosmeticBlock(const AWOGBaseWeapon* InstigatorWeapon)
+{
+	if (!Combat->GetEquippedWeapon()) return;
+
+	if (Combat->GetEquippedWeapon()->GetBlockSound())
+	{
+		//TO-DO - Play block sound here
+	}
+
+	if (Combat->GetEquippedWeapon()->GetBlockMontage())
+	{
+		UAnimInstance* CharacterAnimInstance = GetMesh()->GetAnimInstance();
+		if (!CharacterAnimInstance) return;
+
+		if (CharacterAnimInstance)
+		{
+			CharacterAnimInstance->Montage_Play(Combat->GetEquippedWeapon()->GetBlockMontage(), 1.f);
+			CharacterAnimInstance->Montage_JumpToSection(FName("Impact"));
+		}
+	}
+}
+
+void ABasePlayerCharacter::HandleCosmeticWeaponClash()
+{
+	GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Blue, FString("Weapons Clashed!"));
 }
 
 void ABasePlayerCharacter::TargetLocked(UTargetingHelperComponent* Target, FName Socket)
@@ -569,6 +630,7 @@ void ABasePlayerCharacter::TargetLocked(UTargetingHelperComponent* Target, FName
 			return;
 		}
 
+		CurrentTarget = TargetOwner;
 		bIsTargeting = true;
 		if (!GetCharacterMovement()) return;
 
@@ -579,6 +641,7 @@ void ABasePlayerCharacter::TargetLocked(UTargetingHelperComponent* Target, FName
 
 void ABasePlayerCharacter::TargetUnlocked(UTargetingHelperComponent* UnlockedTarget, FName Socket)
 {
+	CurrentTarget = nullptr;
 	bIsTargeting = false;
 	if (!GetCharacterMovement()) return;
 
@@ -589,12 +652,6 @@ void ABasePlayerCharacter::TargetUnlocked(UTargetingHelperComponent* UnlockedTar
 void ABasePlayerCharacter::TargetNotFound()
 {
 
-}
-
-void ABasePlayerCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser)
-{
-	if (!Attributes) return;
-	Attributes->Server_UpdateHealth(Damage, InstigatedBy);
 }
 
 void ABasePlayerCharacter::Elim(bool bPlayerLeftGame)
@@ -609,10 +666,12 @@ void ABasePlayerCharacter::Multicast_Elim_Implementation(bool bPlayerLeftGame)
 	GetMesh()->SetAllBodiesSimulatePhysics(true);
 	GetCharacterMovement()->DisableMovement();
 	GetCharacterMovement()->StopMovementImmediately();
-	FVector ImpulseDirection = Combat->LastHitDirection.GetSafeNormal() * 30000.f;
+	FVector ImpulseDirection = LastHitDirection.GetSafeNormal() * 30000.f;
 	GetMesh()->AddImpulse(ImpulseDirection);
 	LockOnTarget->ClearTargetManual();
 	TargetAttractor->bCanBeCaptured = false;
+	if(OwnerPC)	OwnerPC->SetDefaultPawn(nullptr);
+	
 
 	/*
 	**Handle respawn timer

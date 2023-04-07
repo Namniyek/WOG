@@ -18,7 +18,11 @@ protected:
 
 	virtual void BeginPlay() override;
 
+	virtual void OnPossess(APawn* InPawn) override;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<class UBehaviorTree> BaseEnemyBehaviorTree;
+
+
 	
 };

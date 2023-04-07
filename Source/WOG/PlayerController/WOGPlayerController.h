@@ -26,6 +26,14 @@ public:
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
+	UFUNCTION(Server, reliable)
+	void PossessMinion(AActor* ActorToPossess);
+	UFUNCTION(Server, reliable)
+	void UnpossessMinion();
+
+	UFUNCTION()
+	void Test(APawn* NewPawn);
+
 protected:
 	virtual void OnPossess(APawn* aPawn) override;
 	virtual void BeginPlay() override;
@@ -47,10 +55,13 @@ private:
 	UFUNCTION(Client, Reliable)
 	void Client_ResetHUD();
 
+	TObjectPtr<class ABasePlayerCharacter> DefaultPawn = nullptr;
+
 public:
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE bool GetIsAttacker() { return bIsAttacker; }
-
+	FORCEINLINE void SetDefaultPawn(ABasePlayerCharacter* PawnToSet) { DefaultPawn = PawnToSet; }
+	FORCEINLINE TObjectPtr<ABasePlayerCharacter> GetDefaultPawn() { return DefaultPawn; }
 
 	
 };

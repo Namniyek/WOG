@@ -25,4 +25,6 @@ public:
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void SetMaxHealth(const float& Value);
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void BroadcastHit(AActor* AgressorActor, const FHitResult& Hit, const float& DamageToApply, AActor* InstigatorWeapon);
 };

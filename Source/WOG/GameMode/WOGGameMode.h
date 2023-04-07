@@ -28,7 +28,7 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TSubclassOf<class AWOGAttacker> AttackerCharacter;
 
-	void PlayerEliminated(class ABasePlayerCharacter* ElimmedCharacter, class AWOGPlayerController* VictimController, AWOGPlayerController* AttackerController);
+	void PlayerEliminated(class AWOGBaseCharacter* ElimmedCharacter, class AWOGPlayerController* VictimController, AWOGPlayerController* AttackerController);
 
 protected:
 

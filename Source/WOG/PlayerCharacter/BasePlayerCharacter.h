@@ -7,7 +7,6 @@
 #include "WOG/Data/PlayerProfileSaveGame.h"
 #include "InputActionValue.h"
 #include "Engine/DataTable.h"
-#include "WOG/Types/CharacterTypes.h"
 #include "WOG/FunctionLibrary/MeshMergeFunctionLibrary.h"
 #include "BasePlayerCharacter.generated.h"
 
@@ -97,6 +96,8 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	UAnimMontage* RaiseHandMontage;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UAnimMontage* UnarmedHurtMontage;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	USkeleton* Skeleton;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	UPhysicsAsset* PhysicsAsset;
@@ -115,7 +116,6 @@ class WOG_API ABasePlayerCharacter : public AWOGBaseCharacter
 public:
 	// Sets default values for this character's properties
 	ABasePlayerCharacter();
-	friend class UWOGAttributesComponent;
 	friend class UWOGCombatComponent;
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
@@ -127,14 +127,13 @@ public:
 
 	#pragma region Handle Damage
 
-	UFUNCTION()
-	void ReceiveDamage(AActor* DamagedActor, float Damage, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser);
-
-	void Elim(bool bPlayerLeftGame);
+	virtual void Elim(bool bPlayerLeftGame) override;
 
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_Elim(bool bPlayerLeftGame);
 
+	UFUNCTION()
+	void ElimTimerFinished();
 
 	#pragma endregion
 	
@@ -151,7 +150,10 @@ public:
 	//Input
 	/** MappingContext */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	class UInputMappingContext* DefaultMappingContext;
+	class UInputMappingContext* MatchMappingContext;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputMappingContext* RadialMenuMappingContext;
 
 	/** Jump Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
@@ -177,7 +179,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* TargetAction;
 
-	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* AbilitiesAction;
 
@@ -187,6 +188,17 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* SecondaryAction;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* PossessAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* RadialMenuAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* BrowseRadialMenuAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* SpawnRadialMenuAction;
 
 	#pragma endregion
 
@@ -237,14 +249,14 @@ protected:
 	void AbilitiesButtonPressed(const FInputActionValue& Value);
 
 	UFUNCTION()
-	void AttackLightButtonPressed(FInputActionValue ActionValue, float ElapsedTime, float TriggeredTime);
+	void PrimaryLightButtonPressed(FInputActionValue ActionValue, float ElapsedTime, float TriggeredTime);
 
 	UFUNCTION()
-	void AttackArmHeavyAttack(FInputActionValue ActionValue, float ElapsedTime, float TriggeredTime);
+	void PrimaryArmHeavyAttack(FInputActionValue ActionValue, float ElapsedTime, float TriggeredTime);
 
-	void AttackHeavyButtonPressed(const FInputActionValue& Value);
-	void BlockButtonPressed(const FInputActionValue& Value);
-	void BlockButtonReleased(const FInputActionValue& Value);
+	void PrimaryHeavyButtonPressed(const FInputActionValue& Value);
+	void SecondaryButtonPressed(const FInputActionValue& Value);
+	void SecondaryButtonReleased(const FInputActionValue& Value);
 	
 	#pragma endregion
 
@@ -269,19 +281,11 @@ protected:
 
 	#pragma region Character State variables
 
-	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly)
-	bool bIsTargeting;
-
-	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly)
-	ECharacterState CharacterState;
-
-	void SetCharacterState(ECharacterState NewState);
-
-	virtual void HandleStateUnnoccupied();
-	virtual void HandleStateDodging();
-	virtual void HandleStateSprinting();
-	virtual void HandleStateElimmed();
-	virtual void HandleStateAttacking();
+	virtual void HandleStateUnnoccupied() override;
+	virtual void HandleStateDodging() override;
+	virtual void HandleStateSprinting() override;
+	virtual void HandleStateElimmed(AController* InstigatedBy = nullptr) override;
+	virtual void HandleStateAttacking() override;
 
 	#pragma endregion
 
@@ -294,12 +298,26 @@ protected:
 	class UTargetingHelperComponent* TargetAttractor;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	UWOGAttributesComponent* Attributes;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	UWOGCombatComponent* Combat;
 
 
+	#pragma endregion
+
+	#pragma region Interface functions
+	virtual void BroadcastHit_Implementation(AActor* AgressorActor, const FHitResult& Hit, const float& DamageToApply, AActor* InstigatorWeapon) override;
+
+	#pragma endregion
+
+	#pragma region Cosmetic Hits
+	//Handle cosmetic body hit
+	virtual void HandleCosmeticBodyHit(const FHitResult& Hit, const FVector& WeaponLocation, const class AWOGBaseWeapon* InstigatorWeapon) override;
+	virtual void PlayHitReactMontage(FName Section) override;
+
+	//Handle cosmetic block
+	virtual void HandleCosmeticBlock(const AWOGBaseWeapon* InstigatorWeapon) override;
+
+	//Handle cosmetic weapon clash
+	virtual void HandleCosmeticWeaponClash() override;
 	#pragma endregion
 
 	UFUNCTION()
@@ -311,21 +329,12 @@ protected:
 	UFUNCTION()
 	void TargetNotFound();
 
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class AWOGPlayerController> OwnerPC = nullptr;
+	TObjectPtr<AActor> CurrentTarget = nullptr;
+
 private:
 
-	UPROPERTY()
-	class AWOGGameMode* WOGGameMode;
-
-	#pragma region Handle Respawn
-	FTimerHandle ElimTimer;
-	FTimerDelegate ElimDelegate;
-
-	UPROPERTY(EditDefaultsOnly)
-	float ElimDelay = 6.f;
-
-	UFUNCTION()
-	void ElimTimerFinished();
-	#pragma endregion
 
 public:
 	//public Getters and Setters 
@@ -335,18 +344,12 @@ public:
 	FORCEINLINE ULockOnTargetComponent* GetLockOnTarget() const { return LockOnTarget; }
 	FORCEINLINE UWOGCombatComponent* GetCombatComponent() const { return Combat; }
 	FORCEINLINE bool GetIsTargeting() const { return bIsTargeting; }
-
-	UFUNCTION(BlueprintPure)
-	FORCEINLINE ECharacterState GetCharacterState() const { return CharacterState; }
-
+	FORCEINLINE void SetOwnerPC(AWOGPlayerController* NewPC) { OwnerPC = NewPC; }
+	FORCEINLINE TObjectPtr<AWOGPlayerController> GetOwnerPC() { return OwnerPC; }
 
 	UFUNCTION(Server, reliable, BlueprintCallable)
 	void Server_SetPlayerProfile(const FPlayerData& NewPlayerProfile);
 
-	UFUNCTION(Server, reliable)
-	void Server_SetCharacterState(ECharacterState NewState);
 
-	UFUNCTION(NetMulticast, reliable)
-	void Multicast_SetCharacterState(ECharacterState NewState);
 
 };

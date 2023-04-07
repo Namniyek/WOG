@@ -4,12 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "WOG/Characters/WOGBaseCharacter.h"
-#include "WOG/Interfaces/AttributesInterface.h"
 #include "WOG/Interfaces/SpawnInterface.h"
 #include "WOGBaseEnemy.generated.h"
 
 UCLASS()
-class WOG_API AWOGBaseEnemy : public AWOGBaseCharacter, public IAttributesInterface, public ISpawnInterface
+class WOG_API AWOGBaseEnemy : public AWOGBaseCharacter, public ISpawnInterface
 {
 	GENERATED_BODY()
 
@@ -27,19 +26,43 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<class UTargetingHelperComponent> TargetAttractor;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<class UWOGAttributesComponent> Attributes;
-
 	#pragma endregion
 
 	#pragma region Interface Functions
-	
+	virtual void BroadcastHit_Implementation(AActor* AgressorActor, const FHitResult& Hit, const float& DamageToApply, AActor* InstigatorWeapon) override;
 
 	#pragma endregion
 
+	virtual void HandleStateElimmed(AController* InstigatedBy = nullptr) override;
+
+	#pragma region Handle Damage
+
+	virtual void Elim(bool bPlayerLeftGame) override;
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_Elim(bool bPlayerLeftGame);
+
+	UFUNCTION()
+	void ElimTimerFinished();
+
+	#pragma endregion
+
+	#pragma region Cosmetic Hits
+	//Handle cosmetic body hit
+	virtual void HandleCosmeticBodyHit(const FHitResult& Hit, const FVector& WeaponLocation, const class AWOGBaseWeapon* InstigatorWeapon) override;
+	virtual void PlayHitReactMontage(FName Section) override;
+
+	//Handle cosmetic block
+	virtual void HandleCosmeticBlock(const AWOGBaseWeapon* InstigatorWeapon) override;
+
+	//Handle cosmetic weapon clash
+	virtual void HandleCosmeticWeaponClash() override;
+	#pragma endregion
+
+private:
+
+
 public:	
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
-	FORCEINLINE UWOGAttributesComponent* GetAttributes() const { return Attributes; }
 
 };

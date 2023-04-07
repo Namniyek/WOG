@@ -3,7 +3,8 @@
 
 #include "WOGAttributesComponent.h"
 #include "Net/UnrealNetwork.h"
-#include "WOG/PlayerCharacter/BasePlayerCharacter.h"
+//#include "WOG/PlayerCharacter/BasePlayerCharacter.h"
+#include "WOG/Characters/WOGBaseCharacter.h"
 #include "WOG/GameMode/WOGGameMode.h"
 #include "WOG/PlayerController/WOGPlayerController.h"
 
@@ -54,7 +55,7 @@ void UWOGAttributesComponent::Server_UpdateHealth_Implementation(float Value, AC
 
 void UWOGAttributesComponent::UpdateHealth(float Value, AController* InstigatedBy)
 {
-	OwnerCharacter = OwnerCharacter == nullptr ? Cast<ABasePlayerCharacter>(GetOwner()) : OwnerCharacter;
+	OwnerCharacter = OwnerCharacter == nullptr ? Cast<AWOGBaseCharacter>(GetOwner()) : OwnerCharacter;
 	if (!OwnerCharacter || OwnerCharacter->CharacterState == ECharacterState::ECS_Elimmed) return;
 
 	if (Health + Value >= MaxHealth)
@@ -64,35 +65,12 @@ void UWOGAttributesComponent::UpdateHealth(float Value, AController* InstigatedB
 	}
 	else if (Health + Value <= 0.f)
 	{
-		OwnerCharacter = OwnerCharacter == nullptr ? Cast<ABasePlayerCharacter>(GetOwner()) : OwnerCharacter;
+		OwnerCharacter = OwnerCharacter == nullptr ? Cast<AWOGBaseCharacter>(GetOwner()) : OwnerCharacter;
 		if (!OwnerCharacter) return;
 
-		OwnerCharacter->WOGGameMode = OwnerCharacter->WOGGameMode == nullptr ?
-			GetWorld()->GetAuthGameMode<AWOGGameMode>() : OwnerCharacter->WOGGameMode;
-
-		OwnerPC = OwnerPC ==nullptr ? Cast<AWOGPlayerController>(OwnerCharacter->GetController()) : OwnerPC;
-		AWOGPlayerController* Attacker = Cast<AWOGPlayerController>(InstigatedBy);
-		if (!OwnerCharacter->WOGGameMode || !OwnerPC || !Attacker)
-		{
-			if (!OwnerCharacter->WOGGameMode)
-			{
-				GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, FString("NoGameMode"));
-			}
-			if (!OwnerPC)
-			{
-				GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, FString("NoOwnerPC"));
-			}
-			if (!Attacker)
-			{
-				GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, FString("NoAttackerPC"));
-			}
-			return;
-		}
-		
-		OwnerCharacter->WOGGameMode->PlayerEliminated(OwnerCharacter, OwnerPC, Attacker);
-
 		Health = 0.f;
-		OwnerCharacter->Server_SetCharacterState(ECharacterState::ECS_Elimmed);
+		OwnerCharacter->Server_SetCharacterState(ECharacterState::ECS_Elimmed, InstigatedBy);
+
 	}
 	else
 	{
@@ -109,7 +87,7 @@ void UWOGAttributesComponent::Server_UpdateMana_Implementation(float Value)
 
 void UWOGAttributesComponent::UpdateMana(float Value)
 {
-	OwnerCharacter = OwnerCharacter == nullptr ? Cast<ABasePlayerCharacter>(GetOwner()) : OwnerCharacter;
+	OwnerCharacter = OwnerCharacter == nullptr ? Cast<AWOGBaseCharacter>(GetOwner()) : OwnerCharacter;
 	if (!OwnerCharacter || OwnerCharacter->CharacterState == ECharacterState::ECS_Elimmed) return;
 
 	if (Mana + Value >= MaxMana)
@@ -134,7 +112,7 @@ void UWOGAttributesComponent::Server_UpdateAdrenaline_Implementation(float Value
 
 void UWOGAttributesComponent::UpdateAdranaline(float Value)
 {
-	OwnerCharacter = OwnerCharacter == nullptr ? Cast<ABasePlayerCharacter>(GetOwner()) : OwnerCharacter;
+	OwnerCharacter = OwnerCharacter == nullptr ? Cast<AWOGBaseCharacter>(GetOwner()) : OwnerCharacter;
 	if (!OwnerCharacter || OwnerCharacter->CharacterState == ECharacterState::ECS_Elimmed) return;
 
 	if (Adrenaline + Value >= MaxAdrenaline)
@@ -156,7 +134,7 @@ void UWOGAttributesComponent::UpdateAdranaline(float Value)
 
 void UWOGAttributesComponent::Server_PassiveAttributeUpdate_Implementation(EAttributeType AttributeToUpdate, float Value)
 {
-	OwnerCharacter = OwnerCharacter == nullptr ? Cast<ABasePlayerCharacter>(GetOwner()) : OwnerCharacter;
+	OwnerCharacter = OwnerCharacter == nullptr ? Cast<AWOGBaseCharacter>(GetOwner()) : OwnerCharacter;
 	if (!OwnerCharacter) return;
 
 	AController* Controller = OwnerCharacter->GetController();

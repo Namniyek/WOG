@@ -2,6 +2,8 @@
 
 
 #include "WOGDefender.h"
+#include "TargetingHelperComponent.h"
+#include "LockOnTargetComponent.h"
 #include "WOG/ActorComponents/WOGBuildComponent.h"
 
 AWOGDefender::AWOGDefender()

@@ -56,15 +56,23 @@ bool UTargetingHelperComponent::CanBeCaptured(const ULockOnTargetComponent* Inst
 
 bool UTargetingHelperComponent::CanBeCapturedCustom_Implementation(const ULockOnTargetComponent* Instigator) const
 {
-	if (!Instigator) return false;
-	FName Tag = ComponentHasTag(FName("defender")) ? FName("defender") : FName("attacker");
-	FName InstigatorTag = Instigator->ComponentHasTag(FName("defender")) ? FName("defender") : FName("attacker");
-
-	if (Tag != InstigatorTag)
+	if (!Instigator || Instigator->ComponentTags.IsEmpty()) return false;
+	
+	FName OwnerTag = Instigator->ComponentTags[0];
+	bool bCanTarget = false;
+	UE_LOG(LogTemp, Warning, TEXT("OwnerTag is: %s"), *OwnerTag.ToString());
+	
+	if (!ComponentTags.IsEmpty())
 	{
-		return false;
+		for (auto TargetTag : ComponentTags)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("TargetTag is: %s"), *TargetTag.ToString());
+			bCanTarget = TargetTag == OwnerTag;
+			if (bCanTarget) break;
+		}
 	}
-	return true;
+
+	return bCanTarget;
 }
 
 void UTargetingHelperComponent::CaptureTarget(ULockOnTargetComponent* Instigator, FName Socket)

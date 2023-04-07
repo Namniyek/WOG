@@ -27,6 +27,7 @@ class WOG_API UWOGAttributesComponent : public UWOGBaseActorComponent
 	GENERATED_BODY()
 public:
 	UWOGAttributesComponent();
+
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 protected:

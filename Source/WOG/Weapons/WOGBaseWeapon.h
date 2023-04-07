@@ -289,7 +289,7 @@ public:
 	void ResetCombo();
 
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly)
-	ABasePlayerCharacter* OwnerCharacter;
+	TObjectPtr<ABasePlayerCharacter> OwnerCharacter;
 
 	UFUNCTION(BlueprintCallable)
 	FORCEINLINE EWeaponState GetWeaponState() const { return WeaponState; }

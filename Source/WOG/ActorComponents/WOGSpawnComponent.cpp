@@ -222,11 +222,11 @@ void UWOGSpawnComponent::Spawn(FTransform Transform, int32 ID)
 		TObjectPtr<AActor> SpawnedActor = GetWorld()->SpawnActor<AActor>(Spawnables[ID]->Actor, Transform, Params);
 		UE_LOG(LogTemp, Warning, TEXT("Spawned at: %s"), *Spawn.ToString());
 
-		if (SpawnedActor->GetClass()->ImplementsInterface(UAttributesInterface::StaticClass()))
+		/*if (SpawnedActor->GetClass()->ImplementsInterface(UAttributesInterface::StaticClass()))
 		{
 			IAttributesInterface::Execute_SetMaxHealth(SpawnedActor,Spawnables[ID]->MaxHealth);
 			UE_LOG(LogTemp, Error, TEXT("SetMaxHealth() from SpawnCOmponent"));
-		}
+		}*/
 	}
 }
 

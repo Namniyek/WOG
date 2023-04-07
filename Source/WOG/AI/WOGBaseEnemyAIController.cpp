@@ -6,10 +6,14 @@
 void AWOGBaseEnemyAIController::BeginPlay()
 {
 	Super::BeginPlay();
+}
+
+void AWOGBaseEnemyAIController::OnPossess(APawn* InPawn)
+{
+	Super::OnPossess(InPawn);
 
 	if (BaseEnemyBehaviorTree)
 	{
 		RunBehaviorTree(BaseEnemyBehaviorTree);
-		UE_LOG(LogTemp, Warning, TEXT("Behaviour tree is running"));
 	}
 }
