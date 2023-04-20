@@ -15,6 +15,8 @@ AWOGBaseCharacter::AWOGBaseCharacter()
 
 	Attributes = CreateDefaultSubobject<UWOGAttributesComponent>(TEXT("AttributesComponent"));
 	Attributes->SetIsReplicated(true);
+
+	SpeedRequiredForLeap = 750.f;
 }
 
 void AWOGBaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

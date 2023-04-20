@@ -148,22 +148,6 @@ void AWOGPlayerController::UnpossessMinion_Implementation()
 
 	UnPossess();
 	Possess(PawnToPossess);
-
-	/*
-	** TO-DO improve the Unpossess camera transition
-	*/
-
-	/*FTimerHandle BlendTimer;
-	FTimerDelegate BlendDelegate;
-	BlendDelegate.BindUFunction(this, "Possess", PawnToPossess);
-	float BlendTime = 1.f;
-	GetWorldTimerManager().SetTimer(BlendTimer, BlendDelegate, BlendTime, false);
-
-	if (ActorToPossess)
-	{
-		SetViewTargetWithBlend(ActorToPossess, BlendTime);
-	}*/
-
 }
 
 void AWOGPlayerController::Server_SetPlayerIndex_Implementation(int32 NewIndex)

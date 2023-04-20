@@ -13,6 +13,7 @@
 #include "TimerManager.h"
 #include "WOG/Enemies/WOGBaseEnemy.h"
 #include "WOG/Interfaces/AttributesInterface.h"
+#include "EnhancedInputSubsystems.h"
 
 UWOGSpawnComponent::UWOGSpawnComponent()
 {
@@ -49,11 +50,29 @@ void UWOGSpawnComponent::LaunchSpawnMode()
 	if (bIsSpawnModeOn)
 	{
 		StopSpawnMode();
+		if (APlayerController* PlayerController = Cast<APlayerController>(AttackerCharacter->GetController()))
+		{
+			if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+			{
+				Subsystem->ClearAllMappings();
+				Subsystem->AddMappingContext(AttackerCharacter->MatchMappingContext, 0);
+				UE_LOG(LogTemp, Warning, TEXT("DefaultModeMC"));
+			}
+		}
 	}
 	else
 	{
 		bIsSpawnModeOn = true;
 		SpawnCycle();
+		if (APlayerController* PlayerController = Cast<APlayerController>(AttackerCharacter->GetController()))
+		{
+			if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+			{
+				Subsystem->ClearAllMappings();
+				Subsystem->AddMappingContext(AttackerCharacter->SpawnModeMappingContext, 0);
+				UE_LOG(LogTemp, Warning, TEXT("SpawnModeMC"));
+			}
+		}
 	}
 }
 
@@ -221,12 +240,6 @@ void UWOGSpawnComponent::Spawn(FTransform Transform, int32 ID)
 
 		TObjectPtr<AActor> SpawnedActor = GetWorld()->SpawnActor<AActor>(Spawnables[ID]->Actor, Transform, Params);
 		UE_LOG(LogTemp, Warning, TEXT("Spawned at: %s"), *Spawn.ToString());
-
-		/*if (SpawnedActor->GetClass()->ImplementsInterface(UAttributesInterface::StaticClass()))
-		{
-			IAttributesInterface::Execute_SetMaxHealth(SpawnedActor,Spawnables[ID]->MaxHealth);
-			UE_LOG(LogTemp, Error, TEXT("SetMaxHealth() from SpawnCOmponent"));
-		}*/
 	}
 }
 
@@ -277,11 +290,11 @@ void UWOGSpawnComponent::HandleSpawnRotation(bool bRotateLeft)
 
 	if (bRotateLeft)
 	{
-		NewSpawnRotation = SpawnTransform.GetRotation().Rotator() - FRotator(0.f, 5.f, 0.f);
+		NewSpawnRotation = SpawnTransform.GetRotation().Rotator() - FRotator(0.f, 15.f, 0.f);
 	}
 	else
 	{
-		NewSpawnRotation = SpawnTransform.GetRotation().Rotator() + FRotator(0.f, 5.f, 0.f);
+		NewSpawnRotation = SpawnTransform.GetRotation().Rotator() + FRotator(0.f, 15.f, 0.f);
 	}
 
 	SpawnTransform.SetRotation(FQuat::MakeFromRotator(NewSpawnRotation));

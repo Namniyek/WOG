@@ -58,6 +58,13 @@ protected:
 	virtual void BroadcastHit_Implementation(AActor* AgressorActor, const FHitResult& Hit, const float& DamageToApply, AActor* InstigatorWeapon) override;
 	#pragma endregion
 
+	#pragma region Animation Variables
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	float SpeedRequiredForLeap;
+
+	#pragma endregion
+
 	UPROPERTY()
 	TObjectPtr<class AWOGGameMode> WOGGameMode;
 
@@ -97,4 +104,5 @@ public:
 
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE ECharacterState GetCharacterState() const { return CharacterState; }
+	FORCEINLINE float GetSpeedRequiredForLeap() const { return SpeedRequiredForLeap; }
 };

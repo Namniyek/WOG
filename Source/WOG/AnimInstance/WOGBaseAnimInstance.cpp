@@ -5,6 +5,9 @@
 #include "WOG/PlayerCharacter/BasePlayerCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetMathLibrary.h"
+#include "KismetAnimationLibrary.h"
+#include "Components/CapsuleComponent.h"
 
 void UWOGBaseAnimInstance::NativeInitializeAnimation()
 {
@@ -13,13 +16,12 @@ void UWOGBaseAnimInstance::NativeInitializeAnimation()
 	if (PlayerCharacter)
 	{
 		CharacterMovementComponent = PlayerCharacter->GetCharacterMovement();
-		GEngine->AddOnScreenDebugMessage(1, -1, FColor::Red, FString::FromInt(PlayerCharacter == nullptr));
+		SpeedRequiredForLeap = PlayerCharacter->GetSpeedRequiredForLeap();
 	}
 	else
 	{
-		GEngine->AddOnScreenDebugMessage(1, -1, FColor::Red, FString::FromInt(PlayerCharacter == nullptr));
+		UE_LOG(LogTemp, Error, TEXT("No valid PlayerCharacter in anim instance"));
 	}
-	GEngine->AddOnScreenDebugMessage(1, -1, FColor::Red, FString("InitializeAnimation"));
 }
 
 void UWOGBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
@@ -39,9 +41,28 @@ void UWOGBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 	if (PlayerCharacter == nullptr || CharacterMovementComponent == nullptr) return;
 	
-	//Get the velocity vector and the ground speed of the character 
+	//is accelerating
+	if (PlayerCharacter->GetCharacterMovement()->GetCurrentAcceleration().Size() > 0)
+	{
+		bIsAccelerating = true;
+	}
+	else
+	{
+		bIsAccelerating = false;
+	}
+
+	//Get the ground speed just before stopping
+	if (!bIsAccelerating)
+	{
+		GroundSpeedLastFrame = GroundSpeed;
+	}
+
+	//Get the ground and lateral speed of the character 
 	Velocity = PlayerCharacter->GetVelocity();
 	GroundSpeed = Velocity.Size2D();
+	LateralSpeed = UKismetMathLibrary::VSizeXY(Velocity);
+
+	bIsMoving = Velocity != FVector(0.f);
 
 	//Check if the character should move
 	bShouldMove = (
@@ -54,10 +75,36 @@ void UWOGBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	//Get the character rotation
 	Rotation = PlayerCharacter->GetActorRotation();
 
+	//Get the current rotation rate
+	FVector CapsuleAngularVelocity = PlayerCharacter->GetCapsuleComponent()->GetPhysicsAngularVelocityInDegrees();
+	CurrentRotationRate = UKismetMathLibrary::MapRangeClamped(CapsuleAngularVelocity.Z, -360, 360, -1, 1);
+
 	//Get the bool bIsTargeting
 	bIsTargeting = PlayerCharacter->GetIsTargeting();
 
+	UpdateMovementDirection();
+
 	#pragma endregion
 
+}
 
+void UWOGBaseAnimInstance::UpdateMovementDirection()
+{
+	MovementDirectionValue = UKismetAnimationLibrary::CalculateDirection(Velocity, Rotation);
+	if (UKismetMathLibrary::InRange_FloatFloat(MovementDirectionValue, -15.f, 0.f) || UKismetMathLibrary::InRange_FloatFloat(MovementDirectionValue, 0.f, 15.f))
+	{
+		MovementDirection = FName("Front");
+	}
+	else if (UKismetMathLibrary::InRange_FloatFloat(MovementDirectionValue, -100.f, -16.f))
+	{
+		MovementDirection = FName("Left");
+	}
+	else if (UKismetMathLibrary::InRange_FloatFloat(MovementDirectionValue, 16.f, 100.f))
+	{
+		MovementDirection = FName("Right");
+	}
+	else if (UKismetMathLibrary::InRange_FloatFloat(MovementDirectionValue, -180.f, -101.f) || UKismetMathLibrary::InRange_FloatFloat(MovementDirectionValue, 101, 180.f))
+	{
+		MovementDirection = FName("Back");
+	}
 }

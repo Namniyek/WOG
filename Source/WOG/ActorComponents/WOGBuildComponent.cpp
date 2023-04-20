@@ -12,6 +12,7 @@
 #include "Components/BoxComponent.h"
 #include "TimerManager.h"
 #include "WOG/Weapons/WOGBaseWeapon.h"
+#include "EnhancedInputSubsystems.h"
 
 UWOGBuildComponent::UWOGBuildComponent()
 {
@@ -47,12 +48,28 @@ void UWOGBuildComponent::LaunchBuildMode()
 	if (bIsBuildModeOn)
 	{
 		StopBuildMode();
+		if (APlayerController* PlayerController = Cast<APlayerController>(DefenderCharacter->GetController()))
+		{
+			if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+			{
+				Subsystem->ClearAllMappings();
+				Subsystem->AddMappingContext(DefenderCharacter->MatchMappingContext, 0);
+			}
+		}
 	}
 	else
 	{
 		bIsBuildModeOn = true;
 		HeightOffset = FVector();
 		BuildCycle();
+		if (APlayerController* PlayerController = Cast<APlayerController>(DefenderCharacter->GetController()))
+		{
+			if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+			{
+				Subsystem->ClearAllMappings();
+				Subsystem->AddMappingContext(DefenderCharacter->SpawnModeMappingContext, 0);
+			}
+		}
 	}
 }
 

@@ -86,11 +86,10 @@ void AWOGBaseWeapon::InitWeapon()
 		WeaponName = WeaponDataRow->WeaponName;
 		WeaponType = WeaponDataRow->WeaponType;
 
-		AttackLightMontage = WeaponDataRow->AttackLightMontage;
-		AttackHeavyMontage = WeaponDataRow->AttackHeavyMontage;
+		AttackMontage = WeaponDataRow->AttackMontage;
+		DodgeMontage = WeaponDataRow->DodgeMontage;
 		BlockMontage = WeaponDataRow->BlockMontage;
 		EquipMontage = WeaponDataRow->EquipMontage;
-		UnequipMontage = WeaponDataRow->UnequipMontage;
 		HurtMontage = WeaponDataRow->HurtMontage;
 
 		BaseDamage = WeaponDataRow->BaseDamage;
@@ -193,6 +192,7 @@ void AWOGBaseWeapon::Equip()
 	if (CharacterAnimInstance && EquipMontage)
 	{
 		CharacterAnimInstance->Montage_Play(EquipMontage, 2.f);
+		CharacterAnimInstance->Montage_JumpToSection(FName("Equip"), EquipMontage);
 	}
 }
 
@@ -238,9 +238,10 @@ void AWOGBaseWeapon::Unequip()
 	if (!OwnerCharacter) return;
 
 	UAnimInstance* CharacterAnimInstance = OwnerCharacter->GetMesh()->GetAnimInstance();
-	if (CharacterAnimInstance && UnequipMontage)
+	if (CharacterAnimInstance && EquipMontage)
 	{
-		CharacterAnimInstance->Montage_Play(UnequipMontage, 2.f);
+		CharacterAnimInstance->Montage_Play(EquipMontage, 2.f);
+		CharacterAnimInstance->Montage_JumpToSection(FName("Unequip"), EquipMontage);
 	}
 }
 
@@ -341,10 +342,10 @@ void AWOGBaseWeapon::AttackLight()
 	if (!OwnerCharacter) return;
 
 	UAnimInstance* CharacterAnimInstance = OwnerCharacter->GetMesh()->GetAnimInstance();
-	if (CharacterAnimInstance && AttackLightMontage)
+	if (CharacterAnimInstance && AttackMontage)
 	{
 		FString SectionName = FString::FromInt(GetComboStreak());
-		CharacterAnimInstance->Montage_Play(AttackLightMontage, 1.f);
+		CharacterAnimInstance->Montage_Play(AttackMontage, 1.f);
 		CharacterAnimInstance->Montage_JumpToSection(FName(*SectionName));
 	}
 	if (TraceComponent)
@@ -373,9 +374,10 @@ void AWOGBaseWeapon::AttackHeavy()
 	if (!OwnerCharacter) return;
 
 	UAnimInstance* CharacterAnimInstance = OwnerCharacter->GetMesh()->GetAnimInstance();
-	if (CharacterAnimInstance && AttackHeavyMontage)
+	if (CharacterAnimInstance && AttackMontage)
 	{
-		CharacterAnimInstance->Montage_Play(AttackHeavyMontage, 1.f);
+		CharacterAnimInstance->Montage_Play(AttackMontage, 1.f);
+		CharacterAnimInstance->Montage_JumpToSection(FName("Heavy"), AttackMontage);
 	}
 	ComboStreak = 0;
 	bIsInCombo = false;

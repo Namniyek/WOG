@@ -19,9 +19,10 @@ enum class EWeaponType : uint8
 {
 	EWT_Unarmed UMETA(DisplayName = "Unarmed"),
 	EWT_SwordAndShield UMETA(DisplayName = "Sword and Shield"),
+	EWT_AxeAndShield UMETA(DisplayName = "Axe and Shield"),
 	EWT_DoubleHanded UMETA(DisplayName = "Double Handed"),
 	EWT_DualWielding UMETA(DisplayName = "Dual Wielding"),
-	EWT_BowAndArrow UMETA(DisplayName = "BowAndArrow"),
+	EWT_BowAndArrow UMETA(DisplayName = "Bow and Arrow"),
 
 	EWT_MAX UMETA(DisplayName = "DefaultMAX")
 };

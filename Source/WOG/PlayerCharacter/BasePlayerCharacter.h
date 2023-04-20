@@ -98,6 +98,8 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	UAnimMontage* UnarmedHurtMontage;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UAnimMontage* DodgeMontage;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	USkeleton* Skeleton;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	UPhysicsAsset* PhysicsAsset;
@@ -147,58 +149,59 @@ public:
 	#pragma endregion
 
 	#pragma region Player Input Variables
-	//Input
-	/** MappingContext */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	/*
+	** MappingContexts
+	**/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Mapping Contexts", meta = (AllowPrivateAccess = "true"))
 	class UInputMappingContext* MatchMappingContext;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputMappingContext* RadialMenuMappingContext;
+	//UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Mapping Contexts", meta = (AllowPrivateAccess = "true"))
+	//UInputMappingContext* RadialMenuMappingContext;
 
-	/** Jump Input Action */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Mapping Contexts", meta = (AllowPrivateAccess = "true"))
+	UInputMappingContext* SpawnModeMappingContext;
+
+	/*
+	** Input actions
+	**/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Base Match", meta = (AllowPrivateAccess = "true"))
 	class UInputAction* JumpAction;
 
-	/** Move Input Action */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Base Match", meta = (AllowPrivateAccess = "true"))
 	UInputAction* MoveAction;
 
-	/** Look Input Action */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Base Match", meta = (AllowPrivateAccess = "true"))
 	UInputAction* LookAction;
 
-	/** Dodge Input Action */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Base Match", meta = (AllowPrivateAccess = "true"))
 	UInputAction* DodgeAction;
 
-	/** Sprint Input Action */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Base Match", meta = (AllowPrivateAccess = "true"))
 	UInputAction* SprintAction;
 
-	/** Target Input Action */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Base Match", meta = (AllowPrivateAccess = "true"))
 	UInputAction* TargetAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Base Match", meta = (AllowPrivateAccess = "true"))
+	UInputAction* CycleTargetAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Base Match", meta = (AllowPrivateAccess = "true"))
 	UInputAction* AbilitiesAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Base Match", meta = (AllowPrivateAccess = "true"))
 	UInputAction* PrimaryAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Base Match", meta = (AllowPrivateAccess = "true"))
 	UInputAction* SecondaryAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputAction* PossessAction;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Base Match", meta = (AllowPrivateAccess = "true"))
 	UInputAction* RadialMenuAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputAction* BrowseRadialMenuAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Spawn Mode", meta = (AllowPrivateAccess = "true"))
+	UInputAction* SpawnAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputAction* SpawnRadialMenuAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Spawn Mode", meta = (AllowPrivateAccess = "true"))
+	UInputAction* RotateSpawnAction;
 
 	#pragma endregion
 
@@ -235,7 +238,6 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void StopDodging();
 
-	UFUNCTION(BlueprintNativeEvent)
 	void Dodge();
 
 	/**Called for sprint input*/
@@ -244,6 +246,7 @@ protected:
 
 	/**Called for Target input*/
 	void TargetActionPressed(const FInputActionValue& Value);
+	void CycleTargetActionPressed(const FInputActionValue& Value);
 
 	/**Called for equip input*/
 	void AbilitiesButtonPressed(const FInputActionValue& Value);
@@ -333,7 +336,12 @@ protected:
 	TObjectPtr<class AWOGPlayerController> OwnerPC = nullptr;
 	TObjectPtr<AActor> CurrentTarget = nullptr;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<class UAnimMontage> DodgeMontage;
+
 private:
+
+
 
 
 public:

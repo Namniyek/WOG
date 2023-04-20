@@ -8,6 +8,13 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "WOG/PlayerController/WOGPlayerController.h"
+#include "WOG/ActorComponents/WOGSpawnComponent.h"
+
+AWOGAttacker::AWOGAttacker()
+{
+	SpawnComponent = CreateDefaultSubobject<UWOGSpawnComponent>(TEXT("SpawnComponent"));
+	SpawnComponent->SetIsReplicated(true);
+}
 
 void AWOGAttacker::BeginPlay()
 {
@@ -46,6 +53,9 @@ void AWOGAttacker::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	{
 		//Possess
 		EnhancedInputComponent->BindAction(PossessAction, ETriggerEvent::Completed, this, &ThisClass::PossessActionPressed);
+		//Spawn 
+		EnhancedInputComponent->BindAction(SpawnAction, ETriggerEvent::Completed, this, &ThisClass::SpawnActionPressed);
+		EnhancedInputComponent->BindAction(RotateSpawnAction, ETriggerEvent::Triggered, this, &ThisClass::RotateSpawnActionPressed);
 	}
 }
 
@@ -53,4 +63,29 @@ void AWOGAttacker::PossessActionPressed(const FInputActionValue& Value)
 {
 	if (CharacterState == ECharacterState::ECS_Elimmed) return;
 	PossessMinion();
+}
+
+void AWOGAttacker::RotateSpawnActionPressed(const FInputActionValue& Value)
+{
+	if (CharacterState == ECharacterState::ECS_Elimmed) return;
+	if (!SpawnComponent) return;
+	float Direction = Value.Get<float>();
+
+	if (Direction < 0)
+	{
+		//Rotate left
+		SpawnComponent->HandleSpawnRotation(true);
+	}
+	else
+	{
+		//Rotate right
+		SpawnComponent->HandleSpawnRotation(false);
+	}
+}
+
+void AWOGAttacker::SpawnActionPressed(const FInputActionValue& Value)
+{
+	if (CharacterState == ECharacterState::ECS_Elimmed) return;
+	if (!SpawnComponent) return;
+	SpawnComponent->PlaceSpawn();
 }

@@ -49,19 +49,16 @@ struct FWeaponDataTable : public FTableRowBase
 	FName BackSecondarySocket;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UAnimMontage* AttackLightMontage;
+	UAnimMontage* AttackMontage;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UAnimMontage* AttackHeavyMontage;
+	UAnimMontage* DodgeMontage;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UAnimMontage* BlockMontage;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UAnimMontage* EquipMontage;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UAnimMontage* UnequipMontage;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UAnimMontage* HurtMontage;
@@ -162,19 +159,16 @@ protected:
 	EWeaponType WeaponType;
 
 	UPROPERTY()
-	UAnimMontage* AttackLightMontage;
+	UAnimMontage* AttackMontage;
 
 	UPROPERTY()
-	UAnimMontage* AttackHeavyMontage;
+	UAnimMontage* DodgeMontage;
 
 	UPROPERTY()
 	UAnimMontage* BlockMontage;
 
 	UPROPERTY()
 	UAnimMontage* EquipMontage;
-
-	UPROPERTY()
-	UAnimMontage* UnequipMontage;
 
 	UPROPERTY()
 	UAnimMontage* HurtMontage;
@@ -305,4 +299,5 @@ public:
 	FORCEINLINE USoundCue* GetBlockSound() const { return BlockSound; }
 	FORCEINLINE UAnimMontage* GetHurtMontage() const { return HurtMontage; }
 	FORCEINLINE UAnimMontage* GetBlockMontage() const { return BlockMontage; }
+	FORCEINLINE UAnimMontage* GetDodgeMontage() const { return DodgeMontage; }
 };

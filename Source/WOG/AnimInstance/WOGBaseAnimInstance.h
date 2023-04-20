@@ -18,7 +18,6 @@ class WOG_API UWOGBaseAnimInstance : public UAnimInstance
 public:
 
 	virtual void NativeInitializeAnimation() override;
-
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 
 
@@ -40,12 +39,49 @@ protected:
 	float GroundSpeed;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Character|General", meta = (AllowPrivateAccess = "true"))
+	float GroundSpeedLastFrame;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Character|General", meta = (AllowPrivateAccess = "true"))
+	float LateralSpeed;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Character|General", meta = (AllowPrivateAccess = "true"))
+	float CurrentRotationRate;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Character|General", meta = (AllowPrivateAccess = "true"))
+	float MovementDirectionValue;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Character|General", meta = (AllowPrivateAccess = "true"))
 	bool bShouldMove;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Character|General", meta = (AllowPrivateAccess = "true"))
+	bool bIsMoving;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Character|General", meta = (AllowPrivateAccess = "true"))
 	bool bIsFalling;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Character|General", meta = (AllowPrivateAccess = "true"))
 	bool bIsTargeting;
+
+	UPROPERTY(BlueprintReadWrite, Category = "Character|General", meta = (AllowPrivateAccess = "true"))
+	bool bStopFootLeft;
+
+	UPROPERTY(BlueprintReadWrite, Category = "Character|General", meta = (AllowPrivateAccess = "true"))
+	bool bIsLandingWhileMoving;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Character|General", meta = (AllowPrivateAccess = "true"))
+	FName MovementDirection;
+
+	//whether the character is accelerating or not
+	UPROPERTY(BlueprintReadOnly, Category = "Character|General", meta = (AllowPrivateAccess = "true"))
+	bool bIsAccelerating;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Character|General", meta = (AllowPrivateAccess = "true"))
+	float SpeedRequiredForLeap;
+
+	void UpdateMovementDirection();
+
+public:
+	FORCEINLINE FName GetMovementDirection() const { return MovementDirection; }
+
 	
 };

@@ -18,6 +18,7 @@
 #include "WOG/Weapons/WOGBaseWeapon.h"
 #include "WOG/ActorComponents/WOGCombatComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "WOG/AnimInstance/WOGBaseAnimInstance.h"
 
 
 void ABasePlayerCharacter::OnConstruction(const FTransform& Transform)
@@ -100,16 +101,10 @@ void ABasePlayerCharacter::BeginPlay()
 	{
 		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
 		{
+			Subsystem->ClearAllMappings();
 			Subsystem->AddMappingContext(MatchMappingContext, 0);
 		}
 	}
-
-	//if (TargetAttractor)
-	//{
-	//	TargetAttractor->UpdateDesiredMesh(Head);
-	//	TargetAttractor->AddSocket(FName("head"));
-	//	TargetAttractor->RemoveSocket();
-	//}
 }
 
 // Called to bind functionality to input
@@ -134,6 +129,7 @@ void ABasePlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &ThisClass::StopSprinting);
 		//Target
 		EnhancedInputComponent->BindAction(TargetAction, ETriggerEvent::Completed, this, &ThisClass::TargetActionPressed);
+		EnhancedInputComponent->BindAction(CycleTargetAction, ETriggerEvent::Triggered, this, &ThisClass::CycleTargetActionPressed);
 		//Equip
 		EnhancedInputComponent->BindAction(AbilitiesAction, ETriggerEvent::Triggered, this, &ThisClass::AbilitiesButtonPressed);
 		//PrimaryAction
@@ -214,8 +210,18 @@ void ABasePlayerCharacter::StopDodging()
 	}
 }
 
-void ABasePlayerCharacter::Dodge_Implementation()
+void ABasePlayerCharacter::Dodge()
 {
+	TObjectPtr<UWOGBaseAnimInstance> CharacterAnimInstance = Cast< UWOGBaseAnimInstance>(GetMesh()->GetAnimInstance());
+	if (!CharacterAnimInstance) return;
+
+	GetCharacterMovement()->MaxWalkSpeed = 1000.f;	//Sets the maximum run speed
+
+	if (DodgeMontage)
+	{
+		CharacterAnimInstance->Montage_Play(DodgeMontage, 1.f);
+		CharacterAnimInstance->Montage_JumpToSection(CharacterAnimInstance->GetMovementDirection());
+	}
 }
 
 void ABasePlayerCharacter::SprintActionPressed()
@@ -237,6 +243,16 @@ void ABasePlayerCharacter::TargetActionPressed(const FInputActionValue& Value)
 	if (CharacterState == ECharacterState::ECS_Elimmed) return;
 	if (!LockOnTarget) return;
 	LockOnTarget->EnableTargeting();
+}
+
+void ABasePlayerCharacter::CycleTargetActionPressed(const FInputActionValue& Value)
+{
+	if (CharacterState == ECharacterState::ECS_Elimmed) return;
+	if (!LockOnTarget) return;
+	float CycleFloat = Value.Get<float>();
+	FVector2D CycleVector = FVector2D(CycleFloat, 0.f);
+
+	LockOnTarget->SwitchTargetManual(CycleVector);
 }
 
 void ABasePlayerCharacter::AbilitiesButtonPressed(const FInputActionValue& Value)
@@ -466,6 +482,7 @@ void ABasePlayerCharacter::SetMeshes(bool bIsMale, FName RowName)
 
 	Combat->SetDefaultWeaponClass(MeshRow->DefaultWeapon);
 	UnarmedHurtMontage = MeshRow->UnarmedHurtMontage;
+	DodgeMontage = MeshRow->DodgeMontage;
 }
 
 void ABasePlayerCharacter::HandleStateUnnoccupied()
@@ -478,7 +495,6 @@ void ABasePlayerCharacter::HandleStateUnnoccupied()
 
 void ABasePlayerCharacter::HandleStateDodging()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Purple, FString("Dodge()"));
 	Dodge();
 }
 
@@ -488,7 +504,6 @@ void ABasePlayerCharacter::HandleStateSprinting()
 
 	//Sets the maximum run speed
 	GetCharacterMovement()->MaxWalkSpeed = 800.f;
-	UE_LOG(LogTemp, Warning, TEXT("Sprinting()"));
 }
 
 void ABasePlayerCharacter::HandleStateElimmed(AController* InstigatedBy)
@@ -537,6 +552,7 @@ void ABasePlayerCharacter::HandleStateAttacking()
 void ABasePlayerCharacter::BroadcastHit_Implementation(AActor* AgressorActor, const FHitResult& Hit, const float& DamageToApply, AActor* InstigatorWeapon)
 {
 	if (CharacterState == ECharacterState::ECS_Elimmed) return;
+	if (CharacterState == ECharacterState::ECS_Dodging) return;
 
 	if (Combat->GetEquippedWeapon() && Combat->GetEquippedWeapon()->GetWeaponState() == EWeaponState::EWS_Blocking)
 	{
