@@ -19,6 +19,7 @@
 #include "WOG/ActorComponents/WOGCombatComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "WOG/AnimInstance/WOGBaseAnimInstance.h"
+#include "Sound/SoundCue.h"
 
 
 void ABasePlayerCharacter::OnConstruction(const FTransform& Transform)
@@ -144,6 +145,8 @@ void ABasePlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 void ABasePlayerCharacter::MoveActionPressed(const FInputActionValue& Value)
 {
 	if (CharacterState == ECharacterState::ECS_Elimmed) return;
+	if (CharacterState == ECharacterState::ECS_Staggered) return;
+
 	FVector2D MovementVector = Value.Get<FVector2D>();
 	if (Controller != nullptr)
 	{
@@ -185,7 +188,8 @@ void ABasePlayerCharacter::LookActionPressed(const FInputActionValue& Value)
 void ABasePlayerCharacter::JumpActionPressed(const FInputActionValue& Value)
 {
 	if (CharacterState == ECharacterState::ECS_Attacking) return;
-	
+	if (CharacterState == ECharacterState::ECS_Staggered) return;
+
 	ACharacter::Jump();
 }
 
@@ -215,9 +219,15 @@ void ABasePlayerCharacter::Dodge()
 	TObjectPtr<UWOGBaseAnimInstance> CharacterAnimInstance = Cast< UWOGBaseAnimInstance>(GetMesh()->GetAnimInstance());
 	if (!CharacterAnimInstance) return;
 
-	GetCharacterMovement()->MaxWalkSpeed = 1000.f;	//Sets the maximum run speed
+	//GetCharacterMovement()->MaxWalkSpeed = 1000.f;	//Sets the maximum run speed
 
-	if (DodgeMontage)
+	if (Combat && Combat->EquippedWeapon && Combat->EquippedWeapon->GetDodgeMontage())
+	{
+		CharacterAnimInstance->Montage_Play(Combat->EquippedWeapon->GetDodgeMontage(), 1.f);
+		CharacterAnimInstance->Montage_JumpToSection(CharacterAnimInstance->GetMovementDirection());
+	}
+
+	else if (DodgeMontage)
 	{
 		CharacterAnimInstance->Montage_Play(DodgeMontage, 1.f);
 		CharacterAnimInstance->Montage_JumpToSection(CharacterAnimInstance->GetMovementDirection());
@@ -241,6 +251,8 @@ void ABasePlayerCharacter::StopSprinting()
 void ABasePlayerCharacter::TargetActionPressed(const FInputActionValue& Value)
 {
 	if (CharacterState == ECharacterState::ECS_Elimmed) return;
+	if (CharacterState == ECharacterState::ECS_Staggered) return;
+
 	if (!LockOnTarget) return;
 	LockOnTarget->EnableTargeting();
 }
@@ -248,6 +260,7 @@ void ABasePlayerCharacter::TargetActionPressed(const FInputActionValue& Value)
 void ABasePlayerCharacter::CycleTargetActionPressed(const FInputActionValue& Value)
 {
 	if (CharacterState == ECharacterState::ECS_Elimmed) return;
+
 	if (!LockOnTarget) return;
 	float CycleFloat = Value.Get<float>();
 	FVector2D CycleVector = FVector2D(CycleFloat, 0.f);
@@ -257,6 +270,10 @@ void ABasePlayerCharacter::CycleTargetActionPressed(const FInputActionValue& Val
 
 void ABasePlayerCharacter::AbilitiesButtonPressed(const FInputActionValue& Value)
 {
+	if (CharacterState == ECharacterState::ECS_Elimmed) return;
+	if (CharacterState == ECharacterState::ECS_Staggered) return;
+	if (CharacterState == ECharacterState::ECS_Dodging) return;
+
 	FVector2D AbilitiesVector = Value.Get<FVector2D>();
 
 	if (AbilitiesVector.X > 0)
@@ -322,6 +339,10 @@ void ABasePlayerCharacter::AbilitiesButtonPressed(const FInputActionValue& Value
 
 void ABasePlayerCharacter::PrimaryLightButtonPressed(FInputActionValue ActionValue, float ElapsedTime, float TriggeredTime)
 {
+	if (CharacterState == ECharacterState::ECS_Elimmed) return;
+	if (CharacterState == ECharacterState::ECS_Staggered) return;
+	if (CharacterState == ECharacterState::ECS_Dodging) return;
+
 	if (!Combat) return;
 
 	if (ElapsedTime < 0.2)
@@ -332,6 +353,10 @@ void ABasePlayerCharacter::PrimaryLightButtonPressed(FInputActionValue ActionVal
 
 void ABasePlayerCharacter::PrimaryArmHeavyAttack(FInputActionValue ActionValue, float ElapsedTime, float TriggeredTime)
 {
+	if (CharacterState == ECharacterState::ECS_Elimmed) return;
+	if (CharacterState == ECharacterState::ECS_Staggered) return;
+	if (CharacterState == ECharacterState::ECS_Dodging) return;
+
 	if (!Combat) return;
 	if (ElapsedTime >= 0.2 && ElapsedTime <= 0.22)
 	{
@@ -345,6 +370,10 @@ void ABasePlayerCharacter::PrimaryArmHeavyAttack(FInputActionValue ActionValue, 
 
 void ABasePlayerCharacter::PrimaryHeavyButtonPressed(const FInputActionValue& Value)
 {
+	if (CharacterState == ECharacterState::ECS_Elimmed) return;
+	if (CharacterState == ECharacterState::ECS_Staggered) return;
+	if (CharacterState == ECharacterState::ECS_Dodging) return;
+
 	if (!Combat) return;
 
 	Combat->AttackHeavy();
@@ -352,6 +381,10 @@ void ABasePlayerCharacter::PrimaryHeavyButtonPressed(const FInputActionValue& Va
 
 void ABasePlayerCharacter::SecondaryButtonPressed(const FInputActionValue& Value)
 {
+	if (CharacterState == ECharacterState::ECS_Elimmed) return;
+	if (CharacterState == ECharacterState::ECS_Staggered) return;
+	if (CharacterState == ECharacterState::ECS_Dodging) return;
+
 	if (!Combat) return;
 	Combat->Block();
 	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Purple, FString("StartBlocking"));
@@ -359,6 +392,10 @@ void ABasePlayerCharacter::SecondaryButtonPressed(const FInputActionValue& Value
 
 void ABasePlayerCharacter::SecondaryButtonReleased(const FInputActionValue& Value)
 {
+	if (CharacterState == ECharacterState::ECS_Elimmed) return;
+	if (CharacterState == ECharacterState::ECS_Staggered) return;
+	if (CharacterState == ECharacterState::ECS_Dodging) return;
+
 	if (!Combat) return;
 	Combat->StopBlocking();
 	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Purple, FString("StopBlocking"));
@@ -549,6 +586,18 @@ void ABasePlayerCharacter::HandleStateAttacking()
 	//TO-DO What happens when character attacks. 
 }
 
+void ABasePlayerCharacter::HandleStateStaggered()
+{
+	UAnimInstance* CharacterAnimInstance = GetMesh()->GetAnimInstance();
+	if (!CharacterAnimInstance) return;
+
+	if (Combat && Combat->EquippedWeapon && Combat->EquippedWeapon->GetBlockMontage())
+	{
+		CharacterAnimInstance->Montage_Play(Combat->GetEquippedWeapon()->GetBlockMontage(), 1.f);
+		CharacterAnimInstance->Montage_JumpToSection(FName("Knockback"));
+	}
+}
+
 void ABasePlayerCharacter::BroadcastHit_Implementation(AActor* AgressorActor, const FHitResult& Hit, const float& DamageToApply, AActor* InstigatorWeapon)
 {
 	if (CharacterState == ECharacterState::ECS_Elimmed) return;
@@ -558,16 +607,32 @@ void ABasePlayerCharacter::BroadcastHit_Implementation(AActor* AgressorActor, co
 	{
 		if (IsHitFrontal(60.f, this, AgressorActor))
 		{
+			if (Combat && Combat->EquippedWeapon && Combat->EquippedWeapon->GetCanParry())
+			{
+				TObjectPtr<AWOGBaseCharacter> AgressorCharacter = Cast<AWOGBaseCharacter>(AgressorActor);
+				if (AgressorCharacter)
+				{
+					AgressorCharacter->Server_SetCharacterState(ECharacterState::ECS_Staggered);
+				}
+			}
+
 			TObjectPtr<AWOGBaseWeapon> Weapon = Cast<AWOGBaseWeapon>(InstigatorWeapon);
 			Multicast_HandleCosmeticHit(ECosmeticHit::ECH_BlockingWeapon, Hit, InstigatorWeapon->GetActorLocation(), Weapon);
 			return;
 		}
 	}
-	if (Combat->GetEquippedWeapon() && (Combat->GetEquippedWeapon()->GetWeaponState() == EWeaponState::EWS_AttackLight || Combat->GetEquippedWeapon()->GetWeaponState() == EWeaponState::EWS_AttackHeavy))
+	if (Combat->GetEquippedWeapon() && (Combat->GetEquippedWeapon()->GetWeaponState() == EWeaponState::EWS_AttackLight))
 	{
 		if (IsHitFrontal(60.f, this, AgressorActor))
 		{
 			TObjectPtr<AWOGBaseWeapon> Weapon = Cast<AWOGBaseWeapon>(InstigatorWeapon);
+			TObjectPtr<ABasePlayerCharacter> Agressor = Cast<ABasePlayerCharacter>(AgressorActor);
+
+			if (Agressor)
+			{
+				Agressor->Server_SetCharacterState(ECharacterState::ECS_Staggered);
+			}
+			Server_SetCharacterState(ECharacterState::ECS_Staggered);
 			Multicast_HandleCosmeticHit(ECosmeticHit::ECH_AttackingWeapon, Hit, InstigatorWeapon->GetActorLocation(), Weapon);
 			return;
 		}
@@ -585,10 +650,21 @@ void ABasePlayerCharacter::BroadcastHit_Implementation(AActor* AgressorActor, co
 
 void ABasePlayerCharacter::HandleCosmeticBodyHit(const FHitResult& Hit, const FVector& WeaponLocation, const AWOGBaseWeapon* InstigatorWeapon)
 {
-	FName HitDirection = CalculateHitDirection(Hit, WeaponLocation);
-	PlayHitReactMontage(HitDirection);
+	FName HitDirection = CalculateHitDirection(Hit, InstigatorWeapon->OwnerCharacter->GetActorLocation());
 
-	//TO-DO - Play hit sound here
+	if (IsHitFrontal(60.f, this, InstigatorWeapon) && InstigatorWeapon->GetWeaponState() == EWeaponState::EWS_AttackHeavy)
+	{
+		PlayHitReactMontage(FName("KO"));
+	}
+	else
+	{
+		PlayHitReactMontage(HitDirection);
+	}
+
+	if (Combat && Combat->EquippedWeapon && Combat->EquippedWeapon->GetHitSound())
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, Combat->GetEquippedWeapon()->GetHitSound(), GetActorLocation());
+	}
 }
 
 void ABasePlayerCharacter::PlayHitReactMontage(FName Section)
@@ -596,7 +672,7 @@ void ABasePlayerCharacter::PlayHitReactMontage(FName Section)
 	UAnimInstance* CharacterAnimInstance = GetMesh()->GetAnimInstance();
 	if (!CharacterAnimInstance) return;
 
-	if (Combat->GetEquippedWeapon() && Combat->GetEquippedWeapon()->GetHurtMontage())
+	if (Combat && Combat->GetEquippedWeapon() && Combat->GetEquippedWeapon()->GetHurtMontage())
 	{
 		CharacterAnimInstance->Montage_Play(Combat->GetEquippedWeapon()->GetHurtMontage(), 1.f);
 		CharacterAnimInstance->Montage_JumpToSection(Section);
@@ -614,7 +690,7 @@ void ABasePlayerCharacter::HandleCosmeticBlock(const AWOGBaseWeapon* InstigatorW
 
 	if (Combat->GetEquippedWeapon()->GetBlockSound())
 	{
-		//TO-DO - Play block sound here
+		UGameplayStatics::PlaySoundAtLocation(this, Combat->GetEquippedWeapon()->GetBlockSound(), GetActorLocation());
 	}
 
 	if (Combat->GetEquippedWeapon()->GetBlockMontage())
@@ -622,16 +698,21 @@ void ABasePlayerCharacter::HandleCosmeticBlock(const AWOGBaseWeapon* InstigatorW
 		UAnimInstance* CharacterAnimInstance = GetMesh()->GetAnimInstance();
 		if (!CharacterAnimInstance) return;
 
-		if (CharacterAnimInstance)
+		if(InstigatorWeapon && InstigatorWeapon->GetWeaponState()==EWeaponState::EWS_AttackLight)
 		{
 			CharacterAnimInstance->Montage_Play(Combat->GetEquippedWeapon()->GetBlockMontage(), 1.f);
 			CharacterAnimInstance->Montage_JumpToSection(FName("Impact"));
+		}
+		else if (InstigatorWeapon && InstigatorWeapon->GetWeaponState() == EWeaponState::EWS_AttackHeavy)
+		{
+			Server_SetCharacterState(ECharacterState::ECS_Staggered);
 		}
 	}
 }
 
 void ABasePlayerCharacter::HandleCosmeticWeaponClash()
 {
+
 	GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Blue, FString("Weapons Clashed!"));
 }
 

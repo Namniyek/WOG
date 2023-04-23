@@ -71,6 +71,9 @@ void AWOGBaseCharacter::SetCharacterState(ECharacterState NewState, AController*
 	case ECharacterState::ECS_Attacking:
 		HandleStateAttacking();
 		break;
+	case ECharacterState::ECS_Staggered:
+		HandleStateStaggered();
+		break;
 	}
 }
 
@@ -99,6 +102,11 @@ void AWOGBaseCharacter::HandleStateAttacking()
 	//To be overriden in Children
 }
 
+void AWOGBaseCharacter::HandleStateStaggered()
+{
+	//To be overriden in Children
+}
+
 void AWOGBaseCharacter::BroadcastHit_Implementation(AActor* AgressorActor, const FHitResult& Hit, const float& DamageToApply, AActor* InstigatorWeapon)
 {
 
@@ -110,8 +118,8 @@ bool AWOGBaseCharacter::IsHitFrontal(const float& AngleTolerance, const AActor* 
 	FRotator DeltaRotator = UKismetMathLibrary::NormalizedDeltaRotator(GetActorRotation(), LookAtRotation);
 
 	bool bIsHitFrontal = 
-		!(UKismetMathLibrary::InRange_FloatFloat(DeltaRotator.Yaw, -180, -45) ||
-		UKismetMathLibrary::InRange_FloatFloat(DeltaRotator.Yaw, 45, 180));
+		!(UKismetMathLibrary::InRange_FloatFloat(DeltaRotator.Yaw, -180, -AngleTolerance) ||
+		UKismetMathLibrary::InRange_FloatFloat(DeltaRotator.Yaw, AngleTolerance, 180));
 
 	return bIsHitFrontal;
 }
@@ -142,46 +150,79 @@ FName AWOGBaseCharacter::CalculateHitDirection(const FHitResult& Hit, const FVec
 	// Get the location of the impact point
 	FVector ImpactPoint = Hit.Location;
 
-	// Calculate the attack direction
-	FVector AttackDirection = (ImpactPoint - WeaponLocation).GetSafeNormal();
+	FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(ImpactPoint, WeaponLocation);
+	FRotator DeltaRotator = UKismetMathLibrary::NormalizedDeltaRotator(GetActorRotation(), LookAtRotation);
 
-	// Calculate the hit direction
-	FVector CharacterForward = GetActorForwardVector();
-	LastHitDirection = FVector::CrossProduct(AttackDirection, CharacterForward);
+	if (UKismetMathLibrary::InRange_FloatFloat(DeltaRotator.Yaw, -45, -0) || UKismetMathLibrary::InRange_FloatFloat(DeltaRotator.Yaw, 0, 45))
+	{
+		//Hit came from the front
+		UE_LOG(LogTemp, Warning, TEXT("FRONT"));
+		return FName("Front");
+	}
 
-	// Determine the hit direction
-	if (FMath::Abs(LastHitDirection.Z) > FMath::Abs(LastHitDirection.X) && FMath::Abs(LastHitDirection.Z) > FMath::Abs(LastHitDirection.Y))
+	else if (UKismetMathLibrary::InRange_FloatFloat(DeltaRotator.Yaw, -135, -46))
 	{
-		// Hit came from the front or back
-		if (FVector::DotProduct(AttackDirection, CharacterForward) > 0.0f)
-		{
-			// Hit came from the front
-			UE_LOG(LogTemp, Warning, TEXT("FRONT"));
-			return FName("Front");
-		}
-		else
-		{
-			// Hit came from the back
-			UE_LOG(LogTemp, Warning, TEXT("BACK"));
-			return FName("Back");
-		}
+		//Hit came from the right
+		UE_LOG(LogTemp, Warning, TEXT("RIGHT"));
+		return FName("Right");
 	}
-	else
+
+	else if (UKismetMathLibrary::InRange_FloatFloat(DeltaRotator.Yaw, 46, 135))
 	{
-		// Hit came from the left or right
-		if (LastHitDirection.Z < 0.0f)
-		{
-			// Hit came from the right
-			UE_LOG(LogTemp, Warning, TEXT("RIGHT"));
-			return FName("Right");
-		}
-		else
-		{
-			// Hit came from the left
-			UE_LOG(LogTemp, Warning, TEXT("LEFT"));
-			return FName("Left");
-		}
+		//Hit came from the left
+		UE_LOG(LogTemp, Warning, TEXT("LEFT"));
+		return FName("Left");
 	}
+
+	else if (UKismetMathLibrary::InRange_FloatFloat(DeltaRotator.Yaw, -180, -136) || UKismetMathLibrary::InRange_FloatFloat(DeltaRotator.Yaw, 136, 180))
+	{
+		//Hit came from the back
+		UE_LOG(LogTemp, Warning, TEXT("BACK"));
+		return FName("Back");
+	}
+
+	return FName("");
+
+	//// Calculate the attack direction
+	//FVector AttackDirection = (ImpactPoint - WeaponLocation).GetSafeNormal();
+
+	//// Calculate the hit direction
+	//FVector CharacterForward = GetActorForwardVector();
+	//LastHitDirection = FVector::CrossProduct(AttackDirection, CharacterForward);
+
+	//// Determine the hit direction
+	//if (FMath::Abs(LastHitDirection.Z) > FMath::Abs(LastHitDirection.X) && FMath::Abs(LastHitDirection.Z) > FMath::Abs(LastHitDirection.Y))
+	//{
+	//	// Hit came from the front or back
+	//	if (FVector::DotProduct(AttackDirection, CharacterForward) > 0.0f)
+	//	{
+	//		// Hit came from the front
+	//		UE_LOG(LogTemp, Warning, TEXT("FRONT"));
+	//		return FName("Front");
+	//	}
+	//	else
+	//	{
+	//		// Hit came from the back
+	//		UE_LOG(LogTemp, Warning, TEXT("BACK"));
+	//		return FName("Back");
+	//	}
+	//}
+	//else
+	//{
+	//	// Hit came from the left or right
+	//	if (LastHitDirection.Z < 0.0f)
+	//	{
+	//		// Hit came from the right
+	//		UE_LOG(LogTemp, Warning, TEXT("RIGHT"));
+	//		return FName("Right");
+	//	}
+	//	else
+	//	{
+	//		// Hit came from the left
+	//		UE_LOG(LogTemp, Warning, TEXT("LEFT"));
+	//		return FName("Left");
+	//	}
+	//}
 }
 
 void AWOGBaseCharacter::PlayHitReactMontage(FName Section)

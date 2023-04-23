@@ -289,6 +289,7 @@ protected:
 	virtual void HandleStateSprinting() override;
 	virtual void HandleStateElimmed(AController* InstigatedBy = nullptr) override;
 	virtual void HandleStateAttacking() override;
+	virtual void HandleStateStaggered() override;
 
 	#pragma endregion
 

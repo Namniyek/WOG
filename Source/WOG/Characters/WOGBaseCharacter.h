@@ -42,6 +42,7 @@ protected:
 	virtual void HandleStateUnnoccupied();
 	virtual void HandleStateDodging();
 	virtual void HandleStateAttacking();
+	virtual void HandleStateStaggered();
 
 	#pragma endregion
 
@@ -99,7 +100,7 @@ public:
 
 	virtual void Elim(bool bPlayerLeftGame);
 
-	UFUNCTION(Server, reliable)
+	UFUNCTION(Server, reliable, BlueprintCallable)
 	void Server_SetCharacterState(ECharacterState NewState, AController* InstigatedBy = nullptr);
 
 	UFUNCTION(BlueprintPure)

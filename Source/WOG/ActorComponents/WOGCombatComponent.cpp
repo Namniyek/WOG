@@ -113,7 +113,7 @@ void UWOGCombatComponent::SetEquippedWeapon(AWOGBaseWeapon* NewEquippedWeapon)
 	}
 	if (EquippedWeapon == nullptr)
 	{
-		EquippedWeaponType = EWeaponType::EWT_Unarmed;
+		EquippedWeaponType = EWeaponType::EWT_Relax;
 	}
 }
 

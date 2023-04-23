@@ -221,6 +221,11 @@ private:
 	bool bIsInCombo;
 	UPROPERTY(Replicated, VisibleAnywhere)
 	bool bIsBlocking;
+	UPROPERTY(Replicated, VisibleAnywhere)
+	bool bCanParry;
+	FTimerHandle ParryTimer;
+
+	void SetCanNotParry();
 
 	UPROPERTY(ReplicatedUsing = OnRep_WeaponStateChanged, VisibleAnywhere)
 	EWeaponState WeaponState;
@@ -294,6 +299,7 @@ public:
 	FORCEINLINE EWeaponType GetWeaponType() const { return WeaponType; }
 	FORCEINLINE int32 GetComboStreak() const { return ComboStreak; }
 	FORCEINLINE bool GetIsInCombo() const { return bIsInCombo; }
+	FORCEINLINE bool GetCanParry() const { return bCanParry; }
 	FORCEINLINE UDidItHitActorComponent* GetTraceComponent() const { return TraceComponent; }
 	FORCEINLINE USoundCue* GetHitSound() const { return HitSound; }
 	FORCEINLINE USoundCue* GetBlockSound() const { return BlockSound; }

@@ -20,15 +20,11 @@ AWOGBaseWeapon::AWOGBaseWeapon()
 
 	MeshMain = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Main Mesh"));
 	MeshMain->SetupAttachment(GetRootComponent());
-	MeshMain->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	MeshMain->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-	MeshMain->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Overlap);
+	MeshMain->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	MeshSecondary = CreateDefaultSubobject <UStaticMeshComponent>(TEXT("Secondary Mesh"));
 	MeshSecondary->SetupAttachment(GetRootComponent());
-	MeshSecondary->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	MeshSecondary->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-	MeshSecondary->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Overlap);
+	MeshSecondary->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	TraceComponent = CreateDefaultSubobject <UDidItHitActorComponent>(TEXT("TraceComponent"));
 }
@@ -47,6 +43,7 @@ void AWOGBaseWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 	DOREPLIFETIME(AWOGBaseWeapon, ComboStreak);
 	DOREPLIFETIME(AWOGBaseWeapon, bIsInCombo);
 	DOREPLIFETIME(AWOGBaseWeapon, bIsBlocking);
+	DOREPLIFETIME(AWOGBaseWeapon, bCanParry);
 }
 
 void AWOGBaseWeapon::Tick(float DeltaSeconds)
@@ -146,6 +143,11 @@ void AWOGBaseWeapon::Server_SetWeaponState_Implementation(EWeaponState NewWeapon
 
 }
 
+void AWOGBaseWeapon::SetCanNotParry()
+{
+	bCanParry = false;
+}
+
 void AWOGBaseWeapon::OnRep_WeaponStateChanged()
 {
 	switch (WeaponState)
@@ -191,7 +193,7 @@ void AWOGBaseWeapon::Equip()
 	UAnimInstance* CharacterAnimInstance = OwnerCharacter->GetMesh()->GetAnimInstance();
 	if (CharacterAnimInstance && EquipMontage)
 	{
-		CharacterAnimInstance->Montage_Play(EquipMontage, 2.f);
+		CharacterAnimInstance->Montage_Play(EquipMontage, 1.f);
 		CharacterAnimInstance->Montage_JumpToSection(FName("Equip"), EquipMontage);
 	}
 }
@@ -240,7 +242,7 @@ void AWOGBaseWeapon::Unequip()
 	UAnimInstance* CharacterAnimInstance = OwnerCharacter->GetMesh()->GetAnimInstance();
 	if (CharacterAnimInstance && EquipMontage)
 	{
-		CharacterAnimInstance->Montage_Play(EquipMontage, 2.f);
+		CharacterAnimInstance->Montage_Play(EquipMontage, 1.f);
 		CharacterAnimInstance->Montage_JumpToSection(FName("Unequip"), EquipMontage);
 	}
 }
@@ -249,6 +251,10 @@ void AWOGBaseWeapon::InitTraceComponent()
 {
 	if (TraceComponent)
 	{
+		TraceComponent->bHitOtherSocketsAtDifferentTime = true;
+		TraceComponent->bHitOtherSocketsAtSameTime = true;
+		TraceComponent->bHitSameSocketAtDifferentTimes = true;
+
 		TraceComponent->SetupVariables(MeshMain, OwnerCharacter);
 		if (!TraceComponent->MyActorsToIgnore.Contains(OwnerCharacter))
 		{
@@ -404,6 +410,8 @@ void AWOGBaseWeapon::Server_Block_Implementation()
 	Multicast_Block();
 	SetWeaponState(EWeaponState::EWS_Blocking);
 	Block();
+	bCanParry = true;
+	GetWorldTimerManager().SetTimer(ParryTimer, this, &ThisClass::SetCanNotParry, MaxParryThreshold);
 }
 
 void AWOGBaseWeapon::Multicast_Block_Implementation()
@@ -422,7 +430,7 @@ void AWOGBaseWeapon::Block()
 	if (CharacterAnimInstance && BlockMontage)
 	{
 		CharacterAnimInstance->Montage_Play(BlockMontage, 1.f);
-		CharacterAnimInstance->Montage_JumpToSection(FName("Start"));
+		CharacterAnimInstance->Montage_JumpToSection(FName("Loop"));
 	}
 }
 
