@@ -54,6 +54,8 @@ private:
 
 	void AttackLight();
 	void AttackHeavy();
+	void AttackHeavyArm();
+	void AttackHeavyCanceled();
 	void Block();
 	void StopBlocking();
 

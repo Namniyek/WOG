@@ -41,9 +41,10 @@ void AWOGBaseWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 	DOREPLIFETIME(AWOGBaseWeapon, OwnerCharacter);
 	DOREPLIFETIME(AWOGBaseWeapon, WeaponState);
 	DOREPLIFETIME(AWOGBaseWeapon, ComboStreak);
-	DOREPLIFETIME(AWOGBaseWeapon, bIsInCombo);
+	DOREPLIFETIME(AWOGBaseWeapon, bAttackWindowOpen);
 	DOREPLIFETIME(AWOGBaseWeapon, bIsBlocking);
 	DOREPLIFETIME(AWOGBaseWeapon, bCanParry);
+	DOREPLIFETIME(AWOGBaseWeapon, bIsArmingHeavy);
 }
 
 void AWOGBaseWeapon::Tick(float DeltaSeconds)
@@ -109,7 +110,7 @@ void AWOGBaseWeapon::InitWeapon()
 
 	WeaponState = EWeaponState::EWS_Stored;
 	ComboStreak = 0;
-	bIsInCombo = false;
+	bAttackWindowOpen = false;
 
 	AttachToBack();
 
@@ -317,13 +318,15 @@ void AWOGBaseWeapon::Server_AttackLight_Implementation()
 {
 	if (ComboStreak < MaxComboStreak)
 	{
+		bIsArmingHeavy = false;
 		AttackLight();
 		SetWeaponState(EWeaponState::EWS_AttackLight);
 		Multicast_AttackLight();
-		bIsInCombo = false;
+		bAttackWindowOpen = false;
 	}
 	if (ComboStreak == MaxComboStreak)
 	{
+		bIsArmingHeavy = false;
 		AttackHeavy();
 		SetWeaponState(EWeaponState::EWS_AttackHeavy);
 	}
@@ -341,6 +344,7 @@ void AWOGBaseWeapon::Server_AttackHeavy_Implementation()
 {
 	AttackHeavy();
 	SetWeaponState(EWeaponState::EWS_AttackHeavy);
+	bIsArmingHeavy = false;
 }
 
 void AWOGBaseWeapon::AttackLight()
@@ -366,12 +370,7 @@ void AWOGBaseWeapon::AttackLight()
 		{
 			HitActorsToIgnore.Add(OwnerCharacter->GetCombatComponent()->GetMainWeapon());
 		}
-		TraceComponent->ToggleTraceCheck(true);
-	}
-
-	if (SwingSound)
-	{
-		UGameplayStatics::PlaySoundAtLocation(this, SwingSound, GetActorLocation());
+		//TraceComponent->ToggleTraceCheck(true);
 	}
 }
 
@@ -386,18 +385,25 @@ void AWOGBaseWeapon::AttackHeavy()
 		CharacterAnimInstance->Montage_JumpToSection(FName("Heavy"), AttackMontage);
 	}
 	ComboStreak = 0;
-	bIsInCombo = false;
+	bAttackWindowOpen = false;
 
 	if (TraceComponent)
 	{
 		TraceComponent->ToggleTraceCheck(false);
 		HitActorsToIgnore.Empty();
-		TraceComponent->ToggleTraceCheck(true);
+		//TraceComponent->ToggleTraceCheck(true);
 	}
+}
 
-	if (SwingSound)
+void AWOGBaseWeapon::AttackHeavyArm()
+{
+	if (!OwnerCharacter) return;
+
+	UAnimInstance* CharacterAnimInstance = OwnerCharacter->GetMesh()->GetAnimInstance();
+	if (CharacterAnimInstance && AttackMontage)
 	{
-		UGameplayStatics::PlaySoundAtLocation(this, SwingSound, GetActorLocation());
+		CharacterAnimInstance->Montage_Play(AttackMontage, 1.f);
+		CharacterAnimInstance->Montage_JumpToSection(FName("HeavyArm"), AttackMontage);
 	}
 }
 
@@ -407,6 +413,7 @@ void AWOGBaseWeapon::Drop()
 
 void AWOGBaseWeapon::Server_Block_Implementation()
 {
+	bIsArmingHeavy = false;
 	Multicast_Block();
 	SetWeaponState(EWeaponState::EWS_Blocking);
 	Block();
@@ -523,7 +530,7 @@ void AWOGBaseWeapon::IncreaseCombo()
 	if (HasAuthority())
 	{
 		++ComboStreak;
-		bIsInCombo = true;
+		bAttackWindowOpen = true;
 	}
 }
 
@@ -532,7 +539,28 @@ void AWOGBaseWeapon::ResetCombo()
 	if (HasAuthority())
 	{
 		ComboStreak = 0;
-		bIsInCombo = false;
+		bAttackWindowOpen = false;
 
 	}
+}
+
+void AWOGBaseWeapon::Server_AttackHeavyArm_Implementation()
+{
+	bIsArmingHeavy = true;
+
+	Multicast_AttackHeavyArm();
+	AttackHeavyArm();
+}
+
+void AWOGBaseWeapon::Multicast_AttackHeavyArm_Implementation()
+{
+	if (!HasAuthority())
+	{
+		AttackHeavyArm();
+	}
+}
+
+void AWOGBaseWeapon::Server_AttackHeavyCanceled_Implementation()
+{
+	bIsArmingHeavy = false;
 }

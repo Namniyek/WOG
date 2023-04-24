@@ -133,9 +133,11 @@ void ABasePlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 		EnhancedInputComponent->BindAction(CycleTargetAction, ETriggerEvent::Triggered, this, &ThisClass::CycleTargetActionPressed);
 		//Equip
 		EnhancedInputComponent->BindAction(AbilitiesAction, ETriggerEvent::Triggered, this, &ThisClass::AbilitiesButtonPressed);
-		//PrimaryAction
-		EnhancedInputComponent->BindAction(PrimaryAction, ETriggerEvent::Triggered, this, TEXT("PrimaryLightButtonPressed"));
-		EnhancedInputComponent->BindAction(PrimaryAction, ETriggerEvent::Ongoing, this, TEXT("PrimaryArmHeavyAttack"));
+		//PrimaryLightAction
+		EnhancedInputComponent->BindAction(PrimaryLightAction, ETriggerEvent::Triggered, this, &ThisClass::PrimaryLightButtonPressed);
+		EnhancedInputComponent->BindAction(PrimaryHeavyAction, ETriggerEvent::Ongoing, this, TEXT("PrimaryArmHeavyAttack"));
+		EnhancedInputComponent->BindAction(PrimaryHeavyAction, ETriggerEvent::Canceled, this, &ThisClass::PrimaryHeavyAttackCanceled);
+		EnhancedInputComponent->BindAction(PrimaryHeavyAction, ETriggerEvent::Triggered, this, &ThisClass::PrimaryExecuteHeavyAttack);
 		//SecondaryAction
 		EnhancedInputComponent->BindAction(SecondaryAction, ETriggerEvent::Started, this, &ThisClass::SecondaryButtonPressed);
 		EnhancedInputComponent->BindAction(SecondaryAction, ETriggerEvent::Triggered, this, &ThisClass::SecondaryButtonReleased);
@@ -337,7 +339,7 @@ void ABasePlayerCharacter::AbilitiesButtonPressed(const FInputActionValue& Value
 	}
 }
 
-void ABasePlayerCharacter::PrimaryLightButtonPressed(FInputActionValue ActionValue, float ElapsedTime, float TriggeredTime)
+void ABasePlayerCharacter::PrimaryLightButtonPressed(const FInputActionValue& Value)
 {
 	if (CharacterState == ECharacterState::ECS_Elimmed) return;
 	if (CharacterState == ECharacterState::ECS_Staggered) return;
@@ -345,10 +347,7 @@ void ABasePlayerCharacter::PrimaryLightButtonPressed(FInputActionValue ActionVal
 
 	if (!Combat) return;
 
-	if (ElapsedTime < 0.2)
-	{
-		Combat->AttackLight();
-	}
+	Combat->AttackLight();
 }
 
 void ABasePlayerCharacter::PrimaryArmHeavyAttack(FInputActionValue ActionValue, float ElapsedTime, float TriggeredTime)
@@ -357,24 +356,34 @@ void ABasePlayerCharacter::PrimaryArmHeavyAttack(FInputActionValue ActionValue, 
 	if (CharacterState == ECharacterState::ECS_Staggered) return;
 	if (CharacterState == ECharacterState::ECS_Dodging) return;
 
-	if (!Combat) return;
-	if (ElapsedTime >= 0.2 && ElapsedTime <= 0.22)
+	if (!Combat || !Combat->GetEquippedWeapon()) return;
+	
+	if (ElapsedTime > 0.2f && !Combat->GetEquippedWeapon()->GetIsArmingHeavy())
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Blue, FString("Starting HeavyAttack()"));
-	}
-	if (ElapsedTime >= 0.95 && ElapsedTime <= 0.97)
-	{
-		Combat->AttackHeavy();
+		Combat->AttackHeavyArm();
+		UE_LOG(LogTemp, Warning, TEXT("ArmingHeavyAttack"));
 	}
 }
 
-void ABasePlayerCharacter::PrimaryHeavyButtonPressed(const FInputActionValue& Value)
+void ABasePlayerCharacter::PrimaryHeavyAttackCanceled(const FInputActionValue& Value)
 {
 	if (CharacterState == ECharacterState::ECS_Elimmed) return;
 	if (CharacterState == ECharacterState::ECS_Staggered) return;
 	if (CharacterState == ECharacterState::ECS_Dodging) return;
 
 	if (!Combat) return;
+
+	Combat->AttackHeavyCanceled();
+	UE_LOG(LogTemp, Warning, TEXT("HeavyAttackCancelled"));
+}
+
+void ABasePlayerCharacter::PrimaryExecuteHeavyAttack(const FInputActionValue& Value)
+{
+	if (CharacterState == ECharacterState::ECS_Elimmed) return;
+	if (CharacterState == ECharacterState::ECS_Staggered) return;
+	if (CharacterState == ECharacterState::ECS_Dodging) return;
+
+	if (!Combat || !Combat->GetEquippedWeapon()) return;
 
 	Combat->AttackHeavy();
 }

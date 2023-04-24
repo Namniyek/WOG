@@ -197,6 +197,22 @@ void UWOGCombatComponent::AttackHeavy()
 	EquippedWeapon->Server_AttackHeavy();
 }
 
+void UWOGCombatComponent::AttackHeavyArm()
+{
+	OwnerPlayerCharacter = OwnerPlayerCharacter == nullptr ? Cast<ABasePlayerCharacter>(GetOwner()) : OwnerPlayerCharacter;
+	if (!EquippedWeapon || !OwnerPlayerCharacter) return;
+
+	EquippedWeapon->Server_AttackHeavyArm();
+}
+
+void UWOGCombatComponent::AttackHeavyCanceled()
+{
+	OwnerPlayerCharacter = OwnerPlayerCharacter == nullptr ? Cast<ABasePlayerCharacter>(GetOwner()) : OwnerPlayerCharacter;
+	if (!EquippedWeapon || !OwnerPlayerCharacter) return;
+
+	EquippedWeapon->Server_AttackHeavyCanceled();
+}
+
 void UWOGCombatComponent::Block()
 {
 	OwnerPlayerCharacter = OwnerPlayerCharacter == nullptr ? Cast<ABasePlayerCharacter>(GetOwner()) : OwnerPlayerCharacter;

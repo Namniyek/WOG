@@ -212,13 +212,14 @@ private:
 	void Drop();
 	void AttackLight();
 	void AttackHeavy();
+	void AttackHeavyArm();
 	void Block();
 	void StopBlocking();
 
 	UPROPERTY(Replicated, VisibleAnywhere)
 	int32 ComboStreak;
 	UPROPERTY(Replicated, VisibleAnywhere)
-	bool bIsInCombo;
+	bool bAttackWindowOpen;
 	UPROPERTY(Replicated, VisibleAnywhere)
 	bool bIsBlocking;
 	UPROPERTY(Replicated, VisibleAnywhere)
@@ -226,6 +227,9 @@ private:
 	FTimerHandle ParryTimer;
 
 	void SetCanNotParry();
+
+	UPROPERTY(Replicated, VisibleAnywhere)
+	bool bIsArmingHeavy;
 
 	UPROPERTY(ReplicatedUsing = OnRep_WeaponStateChanged, VisibleAnywhere)
 	EWeaponState WeaponState;
@@ -266,6 +270,15 @@ public:
 	UFUNCTION(Server, reliable)
 	void Server_AttackHeavy();
 
+	UFUNCTION(Server, reliable)
+	void Server_AttackHeavyArm();
+
+	UFUNCTION(Server, reliable)
+	void Server_AttackHeavyCanceled();
+
+	UFUNCTION(NetMulticast, reliable)
+	void Multicast_AttackHeavyArm();
+
 	UFUNCTION(Server, reliable, BlueprintCallable)
 	void Server_Block();
 
@@ -298,11 +311,13 @@ public:
 
 	FORCEINLINE EWeaponType GetWeaponType() const { return WeaponType; }
 	FORCEINLINE int32 GetComboStreak() const { return ComboStreak; }
-	FORCEINLINE bool GetIsInCombo() const { return bIsInCombo; }
+	FORCEINLINE bool GetIsInCombo() const { return bAttackWindowOpen; }
 	FORCEINLINE bool GetCanParry() const { return bCanParry; }
+	FORCEINLINE bool GetIsArmingHeavy() const { return bIsArmingHeavy; }
 	FORCEINLINE UDidItHitActorComponent* GetTraceComponent() const { return TraceComponent; }
 	FORCEINLINE USoundCue* GetHitSound() const { return HitSound; }
 	FORCEINLINE USoundCue* GetBlockSound() const { return BlockSound; }
+	FORCEINLINE USoundCue* GetSwingSound() const { return SwingSound; }
 	FORCEINLINE UAnimMontage* GetHurtMontage() const { return HurtMontage; }
 	FORCEINLINE UAnimMontage* GetBlockMontage() const { return BlockMontage; }
 	FORCEINLINE UAnimMontage* GetDodgeMontage() const { return DodgeMontage; }

@@ -189,7 +189,10 @@ public:
 	UInputAction* AbilitiesAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Base Match", meta = (AllowPrivateAccess = "true"))
-	UInputAction* PrimaryAction;
+	UInputAction* PrimaryLightAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Base Match", meta = (AllowPrivateAccess = "true"))
+	UInputAction* PrimaryHeavyAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Base Match", meta = (AllowPrivateAccess = "true"))
 	UInputAction* SecondaryAction;
@@ -252,12 +255,13 @@ protected:
 	void AbilitiesButtonPressed(const FInputActionValue& Value);
 
 	UFUNCTION()
-	void PrimaryLightButtonPressed(FInputActionValue ActionValue, float ElapsedTime, float TriggeredTime);
+	void PrimaryLightButtonPressed(const FInputActionValue& Value);
 
 	UFUNCTION()
 	void PrimaryArmHeavyAttack(FInputActionValue ActionValue, float ElapsedTime, float TriggeredTime);
+	void PrimaryHeavyAttackCanceled(const FInputActionValue& Value);
 
-	void PrimaryHeavyButtonPressed(const FInputActionValue& Value);
+	void PrimaryExecuteHeavyAttack(const FInputActionValue& Value);
 	void SecondaryButtonPressed(const FInputActionValue& Value);
 	void SecondaryButtonReleased(const FInputActionValue& Value);
 	
