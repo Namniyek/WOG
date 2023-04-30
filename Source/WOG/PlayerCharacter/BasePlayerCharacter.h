@@ -119,6 +119,7 @@ public:
 	// Sets default values for this character's properties
 	ABasePlayerCharacter();
 	friend class UWOGCombatComponent;
+	friend class UWOGAbilitiesComponent;
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
@@ -252,7 +253,7 @@ protected:
 	void CycleTargetActionPressed(const FInputActionValue& Value);
 
 	/**Called for equip input*/
-	void AbilitiesButtonPressed(const FInputActionValue& Value);
+	virtual void AbilitiesButtonPressed(const FInputActionValue& Value);
 
 	UFUNCTION()
 	void PrimaryLightButtonPressed(const FInputActionValue& Value);
@@ -306,7 +307,10 @@ protected:
 	class UTargetingHelperComponent* TargetAttractor;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	UWOGCombatComponent* Combat;
+	TObjectPtr<UWOGCombatComponent> Combat;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<UWOGAbilitiesComponent> Abilities;
 
 
 	#pragma endregion
@@ -359,6 +363,7 @@ public:
 	FORCEINLINE bool GetIsTargeting() const { return bIsTargeting; }
 	FORCEINLINE void SetOwnerPC(AWOGPlayerController* NewPC) { OwnerPC = NewPC; }
 	FORCEINLINE TObjectPtr<AWOGPlayerController> GetOwnerPC() { return OwnerPC; }
+	FORCEINLINE TObjectPtr<AActor>GetCurrentTarget() { return CurrentTarget; }
 
 	UFUNCTION(Server, reliable, BlueprintCallable)
 	void Server_SetPlayerProfile(const FPlayerData& NewPlayerProfile);

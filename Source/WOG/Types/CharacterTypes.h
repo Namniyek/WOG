@@ -42,3 +42,15 @@ enum class ECosmeticHit : uint8
 	ECH_MAX UMETA(DisplayName = "DefaultMAX")
 };
 
+UENUM(BlueprintType)
+enum class EAbilityType : uint8
+{
+	EAT_Relax UMETA(DisplayName = "Relax"),
+	EAT_Projectile UMETA(DisplayName = "Projectile"),
+	EAT_AOE UMETA(DisplayName = "Area Of Effect"),
+	EAT_Instant UMETA(DisplayName = "Instant"),
+	EAT_Buff UMETA(DisplayName = "Buff"),
+
+	EAT_MAX UMETA(DisplayName = "DefaultMAX")
+};
+

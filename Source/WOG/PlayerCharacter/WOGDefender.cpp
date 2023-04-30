@@ -7,6 +7,8 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "WOG/ActorComponents/WOGBuildComponent.h"
+#include "WOG/ActorComponents/WOGCombatComponent.h"
+#include "WOG/ActorComponents/WOGAbilitiesComponent.h"
 
 AWOGDefender::AWOGDefender()
 {
@@ -85,4 +87,124 @@ void AWOGDefender::SpawnActionPressed(const FInputActionValue& Value)
 	if (CharacterState == ECharacterState::ECS_Elimmed) return;
 	if (!BuildComponent) return;
 	BuildComponent->PlaceBuildable();
+}
+
+void AWOGDefender::AbilitiesButtonPressed(const FInputActionValue& Value)
+{
+	if (CharacterState == ECharacterState::ECS_Elimmed) return;
+	if (CharacterState == ECharacterState::ECS_Staggered) return;
+	if (CharacterState == ECharacterState::ECS_Dodging) return;
+
+	FVector2D AbilitiesVector = Value.Get<FVector2D>();
+
+	if (AbilitiesVector.X > 0)
+	{
+		//Button 4/Right pressed
+		if (!Combat)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Combat component invalid"));
+			return;
+		}
+		if (Combat->EquippedWeapon)
+		{
+			Combat->StoreEquippedWeapon();
+		}
+
+		if (!Abilities)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Abilities component invalid"));
+			return;
+		}
+
+		Abilities->Server_EquipAbility(1);
+
+	}
+	if (AbilitiesVector.X < 0)
+	{
+		//Button 1/Left pressed
+		if (!Abilities)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Abilities component invalid"));
+			return;
+		}
+		if (Abilities->EquippedAbility)
+		{
+			Abilities->Server_UnequipAbility();
+		}
+
+		if (!Combat)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Combat component invalid"));
+			return;
+		}
+		if (!Combat->EquippedWeapon)
+		{
+			Combat->EquipMainWeapon();
+		}
+		else if (Combat->EquippedWeapon == Combat->SecondaryWeapon)
+		{
+			Combat->SwapWeapons();
+		}
+		else if (Combat->EquippedWeapon == Combat->MainWeapon)
+		{
+			Combat->UnequipMainWeapon();
+		}
+	}
+	if (AbilitiesVector.Y > 0)
+	{
+		//Button 2/Up pressed
+		if (!Abilities)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Abilities component invalid"));
+			return;
+		}
+		if (Abilities->EquippedAbility)
+		{
+			Abilities->Server_UnequipAbility();
+		}
+
+		if (!Combat)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Combat component invalid"));
+			return;
+		}
+		if (!Combat->SecondaryWeapon)
+		{
+			Combat->Server_CreateSecondaryWeapon(Combat->SecondaryWeaponClass);
+		}
+		else if (!Combat->EquippedWeapon)
+		{
+			Combat->EquipSecondaryWeapon();
+		}
+		else if (Combat->EquippedWeapon == Combat->MainWeapon)
+		{
+			Combat->SwapWeapons();
+		}
+		else if (Combat->EquippedWeapon == Combat->SecondaryWeapon)
+		{
+			Combat->UnequipSecondaryWeapon();
+		}
+
+	}
+	if (AbilitiesVector.Y < 0)
+	{
+		//Button 3/Down pressed
+		if (!Combat)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Combat component invalid"));
+			return;
+		}
+		if (Combat->EquippedWeapon)
+		{
+			Combat->StoreEquippedWeapon();
+		}
+
+		if (!Abilities)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Abilities component invalid"));
+			return;
+		}
+
+		Abilities->Server_EquipAbility(0);
+	}
 }

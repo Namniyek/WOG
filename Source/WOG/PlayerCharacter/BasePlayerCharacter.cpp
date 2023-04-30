@@ -20,6 +20,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "WOG/AnimInstance/WOGBaseAnimInstance.h"
 #include "Sound/SoundCue.h"
+#include "WOG/ActorComponents/WOGAbilitiesComponent.h"
 
 
 void ABasePlayerCharacter::OnConstruction(const FTransform& Transform)
@@ -44,6 +45,8 @@ ABasePlayerCharacter::ABasePlayerCharacter()
 	TargetAttractor->SetIsReplicated(true);
 	Combat = CreateDefaultSubobject<UWOGCombatComponent>(TEXT("CombatComponent"));
 	Combat->SetIsReplicated(true);
+	Abilities = CreateDefaultSubobject<UWOGAbilitiesComponent>(TEXT("AbilitiesComponent"));
+	Abilities->SetIsReplicated(true);
 
 
 	// Set size for collision capsule
@@ -272,71 +275,7 @@ void ABasePlayerCharacter::CycleTargetActionPressed(const FInputActionValue& Val
 
 void ABasePlayerCharacter::AbilitiesButtonPressed(const FInputActionValue& Value)
 {
-	if (CharacterState == ECharacterState::ECS_Elimmed) return;
-	if (CharacterState == ECharacterState::ECS_Staggered) return;
-	if (CharacterState == ECharacterState::ECS_Dodging) return;
-
-	FVector2D AbilitiesVector = Value.Get<FVector2D>();
-
-	if (AbilitiesVector.X > 0)
-	{
-		//Button 4/Right pressed
-
-
-	}
-	if (AbilitiesVector.X < 0)
-	{
-		//Button 1/Left pressed
-		if (!Combat)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Combat component invalid"));
-			return;
-		}
-
-		if (!Combat->EquippedWeapon)
-		{
-			Combat->EquipMainWeapon();
-		}
-		else if(Combat->EquippedWeapon == Combat->SecondaryWeapon)
-		{
-			Combat->SwapWeapons();
-		}
-		else if (Combat->EquippedWeapon == Combat->MainWeapon)
-		{
-			Combat->UnequipMainWeapon();
-		}
-	}
-	if (AbilitiesVector.Y > 0)
-	{
-		//Button 2/Up pressed
-		if (!Combat)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Combat component invalid"));
-			return;
-		}
-		if (!Combat->SecondaryWeapon)
-		{
-			Combat->Server_CreateSecondaryWeapon(Combat->SecondaryWeaponClass);
-		}
-		else if(!Combat->EquippedWeapon)
-		{
-			Combat->EquipSecondaryWeapon();
-		}
-		else if (Combat->EquippedWeapon == Combat->MainWeapon)
-		{
-			Combat->SwapWeapons();
-		}
-		else if (Combat->EquippedWeapon == Combat->SecondaryWeapon)
-		{
-			Combat->UnequipSecondaryWeapon();
-		}
-
-	}
-	if (AbilitiesVector.Y < 0)
-	{
-		//Button 3/Down pressed
-
-	}
+	//TO BE OVERRIDEN IN CHILDREN
 }
 
 void ABasePlayerCharacter::PrimaryLightButtonPressed(const FInputActionValue& Value)
@@ -345,9 +284,15 @@ void ABasePlayerCharacter::PrimaryLightButtonPressed(const FInputActionValue& Va
 	if (CharacterState == ECharacterState::ECS_Staggered) return;
 	if (CharacterState == ECharacterState::ECS_Dodging) return;
 
-	if (!Combat) return;
-
-	Combat->AttackLight();
+	if (!Combat || !Abilities) return;
+	if (Combat->EquippedWeapon)
+	{
+		Combat->AttackLight();
+	}
+	if (Abilities->EquippedAbility)
+	{
+		Abilities->UseAbilityActionPressed();
+	}
 }
 
 void ABasePlayerCharacter::PrimaryArmHeavyAttack(FInputActionValue ActionValue, float ElapsedTime, float TriggeredTime)
@@ -372,9 +317,10 @@ void ABasePlayerCharacter::PrimaryHeavyAttackCanceled(const FInputActionValue& V
 	if (CharacterState == ECharacterState::ECS_Dodging) return;
 
 	if (!Combat) return;
-
-	Combat->AttackHeavyCanceled();
-	UE_LOG(LogTemp, Warning, TEXT("HeavyAttackCancelled"));
+	if (Combat->EquippedWeapon)
+	{
+		Combat->AttackHeavyCanceled();
+	}
 }
 
 void ABasePlayerCharacter::PrimaryExecuteHeavyAttack(const FInputActionValue& Value)
@@ -648,7 +594,10 @@ void ABasePlayerCharacter::BroadcastHit_Implementation(AActor* AgressorActor, co
 	}
 
 	TObjectPtr<AWOGBaseWeapon> Weapon = Cast<AWOGBaseWeapon>(InstigatorWeapon);
-	Multicast_HandleCosmeticHit(ECosmeticHit::ECH_BodyHit, Hit, InstigatorWeapon->GetActorLocation(), Weapon);
+	if (Weapon)
+	{
+		Multicast_HandleCosmeticHit(ECosmeticHit::ECH_BodyHit, Hit, InstigatorWeapon->GetActorLocation(), Weapon);
+	}
 
 	TObjectPtr<AWOGBaseCharacter> AgressorCharacter = Cast<AWOGBaseCharacter>(AgressorActor);
 	if (AgressorCharacter)

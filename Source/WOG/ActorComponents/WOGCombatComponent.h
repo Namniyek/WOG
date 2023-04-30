@@ -20,6 +20,8 @@ class WOG_API UWOGCombatComponent : public UWOGBaseActorComponent
 public:
 	UWOGCombatComponent();
 	friend class ABasePlayerCharacter;
+	friend class AWOGDefender;
+	friend class AWOGAttacker;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 
@@ -49,7 +51,7 @@ private:
 	void EquipSecondaryWeapon();
 	void UnequipMainWeapon();
 	void UnequipSecondaryWeapon();
-	void DropWeapons();
+	void StoreEquippedWeapon();
 	void SwapWeapons();
 
 	void AttackLight();

@@ -28,10 +28,6 @@ void UWOGCombatComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	OwnerPlayerCharacter = OwnerPlayerCharacter == nullptr ? Cast<ABasePlayerCharacter>(GetOwner()) : OwnerPlayerCharacter;
-	/*if (OwnerPlayerCharacter->IsLocallyControlled() && DefaultWeaponClass)
-	{
-		Server_CreateMainWeapon(DefaultWeaponClass);
-	}*/
 }
 
 void UWOGCombatComponent::Server_CreateMainWeapon_Implementation(TSubclassOf<AWOGBaseWeapon> WeaponToCreate)
@@ -172,8 +168,12 @@ void UWOGCombatComponent::SwapWeapons()
 	}
 }
 
-void UWOGCombatComponent::DropWeapons()
+void UWOGCombatComponent::StoreEquippedWeapon()
 {
+	if (EquippedWeapon)
+	{
+		EquippedWeapon->Server_Swap();
+	}
 }
 
 void UWOGCombatComponent::AttackLight()
