@@ -45,6 +45,7 @@ private:
 
 public:
 	void UseAbilityActionPressed();
+	void RequestEquipAbility(const int32 Index);
 
 	UFUNCTION(Server, reliable, BlueprintCallable)
 	void Server_EquipAbility(const int32 Index);

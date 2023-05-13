@@ -5,6 +5,7 @@
 #include "WOG/PlayerCharacter/BasePlayerCharacter.h"
 #include "Net/UnrealNetwork.h"
 #include "WOG/Abilities/WOGBaseAbility.h"
+#include "WOG/Abilities/WOGProjectileAbility.h"
 
 UWOGAbilitiesComponent::UWOGAbilitiesComponent()
 {
@@ -44,6 +45,7 @@ void UWOGAbilitiesComponent::EquipAbility(const int32 Index)
 
 	EquippedAbilityType = EquippedAbility->GetAbilityType();
 	EquippedAbility->Server_Equip();
+	EquippedAbility->CosmeticEquip();
 }
 
 void UWOGAbilitiesComponent::UnequipAbility()
@@ -61,32 +63,7 @@ void UWOGAbilitiesComponent::UnequipAbility()
 
 void UWOGAbilitiesComponent::Server_EquipAbility_Implementation(const int32 Index)
 {
-	if (!CurrentAbilities[Index])
-	{
-		UE_LOG(LogTemp, Error, TEXT("No valid ability"));
-		return;
-	}
-
-	if (EquippedAbility && EquippedAbility->IsA(CurrentAbilities[Index]))
-	{
-		UE_LOG(LogTemp, Error, TEXT("EquippedAbility already of the desired type. Unequipping"));
-		UnequipAbility();
-		return;
-	}
-
-	if (EquippedAbility && !EquippedAbility->IsA(CurrentAbilities[Index]))
-	{
-		UE_LOG(LogTemp, Error, TEXT("EquippedAbility is of a different type. Unequipping the equipped and equipping the new"));
-		UnequipAbility();
-		EquipAbility(Index);
-		return;
-	}
-	if (!EquippedAbility)
-	{
-		UE_LOG(LogTemp, Error, TEXT("No equipped ability. Equipping the new one."));
-		EquipAbility(Index);
-		return;
-	}
+	EquipAbility(Index);
 }
 
 void UWOGAbilitiesComponent::Server_UnequipAbility_Implementation()
@@ -104,10 +81,27 @@ void UWOGAbilitiesComponent::UseAbilityActionPressed()
 		return;
 	}
 
+	OwnerPlayerCharacter = OwnerPlayerCharacter == nullptr ? Cast<ABasePlayerCharacter>(GetOwner()) : OwnerPlayerCharacter;
+	if (!OwnerPlayerCharacter)
+	{
+		UE_LOG(LogTemp, Error, TEXT("No owner character"));
+		return;
+	}
+
 	switch (EquippedAbilityType)
 	{
 	case EAbilityType::EAT_Projectile:
-		EquippedAbility->Server_Use();
+	{
+		TObjectPtr<AWOGProjectileAbility> ProjectileAbility = Cast<AWOGProjectileAbility>(EquippedAbility);
+		if (ProjectileAbility)
+		{
+			if (OwnerPlayerCharacter->IsLocallyControlled())
+			{
+				ProjectileAbility->CosmeticUse();
+			}
+			ProjectileAbility->Server_Use();
+		}
+	}
 		break;
 	case EAbilityType::EAT_AOE:
 		break;
@@ -117,5 +111,48 @@ void UWOGAbilitiesComponent::UseAbilityActionPressed()
 		break;
 	default:
 		break;
+	}
+}
+
+void UWOGAbilitiesComponent::RequestEquipAbility(const int32 Index)
+{
+	if (!CurrentAbilities[Index])
+	{
+		UE_LOG(LogTemp, Error, TEXT("No valid ability"));
+		return;
+	}
+
+	OwnerPlayerCharacter = OwnerPlayerCharacter == nullptr ? Cast<ABasePlayerCharacter>(GetOwner()) : OwnerPlayerCharacter;
+	if (!OwnerPlayerCharacter)
+	{
+		UE_LOG(LogTemp, Error, TEXT("No owner character"));
+		return;
+	}
+
+	if (EquippedAbility && EquippedAbility->IsA(CurrentAbilities[Index]))
+	{
+		if (OwnerPlayerCharacter->IsLocallyControlled())
+		{
+			EquippedAbility->CosmeticUnequip();
+		}
+		Server_UnequipAbility();
+		return;
+	}
+
+	if (EquippedAbility && !EquippedAbility->IsA(CurrentAbilities[Index]))
+	{
+		if (OwnerPlayerCharacter->IsLocallyControlled())
+		{
+			EquippedAbility->CosmeticUnequip();
+		}
+		Server_UnequipAbility();
+		Server_EquipAbility(Index);
+		return;
+	}
+	if (!EquippedAbility)
+	{
+		UE_LOG(LogTemp, Error, TEXT("No equipped ability. Equipping the new one."));
+		Server_EquipAbility(Index);
+		return;
 	}
 }

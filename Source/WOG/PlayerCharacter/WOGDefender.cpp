@@ -9,6 +9,7 @@
 #include "WOG/ActorComponents/WOGBuildComponent.h"
 #include "WOG/ActorComponents/WOGCombatComponent.h"
 #include "WOG/ActorComponents/WOGAbilitiesComponent.h"
+#include "WOG/Abilities/WOGBaseAbility.h"
 
 AWOGDefender::AWOGDefender()
 {
@@ -108,6 +109,7 @@ void AWOGDefender::AbilitiesButtonPressed(const FInputActionValue& Value)
 		if (Combat->EquippedWeapon)
 		{
 			Combat->StoreEquippedWeapon();
+			return;
 		}
 
 		if (!Abilities)
@@ -116,7 +118,7 @@ void AWOGDefender::AbilitiesButtonPressed(const FInputActionValue& Value)
 			return;
 		}
 
-		Abilities->Server_EquipAbility(1);
+		Abilities->RequestEquipAbility(1);
 
 	}
 	if (AbilitiesVector.X < 0)
@@ -129,7 +131,11 @@ void AWOGDefender::AbilitiesButtonPressed(const FInputActionValue& Value)
 		}
 		if (Abilities->EquippedAbility)
 		{
-			Abilities->Server_UnequipAbility();
+			if (IsLocallyControlled())
+			{
+				Abilities->EquippedAbility->CosmeticUnequip();
+				Abilities->Server_UnequipAbility();
+			}
 		}
 
 		if (!Combat)
@@ -160,7 +166,11 @@ void AWOGDefender::AbilitiesButtonPressed(const FInputActionValue& Value)
 		}
 		if (Abilities->EquippedAbility)
 		{
-			Abilities->Server_UnequipAbility();
+			if (IsLocallyControlled())
+			{
+				Abilities->EquippedAbility->CosmeticUnequip();
+				Abilities->Server_UnequipAbility();
+			}
 		}
 
 		if (!Combat)
@@ -205,6 +215,6 @@ void AWOGDefender::AbilitiesButtonPressed(const FInputActionValue& Value)
 			return;
 		}
 
-		Abilities->Server_EquipAbility(0);
+		Abilities->RequestEquipAbility(0);
 	}
 }

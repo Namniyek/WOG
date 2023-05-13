@@ -8,19 +8,38 @@
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Net/UnrealNetwork.h"
+#include "Camera/CameraComponent.h"
+#include "GameFramework/SpringArmComponent.h"
+#include "WOG/Data/WOGAbilityDataAsset.h"
 
 
 AWOGProjectileAbility::AWOGProjectileAbility()
 {
+	StartLocation = FVector();
+	EndLocation = FVector();
 
+	PrimaryActorTick.bCanEverTick = false;
+}
+
+void AWOGProjectileAbility::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AWOGProjectileAbility, EndLocation);
 }
 
 void AWOGProjectileAbility::BeginPlay()
 {
 	Super::BeginPlay();
 
+	Init();
+
 	OwnerCharacter = OwnerCharacter == nullptr ? Cast<ABasePlayerCharacter>(GetOwner()) : OwnerCharacter;
-	UE_LOG(LogTemp, Warning, TEXT("OwnerCharacter is valid: %d"), IsValid(OwnerCharacter));
+	if (OwnerCharacter && OwnerCharacter->GetMesh())
+	{
+		IdleSystemLeft = UNiagaraFunctionLibrary::SpawnSystemAttached(IdleParticleSystem, OwnerCharacter->GetMesh(), FName("Hand_L_Magic"), FVector(), FRotator(), EAttachLocation::SnapToTargetIncludingScale, false);
+		IdleSystemRight = UNiagaraFunctionLibrary::SpawnSystemAttached(IdleParticleSystem, OwnerCharacter->GetMesh(), FName("Hand_R_Magic"), FVector(), FRotator(), EAttachLocation::SnapToTargetIncludingScale, false);
+	}
 }
 
 void AWOGProjectileAbility::Equip()
@@ -31,8 +50,7 @@ void AWOGProjectileAbility::Equip()
 
 	if (HasAuthority())
 	{
-		HandleCosmeticEquip();
-		Multicast_HandleCosmeticEquip();
+		CosmeticEquip();
 	}
 }
 
@@ -42,8 +60,7 @@ void AWOGProjectileAbility::Unequip()
 
 	if (HasAuthority())
 	{
-		HandleCosmeticUnequip();
-		Multicast_HandleCosmeticUnequip();
+		CosmeticUnequip();
 	}
 
 	AWOGBaseAbility::Unequip();
@@ -55,18 +72,15 @@ void AWOGProjectileAbility::Use()
 
 	if (ProjectileClass && OwnerCharacter)
 	{
-		FVector StartLocation = OwnerCharacter->GetActorLocation() + (OwnerCharacter->GetActorForwardVector() * 50);
-		FVector EndLocation;
+		StartLocation = OwnerCharacter->GetActorLocation() + (OwnerCharacter->GetActorForwardVector() * 25);
+
 		if (OwnerCharacter->GetCurrentTarget())
 		{
 			EndLocation = OwnerCharacter->GetCurrentTarget()->GetActorLocation();
 		}
 		else
 		{
-			FHitResult TraceHitResult;
-
-			GetBeamEndLocation(StartLocation, TraceHitResult);
-			EndLocation = TraceHitResult.Location;
+			EndLocation = CalculateEndVector();
 		}
 
 		FRotator StartRotation = (EndLocation - StartLocation).GetSafeNormal().Rotation();
@@ -75,11 +89,33 @@ void AWOGProjectileAbility::Use()
 		SpawnTransform.SetRotation(FQuat::MakeFromRotator(StartRotation));
 		SpawnTransform.SetLocation(StartLocation);
 
-		OwnerCharacter->SetActorRotation((EndLocation - StartLocation).GetSafeNormal2D().Rotation());
 		FActorSpawnParameters SpawnParams;
 		SpawnParams.Owner = OwnerCharacter;
 		GetWorld()->SpawnActor<AActor>(ProjectileClass, SpawnTransform, SpawnParams);
 	}
+}
+
+void AWOGProjectileAbility::Init()
+{
+	Super::Init();
+
+	if (!AbilityDataAsset)
+	{
+		UE_LOG(LogTemp, Error, TEXT("No Valid Data Asset"));
+		return;
+	}
+
+	CrosshairWidgetClass = AbilityDataAsset->CrosshairWidgetClass;
+	ProjectileClass = AbilityDataAsset->ProjectileClass;
+	ImpactSound = AbilityDataAsset->ImpactSound;
+	ImpactParticleSystem = AbilityDataAsset->ImpactParticleSystem;
+}
+
+FVector AWOGProjectileAbility::CalculateEndVector()
+{
+	FHitResult TraceHitResult;
+	GetBeamEndLocation(StartLocation, TraceHitResult);
+	return TraceHitResult.Location;
 }
 
 void AWOGProjectileAbility::CosmeticUse()
@@ -93,63 +129,48 @@ void AWOGProjectileAbility::CosmeticUse()
 		CharacterAnimInstance->Montage_Play(UseMontage, 1.f);
 		CharacterAnimInstance->Montage_JumpToSection(FName(*SectionName));
 	}
-}
 
-void AWOGProjectileAbility::Multicast_HandleCosmeticEquip_Implementation()
-{
-	if (HasAuthority()) return;
-	HandleCosmeticEquip();
-}
-
-void AWOGProjectileAbility::HandleCosmeticEquip()
-{
-	if (OwnerCharacter && OwnerCharacter->GetMesh())
+	FVector TempEndLocation;
+	if (OwnerCharacter->GetCurrentTarget())
 	{
-		IdleSystemLeft = UNiagaraFunctionLibrary::SpawnSystemAttached(IdleParticleSystem, OwnerCharacter->GetMesh(), FName("Hand_L_Magic"), FVector(), FRotator(), EAttachLocation::SnapToTargetIncludingScale, false);
-		IdleSystemRight = UNiagaraFunctionLibrary::SpawnSystemAttached(IdleParticleSystem, OwnerCharacter->GetMesh(), FName("Hand_R_Magic"), FVector(), FRotator(), EAttachLocation::SnapToTargetIncludingScale, false);
+		TempEndLocation = OwnerCharacter->GetCurrentTarget()->GetActorLocation();
+		UE_LOG(LogTemp, Warning, TEXT("SetActorRotation() to Target"));
 	}
+	else
+	{
+		TempEndLocation = CalculateEndVector();
+		UE_LOG(LogTemp, Warning, TEXT("SetActorRotation() to Trace"));
+	}
+	OwnerCharacter->SetActorRotation((EndLocation - OwnerCharacter->GetActorLocation()).GetSafeNormal2D().Rotation());
+
 }
 
-void AWOGProjectileAbility::Multicast_HandleCosmeticUnequip_Implementation()
+void AWOGProjectileAbility::CosmeticEquip()
 {
-	if (HasAuthority()) return;
-	HandleCosmeticUnequip();
+
 }
 
-void AWOGProjectileAbility::HandleCosmeticUnequip()
+void AWOGProjectileAbility::CosmeticUnequip()
 {
 	if (IdleSystemLeft)
 	{
+		IdleSystemLeft->Deactivate();
 		IdleSystemLeft->DestroyComponent();
 	}
 	if (IdleSystemRight)
 	{
+		IdleSystemRight->Deactivate();
 		IdleSystemRight->DestroyComponent();
 	}
 }
 
 bool AWOGProjectileAbility::TraceUnderCrosshairs(FHitResult& OutHitResult, FVector& OutHitLocation)
 {
-	//Get Viewport size
-	FVector2D ViewportSize;
-	if (GEngine && GEngine->GameViewport)
+	if (OwnerCharacter->GetFollowCamera() && OwnerCharacter->GetCameraBoom())
 	{
-		GEngine->GameViewport->GetViewportSize(ViewportSize);
-	}
-
-	//Get screen space location of the crosshair
-	FVector2D CrosshairLocation((ViewportSize.X / 2.f), (ViewportSize.Y / 2.f));
-	FVector CrosshairWorldPosition;
-	FVector CrosshairWorldDirection;
-
-	//Get world position and direction of the crosshair
-	bool bScreenToWorld = UGameplayStatics::DeprojectScreenToWorld(UGameplayStatics::GetPlayerController(this, 0), CrosshairLocation, CrosshairWorldPosition, CrosshairWorldDirection);
-
-	if (bScreenToWorld)
-	{
-		//Trace from Crosshair world location outward
-		const FVector Start(CrosshairWorldPosition);
-		const FVector End(Start + CrosshairWorldDirection * 50'000.f);
+		//Trace from camera world location outward
+		const FVector Start(OwnerCharacter->GetFollowCamera()->GetComponentLocation() + OwnerCharacter->GetFollowCamera()->GetForwardVector() * (OwnerCharacter->GetCameraBoom()->TargetArmLength));
+		const FVector End(Start + OwnerCharacter->GetFollowCamera()->GetForwardVector() * 15'000.f);
 		OutHitLocation = End;
 		GetWorld()->LineTraceSingleByChannel(OutHitResult, Start, End, ECollisionChannel::ECC_Visibility);
 
@@ -159,11 +180,10 @@ bool AWOGProjectileAbility::TraceUnderCrosshairs(FHitResult& OutHitResult, FVect
 			return true;
 		}
 	}
-
 	return false;
 }
 
-void AWOGProjectileAbility::GetBeamEndLocation(const FVector& StartLocation, FHitResult& OutHitResult)
+void AWOGProjectileAbility::GetBeamEndLocation(const FVector& TraceStartLocation, FHitResult& OutHitResult)
 {
 	//Check for crosshairs trace hit
 	FHitResult CrosshairHitResult;
@@ -180,9 +200,9 @@ void AWOGProjectileAbility::GetBeamEndLocation(const FVector& StartLocation, FHi
 		//OutBeamLocaton is end location of line trace
 	}
 
-	//Perform a second trace from character barrel
-	const FVector TraceStart = StartLocation;
-	const FVector StartToEnd = OutBeamLocation - StartLocation;
+	//Perform a second trace from character
+	const FVector TraceStart = TraceStartLocation;
+	const FVector StartToEnd = OutBeamLocation - TraceStartLocation;
 	const FVector TraceEnd = OutBeamLocation + StartToEnd * 1.25f;
 
 	GetWorld()->LineTraceSingleByChannel(OutHitResult, TraceStart, TraceEnd, ECollisionChannel::ECC_Visibility);

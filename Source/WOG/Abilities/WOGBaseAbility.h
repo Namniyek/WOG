@@ -12,8 +12,7 @@ class UAnimMontage;
 class USoundCue;
 class ABasePlayerCharacter;
 class UNiagaraSystem;
-
-
+class UWOGAbilityDataAsset;
 
 
 UCLASS()
@@ -31,36 +30,42 @@ protected:
 	virtual void Equip();
 	virtual void Unequip();
 	virtual void Use();
+
+	virtual void Init();
+
 	virtual void CosmeticUse();
 	void ResetCooldown();
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setup | Data Asset")
+	TObjectPtr<UWOGAbilityDataAsset> AbilityDataAsset;
+
 	#pragma region Base Variables
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Base Variables")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Setup | Base")
 	TObjectPtr<UAnimMontage> EquipMontage;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Base Variables")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Setup | Base")
 	TObjectPtr<UAnimMontage> UseMontage;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Base Variables")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Setup | Base")
 	TObjectPtr<USoundCue> IdleSound;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Base Variables")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Setup | Base")
 	TObjectPtr<USoundCue> UseSound;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Base Variables")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Setup | Base")
 	TObjectPtr<UNiagaraSystem> IdleParticleSystem;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Base Variables")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Setup | Base")
 	TObjectPtr<UNiagaraSystem> UseParticleSystem;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Base Variables")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Setup | Base")
 	float CooldownTime;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Base Variables")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Setup | Base")
 	EAbilityType AbilityType;
 	#pragma endregion
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Base Variables")
+	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<ABasePlayerCharacter> OwnerCharacter;
 
 	UPROPERTY(Replicated)
@@ -71,17 +76,22 @@ protected:
 public:	
 	virtual void Tick(float DeltaTime) override;
 
+	virtual void CosmeticEquip();
+	virtual void CosmeticUnequip();
+
 	UFUNCTION(Server, reliable)
 	void Server_Equip();
-
 	UFUNCTION(Server, reliable)
 	void Server_Unequip();
-
 	UFUNCTION(Server, reliable)
-	void Server_Use();
+	virtual void Server_Use();
 
 	UFUNCTION(NetMulticast, reliable)
 	void Multicast_CosmeticUse();
+	UFUNCTION(NetMulticast, reliable)
+	void Multicast_CosmeticEquip();
+	UFUNCTION(NetMulticast, reliable)
+	void Multicast_CosmeticUnequip();
 
 	FORCEINLINE void SetOwnerCharacter(ABasePlayerCharacter* NewOwner) { OwnerCharacter = NewOwner; };
 	FORCEINLINE EAbilityType GetAbilityType() const { return AbilityType; }
