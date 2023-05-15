@@ -106,6 +106,7 @@ void AWOGBaseWeapon::InitWeapon()
 		BackMainSocket = WeaponDataRow->BackMainSocket;
 		BackSecondarySocket = WeaponDataRow->BackSecondarySocket;
 
+		WeaponDamageEffect = WeaponDataRow->WeaponDamageEffect;
 	}
 
 	WeaponState = EWeaponState::EWS_Stored;

@@ -55,56 +55,58 @@ struct FCharacterMesh : public FTableRowBase
 	GENERATED_USTRUCT_BODY()
 
 public:
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mesh")
 	USkeletalMesh* BaseMesh;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mesh")
 	USkeletalMesh* Head;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mesh")
 	USkeletalMesh* ArmUpperLeft;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mesh")
 	USkeletalMesh* ArmUpperRight;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mesh")
 	USkeletalMesh* ArmLowerLeft;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mesh")
 	USkeletalMesh* ArmLowerRight;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mesh")
 	USkeletalMesh* HandLeft;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mesh")
 	USkeletalMesh* HandRight;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mesh")
 	USkeletalMesh* Torso;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mesh")
 	USkeletalMesh* Hips;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mesh")
 	USkeletalMesh* LegLeft;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mesh")
 	USkeletalMesh* LegRight;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mesh")
 	USkeletalMesh* Beard;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mesh")
 	USkeletalMesh* Eyebrows;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mesh")
 	USkeletalMesh* Hair;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mesh")
 	USkeletalMesh* Helmet;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mesh")
 	USkeletalMesh* Ears;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Animations")
 	TSubclassOf<UAnimInstance> AnimBP;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Animations")
 	TSubclassOf<UAnimInstance> AnimBPLobby;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Animations")
 	UAnimMontage* RaiseHandMontage;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Animations")
 	UAnimMontage* UnarmedHurtMontage;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Animations")
 	UAnimMontage* DodgeMontage;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Animations")
 	USkeleton* Skeleton;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Animations")
 	UPhysicsAsset* PhysicsAsset;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Initial Setup")
 	TSubclassOf<class AWOGBaseWeapon> DefaultWeapon;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Initial Setup")
+	FCharacterAbilityData DefaultAbilitiesAndEffects;
 };
 
 
@@ -282,7 +284,8 @@ protected:
 	FSkeletalMeshMergeParams MergeParams;
 
 	void SetColors(FName Primary, FName Skin, FName BodyPaint, FName HairColor);
-	void SetMeshes(bool bIsMale, FName RowName);
+	void SetMeshesAndAnimations(bool bIsMale, FName RowName);
+	void SetDefaultAbilitiesAndEffects(bool bIsMale, FName RowName);
 
 
 	#pragma endregion

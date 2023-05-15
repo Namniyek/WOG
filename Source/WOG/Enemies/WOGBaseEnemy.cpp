@@ -9,6 +9,9 @@
 #include "AIController.h"
 #include "WOG/Weapons/WOGBaseWeapon.h"
 #include "Kismet/GameplayStatics.h"
+#include "ActorComponents/WOGAbilitySystemComponent.h"
+#include "AbilitySystemBlueprintLibrary.h"
+#include "GameplayEffectExtension.h"
 
 // Sets default values
 AWOGBaseEnemy::AWOGBaseEnemy()
@@ -25,7 +28,30 @@ AWOGBaseEnemy::AWOGBaseEnemy()
 void AWOGBaseEnemy::BeginPlay()
 {
 	Super::BeginPlay();
-	
+}
+
+void AWOGBaseEnemy::OnHealthAttributeChanged(const FOnAttributeChangeData& Data)
+{
+	UE_LOG(LogTemp, Error, TEXT("OldValue : %f, NewValue : %f"), Data.OldValue, Data.NewValue);
+	if (Data.NewValue <= 0 && Data.OldValue > 0)
+	{
+		AWOGBaseCharacter* InstigatorCharacter = nullptr;
+		if (Data.GEModData)
+		{
+			const FGameplayEffectContextHandle& EffectContext = Data.GEModData->EffectSpec.GetContext();
+			InstigatorCharacter = Cast<AWOGBaseCharacter>(EffectContext.GetInstigator());
+
+			if (InstigatorCharacter && InstigatorCharacter->GetController())
+			{
+				Server_SetCharacterState(ECharacterState::ECS_Elimmed, InstigatorCharacter->GetController());
+			}
+		}
+
+		/*FGameplayEventData EventPayload;
+		EventPayload.EventTag = ZeroHealthEventTag;
+
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, ZeroHealthEventTag, EventPayload);*/
+	}
 }
 
 void AWOGBaseEnemy::BroadcastHit_Implementation(AActor* AgressorActor, const FHitResult& Hit, const float& DamageToApply, AActor* InstigatorWeapon)
@@ -36,9 +62,15 @@ void AWOGBaseEnemy::BroadcastHit_Implementation(AActor* AgressorActor, const FHi
 	Multicast_HandleCosmeticHit(ECosmeticHit::ECH_BodyHit, Hit, InstigatorWeapon->GetActorLocation(), Weapon);
 
 	TObjectPtr<AWOGBaseCharacter> AgressorCharacter = Cast<AWOGBaseCharacter>(AgressorActor);
-	if (AgressorCharacter)
+	if (AgressorCharacter && AbilitySystemComponent.Get() && Weapon && Weapon->GetWeaponDamageEffect())
 	{
-		UGameplayStatics::ApplyDamage(this, -DamageToApply, AgressorCharacter->GetController(), AgressorActor, UDamageType::StaticClass());
+		FGameplayEffectContextHandle DamageContext = AbilitySystemComponent.Get()->MakeEffectContext();
+		DamageContext.AddInstigator(AgressorCharacter, Weapon);
+		DamageContext.AddHitResult(Hit);
+
+		FGameplayEffectSpecHandle OutSpec = AbilitySystemComponent->MakeOutgoingSpec(Weapon->GetWeaponDamageEffect(), 1, DamageContext);
+		UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(OutSpec, FGameplayTag::RequestGameplayTag(TEXT("Damage.Attribute.Health")), -DamageToApply);
+		AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*OutSpec.Data);
 	}
 }
 

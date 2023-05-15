@@ -4,12 +4,19 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "WOG/Types/CharacterTypes.h"
-#include "WOG/Interfaces/AttributesInterface.h"
+#include "Types/CharacterTypes.h"
+#include "Interfaces/AttributesInterface.h"
+#include "Abilities/GameplayAbility.h"
+#include "AbilitySystemInterface.h"
 #include "WOGBaseCharacter.generated.h"
 
+class UWOGAbilitySystemComponent;
+class UWOGAttributeSetBase;
+class UGameplayEffect;
+class UAbilitySystemComponent;
+
 UCLASS()
-class WOG_API AWOGBaseCharacter : public ACharacter, public IAttributesInterface
+class WOG_API AWOGBaseCharacter : public ACharacter, public IAttributesInterface, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 
@@ -19,11 +26,29 @@ public:
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
+	virtual void PossessedBy(AController* NewController) override;
+
+	bool ApplyGameplayEffectToSelf(TSubclassOf<UGameplayEffect> Effect, FGameplayEffectContextHandle InEffectContext);
+	
+
+	void GiveDefaultAbilities();
+	void ApplyDefaultEffects();
+
 protected:
 	virtual void BeginPlay() override;
+	void SendAbilityLocalInput(const EWOGAbilityInputID InInputID);
+	virtual void OnHealthAttributeChanged(const FOnAttributeChangeData& Data);
+
+	UPROPERTY(VisibleAnywhere)
+	FCharacterAbilityData DefaultAbilitiesAndEffects;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	UWOGAttributesComponent* Attributes;
+
+	UPROPERTY()
+	TObjectPtr<UWOGAbilitySystemComponent> AbilitySystemComponent;
+	UPROPERTY()
+	TObjectPtr<UWOGAttributeSetBase> AttributeSet;
 
 	#pragma region  Character State
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly)
@@ -35,10 +60,11 @@ protected:
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly)
 	ECharacterState CharacterState;
 
+	UFUNCTION(BlueprintCallable)
 	void SetCharacterState(ECharacterState NewState, AController* InstigatedBy = nullptr);
 
 	virtual void HandleStateElimmed(AController* InstigatedBy = nullptr);
-	virtual void HandleStateSprinting();
+	virtual void HandleStateSprinting() { /*TO-BE OVERRIDEN IN CHILDREN*/ }
 	virtual void HandleStateUnnoccupied();
 	virtual void HandleStateDodging();
 	virtual void HandleStateAttacking();
@@ -100,10 +126,15 @@ public:
 
 	virtual void Elim(bool bPlayerLeftGame);
 
+	UFUNCTION(BlueprintPure)
+	UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+
 	UFUNCTION(Server, reliable, BlueprintCallable)
 	void Server_SetCharacterState(ECharacterState NewState, AController* InstigatedBy = nullptr);
 
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE ECharacterState GetCharacterState() const { return CharacterState; }
 	FORCEINLINE float GetSpeedRequiredForLeap() const { return SpeedRequiredForLeap; }
+	FORCEINLINE UWOGAttributeSetBase* GetAttributeSetBase() const { return AttributeSet; }
+	FORCEINLINE void SetDefaultAbilitiesAndEffects(const FCharacterAbilityData& Data) { DefaultAbilitiesAndEffects = Data; }
 };

@@ -75,6 +75,8 @@ void AWOGPossessableEnemy::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ThisClass::MoveActionPressed);
 		//Look:
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ThisClass::LookActionPressed);
+		//Jump:
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &ThisClass::JumpActionPressed);
 	}
 }
 
@@ -110,6 +112,12 @@ void AWOGPossessableEnemy::LookActionPressed(const FInputActionValue& Value)
 		AddControllerYawInput(LookAxisVector.X);
 		AddControllerPitchInput(LookAxisVector.Y);
 	}
+}
+
+void AWOGPossessableEnemy::JumpActionPressed(const FInputActionValue& Value)
+{
+	SendAbilityLocalInput(EWOGAbilityInputID::Jump);
+	UE_LOG(LogTemp, Warning, TEXT("JUMPY JUMP"));
 }
 
 void AWOGPossessableEnemy::PossessedBy(AController* NewController)

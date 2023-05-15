@@ -240,6 +240,13 @@ void UWOGSpawnComponent::Spawn(FTransform Transform, int32 ID)
 
 		TObjectPtr<AActor> SpawnedActor = GetWorld()->SpawnActor<AActor>(Spawnables[ID]->Actor, Transform, Params);
 		UE_LOG(LogTemp, Warning, TEXT("Spawned at: %s"), *Spawn.ToString());
+
+		if (TObjectPtr<AWOGBaseEnemy> SpawnedEnemy = Cast<AWOGBaseEnemy>(SpawnedActor))
+		{
+			SpawnedEnemy->SetDefaultAbilitiesAndEffects(Spawnables[ID]->DefaultAbilitiesAndEffects);
+			SpawnedEnemy->GiveDefaultAbilities();
+			SpawnedEnemy->ApplyDefaultEffects();
+		}
 	}
 }
 

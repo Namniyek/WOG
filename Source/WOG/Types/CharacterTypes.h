@@ -1,5 +1,8 @@
 #pragma once
 
+#include "CoreMinimal.h"
+#include "CharacterTypes.generated.h"
+
 UENUM(BlueprintType)
 enum class ECharacterState : uint8
 {
@@ -52,5 +55,34 @@ enum class EAbilityType : uint8
 	EAT_Buff UMETA(DisplayName = "Buff"),
 
 	EAT_MAX UMETA(DisplayName = "DefaultMAX")
+};
+
+USTRUCT(BlueprintType)
+struct FCharacterAbilityData
+{
+	GENERATED_USTRUCT_BODY();
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "GAS")
+	TArray<TSubclassOf<class UWOGGameplayAbilityBase>> Abilities;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "GAS")
+	TArray<TSubclassOf<class UGameplayEffect>> Effects;
+};
+
+UENUM(BlueprintType)
+enum class EWOGAbilityInputID : uint8
+{
+	// 0 None
+	None			UMETA(DisplayName = "None"),
+	// 1 Confirm
+	Confirm			UMETA(DisplayName = "Confirm"),
+	// 2 Cancel
+	Cancel			UMETA(DisplayName = "Cancel"),
+	// 3 LMB
+	Ability1		UMETA(DisplayName = "Ability1"),
+	// 8 Sprint
+	Sprint			UMETA(DisplayName = "Sprint"),
+	// 9 Jump
+	Jump			UMETA(DisplayName = "Jump")
 };
 

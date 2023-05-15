@@ -14,6 +14,7 @@ class UAnimMontage;
 class USoundCue;
 class ABasePlayerCharacter;
 class UDidItHitActorComponent;
+class UGameplayEffect;
 
 
 USTRUCT(BlueprintType)
@@ -89,6 +90,9 @@ struct FWeaponDataTable : public FTableRowBase
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	USoundCue* BlockSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<UGameplayEffect> WeaponDamageEffect;
 
 	//TO-DO SFX particles for weapon trail && hit FX
 
@@ -199,6 +203,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	USoundCue* BlockSound;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TSubclassOf<UGameplayEffect> WeaponDamageEffect;
 
 	#pragma endregion
 
@@ -321,4 +328,5 @@ public:
 	FORCEINLINE UAnimMontage* GetHurtMontage() const { return HurtMontage; }
 	FORCEINLINE UAnimMontage* GetBlockMontage() const { return BlockMontage; }
 	FORCEINLINE UAnimMontage* GetDodgeMontage() const { return DodgeMontage; }
+	FORCEINLINE TSubclassOf<UGameplayEffect> GetWeaponDamageEffect() const { return WeaponDamageEffect; }
 };

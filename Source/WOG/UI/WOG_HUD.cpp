@@ -5,6 +5,7 @@
 #include "WOG/PlayerCharacter/BasePlayerCharacter.h"
 #include "WOG/PlayerController/WOGPlayerController.h"
 #include "WOG/ActorComponents/WOGAttributesComponent.h"
+#include "AbilitySystem/AttributeSets/WOGAttributeSetBase.h"
 
 void UWOG_HUD::NativeOnInitialized()
 {
@@ -33,65 +34,45 @@ void UWOG_HUD::ResetHUDAfterRespawn()
 
 float UWOG_HUD::GetHealthPercent()
 {
-    if (OwnerPlayerCharacter && OwnerPlayerCharacter->GetAttributes())
+    OwnerPlayerController = OwnerPlayerController == nullptr ? Cast<AWOGPlayerController>(GetOwningPlayer()) : OwnerPlayerController;
+    OwnerPlayerCharacter = Cast<ABasePlayerCharacter>(OwnerPlayerController->K2_GetPawn());
+    if (OwnerPlayerCharacter && OwnerPlayerCharacter->GetAttributeSetBase())
     {
-        return OwnerPlayerCharacter->GetAttributes()->GetHealthPercent();
+        return OwnerPlayerCharacter->GetAttributeSetBase()->GetHealth() / OwnerPlayerCharacter->GetAttributeSetBase()->GetMaxHealth();
     }
     else
     {
-        GEngine->AddOnScreenDebugMessage(1, 2.f, FColor::Red, FString("Controller Error"));
-        OwnerPlayerController = OwnerPlayerController == nullptr ? Cast<AWOGPlayerController>(GetOwningPlayer()) : OwnerPlayerController;
-        OwnerPlayerCharacter = Cast<ABasePlayerCharacter>(OwnerPlayerController->K2_GetPawn());
-        if (OwnerPlayerCharacter && OwnerPlayerCharacter->GetAttributes())
-        {
-            return OwnerPlayerCharacter->GetAttributes()->GetHealthPercent();
-        }
-        else
-        {
-            GEngine->AddOnScreenDebugMessage(1, 2.f, FColor::Red, FString("Pawn Error"));
-            return 0.f;
-        }
+        GEngine->AddOnScreenDebugMessage(1, 2.f, FColor::Red, FString("Pawn Error"));
+        return 0.f;
     }
 }
 
 float UWOG_HUD::GetManaPercent()
 {
-    if (OwnerPlayerCharacter && OwnerPlayerCharacter->GetAttributes())
+    OwnerPlayerController = OwnerPlayerController == nullptr ? Cast<AWOGPlayerController>(GetOwningPlayer()) : OwnerPlayerController;
+    OwnerPlayerCharacter = Cast<ABasePlayerCharacter>(OwnerPlayerController->K2_GetPawn());
+    if (OwnerPlayerCharacter && OwnerPlayerCharacter->GetAttributeSetBase())
     {
-        return OwnerPlayerCharacter->GetAttributes()->GetManaPercent();
+        return OwnerPlayerCharacter->GetAttributeSetBase()->GetMana() / OwnerPlayerCharacter->GetAttributeSetBase()->GetMaxMana();
     }
     else
     {
-        OwnerPlayerController = OwnerPlayerController == nullptr ? Cast<AWOGPlayerController>(GetOwningPlayer()) : OwnerPlayerController;
-        OwnerPlayerCharacter = Cast<ABasePlayerCharacter>(OwnerPlayerController->K2_GetPawn());
-        if (OwnerPlayerCharacter && OwnerPlayerCharacter->GetAttributes())
-        {
-            return OwnerPlayerCharacter->GetAttributes()->GetManaPercent();
-        }
-        else
-        {
-            return 0.f;
-        }
+        GEngine->AddOnScreenDebugMessage(1, 2.f, FColor::Red, FString("Pawn Error"));
+        return 0.f;
     }
 }
 
 float UWOG_HUD::GetAdrenalinePercent()
 {
-    if (OwnerPlayerCharacter && OwnerPlayerCharacter->GetAttributes())
+    OwnerPlayerController = OwnerPlayerController == nullptr ? Cast<AWOGPlayerController>(GetOwningPlayer()) : OwnerPlayerController;
+    OwnerPlayerCharacter = Cast<ABasePlayerCharacter>(OwnerPlayerController->K2_GetPawn());
+    if (OwnerPlayerCharacter && OwnerPlayerCharacter->GetAttributeSetBase())
     {
-        return OwnerPlayerCharacter->GetAttributes()->GetAdrenalinePercent();
+        return OwnerPlayerCharacter->GetAttributeSetBase()->GetAdrenaline() / OwnerPlayerCharacter->GetAttributeSetBase()->GetMaxAdrenaline();
     }
     else
     {
-        OwnerPlayerController = OwnerPlayerController == nullptr ? Cast<AWOGPlayerController>(GetOwningPlayer()) : OwnerPlayerController;
-        OwnerPlayerCharacter = Cast<ABasePlayerCharacter>(OwnerPlayerController->K2_GetPawn());
-        if (OwnerPlayerCharacter && OwnerPlayerCharacter->GetAttributes())
-        {
-            return OwnerPlayerCharacter->GetAttributes()->GetAdrenalinePercent();
-        }
-        else
-        {
-            return 0.f;
-        }
+        GEngine->AddOnScreenDebugMessage(1, 2.f, FColor::Red, FString("Pawn Error"));
+        return 0.f;
     }
 }

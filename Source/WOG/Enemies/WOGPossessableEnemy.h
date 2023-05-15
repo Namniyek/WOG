@@ -42,6 +42,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* SecondaryAction;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* JumpAction;
+
 	#pragma endregion
 
 protected:
@@ -66,6 +69,9 @@ protected:
 
 	/** Called for looking input */
 	void LookActionPressed(const FInputActionValue& Value);
+
+	/** Called for jumping input */
+	void JumpActionPressed(const FInputActionValue& Value);
 
 	#pragma endregion
 

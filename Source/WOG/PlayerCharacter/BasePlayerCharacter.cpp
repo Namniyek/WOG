@@ -13,14 +13,19 @@
 #include "EnhancedInputSubsystems.h"
 #include "LockOnTargetComponent.h"
 #include "TargetingHelperComponent.h"
-#include "WOG/GameMode/WOGGameMode.h"
-#include "WOG/PlayerController/WOGPlayerController.h"
-#include "WOG/Weapons/WOGBaseWeapon.h"
-#include "WOG/ActorComponents/WOGCombatComponent.h"
+#include "GameMode/WOGGameMode.h"
+#include "PlayerController/WOGPlayerController.h"
+#include "Weapons/WOGBaseWeapon.h"
+#include "ActorComponents/WOGCombatComponent.h"
 #include "Kismet/GameplayStatics.h"
-#include "WOG/AnimInstance/WOGBaseAnimInstance.h"
+#include "AnimInstance/WOGBaseAnimInstance.h"
 #include "Sound/SoundCue.h"
-#include "WOG/ActorComponents/WOGAbilitiesComponent.h"
+#include "ActorComponents/WOGAbilitiesComponent.h"
+#include "ActorComponents/WOGAbilitySystemComponent.h"
+#include "GameplayEffectTypes.h"
+#include "AbilitySystemBlueprintLibrary.h"
+#include "GameplayTagContainer.h"
+#include "PlayerState/WOGPlayerState.h"
 
 
 void ABasePlayerCharacter::OnConstruction(const FTransform& Transform)
@@ -195,7 +200,7 @@ void ABasePlayerCharacter::JumpActionPressed(const FInputActionValue& Value)
 	if (CharacterState == ECharacterState::ECS_Attacking) return;
 	if (CharacterState == ECharacterState::ECS_Staggered) return;
 
-	ACharacter::Jump();
+	SendAbilityLocalInput(EWOGAbilityInputID::Jump);
 }
 
 void ABasePlayerCharacter::DodgeActionPressed(const FInputActionValue& Value)
@@ -241,16 +246,24 @@ void ABasePlayerCharacter::Dodge()
 
 void ABasePlayerCharacter::SprintActionPressed()
 {
-	if (CharacterState != ECharacterState::ECS_Unnoccupied) return;
-	if (!bIsTargeting)
-	{
-		Server_SetCharacterState(ECharacterState::ECS_Sprinting);
-	}
+	//if (CharacterState != ECharacterState::ECS_Unnoccupied) return;
+	//if (!bIsTargeting)
+	//{
+	//	Server_SetCharacterState(ECharacterState::ECS_Sprinting);
+	//}
+
+	SendAbilityLocalInput(EWOGAbilityInputID::Sprint);
+
 }
 
 void ABasePlayerCharacter::StopSprinting()
 {
-	Server_SetCharacterState(ECharacterState::ECS_Unnoccupied);
+	//Server_SetCharacterState(ECharacterState::ECS_Unnoccupied);
+
+	FGameplayEventData EventPayload;
+	EventPayload.EventTag = FGameplayTag::RequestGameplayTag(TEXT("Event.Movement.Sprint.Stop"));
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, FGameplayTag::RequestGameplayTag(TEXT("Event.Movement.Sprint.Stop")), EventPayload);
+
 }
 
 void ABasePlayerCharacter::TargetActionPressed(const FInputActionValue& Value)
@@ -292,6 +305,12 @@ void ABasePlayerCharacter::PrimaryLightButtonPressed(const FInputActionValue& Va
 	if (Abilities->EquippedAbility)
 	{
 		Abilities->UseAbilityActionPressed();
+	}
+
+	if (AbilitySystemComponent.Get())
+	{
+		AbilitySystemComponent->LocalInputConfirm();
+		UE_LOG(LogTemp, Warning, TEXT("Confirmed Input"))
 	}
 }
 
@@ -376,10 +395,13 @@ void ABasePlayerCharacter::OnRep_PlayerProfile()
 void ABasePlayerCharacter::UpdatePlayerProfile_Implementation(const FPlayerData& NewPlayerProfile)
 {
 	//Set the character meshes
-	SetMeshes(NewPlayerProfile.bIsMale, NewPlayerProfile.CharacterIndex);
+	SetMeshesAndAnimations(NewPlayerProfile.bIsMale, NewPlayerProfile.CharacterIndex);
 
 	//Set the character colors
 	SetColors(NewPlayerProfile.PrimaryColor, NewPlayerProfile.SkinColor, NewPlayerProfile.BodyPaintColor, NewPlayerProfile.HairColor);	
+
+	//Set the character default abilities and effects
+	SetDefaultAbilitiesAndEffects(NewPlayerProfile.bIsMale, NewPlayerProfile.CharacterIndex);
 }
 
 void ABasePlayerCharacter::SetColors(FName Primary, FName Skin, FName BodyPaint, FName HairColor)
@@ -424,7 +446,7 @@ void ABasePlayerCharacter::SetColors(FName Primary, FName Skin, FName BodyPaint,
 	CharacterMI->SetVectorParameterValue(FName("Color_Hair"), HairRow->ColorVector);
 }
 
-void ABasePlayerCharacter::SetMeshes(bool bIsMale, FName RowName)
+void ABasePlayerCharacter::SetMeshesAndAnimations(bool bIsMale, FName RowName)
 {
 	UDataTable* MeshTable = bIsMale ? CharacterDataTables.MaleBody : CharacterDataTables.FemaleBody;
 
@@ -472,9 +494,33 @@ void ABasePlayerCharacter::SetMeshes(bool bIsMale, FName RowName)
 		GetMesh()->SetPhysicsAsset(MeshRow->PhysicsAsset);
 	}
 
-	Combat->SetDefaultWeaponClass(MeshRow->DefaultWeapon);
 	UnarmedHurtMontage = MeshRow->UnarmedHurtMontage;
 	DodgeMontage = MeshRow->DodgeMontage;
+}
+
+void ABasePlayerCharacter::SetDefaultAbilitiesAndEffects(bool bIsMale, FName RowName)
+{
+	UDataTable* MeshTable = bIsMale ? CharacterDataTables.MaleBody : CharacterDataTables.FemaleBody;
+
+	if (!MeshTable)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, "Error with data tables");
+		return;
+	}
+
+	FCharacterMesh* MeshRow = MeshTable->FindRow<FCharacterMesh>(RowName, FString());
+
+	if (!MeshRow)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, "Error with data table rows");
+		return;
+	}
+
+	Combat->SetDefaultWeaponClass(MeshRow->DefaultWeapon);
+
+	DefaultAbilitiesAndEffects = MeshRow->DefaultAbilitiesAndEffects;
+	GiveDefaultAbilities();
+	ApplyDefaultEffects();
 }
 
 void ABasePlayerCharacter::HandleStateUnnoccupied()
@@ -600,9 +646,19 @@ void ABasePlayerCharacter::BroadcastHit_Implementation(AActor* AgressorActor, co
 	}
 
 	TObjectPtr<AWOGBaseCharacter> AgressorCharacter = Cast<AWOGBaseCharacter>(AgressorActor);
-	if (AgressorCharacter)
+	if (AgressorCharacter && AbilitySystemComponent.Get() && Weapon && Weapon->GetWeaponDamageEffect())
 	{
-		UGameplayStatics::ApplyDamage(this, -DamageToApply, AgressorCharacter->GetController(), AgressorActor, UDamageType::StaticClass());
+		FGameplayEffectContextHandle DamageContext = AbilitySystemComponent.Get()->MakeEffectContext();
+		DamageContext.AddInstigator(AgressorCharacter, Weapon);
+		DamageContext.AddHitResult(Hit);
+
+		FGameplayEffectSpecHandle OutSpec = AbilitySystemComponent->MakeOutgoingSpec(Weapon->GetWeaponDamageEffect(), 1, DamageContext);
+		UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(OutSpec, FGameplayTag::RequestGameplayTag(TEXT("Damage.Attribute.Health")), -DamageToApply);
+		AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*OutSpec.Data);
+		UE_LOG(LogTemp, Warning, TEXT("DamageEffectApplied"));
+
+		//UGameplayStatics::ApplyDamage(this, -DamageToApply, AgressorCharacter->GetController(), AgressorActor, UDamageType::StaticClass());
+
 	}
 }
 

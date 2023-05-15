@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "WOGBaseActorComponent.h"
 #include "Engine/DataTable.h"
+#include "Types/CharacterTypes.h"
 #include "WOGSpawnComponent.generated.h"
 
 /**
@@ -37,6 +38,9 @@ public:
 	/**Capsule half height*/
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "HeightOffset", MakeStructureDefaultValue = "1"))
 	float HeightOffset;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Initial Setup")
+	FCharacterAbilityData DefaultAbilitiesAndEffects;
 
 };
 

@@ -3,10 +3,15 @@
 
 #include "WOGBaseCharacter.h"
 #include "Net/UnrealNetwork.h"
-#include "WOG/ActorComponents/WOGAttributesComponent.h"
+#include "ActorComponents/WOGAttributesComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Kismet/GameplayStatics.h"
-#
+#include "PlayerState/WOGPlayerState.h"
+#include "ActorComponents/WOGAbilitySystemComponent.h"
+#include "GameplayEffectExtension.h"
+#include "AbilitySystemComponent.h"
+#include "AbilitySystem/AttributeSets/WOGAttributeSetBase.h"
+#include "AbilitySystem/Abilities/WOGGameplayAbilityBase.h"
 
 
 AWOGBaseCharacter::AWOGBaseCharacter()
@@ -15,6 +20,12 @@ AWOGBaseCharacter::AWOGBaseCharacter()
 
 	Attributes = CreateDefaultSubobject<UWOGAttributesComponent>(TEXT("AttributesComponent"));
 	Attributes->SetIsReplicated(true);
+
+	AbilitySystemComponent = CreateDefaultSubobject<UWOGAbilitySystemComponent>(TEXT("Ability System Component"));
+	AbilitySystemComponent->SetIsReplicated(true);
+	AbilitySystemComponent->ReplicationMode = EGameplayEffectReplicationMode::Mixed;
+
+	AttributeSet = CreateDefaultSubobject<UWOGAttributeSetBase>(TEXT("AttributeSet"));
 
 	SpeedRequiredForLeap = 750.f;
 }
@@ -26,6 +37,22 @@ void AWOGBaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	DOREPLIFETIME(AWOGBaseCharacter, CharacterState);
 }
 
+void AWOGBaseCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+
+	if (AbilitySystemComponent)
+	{
+		AbilitySystemComponent->InitAbilityActorInfo(this, this);
+		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetHealthAttribute()).AddUObject(this, &ThisClass::OnHealthAttributeChanged);
+
+	}
+
+	// ASC MixedMode replication requires that the ASC Owner's Owner be the Controller.
+	SetOwner(NewController);
+}
+
+
 void AWOGBaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
@@ -33,6 +60,77 @@ void AWOGBaseCharacter::BeginPlay()
 	if (HasAuthority())
 	{
 		OnTakeAnyDamage.AddDynamic(this, &ThisClass::ReceiveDamage);
+	}
+}
+
+void AWOGBaseCharacter::SendAbilityLocalInput(const EWOGAbilityInputID InInputID)
+{
+	if (!AbilitySystemComponent.Get())
+	{
+		UE_LOG(LogTemp, Error, TEXT("Invalid AbilitySystemComponent"));
+		return;
+	}
+
+	AbilitySystemComponent->AbilityLocalInputPressed(static_cast<int32>(InInputID));
+}
+
+void AWOGBaseCharacter::GiveDefaultAbilities()
+{
+	if (!HasAuthority() || DefaultAbilitiesAndEffects.Abilities.IsEmpty() || !AbilitySystemComponent.Get()) return;
+	for (auto DefaultAbility : DefaultAbilitiesAndEffects.Abilities)
+	{
+		AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(DefaultAbility, 1, static_cast<int32>(DefaultAbility.GetDefaultObject()->AbilityInputID), this));
+	}
+}
+
+void AWOGBaseCharacter::ApplyDefaultEffects()
+{
+	if (!HasAuthority() || DefaultAbilitiesAndEffects.Effects.IsEmpty() || !AbilitySystemComponent.Get()) return;
+
+	FGameplayEffectContextHandle EffectContext = AbilitySystemComponent.Get()->MakeEffectContext();
+	EffectContext.AddSourceObject(this);
+
+	for (auto DefaultEffect : DefaultAbilitiesAndEffects.Effects)
+	{
+		
+		ApplyGameplayEffectToSelf(DefaultEffect, EffectContext);
+	}
+}
+
+bool AWOGBaseCharacter::ApplyGameplayEffectToSelf(TSubclassOf<UGameplayEffect> Effect, FGameplayEffectContextHandle InEffectContext)
+{
+	if (!Effect.Get()) return false;
+
+	FGameplayEffectSpecHandle SpecHandle = AbilitySystemComponent->MakeOutgoingSpec(Effect, 1, InEffectContext);
+	if (SpecHandle.IsValid())
+	{
+		FActiveGameplayEffectHandle ActiveGEHandle = AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+
+		return ActiveGEHandle.WasSuccessfullyApplied();
+	}
+	return false;
+}
+
+void AWOGBaseCharacter::OnHealthAttributeChanged(const FOnAttributeChangeData& Data)
+{
+	if (Data.NewValue <= 0 && Data.OldValue > 0)
+	{
+		AWOGBaseCharacter* InstigatorCharacter = nullptr;
+		if (Data.GEModData)
+		{
+			const FGameplayEffectContextHandle& EffectContext = Data.GEModData->EffectSpec.GetContext();
+			InstigatorCharacter = Cast<AWOGBaseCharacter>(EffectContext.GetInstigator());
+
+			if (InstigatorCharacter && InstigatorCharacter->GetController())
+			{
+				Server_SetCharacterState(ECharacterState::ECS_Elimmed, InstigatorCharacter->GetController());
+			}
+		}
+
+		/*FGameplayEventData EventPayload;
+		EventPayload.EventTag = ZeroHealthEventTag;
+
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, ZeroHealthEventTag, EventPayload);*/
 	}
 }
 
@@ -82,10 +180,10 @@ void AWOGBaseCharacter::HandleStateElimmed(AController* InstigatedBy)
 	//To be overriden in Children
 }
 
-void AWOGBaseCharacter::HandleStateSprinting()
-{
-	//To be overriden in Children
-}
+//void AWOGBaseCharacter::HandleStateSprinting()
+//{
+//	//To be overriden in Children
+//}
 
 void AWOGBaseCharacter::HandleStateUnnoccupied()
 {
@@ -261,5 +359,10 @@ void AWOGBaseCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const 
 void AWOGBaseCharacter::Elim(bool bPlayerLeftGame)
 {
 	//To be overriden in Children
+}
+
+UAbilitySystemComponent* AWOGBaseCharacter::GetAbilitySystemComponent() const
+{
+	return AbilitySystemComponent.Get();
 }
 

@@ -31,6 +31,8 @@ public:
 	UFUNCTION(Server, reliable)
 	void UnpossessMinion();
 
+	virtual void AcknowledgePossession(class APawn* P);
+
 	UFUNCTION()
 	void Test(APawn* NewPawn);
 

@@ -2,25 +2,38 @@
 
 
 #include "WOGPlayerController.h"
-#include "WOG/GameInstance/WOGGameInstance.h"
+#include "GameInstance/WOGGameInstance.h"
 #include "GameFramework/PlayerState.h"
 #include "Kismet/GameplayStatics.h"
-#include "WOG/Data/PlayerProfileSaveGame.h"
-#include "WOG/PlayerCharacter/BasePlayerCharacter.h"
+#include "Data/PlayerProfileSaveGame.h"
+#include "PlayerCharacter/BasePlayerCharacter.h"
 #include "WOG/UI/WOGMatchHUD.h"
 #include "Blueprint/UserWidget.h"
-#include "WOG/UI/MainAnnouncementWidget.h"
-#include "WOG/Data/TODEnum.h"
-#include "WOG/UI/EndgameWidget.h"
+#include "UI/MainAnnouncementWidget.h"
+#include "Data/TODEnum.h"
+#include "UI/EndgameWidget.h"
 #include "Net/UnrealNetwork.h"
-#include "WOG/ActorComponents/WOGCombatComponent.h"
-#include "WOG/Enemies/WOGPossessableEnemy.h"
+#include "ActorComponents/WOGCombatComponent.h"
+#include "Enemies/WOGPossessableEnemy.h"
+#include "Characters/WOGBaseCharacter.h"
+#include "AbilitySystemComponent.h"
 
 
 void AWOGPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AWOGPlayerController, bIsAttacker);
+}
+
+void AWOGPlayerController::AcknowledgePossession(APawn* P)
+{
+	Super::AcknowledgePossession(P);
+
+	AWOGBaseCharacter* CharacterBase = Cast<AWOGBaseCharacter>(P);
+	if (CharacterBase)
+	{
+		CharacterBase->GetAbilitySystemComponent()->InitAbilityActorInfo(CharacterBase, CharacterBase);
+	}
 }
 
 void AWOGPlayerController::Test(APawn* NewPawn)
