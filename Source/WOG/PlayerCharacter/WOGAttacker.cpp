@@ -4,7 +4,6 @@
 #include "WOGAttacker.h"
 #include "TargetingHelperComponent.h"
 #include "LockOnTargetComponent.h"
-#include "WOG/ActorComponents/WOGAttributesComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "WOG/PlayerController/WOGPlayerController.h"
@@ -21,11 +20,6 @@ AWOGAttacker::AWOGAttacker()
 void AWOGAttacker::BeginPlay()
 {
 	Super::BeginPlay();
-
-	if (Attributes)
-	{
-		Attributes->Server_PassiveAttributeUpdate(EAttributeType::AT_Mana, 2.f);
-	}
 }
 
 void AWOGAttacker::PossessMinion()

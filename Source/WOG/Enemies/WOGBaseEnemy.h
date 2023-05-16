@@ -3,8 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "WOG/Characters/WOGBaseCharacter.h"
-#include "WOG/Interfaces/SpawnInterface.h"
+#include "Characters/WOGBaseCharacter.h"
+#include "Interfaces/SpawnInterface.h"
 #include "WOGBaseEnemy.generated.h"
 
 UCLASS()
@@ -17,7 +17,6 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
-	virtual void OnHealthAttributeChanged(const FOnAttributeChangeData& Data);
 
 	#pragma region Actor Components
 
@@ -64,6 +63,5 @@ private:
 
 
 public:	
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 };

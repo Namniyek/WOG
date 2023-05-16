@@ -22,7 +22,6 @@ class WOG_API AWOGBaseCharacter : public ACharacter, public IAttributesInterface
 
 public:
 	AWOGBaseCharacter();
-	friend class UWOGAttributesComponent;
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
@@ -30,7 +29,6 @@ public:
 
 	bool ApplyGameplayEffectToSelf(TSubclassOf<UGameplayEffect> Effect, FGameplayEffectContextHandle InEffectContext);
 	
-
 	void GiveDefaultAbilities();
 	void ApplyDefaultEffects();
 
@@ -41,9 +39,6 @@ protected:
 
 	UPROPERTY(VisibleAnywhere)
 	FCharacterAbilityData DefaultAbilitiesAndEffects;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	UWOGAttributesComponent* Attributes;
 
 	UPROPERTY()
 	TObjectPtr<UWOGAbilitySystemComponent> AbilitySystemComponent;
@@ -63,12 +58,13 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void SetCharacterState(ECharacterState NewState, AController* InstigatedBy = nullptr);
 
-	virtual void HandleStateElimmed(AController* InstigatedBy = nullptr);
-	virtual void HandleStateSprinting() { /*TO-BE OVERRIDEN IN CHILDREN*/ }
-	virtual void HandleStateUnnoccupied();
-	virtual void HandleStateDodging();
-	virtual void HandleStateAttacking();
-	virtual void HandleStateStaggered();
+	UFUNCTION(BlueprintCallable)
+	virtual void HandleStateElimmed(AController* InstigatedBy = nullptr) { /*TO-BE OVERRIDEN IN CHILDREN*/ };
+	virtual void HandleStateSprinting() { /*TO-BE OVERRIDEN IN CHILDREN*/ };
+	virtual void HandleStateUnnoccupied() { /*TO-BE OVERRIDEN IN CHILDREN*/ };
+	virtual void HandleStateDodging() { /*TO-BE OVERRIDEN IN CHILDREN*/ };
+	virtual void HandleStateAttacking() { /*TO-BE OVERRIDEN IN CHILDREN*/ };
+	virtual void HandleStateStaggered() { /*TO-BE OVERRIDEN IN CHILDREN*/ };
 
 	#pragma endregion
 
@@ -82,7 +78,7 @@ protected:
 
 	#pragma region Interfaces functions
 
-	virtual void BroadcastHit_Implementation(AActor* AgressorActor, const FHitResult& Hit, const float& DamageToApply, AActor* InstigatorWeapon) override;
+	virtual void BroadcastHit_Implementation(AActor* AgressorActor, const FHitResult& Hit, const float& DamageToApply, AActor* InstigatorWeapon) override {/*To be overriden in Children*/};
 	#pragma endregion
 
 	#pragma region Animation Variables
@@ -120,9 +116,6 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
-	UFUNCTION()
-	virtual void ReceiveDamage(AActor* DamagedActor, float Damage, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser);
 
 	virtual void Elim(bool bPlayerLeftGame);
 

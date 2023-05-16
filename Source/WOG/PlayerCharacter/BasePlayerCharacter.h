@@ -360,7 +360,6 @@ public:
 	//public Getters and Setters 
 	FORCEINLINE USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
-	FORCEINLINE UWOGAttributesComponent* GetAttributes() const { return Attributes; }
 	FORCEINLINE ULockOnTargetComponent* GetLockOnTarget() const { return LockOnTarget; }
 	FORCEINLINE UWOGCombatComponent* GetCombatComponent() const { return Combat; }
 	FORCEINLINE bool GetIsTargeting() const { return bIsTargeting; }

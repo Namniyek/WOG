@@ -4,7 +4,6 @@
 #include "WOGBaseEnemy.h"
 #include "LockOnTargetComponent.h"
 #include "TargetingHelperComponent.h"
-#include "WOG/ActorComponents/WOGAttributesComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "AIController.h"
 #include "WOG/Weapons/WOGBaseWeapon.h"
@@ -28,30 +27,6 @@ AWOGBaseEnemy::AWOGBaseEnemy()
 void AWOGBaseEnemy::BeginPlay()
 {
 	Super::BeginPlay();
-}
-
-void AWOGBaseEnemy::OnHealthAttributeChanged(const FOnAttributeChangeData& Data)
-{
-	UE_LOG(LogTemp, Error, TEXT("OldValue : %f, NewValue : %f"), Data.OldValue, Data.NewValue);
-	if (Data.NewValue <= 0 && Data.OldValue > 0)
-	{
-		AWOGBaseCharacter* InstigatorCharacter = nullptr;
-		if (Data.GEModData)
-		{
-			const FGameplayEffectContextHandle& EffectContext = Data.GEModData->EffectSpec.GetContext();
-			InstigatorCharacter = Cast<AWOGBaseCharacter>(EffectContext.GetInstigator());
-
-			if (InstigatorCharacter && InstigatorCharacter->GetController())
-			{
-				Server_SetCharacterState(ECharacterState::ECS_Elimmed, InstigatorCharacter->GetController());
-			}
-		}
-
-		/*FGameplayEventData EventPayload;
-		EventPayload.EventTag = ZeroHealthEventTag;
-
-		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, ZeroHealthEventTag, EventPayload);*/
-	}
 }
 
 void AWOGBaseEnemy::BroadcastHit_Implementation(AActor* AgressorActor, const FHitResult& Hit, const float& DamageToApply, AActor* InstigatorWeapon)
@@ -127,11 +102,5 @@ void AWOGBaseEnemy::HandleCosmeticBlock(const AWOGBaseWeapon* InstigatorWeapon)
 
 void AWOGBaseEnemy::HandleCosmeticWeaponClash()
 {
-}
-
-void AWOGBaseEnemy::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
 }
 

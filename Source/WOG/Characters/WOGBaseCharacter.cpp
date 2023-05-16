@@ -3,7 +3,6 @@
 
 #include "WOGBaseCharacter.h"
 #include "Net/UnrealNetwork.h"
-#include "ActorComponents/WOGAttributesComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Kismet/GameplayStatics.h"
 #include "PlayerState/WOGPlayerState.h"
@@ -12,14 +11,14 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystem/AttributeSets/WOGAttributeSetBase.h"
 #include "AbilitySystem/Abilities/WOGGameplayAbilityBase.h"
+#include "AbilitySystemBlueprintLibrary.h"
+#include "PlayerCharacter/BasePlayerCharacter.h"
+#include "Enemies/WOGBaseEnemy.h"
 
 
 AWOGBaseCharacter::AWOGBaseCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
-
-	Attributes = CreateDefaultSubobject<UWOGAttributesComponent>(TEXT("AttributesComponent"));
-	Attributes->SetIsReplicated(true);
 
 	AbilitySystemComponent = CreateDefaultSubobject<UWOGAbilitySystemComponent>(TEXT("Ability System Component"));
 	AbilitySystemComponent->SetIsReplicated(true);
@@ -56,11 +55,6 @@ void AWOGBaseCharacter::PossessedBy(AController* NewController)
 void AWOGBaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-
-	if (HasAuthority())
-	{
-		OnTakeAnyDamage.AddDynamic(this, &ThisClass::ReceiveDamage);
-	}
 }
 
 void AWOGBaseCharacter::SendAbilityLocalInput(const EWOGAbilityInputID InInputID)
@@ -115,22 +109,34 @@ void AWOGBaseCharacter::OnHealthAttributeChanged(const FOnAttributeChangeData& D
 {
 	if (Data.NewValue <= 0 && Data.OldValue > 0)
 	{
-		AWOGBaseCharacter* InstigatorCharacter = nullptr;
 		if (Data.GEModData)
 		{
 			const FGameplayEffectContextHandle& EffectContext = Data.GEModData->EffectSpec.GetContext();
-			InstigatorCharacter = Cast<AWOGBaseCharacter>(EffectContext.GetInstigator());
 
-			if (InstigatorCharacter && InstigatorCharacter->GetController())
+			if (EffectContext.GetInstigator()->IsA<ABasePlayerCharacter>())
 			{
-				Server_SetCharacterState(ECharacterState::ECS_Elimmed, InstigatorCharacter->GetController());
+				ACharacter* InstigatorCharacter = Cast<ACharacter>(EffectContext.GetInstigator());
+				if (InstigatorCharacter && InstigatorCharacter->GetController())
+				{
+					FGameplayEventData EventPayload;
+					EventPayload.EventTag = FGameplayTag::RequestGameplayTag(TEXT("Event.Elim"));
+					EventPayload.Instigator = InstigatorCharacter->GetController();
+					UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, FGameplayTag::RequestGameplayTag(TEXT("Event.Elim")), EventPayload);
+					UE_LOG(LogTemp, Error, TEXT("Killed by Character"));
+				}
+			}
+			else if (EffectContext.GetInstigator()->IsA<AWOGBaseEnemy>())
+			{
+				FGameplayEventData EventPayload;
+				EventPayload.EventTag = FGameplayTag::RequestGameplayTag(TEXT("Event.Elim"));
+				UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, FGameplayTag::RequestGameplayTag(TEXT("Event.Elim")), EventPayload);
+				UE_LOG(LogTemp, Error, TEXT("Killed by Enemy"));
+
+				/*
+				** TO-DO - Add and pass reference to the Owner of the enemy that killed this character
+				*/
 			}
 		}
-
-		/*FGameplayEventData EventPayload;
-		EventPayload.EventTag = ZeroHealthEventTag;
-
-		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, ZeroHealthEventTag, EventPayload);*/
 	}
 }
 
@@ -173,41 +179,6 @@ void AWOGBaseCharacter::SetCharacterState(ECharacterState NewState, AController*
 		HandleStateStaggered();
 		break;
 	}
-}
-
-void AWOGBaseCharacter::HandleStateElimmed(AController* InstigatedBy)
-{
-	//To be overriden in Children
-}
-
-//void AWOGBaseCharacter::HandleStateSprinting()
-//{
-//	//To be overriden in Children
-//}
-
-void AWOGBaseCharacter::HandleStateUnnoccupied()
-{
-	//To be overriden in Children
-}
-
-void AWOGBaseCharacter::HandleStateDodging()
-{
-	//To be overriden in Children
-}
-
-void AWOGBaseCharacter::HandleStateAttacking()
-{
-	//To be overriden in Children
-}
-
-void AWOGBaseCharacter::HandleStateStaggered()
-{
-	//To be overriden in Children
-}
-
-void AWOGBaseCharacter::BroadcastHit_Implementation(AActor* AgressorActor, const FHitResult& Hit, const float& DamageToApply, AActor* InstigatorWeapon)
-{
-
 }
 
 bool AWOGBaseCharacter::IsHitFrontal(const float& AngleTolerance, const AActor* Victim, const AActor* Agressor)
@@ -280,47 +251,6 @@ FName AWOGBaseCharacter::CalculateHitDirection(const FHitResult& Hit, const FVec
 	}
 
 	return FName("");
-
-	//// Calculate the attack direction
-	//FVector AttackDirection = (ImpactPoint - WeaponLocation).GetSafeNormal();
-
-	//// Calculate the hit direction
-	//FVector CharacterForward = GetActorForwardVector();
-	//LastHitDirection = FVector::CrossProduct(AttackDirection, CharacterForward);
-
-	//// Determine the hit direction
-	//if (FMath::Abs(LastHitDirection.Z) > FMath::Abs(LastHitDirection.X) && FMath::Abs(LastHitDirection.Z) > FMath::Abs(LastHitDirection.Y))
-	//{
-	//	// Hit came from the front or back
-	//	if (FVector::DotProduct(AttackDirection, CharacterForward) > 0.0f)
-	//	{
-	//		// Hit came from the front
-	//		UE_LOG(LogTemp, Warning, TEXT("FRONT"));
-	//		return FName("Front");
-	//	}
-	//	else
-	//	{
-	//		// Hit came from the back
-	//		UE_LOG(LogTemp, Warning, TEXT("BACK"));
-	//		return FName("Back");
-	//	}
-	//}
-	//else
-	//{
-	//	// Hit came from the left or right
-	//	if (LastHitDirection.Z < 0.0f)
-	//	{
-	//		// Hit came from the right
-	//		UE_LOG(LogTemp, Warning, TEXT("RIGHT"));
-	//		return FName("Right");
-	//	}
-	//	else
-	//	{
-	//		// Hit came from the left
-	//		UE_LOG(LogTemp, Warning, TEXT("LEFT"));
-	//		return FName("Left");
-	//	}
-	//}
 }
 
 void AWOGBaseCharacter::PlayHitReactMontage(FName Section)
@@ -348,12 +278,6 @@ void AWOGBaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-}
-
-void AWOGBaseCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser)
-{
-	if (!Attributes) return;
-	Attributes->Server_UpdateHealth(Damage, InstigatedBy);
 }
 
 void AWOGBaseCharacter::Elim(bool bPlayerLeftGame)

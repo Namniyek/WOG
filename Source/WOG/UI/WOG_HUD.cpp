@@ -4,7 +4,6 @@
 #include "WOG_HUD.h"
 #include "WOG/PlayerCharacter/BasePlayerCharacter.h"
 #include "WOG/PlayerController/WOGPlayerController.h"
-#include "WOG/ActorComponents/WOGAttributesComponent.h"
 #include "AbilitySystem/AttributeSets/WOGAttributeSetBase.h"
 
 void UWOG_HUD::NativeOnInitialized()
