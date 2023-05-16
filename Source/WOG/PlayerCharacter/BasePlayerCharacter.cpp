@@ -154,7 +154,7 @@ void ABasePlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 
 void ABasePlayerCharacter::MoveActionPressed(const FInputActionValue& Value)
 {
-	if (CharacterState == ECharacterState::ECS_Elimmed) return;
+	if (!GetAbilitySystemComponent() || GetAbilitySystemComponent()->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag(TEXT("State.Dead")))) return;
 	if (CharacterState == ECharacterState::ECS_Staggered) return;
 
 	FVector2D MovementVector = Value.Get<FVector2D>();
@@ -268,7 +268,7 @@ void ABasePlayerCharacter::StopSprinting()
 
 void ABasePlayerCharacter::TargetActionPressed(const FInputActionValue& Value)
 {
-	if (CharacterState == ECharacterState::ECS_Elimmed) return;
+	if (!GetAbilitySystemComponent() || GetAbilitySystemComponent()->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag(TEXT("State.Dead")))) return;
 	if (CharacterState == ECharacterState::ECS_Staggered) return;
 
 	if (!LockOnTarget) return;
@@ -277,7 +277,7 @@ void ABasePlayerCharacter::TargetActionPressed(const FInputActionValue& Value)
 
 void ABasePlayerCharacter::CycleTargetActionPressed(const FInputActionValue& Value)
 {
-	if (CharacterState == ECharacterState::ECS_Elimmed) return;
+	if (!GetAbilitySystemComponent() || GetAbilitySystemComponent()->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag(TEXT("State.Dead")))) return;
 
 	if (!LockOnTarget) return;
 	float CycleFloat = Value.Get<float>();
@@ -293,7 +293,7 @@ void ABasePlayerCharacter::AbilitiesButtonPressed(const FInputActionValue& Value
 
 void ABasePlayerCharacter::PrimaryLightButtonPressed(const FInputActionValue& Value)
 {
-	if (CharacterState == ECharacterState::ECS_Elimmed) return;
+	if (!GetAbilitySystemComponent() || GetAbilitySystemComponent()->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag(TEXT("State.Dead")))) return;
 	if (CharacterState == ECharacterState::ECS_Staggered) return;
 	if (CharacterState == ECharacterState::ECS_Dodging) return;
 
@@ -316,7 +316,7 @@ void ABasePlayerCharacter::PrimaryLightButtonPressed(const FInputActionValue& Va
 
 void ABasePlayerCharacter::PrimaryArmHeavyAttack(FInputActionValue ActionValue, float ElapsedTime, float TriggeredTime)
 {
-	if (CharacterState == ECharacterState::ECS_Elimmed) return;
+	if (!GetAbilitySystemComponent() || GetAbilitySystemComponent()->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag(TEXT("State.Dead")))) return;
 	if (CharacterState == ECharacterState::ECS_Staggered) return;
 	if (CharacterState == ECharacterState::ECS_Dodging) return;
 
@@ -331,7 +331,7 @@ void ABasePlayerCharacter::PrimaryArmHeavyAttack(FInputActionValue ActionValue, 
 
 void ABasePlayerCharacter::PrimaryHeavyAttackCanceled(const FInputActionValue& Value)
 {
-	if (CharacterState == ECharacterState::ECS_Elimmed) return;
+	if (!GetAbilitySystemComponent() || GetAbilitySystemComponent()->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag(TEXT("State.Dead")))) return;
 	if (CharacterState == ECharacterState::ECS_Staggered) return;
 	if (CharacterState == ECharacterState::ECS_Dodging) return;
 
@@ -344,7 +344,7 @@ void ABasePlayerCharacter::PrimaryHeavyAttackCanceled(const FInputActionValue& V
 
 void ABasePlayerCharacter::PrimaryExecuteHeavyAttack(const FInputActionValue& Value)
 {
-	if (CharacterState == ECharacterState::ECS_Elimmed) return;
+	if (!GetAbilitySystemComponent() || GetAbilitySystemComponent()->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag(TEXT("State.Dead")))) return;
 	if (CharacterState == ECharacterState::ECS_Staggered) return;
 	if (CharacterState == ECharacterState::ECS_Dodging) return;
 
@@ -355,7 +355,7 @@ void ABasePlayerCharacter::PrimaryExecuteHeavyAttack(const FInputActionValue& Va
 
 void ABasePlayerCharacter::SecondaryButtonPressed(const FInputActionValue& Value)
 {
-	if (CharacterState == ECharacterState::ECS_Elimmed) return;
+	if (!GetAbilitySystemComponent() || GetAbilitySystemComponent()->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag(TEXT("State.Dead")))) return;
 	if (CharacterState == ECharacterState::ECS_Staggered) return;
 	if (CharacterState == ECharacterState::ECS_Dodging) return;
 
@@ -366,7 +366,7 @@ void ABasePlayerCharacter::SecondaryButtonPressed(const FInputActionValue& Value
 
 void ABasePlayerCharacter::SecondaryButtonReleased(const FInputActionValue& Value)
 {
-	if (CharacterState == ECharacterState::ECS_Elimmed) return;
+	if (!GetAbilitySystemComponent() || GetAbilitySystemComponent()->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag(TEXT("State.Dead")))) return;
 	if (CharacterState == ECharacterState::ECS_Staggered) return;
 	if (CharacterState == ECharacterState::ECS_Dodging) return;
 
@@ -601,7 +601,7 @@ void ABasePlayerCharacter::HandleStateStaggered()
 
 void ABasePlayerCharacter::BroadcastHit_Implementation(AActor* AgressorActor, const FHitResult& Hit, const float& DamageToApply, AActor* InstigatorWeapon)
 {
-	if (CharacterState == ECharacterState::ECS_Elimmed) return;
+	if (!GetAbilitySystemComponent() || GetAbilitySystemComponent()->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag(TEXT("State.Dead")))) return;
 	if (CharacterState == ECharacterState::ECS_Dodging) return;
 
 	if (Combat->GetEquippedWeapon() && Combat->GetEquippedWeapon()->GetWeaponState() == EWeaponState::EWS_Blocking)

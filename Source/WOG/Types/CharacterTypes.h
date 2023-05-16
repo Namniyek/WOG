@@ -12,7 +12,6 @@ enum class ECharacterState : uint8
 	ECS_Attacking UMETA(DisplayName = "Attacking"),
 	ECS_Blocking UMETA(DisplayName = "Blocking"),
 	ECS_Staggered UMETA(DisplayName = "Staggered"),
-	ECS_Elimmed UMETA(DisplayName = "Eliminated"),
 
 	ECS_MAX UMETA(DisplayName = "DefaultMAX")
 };
@@ -72,17 +71,11 @@ struct FCharacterAbilityData
 UENUM(BlueprintType)
 enum class EWOGAbilityInputID : uint8
 {
-	// 0 None
 	None			UMETA(DisplayName = "None"),
-	// 1 Confirm
 	Confirm			UMETA(DisplayName = "Confirm"),
-	// 2 Cancel
 	Cancel			UMETA(DisplayName = "Cancel"),
-	// 3 LMB
 	Ability1		UMETA(DisplayName = "Ability1"),
-	// 8 Sprint
 	Sprint			UMETA(DisplayName = "Sprint"),
-	// 9 Jump
 	Jump			UMETA(DisplayName = "Jump")
 };
 

@@ -9,6 +9,7 @@
 #include "WOG/ActorComponents/WOGBuildComponent.h"
 #include "WOG/ActorComponents/WOGCombatComponent.h"
 #include "WOG/ActorComponents/WOGAbilitiesComponent.h"
+#include "AbilitySystemComponent.h"
 
 AWOGDefender::AWOGDefender()
 {
@@ -48,7 +49,7 @@ void AWOGDefender::InteractActionPressed(const FInputActionValue& Value)
 
 void AWOGDefender::AdjustSpawnHeightActionPressed(const FInputActionValue& Value)
 {
-	if (CharacterState == ECharacterState::ECS_Elimmed) return;
+	if (!GetAbilitySystemComponent() || GetAbilitySystemComponent()->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag(TEXT("State.Dead")))) return;
 	if (!BuildComponent) return;
 	float Direction = Value.Get<float>();
 
@@ -66,7 +67,7 @@ void AWOGDefender::AdjustSpawnHeightActionPressed(const FInputActionValue& Value
 
 void AWOGDefender::RotateSpawnActionPressed(const FInputActionValue& Value)
 {
-	if (CharacterState == ECharacterState::ECS_Elimmed) return;
+	if (!GetAbilitySystemComponent() || GetAbilitySystemComponent()->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag(TEXT("State.Dead")))) return;
 	if (!BuildComponent) return;
 	float Direction = Value.Get<float>();
 
@@ -84,14 +85,14 @@ void AWOGDefender::RotateSpawnActionPressed(const FInputActionValue& Value)
 
 void AWOGDefender::SpawnActionPressed(const FInputActionValue& Value)
 {
-	if (CharacterState == ECharacterState::ECS_Elimmed) return;
+	if (!GetAbilitySystemComponent() || GetAbilitySystemComponent()->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag(TEXT("State.Dead")))) return;
 	if (!BuildComponent) return;
 	BuildComponent->PlaceBuildable();
 }
 
 void AWOGDefender::AbilitiesButtonPressed(const FInputActionValue& Value)
 {
-	if (CharacterState == ECharacterState::ECS_Elimmed) return;
+	if (!GetAbilitySystemComponent() || GetAbilitySystemComponent()->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag(TEXT("State.Dead")))) return;
 	if (CharacterState == ECharacterState::ECS_Staggered) return;
 	if (CharacterState == ECharacterState::ECS_Dodging) return;
 

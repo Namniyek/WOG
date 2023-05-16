@@ -31,13 +31,13 @@ void AWOGBaseEnemy::BeginPlay()
 
 void AWOGBaseEnemy::BroadcastHit_Implementation(AActor* AgressorActor, const FHitResult& Hit, const float& DamageToApply, AActor* InstigatorWeapon)
 {
-	if (CharacterState == ECharacterState::ECS_Elimmed) return;
+	if(!GetAbilitySystemComponent() || GetAbilitySystemComponent()->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag(TEXT("State.Dead")))) return;
 
 	TObjectPtr<AWOGBaseWeapon> Weapon = Cast<AWOGBaseWeapon>(InstigatorWeapon);
 	Multicast_HandleCosmeticHit(ECosmeticHit::ECH_BodyHit, Hit, InstigatorWeapon->GetActorLocation(), Weapon);
 
 	TObjectPtr<AWOGBaseCharacter> AgressorCharacter = Cast<AWOGBaseCharacter>(AgressorActor);
-	if (AgressorCharacter && AbilitySystemComponent.Get() && Weapon && Weapon->GetWeaponDamageEffect())
+	if (AgressorCharacter && Weapon && Weapon->GetWeaponDamageEffect())
 	{
 		FGameplayEffectContextHandle DamageContext = AbilitySystemComponent.Get()->MakeEffectContext();
 		DamageContext.AddInstigator(AgressorCharacter, Weapon);

@@ -160,9 +160,6 @@ void AWOGBaseCharacter::SetCharacterState(ECharacterState NewState, AController*
 
 	switch (CharacterState)
 	{
-	case ECharacterState::ECS_Elimmed:
-		HandleStateElimmed(InstigatedBy);
-		break;
 	case ECharacterState::ECS_Sprinting:
 		HandleStateSprinting();
 		break;

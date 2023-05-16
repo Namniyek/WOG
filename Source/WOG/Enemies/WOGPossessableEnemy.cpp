@@ -11,6 +11,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "TargetingHelperComponent.h"
 #include "LockOnTargetComponent.h"
+#include "AbilitySystemComponent.h"
 
 AWOGPossessableEnemy::AWOGPossessableEnemy()
 {
@@ -82,7 +83,7 @@ void AWOGPossessableEnemy::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 
 void AWOGPossessableEnemy::MoveActionPressed(const FInputActionValue& Value)
 {
-	if (CharacterState == ECharacterState::ECS_Elimmed) return;
+	if (!GetAbilitySystemComponent() || GetAbilitySystemComponent()->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag(TEXT("State.Dead")))) return;
 	FVector2D MovementVector = Value.Get<FVector2D>();
 	if (Controller != nullptr)
 	{
