@@ -4,6 +4,8 @@
 #include "AbilitySystem/AttributeSets/WOGAttributeSetBase.h"
 #include "Net/UnrealNetwork.h"
 #include "GameplayEffectExtension.h"
+#include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 
 void UWOGAttributeSetBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -17,6 +19,7 @@ void UWOGAttributeSetBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 	DOREPLIFETIME_CONDITION_NOTIFY(UWOGAttributeSetBase, MaxAdrenaline, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UWOGAttributeSetBase, Stamina, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UWOGAttributeSetBase, MaxStamina, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UWOGAttributeSetBase, MaxMovementSpeed, COND_None, REPNOTIFY_Always);
 }
 
 void UWOGAttributeSetBase::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
@@ -27,15 +30,15 @@ void UWOGAttributeSetBase::PostGameplayEffectExecute(const FGameplayEffectModCal
 	{
 		SetHealth(FMath::Clamp(GetHealth(), 0.0f, GetMaxHealth()));
 	}
-	if (Data.EvaluatedData.Attribute == GetManaAttribute())
+	else if (Data.EvaluatedData.Attribute == GetManaAttribute())
 	{
 		SetMana(FMath::Clamp(GetMana(), 0.0f, GetMaxMana()));
 	}
-	if (Data.EvaluatedData.Attribute == GetAdrenalineAttribute())
+	else if (Data.EvaluatedData.Attribute == GetAdrenalineAttribute())
 	{
 		SetAdrenaline(FMath::Clamp(GetAdrenaline(), 0.0f, GetMaxAdrenaline()));
 	}
-	if (Data.EvaluatedData.Attribute == GetStaminaAttribute())
+	else if (Data.EvaluatedData.Attribute == GetStaminaAttribute())
 	{
 		SetStamina(FMath::Clamp(GetStamina(), 0.0f, GetMaxStamina()));
 	}
@@ -79,4 +82,9 @@ void UWOGAttributeSetBase::OnRep_Stamina(const FGameplayAttributeData& OldStamin
 void UWOGAttributeSetBase::OnRep_MaxStamina(const FGameplayAttributeData& OldMaxStamina)
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UWOGAttributeSetBase, MaxStamina, OldMaxStamina);
+}
+
+void UWOGAttributeSetBase::OnRep_MaxMovementSpeed(const FGameplayAttributeData& OldMaxMovementSpeed)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UWOGAttributeSetBase, MaxMovementSpeed, OldMaxMovementSpeed);
 }

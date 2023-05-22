@@ -31,10 +31,10 @@ public:
 	/*
 	** Input actions
 	**/
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Spawn Mode", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Spawn Mode", meta = (AllowPrivateAccess = "true"))
 	UInputAction* AdjustSpawnHeightAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Base Match", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Base Match", meta = (AllowPrivateAccess = "true"))
 	UInputAction* InteractAction;
 
 	#pragma endregion

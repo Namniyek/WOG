@@ -12,6 +12,7 @@
 #include "TargetingHelperComponent.h"
 #include "LockOnTargetComponent.h"
 #include "AbilitySystemComponent.h"
+#include "Types/WOGGameplayTags.h"
 
 AWOGPossessableEnemy::AWOGPossessableEnemy()
 {
@@ -42,8 +43,6 @@ AWOGPossessableEnemy::AWOGPossessableEnemy()
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
-
-	CharacterState = ECharacterState::ECS_Unnoccupied;
 }
 
 void AWOGPossessableEnemy::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -83,7 +82,7 @@ void AWOGPossessableEnemy::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 
 void AWOGPossessableEnemy::MoveActionPressed(const FInputActionValue& Value)
 {
-	if (!GetAbilitySystemComponent() || GetAbilitySystemComponent()->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag(TEXT("State.Dead")))) return;
+	if (HasMatchingGameplayTag(TAG_State_Dead)) return;
 	FVector2D MovementVector = Value.Get<FVector2D>();
 	if (Controller != nullptr)
 	{

@@ -10,6 +10,7 @@
 #include "WOG/ActorComponents/WOGCombatComponent.h"
 #include "WOG/ActorComponents/WOGAbilitiesComponent.h"
 #include "AbilitySystemComponent.h"
+#include "Types/WOGGameplayTags.h"
 
 AWOGDefender::AWOGDefender()
 {
@@ -49,7 +50,7 @@ void AWOGDefender::InteractActionPressed(const FInputActionValue& Value)
 
 void AWOGDefender::AdjustSpawnHeightActionPressed(const FInputActionValue& Value)
 {
-	if (!GetAbilitySystemComponent() || GetAbilitySystemComponent()->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag(TEXT("State.Dead")))) return;
+	if (HasMatchingGameplayTag(TAG_State_Dead)) return;
 	if (!BuildComponent) return;
 	float Direction = Value.Get<float>();
 
@@ -67,7 +68,8 @@ void AWOGDefender::AdjustSpawnHeightActionPressed(const FInputActionValue& Value
 
 void AWOGDefender::RotateSpawnActionPressed(const FInputActionValue& Value)
 {
-	if (!GetAbilitySystemComponent() || GetAbilitySystemComponent()->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag(TEXT("State.Dead")))) return;
+	if (HasMatchingGameplayTag(TAG_State_Dead)) return;
+
 	if (!BuildComponent) return;
 	float Direction = Value.Get<float>();
 
@@ -85,16 +87,17 @@ void AWOGDefender::RotateSpawnActionPressed(const FInputActionValue& Value)
 
 void AWOGDefender::SpawnActionPressed(const FInputActionValue& Value)
 {
-	if (!GetAbilitySystemComponent() || GetAbilitySystemComponent()->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag(TEXT("State.Dead")))) return;
+	if (HasMatchingGameplayTag(TAG_State_Dead)) return;
 	if (!BuildComponent) return;
 	BuildComponent->PlaceBuildable();
 }
 
 void AWOGDefender::AbilitiesButtonPressed(const FInputActionValue& Value)
 {
-	if (!GetAbilitySystemComponent() || GetAbilitySystemComponent()->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag(TEXT("State.Dead")))) return;
+	if (HasMatchingGameplayTag(TAG_State_Dead)) return;
+	if (HasMatchingGameplayTag(TAG_State_Dodging)) return;
+
 	if (CharacterState == ECharacterState::ECS_Staggered) return;
-	if (CharacterState == ECharacterState::ECS_Dodging) return;
 
 	FVector2D AbilitiesVector = Value.Get<FVector2D>();
 

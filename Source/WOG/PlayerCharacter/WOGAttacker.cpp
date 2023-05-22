@@ -10,6 +10,7 @@
 #include "WOG/ActorComponents/WOGSpawnComponent.h"
 #include "WOG/ActorComponents/WOGCombatComponent.h"
 #include "AbilitySystemComponent.h"
+#include "Types/WOGGameplayTags.h"
 
 
 AWOGAttacker::AWOGAttacker()
@@ -58,13 +59,13 @@ void AWOGAttacker::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 void AWOGAttacker::PossessActionPressed(const FInputActionValue& Value)
 {
-	if (!GetAbilitySystemComponent() || GetAbilitySystemComponent()->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag(TEXT("State.Dead")))) return;
+	if (HasMatchingGameplayTag(TAG_State_Dead)) return;
 	PossessMinion();
 }
 
 void AWOGAttacker::RotateSpawnActionPressed(const FInputActionValue& Value)
 {
-	if (!GetAbilitySystemComponent() || GetAbilitySystemComponent()->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag(TEXT("State.Dead")))) return;
+	if (HasMatchingGameplayTag(TAG_State_Dead)) return;
 	if (!SpawnComponent) return;
 	float Direction = Value.Get<float>();
 
@@ -82,16 +83,16 @@ void AWOGAttacker::RotateSpawnActionPressed(const FInputActionValue& Value)
 
 void AWOGAttacker::SpawnActionPressed(const FInputActionValue& Value)
 {
-	if (!GetAbilitySystemComponent() || GetAbilitySystemComponent()->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag(TEXT("State.Dead")))) return;
+	if (HasMatchingGameplayTag(TAG_State_Dead)) return;
 	if (!SpawnComponent) return;
 	SpawnComponent->PlaceSpawn();
 }
 
 void AWOGAttacker::AbilitiesButtonPressed(const FInputActionValue& Value)
 {
-	if (!GetAbilitySystemComponent() || GetAbilitySystemComponent()->HasMatchingGameplayTag(FGameplayTag::RequestGameplayTag(TEXT("State.Dead")))) return;
+	if (HasMatchingGameplayTag(TAG_State_Dead)) return;
+	if (HasMatchingGameplayTag(TAG_State_Dodging)) return;
 	if (CharacterState == ECharacterState::ECS_Staggered) return;
-	if (CharacterState == ECharacterState::ECS_Dodging) return;
 
 	FVector2D AbilitiesVector = Value.Get<FVector2D>();
 

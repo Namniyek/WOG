@@ -14,6 +14,8 @@
 #include "AbilitySystemBlueprintLibrary.h"
 #include "PlayerCharacter/BasePlayerCharacter.h"
 #include "Enemies/WOGBaseEnemy.h"
+#include "Types/WOGGameplayTags.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 
 AWOGBaseCharacter::AWOGBaseCharacter()
@@ -23,6 +25,9 @@ AWOGBaseCharacter::AWOGBaseCharacter()
 	AbilitySystemComponent = CreateDefaultSubobject<UWOGAbilitySystemComponent>(TEXT("Ability System Component"));
 	AbilitySystemComponent->SetIsReplicated(true);
 	AbilitySystemComponent->ReplicationMode = EGameplayEffectReplicationMode::Mixed;
+
+	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetHealthAttribute()).AddUObject(this, &ThisClass::OnHealthAttributeChanged);
+	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetMaxMovementSpeedAttribute()).AddUObject(this, &ThisClass::OnMaxMovementSpeedAttributeChanged);
 
 	AttributeSet = CreateDefaultSubobject<UWOGAttributeSetBase>(TEXT("AttributeSet"));
 
@@ -43,8 +48,6 @@ void AWOGBaseCharacter::PossessedBy(AController* NewController)
 	if (AbilitySystemComponent)
 	{
 		AbilitySystemComponent->InitAbilityActorInfo(this, this);
-		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetHealthAttribute()).AddUObject(this, &ThisClass::OnHealthAttributeChanged);
-
 	}
 
 	// ASC MixedMode replication requires that the ASC Owner's Owner be the Controller.
@@ -119,17 +122,17 @@ void AWOGBaseCharacter::OnHealthAttributeChanged(const FOnAttributeChangeData& D
 				if (InstigatorCharacter && InstigatorCharacter->GetController())
 				{
 					FGameplayEventData EventPayload;
-					EventPayload.EventTag = FGameplayTag::RequestGameplayTag(TEXT("Event.Elim"));
+					EventPayload.EventTag = TAG_Event_Elim;
 					EventPayload.Instigator = InstigatorCharacter->GetController();
-					UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, FGameplayTag::RequestGameplayTag(TEXT("Event.Elim")), EventPayload);
+					UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Elim, EventPayload);
 					UE_LOG(LogTemp, Error, TEXT("Killed by Character"));
 				}
 			}
 			else if (EffectContext.GetInstigator()->IsA<AWOGBaseEnemy>())
 			{
 				FGameplayEventData EventPayload;
-				EventPayload.EventTag = FGameplayTag::RequestGameplayTag(TEXT("Event.Elim"));
-				UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, FGameplayTag::RequestGameplayTag(TEXT("Event.Elim")), EventPayload);
+				EventPayload.EventTag = TAG_Event_Elim;
+				UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Elim, EventPayload);
 				UE_LOG(LogTemp, Error, TEXT("Killed by Enemy"));
 
 				/*
@@ -137,6 +140,14 @@ void AWOGBaseCharacter::OnHealthAttributeChanged(const FOnAttributeChangeData& D
 				*/
 			}
 		}
+	}
+}
+
+void AWOGBaseCharacter::OnMaxMovementSpeedAttributeChanged(const FOnAttributeChangeData& Data)
+{
+	if (GetCharacterMovement())
+	{
+		GetCharacterMovement()->MaxWalkSpeed = Data.NewValue;
 	}
 }
 
@@ -160,15 +171,6 @@ void AWOGBaseCharacter::SetCharacterState(ECharacterState NewState, AController*
 
 	switch (CharacterState)
 	{
-	case ECharacterState::ECS_Sprinting:
-		HandleStateSprinting();
-		break;
-	case ECharacterState::ECS_Dodging :
-		HandleStateDodging();
-		break;
-	case ECharacterState::ECS_Unnoccupied:
-		HandleStateUnnoccupied();
-		break;
 	case ECharacterState::ECS_Attacking:
 		HandleStateAttacking();
 		break;
@@ -280,6 +282,16 @@ void AWOGBaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 void AWOGBaseCharacter::Elim(bool bPlayerLeftGame)
 {
 	//To be overriden in Children
+}
+
+bool AWOGBaseCharacter::HasMatchingGameplayTag(FGameplayTag TagToCheck) const
+{
+	if (GetAbilitySystemComponent())
+	{
+		return GetAbilitySystemComponent()->HasMatchingGameplayTag(TagToCheck);
+	}
+
+	return false;
 }
 
 UAbilitySystemComponent* AWOGBaseCharacter::GetAbilitySystemComponent() const

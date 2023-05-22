@@ -7,8 +7,6 @@ UENUM(BlueprintType)
 enum class ECharacterState : uint8
 {
 	ECS_Unnoccupied UMETA(DisplayName = "Unnoccupied"),
-	ECS_Dodging UMETA(DisplayName = "Dodging"),
-	ECS_Sprinting UMETA(DisplayName = "Sprinting"),
 	ECS_Attacking UMETA(DisplayName = "Attacking"),
 	ECS_Blocking UMETA(DisplayName = "Blocking"),
 	ECS_Staggered UMETA(DisplayName = "Staggered"),
@@ -66,16 +64,32 @@ struct FCharacterAbilityData
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "GAS")
 	TArray<TSubclassOf<class UGameplayEffect>> Effects;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Inventory")
+	TArray<TSubclassOf<class AWOGBaseWeapon>> Weapons;
 };
 
 UENUM(BlueprintType)
 enum class EWOGAbilityInputID : uint8
 {
+	//Base
 	None			UMETA(DisplayName = "None"),
 	Confirm			UMETA(DisplayName = "Confirm"),
 	Cancel			UMETA(DisplayName = "Cancel"),
+
+	//Powers
 	Ability1		UMETA(DisplayName = "Ability1"),
+
+	//Weapons
+	WeaponEquip		UMETA(DisplayName = "WeaponEquip"),
+	WeaponUnequip	UMETA(DisplayName = "WeaponUnequip"),
+	AttackLight		UMETA(DisplayName = "AttackLight"),
+	AttackHeavy		UMETA(DisplayName = "AttackHeavy"),
+	Block			UMETA(DisplayName = "Block"),
+
+	//Character
 	Sprint			UMETA(DisplayName = "Sprint"),
+	Dodge			UMETA(DisplayName = "Dodge"),
 	Jump			UMETA(DisplayName = "Jump")
 };
 

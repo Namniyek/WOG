@@ -27,9 +27,9 @@ void UWOGAnimNotifyAttackSwing::NotifyBegin(USkeletalMeshComponent* MeshComp, UA
 		UE_LOG(LogTemp, Error, TEXT("Invalid Weapon"));
 		return;
 	}
-	if (Weapon->GetSwingSound())
+	if (Weapon->GetWeaponData().SwingSound)
 	{
-		UGameplayStatics::PlaySoundAtLocation(Weapon, Weapon->GetSwingSound(), Weapon->GetActorLocation());
+		UGameplayStatics::PlaySoundAtLocation(Weapon, Weapon->GetWeaponData().SwingSound, Weapon->GetActorLocation());
 	}
 	else
 	{

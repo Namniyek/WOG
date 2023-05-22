@@ -11,28 +11,43 @@
 #include "Sound/SoundCue.h"
 #include "WOG/Interfaces/BuildingInterface.h"
 #include "WOG/Interfaces/AttributesInterface.h"
+#include "Components/SphereComponent.h"
+#include "Components/AGR_ItemComponent.h"
+#include "Data/AGRLibrary.h"
+#include "AbilitySystemBlueprintLibrary.h"
+#include "Types/WOGGameplayTags.h"
 
 // Sets default values
 AWOGBaseWeapon::AWOGBaseWeapon()
 {
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 	bReplicates = true;
+	SetReplicateMovement(true);
+	bNetLoadOnClient = false;
+
+	SphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("OverlapSphere"));
+	SetRootComponent(SphereComponent);
+	SphereComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	SphereComponent->SetCollisionResponseToAllChannels(ECR_Ignore);
+	SphereComponent->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+	SphereComponent->InitSphereRadius(96.f);
+	SphereComponent->SetGenerateOverlapEvents(true);
 
 	MeshMain = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Main Mesh"));
 	MeshMain->SetupAttachment(GetRootComponent());
 	MeshMain->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	MeshMain->SetIsReplicated(true);
 
 	MeshSecondary = CreateDefaultSubobject <UStaticMeshComponent>(TEXT("Secondary Mesh"));
 	MeshSecondary->SetupAttachment(GetRootComponent());
 	MeshSecondary->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	MeshSecondary->SetIsReplicated(true);
 
 	TraceComponent = CreateDefaultSubobject <UDidItHitActorComponent>(TEXT("TraceComponent"));
-}
 
-void AWOGBaseWeapon::OnConstruction(const FTransform& Transform)
-{
-	Super::OnConstruction(Transform);
-	InitWeapon();
+
+	ItemComponent = CreateDefaultSubobject <UAGR_ItemComponent>(TEXT("ItemComponent"));
+
 }
 
 void AWOGBaseWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -40,26 +55,21 @@ void AWOGBaseWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AWOGBaseWeapon, OwnerCharacter);
 	DOREPLIFETIME(AWOGBaseWeapon, WeaponState);
-	DOREPLIFETIME(AWOGBaseWeapon, ComboStreak);
-	DOREPLIFETIME(AWOGBaseWeapon, bAttackWindowOpen);
 	DOREPLIFETIME(AWOGBaseWeapon, bIsBlocking);
 	DOREPLIFETIME(AWOGBaseWeapon, bCanParry);
 	DOREPLIFETIME(AWOGBaseWeapon, bIsArmingHeavy);
 }
 
-void AWOGBaseWeapon::Tick(float DeltaSeconds)
+void AWOGBaseWeapon::OnConstruction(const FTransform& Transform)
 {
+	Super::OnConstruction(Transform);
+	InitWeaponData();
 }
 
-void AWOGBaseWeapon::BeginPlay()
+void AWOGBaseWeapon::InitWeaponData()
 {
-	Super::BeginPlay();
-	//InitWeapon();
+	OwnerCharacter = GetOwner() ? Cast<ABasePlayerCharacter>(GetOwner()) : nullptr;
 
-}
-
-void AWOGBaseWeapon::InitWeapon()
-{
 	const FString WeaponTablePath{ TEXT("Engine.DataTable'/Game/Data/Weapons/DT_Weapons.DT_Weapons'") };
 	UDataTable* WeaponTableObject = Cast<UDataTable>(StaticLoadObject(UDataTable::StaticClass(), nullptr, *WeaponTablePath));
 
@@ -67,7 +77,7 @@ void AWOGBaseWeapon::InitWeapon()
 
 	TArray<FName> WeaponNamesArray = WeaponTableObject->GetRowNames();
 	FWeaponDataTable* WeaponDataRow = nullptr;
-	
+
 	for (auto WeaponRowName : WeaponNamesArray)
 	{
 		if (WeaponRowName == WeaponName)
@@ -80,33 +90,35 @@ void AWOGBaseWeapon::InitWeapon()
 	{
 		MeshMain->SetStaticMesh(WeaponDataRow->MeshMain);
 		MeshSecondary->SetStaticMesh(WeaponDataRow->MeshSecondary);
-		bIsAttacker = WeaponDataRow->bIsAttacker;
-		WeaponName = WeaponDataRow->WeaponName;
-		WeaponType = WeaponDataRow->WeaponType;
+		WeaponData.bIsAttacker = WeaponDataRow->bIsAttacker;
+		WeaponData.WeaponName = WeaponDataRow->WeaponName;
+		WeaponData.WeaponType = WeaponDataRow->WeaponType;
+		WeaponData.WeaponTag = WeaponDataRow->WeaponTag;
+		WeaponData.WeaponPoseTag = WeaponDataRow->WeaponPoseTag;
 
-		AttackMontage = WeaponDataRow->AttackMontage;
-		DodgeMontage = WeaponDataRow->DodgeMontage;
-		BlockMontage = WeaponDataRow->BlockMontage;
-		EquipMontage = WeaponDataRow->EquipMontage;
-		HurtMontage = WeaponDataRow->HurtMontage;
+		WeaponData.AttackMontage = WeaponDataRow->AttackMontage;
+		WeaponData.DodgeMontage = WeaponDataRow->DodgeMontage;
+		WeaponData.BlockMontage = WeaponDataRow->BlockMontage;
+		WeaponData.EquipMontage = WeaponDataRow->EquipMontage;
+		WeaponData.HurtMontage = WeaponDataRow->HurtMontage;
 
-		BaseDamage = WeaponDataRow->BaseDamage;
-		HeavyDamageMultiplier = WeaponDataRow->HeavyDamageMultiplier;
-		DamageMultiplier = WeaponDataRow->DamageMultiplier;
-		ComboDamageMultiplier = WeaponDataRow->ComboDamageMultiplier;
-		MaxComboStreak = WeaponDataRow->MaxComboStreak;
-		MaxParryThreshold = WeaponDataRow->MaxParryThreshold;
+		WeaponData.BaseDamage = WeaponDataRow->BaseDamage;
+		WeaponData.HeavyDamageMultiplier = WeaponDataRow->HeavyDamageMultiplier;
+		WeaponData.DamageMultiplier = WeaponDataRow->DamageMultiplier;
+		WeaponData.ComboDamageMultiplier = WeaponDataRow->ComboDamageMultiplier;
+		WeaponData.MaxComboStreak = WeaponDataRow->MaxComboStreak;
+		WeaponData.MaxParryThreshold = WeaponDataRow->MaxParryThreshold;
 
-		SwingSound = WeaponDataRow->SwingSound;
-		HitSound = WeaponDataRow->HitSound;
-		BlockSound = WeaponDataRow->BlockSound;
+		WeaponData.SwingSound = WeaponDataRow->SwingSound;
+		WeaponData.HitSound = WeaponDataRow->HitSound;
+		WeaponData.BlockSound = WeaponDataRow->BlockSound;
 
-		MeshMainSocket = WeaponDataRow->MeshMainSocket;
-		MeshSecondarySocket = WeaponDataRow->MeshSecondarySocket;
-		BackMainSocket = WeaponDataRow->BackMainSocket;
-		BackSecondarySocket = WeaponDataRow->BackSecondarySocket;
+		WeaponData.MeshMainSocket = WeaponDataRow->MeshMainSocket;
+		WeaponData.MeshSecondarySocket = WeaponDataRow->MeshSecondarySocket;
+		WeaponData.BackMainSocket = WeaponDataRow->BackMainSocket;
+		WeaponData.BackSecondarySocket = WeaponDataRow->BackSecondarySocket;
 
-		WeaponDamageEffect = WeaponDataRow->WeaponDamageEffect;
+		WeaponData.WeaponDamageEffect = WeaponDataRow->WeaponDamageEffect;
 	}
 
 	WeaponState = EWeaponState::EWS_Stored;
@@ -115,6 +127,163 @@ void AWOGBaseWeapon::InitWeapon()
 
 	AttachToBack();
 
+}
+
+void AWOGBaseWeapon::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+
+	if (SphereComponent && HasAuthority())
+	{
+		SphereComponent->OnComponentBeginOverlap.AddDynamic(this, &ThisClass::OnWeaponOverlap);
+	}
+	if (ItemComponent && HasAuthority())
+	{
+		ItemComponent->ItemName = WeaponName;
+		ItemComponent->ItemTagSlotType = WeaponData.WeaponTag;
+
+		ItemComponent->OnPickup.AddDynamic(this, &ThisClass::OnWeaponPickedUp);
+		ItemComponent->OnEquip.AddDynamic(this, &ThisClass::OnWeaponEquip);
+		ItemComponent->OnUnEquip.AddDynamic(this, &ThisClass::OnWeaponUnequip);
+	}
+}
+
+void AWOGBaseWeapon::BeginPlay()
+{
+	Super::BeginPlay();
+	OwnerCharacter = OwnerCharacter!=nullptr ? OwnerCharacter : GetOwner() ? Cast<ABasePlayerCharacter>(GetOwner()) : nullptr;
+	if (!OwnerCharacter)
+	{
+		UE_LOG(LogTemp, Error, TEXT("NO OWNER CHARACTER AT BEGINPLAY"));
+	}
+
+}
+
+void AWOGBaseWeapon::OnWeaponOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (!HasAuthority() || !ItemComponent) return;
+
+	UAGR_EquipmentManager* Equipment = UAGRLibrary::GetEquipment(OtherActor);
+	UAGR_InventoryManager* Inventory = UAGRLibrary::GetInventory(OtherActor);
+
+	if (!Equipment || !Inventory)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Equipment or Inventory not valid"));
+		return;
+	}
+	
+	/*
+	** 
+	**TO - DO Loop through inventory to check for duplicate items
+	**
+	*/
+
+	int32 MaxAmountWeapons = WeaponData.bIsAttacker ? 1 : 2;
+	if (Equipment->WeaponShortcutReferences.Num() < MaxAmountWeapons)
+	{
+		FShortcutItemReference WeaponRef;
+		int32 KeyInt = Equipment->WeaponShortcutReferences.Num() + 1;
+		WeaponRef.Key = *FString::FromInt(KeyInt);
+		WeaponRef.ItemShortcut = this;
+
+		if (Equipment->SaveWeaponShortcutReference(WeaponRef))
+		{
+			ABasePlayerCharacter* NewOwnerCharacter = Cast<ABasePlayerCharacter>(OtherActor);
+			if (NewOwnerCharacter)
+			{
+				SetOwnerCharacter(NewOwnerCharacter);
+			}
+			else
+			{
+				UE_LOG(LogTemp, Error, TEXT("OWNER CHARACTER NOT VALID"));
+			}
+			SphereComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			SphereComponent->SetGenerateOverlapEvents(false);
+			ItemComponent->PickUpItem(Inventory);
+			return;
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Too many weapons in the inventory"));
+	}
+}
+
+void AWOGBaseWeapon::OnWeaponPickedUp(UAGR_InventoryManager* Inventory)
+{
+	if (!Inventory->GetOwner() || !HasAuthority()) return;
+	UAGR_EquipmentManager* Equipment = UAGRLibrary::GetEquipment(Inventory->GetOwner());
+	if (!Equipment) return;
+	
+	FName Key = FName("1");
+
+	if (!Equipment->WeaponShortcutReferences.IsEmpty())
+	{
+		for (auto WeaponRef : Equipment->WeaponShortcutReferences)
+		{
+			if (WeaponRef.ItemShortcut == this)
+			{
+				Key = WeaponRef.Key;
+			}
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("No saved reference shortcut"));
+		return;
+	}
+	
+	AActor* OutItem = nullptr;
+	if (Key == FName("1") && !Equipment->GetItemInSlot(FName("BackMain"), OutItem))
+	{
+		AActor* PreviousItem = nullptr;
+		AActor* NewItem = nullptr;
+		bool bSucess = Equipment->EquipItemInSlot(FName("BackMain"), this, PreviousItem, NewItem);
+		UE_LOG(LogTemp, Display, TEXT("Equipped to BackMain : %d"), bSucess);
+		return;
+	}
+	if (Key == FName("2") && !Equipment->GetItemInSlot(FName("BackSecondary"), OutItem))
+	{
+		AActor* PreviousItem = nullptr;
+		AActor* NewItem = nullptr;
+		bool bSucess = Equipment->EquipItemInSlot(FName("BackSecondary"), this, PreviousItem, NewItem);
+		UE_LOG(LogTemp, Display, TEXT("Equipped to BackSecondary : %d"), bSucess);
+		return;
+	}
+	UE_LOG(LogTemp, Error, TEXT("Not equipped at all"));
+}
+
+void AWOGBaseWeapon::OnWeaponEquip(AActor* User, FName SlotName)
+{
+	if (!User) return;
+	Multicast_OnWeaponEquip(User, SlotName);
+}
+
+void AWOGBaseWeapon::Multicast_OnWeaponEquip_Implementation(AActor* User, FName SlotName)
+{
+	if (!User) return;
+
+	if (SlotName == FName("Primary"))
+	{
+		FGameplayEventData EventPayload;
+		EventPayload.EventTag = TAG_Event_Weapon_Equip;
+		EventPayload.OptionalObject = this;
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(User, TAG_Event_Weapon_Equip, EventPayload);
+		return;
+	}
+	if (SlotName == FName("BackMain") || SlotName == FName("BackSecondary"))
+	{
+		FGameplayEventData EventPayload;
+		EventPayload.EventTag = TAG_Event_Weapon_Unequip;
+		EventPayload.OptionalObject = this;
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(User, TAG_Event_Weapon_Unequip, EventPayload);
+		return;
+	}
+}
+
+void AWOGBaseWeapon::OnWeaponUnequip(AActor* User, FName SlotName)
+{
+	//Empty for now
 }
 
 void AWOGBaseWeapon::Server_SetWeaponState_Implementation(EWeaponState NewWeaponState)
@@ -159,7 +328,6 @@ void AWOGBaseWeapon::OnRep_WeaponStateChanged()
 		break;
 	case EWeaponState::EWS_Stored:
 		AttachToBack();
-		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, FString("OnRep Called()"));
 		break;
 	case EWeaponState::EWS_BeingEquipped:
 		Equip();
@@ -167,15 +335,8 @@ void AWOGBaseWeapon::OnRep_WeaponStateChanged()
 	case EWeaponState::EWS_BeingStored:
 		Unequip();
 		break;
-	case EWeaponState::EWS_Dropped:
-		break;
-	case EWeaponState::EWS_AttackLight:
-		break;
 	case EWeaponState::EWS_AttackHeavy:
 		AttackHeavy();
-		break;
-	case EWeaponState::EWS_Blocking:
-		//Block();
 		break;
 	default:
 		break;
@@ -190,19 +351,26 @@ void AWOGBaseWeapon::Server_Equip_Implementation()
 
 void AWOGBaseWeapon::Equip()
 {	
-	if (!OwnerCharacter) return;
+	if (!OwnerCharacter)
+	{
+		UE_LOG(LogTemp, Error, TEXT("No OWNER CHARACTER"));
+		return;
+	}
 
 	UAnimInstance* CharacterAnimInstance = OwnerCharacter->GetMesh()->GetAnimInstance();
-	if (CharacterAnimInstance && EquipMontage)
+	if (CharacterAnimInstance && WeaponData.EquipMontage)
 	{
-		CharacterAnimInstance->Montage_Play(EquipMontage, 1.f);
-		CharacterAnimInstance->Montage_JumpToSection(FName("Equip"), EquipMontage);
+		CharacterAnimInstance->Montage_Play(WeaponData.EquipMontage, 1.f);
+		CharacterAnimInstance->Montage_JumpToSection(FName("Equip"), WeaponData.EquipMontage);
 	}
+
+	AttachToHands();
 }
 
 void AWOGBaseWeapon::AttachToHands()
 {
 	if (!OwnerCharacter) return;
+	AttachToActor(OwnerCharacter, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 
 	if (HasAuthority() && OwnerCharacter->GetCombatComponent())
 	{
@@ -216,8 +384,8 @@ void AWOGBaseWeapon::AttachToHands()
 		false
 	);
 
-	MeshMain->AttachToComponent(OwnerCharacter->GetMesh(), AttachmentRules, MeshMainSocket);
-	MeshSecondary->AttachToComponent(OwnerCharacter->GetMesh(), AttachmentRules, MeshSecondarySocket);
+	MeshMain->AttachToComponent(OwnerCharacter->GetMesh(), AttachmentRules, WeaponData.MeshMainSocket);
+	MeshSecondary->AttachToComponent(OwnerCharacter->GetMesh(), AttachmentRules, WeaponData.MeshSecondarySocket);
 
 	if (HasAuthority())
 	{
@@ -242,10 +410,10 @@ void AWOGBaseWeapon::Unequip()
 	if (!OwnerCharacter) return;
 
 	UAnimInstance* CharacterAnimInstance = OwnerCharacter->GetMesh()->GetAnimInstance();
-	if (CharacterAnimInstance && EquipMontage)
+	if (CharacterAnimInstance && WeaponData.EquipMontage)
 	{
-		CharacterAnimInstance->Montage_Play(EquipMontage, 1.f);
-		CharacterAnimInstance->Montage_JumpToSection(FName("Unequip"), EquipMontage);
+		CharacterAnimInstance->Montage_Play(WeaponData.EquipMontage, 1.f);
+		CharacterAnimInstance->Montage_JumpToSection(FName("Unequip"), WeaponData.EquipMontage);
 	}
 }
 
@@ -276,6 +444,8 @@ void AWOGBaseWeapon::InitTraceComponent()
 void AWOGBaseWeapon::AttachToBack()
 {
 	if (!OwnerCharacter) return;
+	UE_LOG(LogTemp, Error, TEXT("AttachToBack"));
+	AttachToActor(OwnerCharacter, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 
 	if (HasAuthority() && OwnerCharacter->GetCombatComponent() && OwnerCharacter->GetCombatComponent()->GetEquippedWeapon())
 	{
@@ -293,8 +463,8 @@ void AWOGBaseWeapon::AttachToBack()
 		false
 	);
 
-	MeshMain->AttachToComponent(OwnerCharacter->GetMesh(), AttachmentRules, BackMainSocket);
-	MeshSecondary->AttachToComponent(OwnerCharacter->GetMesh(), AttachmentRules, BackSecondarySocket);
+	MeshMain->AttachToComponent(OwnerCharacter->GetMesh(), AttachmentRules, WeaponData.BackMainSocket);
+	MeshSecondary->AttachToComponent(OwnerCharacter->GetMesh(), AttachmentRules, WeaponData.BackSecondarySocket);
 
 	if (HasAuthority())
 	{
@@ -315,49 +485,14 @@ void AWOGBaseWeapon::FinishAttacking()
 	}
 }
 
-void AWOGBaseWeapon::Server_AttackLight_Implementation()
-{
-	if (ComboStreak < MaxComboStreak)
-	{
-		bIsArmingHeavy = false;
-		AttackLight();
-		SetWeaponState(EWeaponState::EWS_AttackLight);
-		Multicast_AttackLight();
-		bAttackWindowOpen = false;
-	}
-	if (ComboStreak == MaxComboStreak)
-	{
-		bIsArmingHeavy = false;
-		AttackHeavy();
-		SetWeaponState(EWeaponState::EWS_AttackHeavy);
-	}
-}
-
-void AWOGBaseWeapon::Multicast_AttackLight_Implementation()
-{
-	if (!HasAuthority())
-	{
-		AttackLight();
-	}
-}
-
-void AWOGBaseWeapon::Server_AttackHeavy_Implementation()
-{
-	AttackHeavy();
-	SetWeaponState(EWeaponState::EWS_AttackHeavy);
-	bIsArmingHeavy = false;
-}
-
 void AWOGBaseWeapon::AttackLight()
 {
 	if (!OwnerCharacter) return;
-
-	UAnimInstance* CharacterAnimInstance = OwnerCharacter->GetMesh()->GetAnimInstance();
-	if (CharacterAnimInstance && AttackMontage)
+	if (HasAuthority())
 	{
-		FString SectionName = FString::FromInt(GetComboStreak());
-		CharacterAnimInstance->Montage_Play(AttackMontage, 1.f);
-		CharacterAnimInstance->Montage_JumpToSection(FName(*SectionName));
+		bIsArmingHeavy = false;
+		SetWeaponState(EWeaponState::EWS_AttackLight);
+		bAttackWindowOpen = false;
 	}
 	if (TraceComponent)
 	{
@@ -371,104 +506,41 @@ void AWOGBaseWeapon::AttackLight()
 		{
 			HitActorsToIgnore.Add(OwnerCharacter->GetCombatComponent()->GetMainWeapon());
 		}
-		//TraceComponent->ToggleTraceCheck(true);
 	}
 }
 
 void AWOGBaseWeapon::AttackHeavy()
 {
 	if (!OwnerCharacter) return;
-
-	UAnimInstance* CharacterAnimInstance = OwnerCharacter->GetMesh()->GetAnimInstance();
-	if (CharacterAnimInstance && AttackMontage)
+	if (HasAuthority())
 	{
-		CharacterAnimInstance->Montage_Play(AttackMontage, 1.f);
-		CharacterAnimInstance->Montage_JumpToSection(FName("Heavy"), AttackMontage);
+		bIsArmingHeavy = false;
+		SetWeaponState(EWeaponState::EWS_AttackHeavy);
+		bAttackWindowOpen = false;
 	}
+
 	ComboStreak = 0;
-	bAttackWindowOpen = false;
 
 	if (TraceComponent)
 	{
 		TraceComponent->ToggleTraceCheck(false);
 		HitActorsToIgnore.Empty();
-		//TraceComponent->ToggleTraceCheck(true);
-	}
-}
-
-void AWOGBaseWeapon::AttackHeavyArm()
-{
-	if (!OwnerCharacter) return;
-
-	UAnimInstance* CharacterAnimInstance = OwnerCharacter->GetMesh()->GetAnimInstance();
-	if (CharacterAnimInstance && AttackMontage)
-	{
-		CharacterAnimInstance->Montage_Play(AttackMontage, 1.f);
-		CharacterAnimInstance->Montage_JumpToSection(FName("HeavyArm"), AttackMontage);
-	}
-}
-
-void AWOGBaseWeapon::Drop()
-{
-}
-
-void AWOGBaseWeapon::Server_Block_Implementation()
-{
-	bIsArmingHeavy = false;
-	Multicast_Block();
-	SetWeaponState(EWeaponState::EWS_Blocking);
-	Block();
-	bCanParry = true;
-	GetWorldTimerManager().SetTimer(ParryTimer, this, &ThisClass::SetCanNotParry, MaxParryThreshold);
-}
-
-void AWOGBaseWeapon::Multicast_Block_Implementation()
-{
-	if (!HasAuthority())
-	{
-		Block();
 	}
 }
 
 void AWOGBaseWeapon::Block()
 {
-	if (!OwnerCharacter) return;
+	if (!OwnerCharacter || !HasAuthority()) return;
 
-	UAnimInstance* CharacterAnimInstance = OwnerCharacter->GetMesh()->GetAnimInstance();
-	if (CharacterAnimInstance && BlockMontage)
-	{
-		CharacterAnimInstance->Montage_Play(BlockMontage, 1.f);
-		CharacterAnimInstance->Montage_JumpToSection(FName("Loop"));
-	}
-}
-
-void AWOGBaseWeapon::Server_StopBlocking_Implementation()
-{
-	Multicast_StopBlocking();
-	StopBlocking();
-	//bIsBlocking = false;
-	SetWeaponState(EWeaponState::EWS_Equipped);
-}
-
-void AWOGBaseWeapon::Multicast_StopBlocking_Implementation()
-{
-	if (!HasAuthority())
-	{
-		StopBlocking();
-	}
+	SetWeaponState(EWeaponState::EWS_Blocking);
+	bCanParry = true;
+	GetWorldTimerManager().SetTimer(ParryTimer, this, &ThisClass::SetCanNotParry, WeaponData.MaxParryThreshold);
 }
 
 void AWOGBaseWeapon::StopBlocking()
 {
-	if (!OwnerCharacter) return;
-
-	UAnimInstance* CharacterAnimInstance = OwnerCharacter->GetMesh()->GetAnimInstance();
-	if (CharacterAnimInstance && BlockMontage)
-	{
-		//FString SectionName = FString::FromInt(GetComboStreak());
-		CharacterAnimInstance->Montage_Play(BlockMontage, 1.f);
-		CharacterAnimInstance->Montage_JumpToSection(FName("Stop"));
-	}
+	if (!OwnerCharacter || !HasAuthority()) return;
+	SetWeaponState(EWeaponState::EWS_Equipped);
 }
 
 void AWOGBaseWeapon::HitDetected(FHitResult Hit)
@@ -479,10 +551,10 @@ void AWOGBaseWeapon::HitDetected(FHitResult Hit)
 	switch (WeaponState)
 	{
 	case EWeaponState::EWS_AttackLight:
-		DamageToApply = BaseDamage + (BaseDamage * DamageMultiplier) + (BaseDamage * (ComboStreak * ComboDamageMultiplier));
+		DamageToApply = WeaponData.BaseDamage + (WeaponData.BaseDamage * WeaponData.DamageMultiplier) + (WeaponData.BaseDamage * (ComboStreak * WeaponData.ComboDamageMultiplier));
 		break;
 	case EWeaponState::EWS_AttackHeavy:
-		DamageToApply = BaseDamage + (BaseDamage * DamageMultiplier) + (BaseDamage * HeavyDamageMultiplier);
+		DamageToApply = WeaponData.BaseDamage + (WeaponData.BaseDamage * WeaponData.DamageMultiplier) + (WeaponData.BaseDamage * WeaponData.HeavyDamageMultiplier);
 		break;
 	}
 
@@ -528,40 +600,23 @@ void AWOGBaseWeapon::HitDetected(FHitResult Hit)
 
 void AWOGBaseWeapon::IncreaseCombo()
 {
-	if (HasAuthority())
-	{
-		++ComboStreak;
-		bAttackWindowOpen = true;
-	}
+	++ComboStreak;
+	bAttackWindowOpen = true;
 }
 
 void AWOGBaseWeapon::ResetCombo()
 {
-	if (HasAuthority())
+	ComboStreak = 0;
+	bAttackWindowOpen = false;
+}
+
+void AWOGBaseWeapon::SetOwnerCharacter(ABasePlayerCharacter* NewOwner)
+{
+	if (NewOwner)
 	{
-		ComboStreak = 0;
-		bAttackWindowOpen = false;
-
+		OwnerCharacter = NewOwner;
 	}
+	UE_LOG(LogTemp, Warning, TEXT("New owner of weapon %s is : %s"), *GetNameSafe(this), *GetNameSafe(OwnerCharacter));
 }
 
-void AWOGBaseWeapon::Server_AttackHeavyArm_Implementation()
-{
-	bIsArmingHeavy = true;
 
-	Multicast_AttackHeavyArm();
-	AttackHeavyArm();
-}
-
-void AWOGBaseWeapon::Multicast_AttackHeavyArm_Implementation()
-{
-	if (!HasAuthority())
-	{
-		AttackHeavyArm();
-	}
-}
-
-void AWOGBaseWeapon::Server_AttackHeavyCanceled_Implementation()
-{
-	bIsArmingHeavy = false;
-}

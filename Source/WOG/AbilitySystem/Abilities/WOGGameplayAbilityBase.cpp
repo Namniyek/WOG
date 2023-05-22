@@ -5,7 +5,10 @@
 #include "AbilitySystemComponent.h"
 #include "GameplayTagContainer.h"
 #include "Characters/WOGBaseCharacter.h"
+#include "PlayerCharacter/BasePlayerCharacter.h"
 #include "AbilitySystemLog.h"
+#include "Types/WOGGameplayTags.h"
+
 
 UWOGGameplayAbilityBase::UWOGGameplayAbilityBase()
 {
@@ -13,8 +16,8 @@ UWOGGameplayAbilityBase::UWOGGameplayAbilityBase()
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 
 	// Default tags that block this ability from activating
-	ActivationBlockedTags.AddTag(FGameplayTag::RequestGameplayTag(FName("State.Dead")));
-	ActivationBlockedTags.AddTag(FGameplayTag::RequestGameplayTag(FName("State.Debuff.Stun")));
+	ActivationBlockedTags.AddTag(TAG_State_Dead);
+	ActivationBlockedTags.AddTag(TAG_State_Debuff_Stagger);
 }
 
 void UWOGGameplayAbilityBase::OnAvatarSet(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec)
@@ -87,4 +90,9 @@ void UWOGGameplayAbilityBase::EndAbility(const FGameplayAbilitySpecHandle Handle
 AWOGBaseCharacter* UWOGGameplayAbilityBase::GetCharacterFromActorInfo() const
 {
 	return Cast<AWOGBaseCharacter>(GetAvatarActorFromActorInfo());
+}
+
+ABasePlayerCharacter* UWOGGameplayAbilityBase::GetPlayerCharacterFromActorInfo() const
+{
+	return Cast<ABasePlayerCharacter>(GetAvatarActorFromActorInfo());
 }

@@ -51,8 +51,11 @@ protected:
 
 	TArray<FActiveGameplayEffectHandle> RemoveOnEndEffectHandles;
 
-	UFUNCTION(BlueprintCallable, BlueprintPure)
+	UFUNCTION(BlueprintPure)
 	class AWOGBaseCharacter* GetCharacterFromActorInfo() const;
+
+	UFUNCTION(BlueprintPure)
+	class ABasePlayerCharacter* GetPlayerCharacterFromActorInfo() const;
 
 	
 };

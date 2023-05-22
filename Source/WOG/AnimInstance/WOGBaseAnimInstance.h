@@ -81,6 +81,7 @@ protected:
 	void UpdateMovementDirection();
 
 public:
+	UFUNCTION(BlueprintPure)
 	FORCEINLINE FName GetMovementDirection() const { return MovementDirection; }
 
 	

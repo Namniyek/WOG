@@ -36,8 +36,9 @@ protected:
 	virtual void BeginPlay() override;
 	void SendAbilityLocalInput(const EWOGAbilityInputID InInputID);
 	virtual void OnHealthAttributeChanged(const FOnAttributeChangeData& Data);
+	virtual void OnMaxMovementSpeedAttributeChanged(const FOnAttributeChangeData& Data);
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(EditDefaultsOnly, Category = "Setup|Abilities and Effects")
 	FCharacterAbilityData DefaultAbilitiesAndEffects;
 
 	UPROPERTY()
@@ -60,9 +61,6 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 	virtual void HandleStateElimmed(AController* InstigatedBy = nullptr) { /*TO-BE OVERRIDEN IN CHILDREN*/ };
-	virtual void HandleStateSprinting() { /*TO-BE OVERRIDEN IN CHILDREN*/ };
-	virtual void HandleStateUnnoccupied() { /*TO-BE OVERRIDEN IN CHILDREN*/ };
-	virtual void HandleStateDodging() { /*TO-BE OVERRIDEN IN CHILDREN*/ };
 	virtual void HandleStateAttacking() { /*TO-BE OVERRIDEN IN CHILDREN*/ };
 	virtual void HandleStateStaggered() { /*TO-BE OVERRIDEN IN CHILDREN*/ };
 
@@ -83,7 +81,7 @@ protected:
 
 	#pragma region Animation Variables
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setup|Animations")
 	float SpeedRequiredForLeap;
 
 	#pragma endregion
@@ -108,7 +106,7 @@ protected:
 	//Handle cosmetic weapon clash
 	virtual void HandleCosmeticWeaponClash();
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setup|Animations")
 	TObjectPtr<class UAnimMontage> UnarmedHurtMontage;
 	#pragma endregion
 
@@ -118,6 +116,8 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	virtual void Elim(bool bPlayerLeftGame);
+
+	bool HasMatchingGameplayTag(FGameplayTag TagToCheck) const;
 
 	UFUNCTION(BlueprintPure)
 	UAbilitySystemComponent* GetAbilitySystemComponent() const override;

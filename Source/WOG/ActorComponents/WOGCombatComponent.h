@@ -54,13 +54,6 @@ private:
 	void StoreEquippedWeapon();
 	void SwapWeapons();
 
-	void AttackLight();
-	void AttackHeavy();
-	void AttackHeavyArm();
-	void AttackHeavyCanceled();
-	void Block();
-	void StopBlocking();
-
 	UFUNCTION()
 	void OnRep_MainWeapon();
 	UFUNCTION()

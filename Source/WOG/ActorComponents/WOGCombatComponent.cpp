@@ -105,7 +105,7 @@ void UWOGCombatComponent::SetEquippedWeapon(AWOGBaseWeapon* NewEquippedWeapon)
 	EquippedWeapon = NewEquippedWeapon;
 	if (EquippedWeapon)
 	{
-		EquippedWeaponType = EquippedWeapon->GetWeaponType();
+		EquippedWeaponType = EquippedWeapon->GetWeaponData().WeaponType;
 	}
 	if (EquippedWeapon == nullptr)
 	{
@@ -174,75 +174,4 @@ void UWOGCombatComponent::StoreEquippedWeapon()
 	{
 		EquippedWeapon->Server_Swap();
 	}
-}
-
-void UWOGCombatComponent::AttackLight()
-{
-	OwnerPlayerCharacter = OwnerPlayerCharacter == nullptr ? Cast<ABasePlayerCharacter>(GetOwner()) : OwnerPlayerCharacter;
-	if (!EquippedWeapon || !OwnerPlayerCharacter) return;
-
-	if (OwnerPlayerCharacter->CharacterState != ECharacterState::ECS_Attacking || EquippedWeapon->GetIsInCombo())
-	{
-		EquippedWeapon->Server_AttackLight();
-		OwnerPlayerCharacter->Server_SetCharacterState(ECharacterState::ECS_Attacking);
-	}
-}
-
-void UWOGCombatComponent::AttackHeavy()
-{
-	OwnerPlayerCharacter = OwnerPlayerCharacter == nullptr ? Cast<ABasePlayerCharacter>(GetOwner()) : OwnerPlayerCharacter;
-	if (!EquippedWeapon || !OwnerPlayerCharacter) return;
-	OwnerPlayerCharacter->Server_SetCharacterState(ECharacterState::ECS_Attacking);
-
-	EquippedWeapon->Server_AttackHeavy();
-}
-
-void UWOGCombatComponent::AttackHeavyArm()
-{
-	OwnerPlayerCharacter = OwnerPlayerCharacter == nullptr ? Cast<ABasePlayerCharacter>(GetOwner()) : OwnerPlayerCharacter;
-	if (!EquippedWeapon || !OwnerPlayerCharacter) return;
-
-	EquippedWeapon->Server_AttackHeavyArm();
-}
-
-void UWOGCombatComponent::AttackHeavyCanceled()
-{
-	OwnerPlayerCharacter = OwnerPlayerCharacter == nullptr ? Cast<ABasePlayerCharacter>(GetOwner()) : OwnerPlayerCharacter;
-	if (!EquippedWeapon || !OwnerPlayerCharacter) return;
-
-	EquippedWeapon->Server_AttackHeavyCanceled();
-}
-
-void UWOGCombatComponent::Block()
-{
-	OwnerPlayerCharacter = OwnerPlayerCharacter == nullptr ? Cast<ABasePlayerCharacter>(GetOwner()) : OwnerPlayerCharacter;
-	if (!OwnerPlayerCharacter) return;
-	if (OwnerPlayerCharacter->GetCharacterState() == ECharacterState::ECS_Unnoccupied)
-	{
-		OwnerPlayerCharacter->Server_SetCharacterState(ECharacterState::ECS_Blocking);
-	}
-
-	if (!EquippedWeapon)
-	{
-		return;
-	}
-	EquippedWeapon->Server_Block();
-}
-
-void UWOGCombatComponent::StopBlocking()
-{
-	OwnerPlayerCharacter = OwnerPlayerCharacter == nullptr ? Cast<ABasePlayerCharacter>(GetOwner()) : OwnerPlayerCharacter;
-	if (!OwnerPlayerCharacter) return;
-
-	if (OwnerPlayerCharacter->GetCharacterState() == ECharacterState::ECS_Blocking)
-	{
-		OwnerPlayerCharacter->Server_SetCharacterState(ECharacterState::ECS_Unnoccupied);
-	}
-
-	if (!EquippedWeapon)
-	{
-		return;
-	}
-	EquippedWeapon->Server_StopBlocking();
-
 }

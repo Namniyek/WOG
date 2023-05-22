@@ -1,0 +1,22 @@
+#pragma once
+
+#include "NativeGameplayTags.h"
+
+//State tags
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_State_Dead)
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_State_Dodging)
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_State_Debuff_Stagger)
+
+
+//EventTags
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Event_Movement_Sprint_Stop)
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Event_Weapon_Block_Stop)
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Event_Elim)
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Event_Weapon_HeavyAttackExecute)
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Event_Weapon_HeavyAttackCancel)
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Event_Weapon_Equip)
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Event_Weapon_Unequip)
+
+//InventoryItems
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Inventory_Weapon_1H_HammerShield)
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Inventory_Weapon_2H_GreatSword)
