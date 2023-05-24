@@ -11,6 +11,8 @@
 #include "WOG/ActorComponents/WOGCombatComponent.h"
 #include "AbilitySystemComponent.h"
 #include "Types/WOGGameplayTags.h"
+#include "Components/AGR_EquipmentManager.h"
+#include "AbilitySystemBlueprintLibrary.h"
 
 
 AWOGAttacker::AWOGAttacker()
@@ -105,19 +107,32 @@ void AWOGAttacker::AbilitiesButtonPressed(const FInputActionValue& Value)
 	if (AbilitiesVector.X < 0)
 	{
 		//Button 1/Left pressed
-		if (!Combat)
+		if (!EquipmentManager)
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Combat component invalid"));
+			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Equipment component invalid"));
 			return;
 		}
-
-		if (!Combat->EquippedWeapon)
+		AActor* OutItem = nullptr;
+		AActor* PrimaryItem = nullptr;
+		EquipmentManager->GetWeaponShortcutReference(FName("1"), OutItem);
+		EquipmentManager->GetItemInSlot(FName("Primary"), PrimaryItem);
+		if (PrimaryItem && OutItem && PrimaryItem == OutItem)
 		{
-			Combat->EquipMainWeapon();
+			FGameplayEventData EventPayload;
+			EventPayload.EventTag = TAG_Event_Weapon_Unequip;
+			EventPayload.OptionalObject = PrimaryItem;
+			int32 Key = FCString::Atoi(*FName("1").ToString());
+			EventPayload.EventMagnitude = Key;
+			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Weapon_Unequip, EventPayload);
 		}
-		else if (Combat->EquippedWeapon)
+		else if (OutItem)
 		{
-			Combat->UnequipMainWeapon();
+			FGameplayEventData EventPayload;
+			EventPayload.EventTag = TAG_Event_Weapon_Equip;
+			EventPayload.OptionalObject = OutItem;
+			int32 Key = FCString::Atoi(*FName("1").ToString());
+			EventPayload.EventMagnitude = Key;
+			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Weapon_Equip, EventPayload);
 		}
 	}
 	if (AbilitiesVector.Y > 0)

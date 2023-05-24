@@ -47,13 +47,6 @@ private:
 	void CreateMainWeapon(TSubclassOf<AWOGBaseWeapon> WeaponToCreate);
 	void CreateSecondaryWeapon(TSubclassOf<AWOGBaseWeapon> WeaponToCreate);
 
-	void EquipMainWeapon();
-	void EquipSecondaryWeapon();
-	void UnequipMainWeapon();
-	void UnequipSecondaryWeapon();
-	void StoreEquippedWeapon();
-	void SwapWeapons();
-
 	UFUNCTION()
 	void OnRep_MainWeapon();
 	UFUNCTION()

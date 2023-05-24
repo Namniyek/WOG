@@ -200,6 +200,10 @@ void AWOGBaseWeapon::OnWeaponOverlap(UPrimitiveComponent* OverlappedComponent, A
 			SphereComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 			SphereComponent->SetGenerateOverlapEvents(false);
 			ItemComponent->PickUpItem(Inventory);
+			if (OwnerCharacter)
+			{
+				OwnerCharacter->Server_EquipWeapon(WeaponRef.Key, this);
+			}
 			return;
 		}
 	}
@@ -211,73 +215,25 @@ void AWOGBaseWeapon::OnWeaponOverlap(UPrimitiveComponent* OverlappedComponent, A
 
 void AWOGBaseWeapon::OnWeaponPickedUp(UAGR_InventoryManager* Inventory)
 {
-	if (!Inventory->GetOwner() || !HasAuthority()) return;
-	UAGR_EquipmentManager* Equipment = UAGRLibrary::GetEquipment(Inventory->GetOwner());
-	if (!Equipment) return;
-	
-	FName Key = FName("1");
-
-	if (!Equipment->WeaponShortcutReferences.IsEmpty())
-	{
-		for (auto WeaponRef : Equipment->WeaponShortcutReferences)
-		{
-			if (WeaponRef.ItemShortcut == this)
-			{
-				Key = WeaponRef.Key;
-			}
-		}
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("No saved reference shortcut"));
-		return;
-	}
-	
-	AActor* OutItem = nullptr;
-	if (Key == FName("1") && !Equipment->GetItemInSlot(FName("BackMain"), OutItem))
-	{
-		AActor* PreviousItem = nullptr;
-		AActor* NewItem = nullptr;
-		bool bSucess = Equipment->EquipItemInSlot(FName("BackMain"), this, PreviousItem, NewItem);
-		UE_LOG(LogTemp, Display, TEXT("Equipped to BackMain : %d"), bSucess);
-		return;
-	}
-	if (Key == FName("2") && !Equipment->GetItemInSlot(FName("BackSecondary"), OutItem))
-	{
-		AActor* PreviousItem = nullptr;
-		AActor* NewItem = nullptr;
-		bool bSucess = Equipment->EquipItemInSlot(FName("BackSecondary"), this, PreviousItem, NewItem);
-		UE_LOG(LogTemp, Display, TEXT("Equipped to BackSecondary : %d"), bSucess);
-		return;
-	}
-	UE_LOG(LogTemp, Error, TEXT("Not equipped at all"));
+	/*
+	** KEPT HERE JUST IN CASE
+	*/
 }
 
 void AWOGBaseWeapon::OnWeaponEquip(AActor* User, FName SlotName)
 {
-	if (!User) return;
 	Multicast_OnWeaponEquip(User, SlotName);
 }
 
 void AWOGBaseWeapon::Multicast_OnWeaponEquip_Implementation(AActor* User, FName SlotName)
 {
-	if (!User) return;
-
 	if (SlotName == FName("Primary"))
 	{
-		FGameplayEventData EventPayload;
-		EventPayload.EventTag = TAG_Event_Weapon_Equip;
-		EventPayload.OptionalObject = this;
-		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(User, TAG_Event_Weapon_Equip, EventPayload);
-		return;
+		AttachToHands();
 	}
-	if (SlotName == FName("BackMain") || SlotName == FName("BackSecondary"))
+	else
 	{
-		FGameplayEventData EventPayload;
-		EventPayload.EventTag = TAG_Event_Weapon_Unequip;
-		EventPayload.OptionalObject = this;
-		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(User, TAG_Event_Weapon_Unequip, EventPayload);
-		return;
+		AttachToBack();
 	}
 }
 
@@ -330,10 +286,8 @@ void AWOGBaseWeapon::OnRep_WeaponStateChanged()
 		AttachToBack();
 		break;
 	case EWeaponState::EWS_BeingEquipped:
-		Equip();
 		break;
 	case EWeaponState::EWS_BeingStored:
-		Unequip();
 		break;
 	case EWeaponState::EWS_AttackHeavy:
 		AttackHeavy();
@@ -343,78 +297,22 @@ void AWOGBaseWeapon::OnRep_WeaponStateChanged()
 	}
 }
 
-void AWOGBaseWeapon::Server_Equip_Implementation()
-{
-	SetWeaponState(EWeaponState::EWS_BeingEquipped);
-	Equip();
-}
-
-void AWOGBaseWeapon::Equip()
-{	
-	if (!OwnerCharacter)
-	{
-		UE_LOG(LogTemp, Error, TEXT("No OWNER CHARACTER"));
-		return;
-	}
-
-	UAnimInstance* CharacterAnimInstance = OwnerCharacter->GetMesh()->GetAnimInstance();
-	if (CharacterAnimInstance && WeaponData.EquipMontage)
-	{
-		CharacterAnimInstance->Montage_Play(WeaponData.EquipMontage, 1.f);
-		CharacterAnimInstance->Montage_JumpToSection(FName("Equip"), WeaponData.EquipMontage);
-	}
-
-	AttachToHands();
-}
-
 void AWOGBaseWeapon::AttachToHands()
 {
 	if (!OwnerCharacter) return;
 	AttachToActor(OwnerCharacter, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 
-	if (HasAuthority() && OwnerCharacter->GetCombatComponent())
-	{
-		OwnerCharacter->GetCombatComponent()->SetEquippedWeapon(this);
-	}
-
-	FAttachmentTransformRules AttachmentRules = FAttachmentTransformRules(
-		EAttachmentRule::SnapToTarget,
-		EAttachmentRule::SnapToTarget,
-		EAttachmentRule::KeepWorld,
-		false
-	);
-
-	MeshMain->AttachToComponent(OwnerCharacter->GetMesh(), AttachmentRules, WeaponData.MeshMainSocket);
-	MeshSecondary->AttachToComponent(OwnerCharacter->GetMesh(), AttachmentRules, WeaponData.MeshSecondarySocket);
-
-	if (HasAuthority())
-	{
-		SetWeaponState(EWeaponState::EWS_Equipped);
-	}
+	MeshMain->AttachToComponent(OwnerCharacter->GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponData.MeshMainSocket);
+	MeshSecondary->AttachToComponent(OwnerCharacter->GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponData.MeshSecondarySocket);
 }
 
-void AWOGBaseWeapon::Server_Unequip_Implementation()
-{
-	SetWeaponState(EWeaponState::EWS_BeingStored);
-	Unequip();
-}
-
-void AWOGBaseWeapon::Server_Swap_Implementation()
-{
-	SetWeaponState(EWeaponState::EWS_Stored);
-	AttachToBack();
-}
-
-void AWOGBaseWeapon::Unequip()
+void AWOGBaseWeapon::AttachToBack()
 {
 	if (!OwnerCharacter) return;
+	AttachToActor(OwnerCharacter, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 
-	UAnimInstance* CharacterAnimInstance = OwnerCharacter->GetMesh()->GetAnimInstance();
-	if (CharacterAnimInstance && WeaponData.EquipMontage)
-	{
-		CharacterAnimInstance->Montage_Play(WeaponData.EquipMontage, 1.f);
-		CharacterAnimInstance->Montage_JumpToSection(FName("Unequip"), WeaponData.EquipMontage);
-	}
+	MeshMain->AttachToComponent(OwnerCharacter->GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponData.BackMainSocket);
+	MeshSecondary->AttachToComponent(OwnerCharacter->GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponData.BackSecondarySocket);
 }
 
 void AWOGBaseWeapon::InitTraceComponent()
@@ -438,37 +336,6 @@ void AWOGBaseWeapon::InitTraceComponent()
 		{
 			TraceComponent->OnItemAdded.AddDynamic(this, &ThisClass::HitDetected);
 		}
-	}
-}
-
-void AWOGBaseWeapon::AttachToBack()
-{
-	if (!OwnerCharacter) return;
-	UE_LOG(LogTemp, Error, TEXT("AttachToBack"));
-	AttachToActor(OwnerCharacter, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
-
-	if (HasAuthority() && OwnerCharacter->GetCombatComponent() && OwnerCharacter->GetCombatComponent()->GetEquippedWeapon())
-	{
-		if (OwnerCharacter->GetCombatComponent()->GetEquippedWeapon()->GetWeaponState() == EWeaponState::EWS_BeingStored
-			|| OwnerCharacter->GetCombatComponent()->GetEquippedWeapon()->GetWeaponState() == EWeaponState::EWS_Stored)
-		{
-			OwnerCharacter->GetCombatComponent()->SetEquippedWeapon(nullptr);
-		}
-	}
-
-	FAttachmentTransformRules AttachmentRules = FAttachmentTransformRules(
-		EAttachmentRule::SnapToTarget,
-		EAttachmentRule::SnapToTarget,
-		EAttachmentRule::KeepWorld,
-		false
-	);
-
-	MeshMain->AttachToComponent(OwnerCharacter->GetMesh(), AttachmentRules, WeaponData.BackMainSocket);
-	MeshSecondary->AttachToComponent(OwnerCharacter->GetMesh(), AttachmentRules, WeaponData.BackSecondarySocket);
-
-	if (HasAuthority())
-	{
-		SetWeaponState(EWeaponState::EWS_Stored);
 	}
 }
 
@@ -618,5 +485,3 @@ void AWOGBaseWeapon::SetOwnerCharacter(ABasePlayerCharacter* NewOwner)
 	}
 	UE_LOG(LogTemp, Warning, TEXT("New owner of weapon %s is : %s"), *GetNameSafe(this), *GetNameSafe(OwnerCharacter));
 }
-
-

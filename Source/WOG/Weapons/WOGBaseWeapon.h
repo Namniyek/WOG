@@ -182,8 +182,6 @@ private:
 	void InitWeaponData();
 
 	float TimeSinceBlockStarted;
-	void Equip();
-	void Unequip();
 
 	UFUNCTION(BlueprintCallable)
 	void AttackLight();
@@ -229,15 +227,6 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void FinishAttacking();
-
-	UFUNCTION(Server, reliable, BlueprintCallable)
-	void Server_Equip();
-
-	UFUNCTION(Server, reliable, BlueprintCallable)
-	void Server_Unequip();
-
-	UFUNCTION(Server, reliable)
-	void Server_Swap();
 
 	UFUNCTION(Server, reliable, BlueprintCallable)
 	void Server_SetWeaponState(EWeaponState NewWeaponState);

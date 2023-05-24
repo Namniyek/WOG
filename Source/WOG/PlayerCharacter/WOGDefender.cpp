@@ -11,6 +11,8 @@
 #include "WOG/ActorComponents/WOGAbilitiesComponent.h"
 #include "AbilitySystemComponent.h"
 #include "Types/WOGGameplayTags.h"
+#include "Components/AGR_EquipmentManager.h"
+#include "AbilitySystemBlueprintLibrary.h"
 
 AWOGDefender::AWOGDefender()
 {
@@ -104,15 +106,6 @@ void AWOGDefender::AbilitiesButtonPressed(const FInputActionValue& Value)
 	if (AbilitiesVector.X > 0)
 	{
 		//Button 4/Right pressed
-		if (!Combat)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Combat component invalid"));
-			return;
-		}
-		if (Combat->EquippedWeapon)
-		{
-			Combat->StoreEquippedWeapon();
-		}
 
 		if (!Abilities)
 		{
@@ -136,22 +129,32 @@ void AWOGDefender::AbilitiesButtonPressed(const FInputActionValue& Value)
 			Abilities->Server_UnequipAbility();
 		}
 
-		if (!Combat)
+		if (!EquipmentManager)
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Combat component invalid"));
+			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Equipment component invalid"));
 			return;
 		}
-		if (!Combat->EquippedWeapon)
+		AActor* OutItem = nullptr;
+		AActor* PrimaryItem = nullptr;
+		EquipmentManager->GetWeaponShortcutReference(FName("1"), OutItem);
+		EquipmentManager->GetItemInSlot(FName("Primary"), PrimaryItem);
+		if (PrimaryItem && OutItem && PrimaryItem == OutItem)
 		{
-			Combat->EquipMainWeapon();
+			FGameplayEventData EventPayload;
+			EventPayload.EventTag = TAG_Event_Weapon_Unequip;
+			EventPayload.OptionalObject = PrimaryItem;
+			int32 Key = FCString::Atoi(*FName("1").ToString());
+			EventPayload.EventMagnitude = Key;
+			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Weapon_Unequip, EventPayload);
 		}
-		else if (Combat->EquippedWeapon == Combat->SecondaryWeapon)
+		else if (OutItem)
 		{
-			Combat->SwapWeapons();
-		}
-		else if (Combat->EquippedWeapon == Combat->MainWeapon)
-		{
-			Combat->UnequipMainWeapon();
+			FGameplayEventData EventPayload;
+			EventPayload.EventTag = TAG_Event_Weapon_Equip;
+			EventPayload.OptionalObject = OutItem;
+			int32 Key = FCString::Atoi(*FName("1").ToString());
+			EventPayload.EventMagnitude = Key;
+			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Weapon_Equip, EventPayload);
 		}
 	}
 	if (AbilitiesVector.Y > 0)
@@ -167,41 +170,37 @@ void AWOGDefender::AbilitiesButtonPressed(const FInputActionValue& Value)
 			Abilities->Server_UnequipAbility();
 		}
 
-		if (!Combat)
+		if (!EquipmentManager)
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Combat component invalid"));
+			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Equipment component invalid"));
 			return;
 		}
-		if (!Combat->SecondaryWeapon)
+		AActor* OutItem = nullptr;
+		AActor* PrimaryItem = nullptr;
+		EquipmentManager->GetWeaponShortcutReference(FName("2"), OutItem);
+		EquipmentManager->GetItemInSlot(FName("Primary"), PrimaryItem);
+		if (PrimaryItem && OutItem && PrimaryItem == OutItem)
 		{
-			Combat->Server_CreateSecondaryWeapon(Combat->SecondaryWeaponClass);
+			FGameplayEventData EventPayload;
+			EventPayload.EventTag = TAG_Event_Weapon_Unequip;
+			EventPayload.OptionalObject = PrimaryItem;
+			int32 Key = FCString::Atoi(*FName("2").ToString());
+			EventPayload.EventMagnitude = Key;
+			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Weapon_Unequip, EventPayload);
 		}
-		else if (!Combat->EquippedWeapon)
+		else if (OutItem)
 		{
-			Combat->EquipSecondaryWeapon();
+			FGameplayEventData EventPayload;
+			EventPayload.EventTag = TAG_Event_Weapon_Equip;
+			EventPayload.OptionalObject = OutItem;
+			int32 Key = FCString::Atoi(*FName("2").ToString());
+			EventPayload.EventMagnitude = Key;
+			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Weapon_Equip, EventPayload);
 		}
-		else if (Combat->EquippedWeapon == Combat->MainWeapon)
-		{
-			Combat->SwapWeapons();
-		}
-		else if (Combat->EquippedWeapon == Combat->SecondaryWeapon)
-		{
-			Combat->UnequipSecondaryWeapon();
-		}
-
 	}
 	if (AbilitiesVector.Y < 0)
 	{
 		//Button 3/Down pressed
-		if (!Combat)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Combat component invalid"));
-			return;
-		}
-		if (Combat->EquippedWeapon)
-		{
-			Combat->StoreEquippedWeapon();
-		}
 
 		if (!Abilities)
 		{

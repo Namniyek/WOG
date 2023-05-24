@@ -573,8 +573,42 @@ void ABasePlayerCharacter::Server_EquipWeapon_Implementation(const FName& Key, A
 			UE_LOG(LogTemp, Display, TEXT("Same as BackMain - Equipping to Primary"));
 			return;
 		}
+		else
+		{
+			//InWeapon was never equipped before
+			AActor* PreviousItem;
+			AActor* NewItem;
+			EquipmentManager->EquipItemInSlot(RelevantBackSlot, InWeapon, PreviousItem, NewItem);
+			UE_LOG(LogTemp, Display, TEXT("Never equipped before - Equipping to Relevant BackSlot"));
+			return;
+		}
 	}
 	UE_LOG(LogTemp, Error, TEXT("ERROR WHILE EQUIPPING"));
+}
+
+void ABasePlayerCharacter::Server_UnequipWeapon_Implementation(const FName& Key, AActor* InWeapon)
+{
+	if (!InWeapon) return;
+
+	//Determine the back slots names
+	FName BackSlot;
+	if (Key == FName("1"))
+	{
+		BackSlot = FName("BackMain");
+	}
+	else if (Key == FName("2"))
+	{
+		BackSlot = FName("BackSecondary");
+	}
+
+	//Unequip from primary and equip to back
+	FText Note;
+	EquipmentManager->UnEquipByReference(InWeapon, Note);
+	AActor* PreviousItem;
+	AActor* NewItem;
+	EquipmentManager->EquipItemInSlot(BackSlot, InWeapon, PreviousItem, NewItem);
+	UE_LOG(LogTemp, Display, TEXT("WeaponUnequipped"));
+	return;
 }
 
 void ABasePlayerCharacter::HandleStateElimmed(AController* InstigatedBy)

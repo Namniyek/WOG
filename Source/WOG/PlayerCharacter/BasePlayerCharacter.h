@@ -284,17 +284,24 @@ protected:
 
 	#pragma endregion
 
-
 	#pragma region Inventory
+protected:
+
 	UFUNCTION(Client, reliable, BlueprintCallable)
 	void Client_SaveShortcutReferences(AActor* InItem, const FGameplayTag& InItemTag, const FName& Key);
 
+public:
 	UFUNCTION(Server, reliable, BlueprintCallable)
 	void Server_EquipWeapon(const FName& Key, AActor* InWeapon);
+
+	UFUNCTION(Server, reliable, BlueprintCallable)
+	void Server_UnequipWeapon(const FName& Key, AActor* InWeapon);
+
 	#pragma endregion
 
 	#pragma region Character State variables
 
+protected:
 	virtual void HandleStateElimmed(AController* InstigatedBy = nullptr) override;
 	virtual void HandleStateAttacking() override;
 	virtual void HandleStateStaggered() override;
