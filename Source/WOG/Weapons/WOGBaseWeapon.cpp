@@ -2,10 +2,10 @@
 
 
 #include "WOGBaseWeapon.h"
+#include "WOG.h"
 #include "Net/UnrealNetwork.h"
 #include "WOG/PlayerCharacter/BasePlayerCharacter.h"
 #include "WOG/Enemies/WOGBaseEnemy.h"
-#include "WOG/ActorComponents/WOGCombatComponent.h"
 #include "DidItHitActorComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundCue.h"
@@ -216,7 +216,7 @@ void AWOGBaseWeapon::OnWeaponOverlap(UPrimitiveComponent* OverlappedComponent, A
 void AWOGBaseWeapon::OnWeaponPickedUp(UAGR_InventoryManager* Inventory)
 {
 	/*
-	** KEPT HERE JUST IN CASE
+	** BOUND AND KEPT HERE JUST IN CASE
 	*/
 }
 
@@ -227,7 +227,7 @@ void AWOGBaseWeapon::OnWeaponEquip(AActor* User, FName SlotName)
 
 void AWOGBaseWeapon::Multicast_OnWeaponEquip_Implementation(AActor* User, FName SlotName)
 {
-	if (SlotName == FName("Primary"))
+	if (SlotName == NAME_WeaponSlot_Primary)
 	{
 		AttachToHands();
 	}
@@ -239,7 +239,14 @@ void AWOGBaseWeapon::Multicast_OnWeaponEquip_Implementation(AActor* User, FName 
 
 void AWOGBaseWeapon::OnWeaponUnequip(AActor* User, FName SlotName)
 {
-	//Empty for now
+	/*
+	** BOUND AND KEPT HERE JUST IN CASE
+	*/
+}
+
+void AWOGBaseWeapon::SetCanNotParry()
+{
+	bCanParry = false;
 }
 
 void AWOGBaseWeapon::Server_SetWeaponState_Implementation(EWeaponState NewWeaponState)
@@ -270,10 +277,7 @@ void AWOGBaseWeapon::Server_SetWeaponState_Implementation(EWeaponState NewWeapon
 
 }
 
-void AWOGBaseWeapon::SetCanNotParry()
-{
-	bCanParry = false;
-}
+
 
 void AWOGBaseWeapon::OnRep_WeaponStateChanged()
 {
@@ -365,13 +369,16 @@ void AWOGBaseWeapon::AttackLight()
 	{
 		TraceComponent->ToggleTraceCheck(false);
 		HitActorsToIgnore.Empty();
-		if (OwnerCharacter->GetCombatComponent()->GetSecondaryWeapon())
+		AActor* WeaponOne;
+		if (UAGRLibrary::GetEquipment(OwnerCharacter)->GetWeaponShortcutReference(FName("1"), WeaponOne))
 		{
-			HitActorsToIgnore.Add(OwnerCharacter->GetCombatComponent()->GetSecondaryWeapon());
+			HitActorsToIgnore.Add(WeaponOne);
 		}
-		if (OwnerCharacter->GetCombatComponent()->GetMainWeapon())
+
+		AActor* WeaponTwo;
+		if (UAGRLibrary::GetEquipment(OwnerCharacter)->GetWeaponShortcutReference(FName("1"), WeaponTwo))
 		{
-			HitActorsToIgnore.Add(OwnerCharacter->GetCombatComponent()->GetMainWeapon());
+			HitActorsToIgnore.Add(WeaponTwo);
 		}
 	}
 }

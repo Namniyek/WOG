@@ -3,11 +3,11 @@
 
 #include "WOGAnimNotifyAttackSwing.h"
 #include "WOG/PlayerCharacter/BasePlayerCharacter.h"
-#include "WOG/ActorComponents/WOGCombatComponent.h"
 #include "WOG/Weapons/WOGBaseWeapon.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundCue.h"
 #include "DidItHitActorComponent.h"
+#include "Libraries/WOGBlueprintLibrary.h"
 
 void UWOGAnimNotifyAttackSwing::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration, const FAnimNotifyEventReference& EventReference)
 {
@@ -21,7 +21,8 @@ void UWOGAnimNotifyAttackSwing::NotifyBegin(USkeletalMeshComponent* MeshComp, UA
 		UE_LOG(LogTemp, Error, TEXT("Invalid OwnerCharacter"));
 		return;
 	}
-	Weapon = OwnerCharacter->GetCombatComponent()->GetEquippedWeapon();
+
+	Weapon = UWOGBlueprintLibrary::GetEquippedWeapon(OwnerCharacter);
 	if (!Weapon)
 	{
 		UE_LOG(LogTemp, Error, TEXT("Invalid Weapon"));
@@ -54,7 +55,8 @@ void UWOGAnimNotifyAttackSwing::NotifyEnd(USkeletalMeshComponent* MeshComp, UAni
 
 	OwnerCharacter = OwnerCharacter == nullptr ? Cast<ABasePlayerCharacter>(MeshComp->GetOwner()) : OwnerCharacter;
 	if (!OwnerCharacter) return;
-	Weapon = Weapon == nullptr ? OwnerCharacter->GetCombatComponent()->GetEquippedWeapon() : Weapon;
+
+	Weapon = Weapon == nullptr ? UWOGBlueprintLibrary::GetEquippedWeapon(OwnerCharacter) : Weapon;
 	if (!Weapon) return;
 
 	if (Weapon->GetTraceComponent())

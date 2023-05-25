@@ -120,7 +120,6 @@ class WOG_API ABasePlayerCharacter : public AWOGBaseCharacter
 public:
 	// Sets default values for this character's properties
 	ABasePlayerCharacter();
-	friend class UWOGCombatComponent;
 	friend class UWOGAbilitiesComponent;
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
@@ -317,9 +316,6 @@ protected:
 	class UTargetingHelperComponent* TargetAttractor;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<UWOGCombatComponent> Combat;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<UWOGAbilitiesComponent> Abilities;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
@@ -368,7 +364,6 @@ public:
 	FORCEINLINE USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 	FORCEINLINE ULockOnTargetComponent* GetLockOnTarget() const { return LockOnTarget; }
-	FORCEINLINE UWOGCombatComponent* GetCombatComponent() const { return Combat; }
 	FORCEINLINE bool GetIsTargeting() const { return bIsTargeting; }
 	FORCEINLINE void SetOwnerPC(AWOGPlayerController* NewPC) { OwnerPC = NewPC; }
 	FORCEINLINE TObjectPtr<AWOGPlayerController> GetOwnerPC() { return OwnerPC; }

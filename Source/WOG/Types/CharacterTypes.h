@@ -3,6 +3,8 @@
 #include "CoreMinimal.h"
 #include "CharacterTypes.generated.h"
 
+
+
 UENUM(BlueprintType)
 enum class ECharacterState : uint8
 {

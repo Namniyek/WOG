@@ -2,13 +2,13 @@
 
 
 #include "WOGAttacker.h"
+#include "WOG.h"
 #include "TargetingHelperComponent.h"
 #include "LockOnTargetComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "WOG/PlayerController/WOGPlayerController.h"
 #include "WOG/ActorComponents/WOGSpawnComponent.h"
-#include "WOG/ActorComponents/WOGCombatComponent.h"
 #include "AbilitySystemComponent.h"
 #include "Types/WOGGameplayTags.h"
 #include "Components/AGR_EquipmentManager.h"
@@ -115,7 +115,7 @@ void AWOGAttacker::AbilitiesButtonPressed(const FInputActionValue& Value)
 		AActor* OutItem = nullptr;
 		AActor* PrimaryItem = nullptr;
 		EquipmentManager->GetWeaponShortcutReference(FName("1"), OutItem);
-		EquipmentManager->GetItemInSlot(FName("Primary"), PrimaryItem);
+		EquipmentManager->GetItemInSlot(NAME_WeaponSlot_Primary, PrimaryItem);
 		if (PrimaryItem && OutItem && PrimaryItem == OutItem)
 		{
 			FGameplayEventData EventPayload;

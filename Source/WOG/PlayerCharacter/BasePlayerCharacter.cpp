@@ -2,6 +2,7 @@
 
 
 #include "BasePlayerCharacter.h"
+#include "WOG.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
@@ -16,7 +17,6 @@
 #include "GameMode/WOGGameMode.h"
 #include "PlayerController/WOGPlayerController.h"
 #include "Weapons/WOGBaseWeapon.h"
-#include "ActorComponents/WOGCombatComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "AnimInstance/WOGBaseAnimInstance.h"
 #include "Sound/SoundCue.h"
@@ -29,6 +29,7 @@
 #include "Types/WOGGameplayTags.h"
 #include "Components/AGR_EquipmentManager.h"
 #include "Components/AGR_InventoryManager.h"
+#include "Libraries/WOGBlueprintLibrary.h"
 
 
 void ABasePlayerCharacter::OnConstruction(const FTransform& Transform)
@@ -51,8 +52,6 @@ ABasePlayerCharacter::ABasePlayerCharacter()
 	LockOnTarget->SetIsReplicated(true);
 	TargetAttractor = CreateDefaultSubobject<UTargetingHelperComponent>(TEXT("TargetAttractor"));
 	TargetAttractor->SetIsReplicated(true);
-	Combat = CreateDefaultSubobject<UWOGCombatComponent>(TEXT("CombatComponent"));
-	Combat->SetIsReplicated(true);
 	Abilities = CreateDefaultSubobject<UWOGAbilitiesComponent>(TEXT("AbilitiesComponent"));
 	Abilities->SetIsReplicated(true);
 	EquipmentManager = CreateDefaultSubobject<UAGR_EquipmentManager>(TEXT("EquipmentManager"));
@@ -260,8 +259,9 @@ void ABasePlayerCharacter::PrimaryLightButtonPressed(const FInputActionValue& Va
 	if (HasMatchingGameplayTag(TAG_State_Dodging)) return;
 	if (CharacterState == ECharacterState::ECS_Staggered) return;
 
-	if (!Combat || !Abilities) return;
-	if (Combat->EquippedWeapon)
+	if (!EquipmentManager || !Abilities) return;
+	AActor* OutItem;
+	if (EquipmentManager->GetItemInSlot(NAME_WeaponSlot_Primary, OutItem))
 	{
 		SendAbilityLocalInput(EWOGAbilityInputID::AttackLight);
 	}
@@ -283,9 +283,10 @@ void ABasePlayerCharacter::PrimaryArmHeavyAttack(FInputActionValue ActionValue, 
 	if (HasMatchingGameplayTag(TAG_State_Dodging)) return;
 	if (CharacterState == ECharacterState::ECS_Staggered) return;
 
-	if (!Combat || !Combat->GetEquippedWeapon()) return;
+	AActor* OutItem;
+	if (!EquipmentManager->GetItemInSlot(NAME_WeaponSlot_Primary, OutItem) || !OutItem) return;
 	
-	if (ElapsedTime > 0.21f && !Combat->GetEquippedWeapon()->GetIsArmingHeavy())
+	if (ElapsedTime > 0.21f)
 	{
 		SendAbilityLocalInput(EWOGAbilityInputID::AttackHeavy);
 	}
@@ -297,7 +298,8 @@ void ABasePlayerCharacter::PrimaryHeavyAttackCanceled(const FInputActionValue& V
 	if (HasMatchingGameplayTag(TAG_State_Dodging)) return;
 	if (CharacterState == ECharacterState::ECS_Staggered) return;
 
-	if (!Combat || !Combat->GetEquippedWeapon()) return;
+	AActor* OutItem;
+	if (!EquipmentManager->GetItemInSlot(NAME_WeaponSlot_Primary, OutItem) || !OutItem) return;
 
 	FGameplayEventData EventPayload;
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Weapon_HeavyAttackCancel, EventPayload);
@@ -309,7 +311,8 @@ void ABasePlayerCharacter::PrimaryExecuteHeavyAttack(const FInputActionValue& Va
 	if (HasMatchingGameplayTag(TAG_State_Dodging)) return;
 	if (CharacterState == ECharacterState::ECS_Staggered) return;
 
-	if (!Combat || !Combat->GetEquippedWeapon()) return;
+	AActor* OutItem;
+	if (!EquipmentManager->GetItemInSlot(NAME_WeaponSlot_Primary, OutItem) || !OutItem) return;
 
 	FGameplayEventData EventPayload;
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Weapon_HeavyAttackExecute, EventPayload);
@@ -321,7 +324,8 @@ void ABasePlayerCharacter::SecondaryButtonPressed(const FInputActionValue& Value
 	if (HasMatchingGameplayTag(TAG_State_Dodging)) return;
 	if (CharacterState == ECharacterState::ECS_Staggered) return;
 
-	if (!Combat) return;
+	AActor* OutItem;
+	if (!EquipmentManager->GetItemInSlot(NAME_WeaponSlot_Primary, OutItem) || !OutItem) return;
 
 	SendAbilityLocalInput(EWOGAbilityInputID::Block);
 	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Purple, FString("StartBlocking"));
@@ -333,7 +337,8 @@ void ABasePlayerCharacter::SecondaryButtonReleased(const FInputActionValue& Valu
 	if (HasMatchingGameplayTag(TAG_State_Dodging)) return;
 	if (CharacterState == ECharacterState::ECS_Staggered) return;
 
-	if (!Combat) return;
+	AActor* OutItem;
+	if (!EquipmentManager->GetItemInSlot(NAME_WeaponSlot_Primary, OutItem) || !OutItem) return;
 
 	FGameplayEventData EventPayload;
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Weapon_Block_Stop, EventPayload);
@@ -475,8 +480,6 @@ void ABasePlayerCharacter::SetDefaultAbilitiesAndEffects(bool bIsMale, FName Row
 		return;
 	}
 
-	Combat->SetDefaultWeaponClass(MeshRow->DefaultWeapon);
-
 	DefaultAbilitiesAndEffects.Abilities.Append(MeshRow->DefaultAbilitiesAndEffects.Abilities);
 	DefaultAbilitiesAndEffects.Effects.Append(MeshRow->DefaultAbilitiesAndEffects.Effects);
 	DefaultAbilitiesAndEffects.Weapons.Append(MeshRow->DefaultAbilitiesAndEffects.Weapons);
@@ -522,18 +525,18 @@ void ABasePlayerCharacter::Server_EquipWeapon_Implementation(const FName& Key, A
 	FName OtherBackSlot;
 	if (Key == FName("1"))
 	{
-		RelevantBackSlot = FName("BackMain");
-		OtherBackSlot = FName("BackSecondary");
+		RelevantBackSlot = NAME_WeaponSlot_BackMain;
+		OtherBackSlot = NAME_WeaponSlot_BackSecondary;
 	}
 	else if (Key == FName("2"))
 	{
-		RelevantBackSlot = FName("BackSecondary");
-		OtherBackSlot = FName("BackMain");
+		RelevantBackSlot = NAME_WeaponSlot_BackSecondary;
+		OtherBackSlot = NAME_WeaponSlot_BackMain;
 	}
 
 	//Determine where to equip weapons
 	AActor* PrimarySlotActor;
-	EquipmentManager->GetItemInSlot(FName("Primary"), PrimarySlotActor);
+	EquipmentManager->GetItemInSlot(NAME_WeaponSlot_Primary, PrimarySlotActor);
 	if (PrimarySlotActor == InWeapon)
 	{
 		//InWeapon already equipped. Put it on the back
@@ -554,7 +557,7 @@ void ABasePlayerCharacter::Server_EquipWeapon_Implementation(const FName& Key, A
 		if (BackSlotActor == InWeapon)
 		{
 			//InWeapon equipped on the back releavant slot
-			if (EquipmentManager->GetItemInSlot(FName("Primary"), PrimarySlotActor))
+			if (EquipmentManager->GetItemInSlot(NAME_WeaponSlot_Primary, PrimarySlotActor))
 			{
 				//Primary slot taken. Send Previous weapon to back.
 				FText Note;
@@ -569,7 +572,7 @@ void ABasePlayerCharacter::Server_EquipWeapon_Implementation(const FName& Key, A
 			EquipmentManager->UnEquipByReference(InWeapon, Note);
 			AActor* PreviousItem;
 			AActor* NewItem;
-			EquipmentManager->EquipItemInSlot(FName("Primary"), InWeapon, PreviousItem, NewItem);
+			EquipmentManager->EquipItemInSlot(NAME_WeaponSlot_Primary, InWeapon, PreviousItem, NewItem);
 			UE_LOG(LogTemp, Display, TEXT("Same as BackMain - Equipping to Primary"));
 			return;
 		}
@@ -594,11 +597,11 @@ void ABasePlayerCharacter::Server_UnequipWeapon_Implementation(const FName& Key,
 	FName BackSlot;
 	if (Key == FName("1"))
 	{
-		BackSlot = FName("BackMain");
+		BackSlot = NAME_WeaponSlot_BackMain;
 	}
 	else if (Key == FName("2"))
 	{
-		BackSlot = FName("BackSecondary");
+		BackSlot = NAME_WeaponSlot_BackSecondary;
 	}
 
 	//Unequip from primary and equip to back
@@ -613,15 +616,6 @@ void ABasePlayerCharacter::Server_UnequipWeapon_Implementation(const FName& Key,
 
 void ABasePlayerCharacter::HandleStateElimmed(AController* InstigatedBy)
 {
-	if (Combat->MainWeapon)
-	{
-		Combat->MainWeapon->Destroy();
-	}
-	if (Combat->SecondaryWeapon)
-	{
-		Combat->SecondaryWeapon->Destroy();
-	}
-
 	if (!HasAuthority()) return;
 
 	WOGGameMode = WOGGameMode == nullptr ?	GetWorld()->GetAuthGameMode<AWOGGameMode>() : WOGGameMode;
@@ -659,9 +653,10 @@ void ABasePlayerCharacter::HandleStateStaggered()
 	UAnimInstance* CharacterAnimInstance = GetMesh()->GetAnimInstance();
 	if (!CharacterAnimInstance) return;
 
-	if (Combat && Combat->EquippedWeapon && Combat->EquippedWeapon->GetWeaponData().BlockMontage)
+	AWOGBaseWeapon* EquippedWeapon = UWOGBlueprintLibrary::GetEquippedWeapon(this);
+	if (EquippedWeapon && EquippedWeapon->GetWeaponData().BlockMontage)
 	{
-		CharacterAnimInstance->Montage_Play(Combat->GetEquippedWeapon()->GetWeaponData().BlockMontage, 1.f);
+		CharacterAnimInstance->Montage_Play(EquippedWeapon->GetWeaponData().BlockMontage, 1.f);
 		CharacterAnimInstance->Montage_JumpToSection(FName("Knockback"));
 	}
 }
@@ -671,11 +666,12 @@ void ABasePlayerCharacter::BroadcastHit_Implementation(AActor* AgressorActor, co
 	if (HasMatchingGameplayTag(TAG_State_Dead)) return;
 	if (HasMatchingGameplayTag(TAG_State_Dodging)) return;
 
-	if (Combat->GetEquippedWeapon() && Combat->GetEquippedWeapon()->GetWeaponState() == EWeaponState::EWS_Blocking)
+	if (HasMatchingGameplayTag(TAG_State_Weapon_Block))
 	{
 		if (IsHitFrontal(60.f, this, AgressorActor))
 		{
-			if (Combat && Combat->EquippedWeapon && Combat->EquippedWeapon->GetCanParry())
+			AWOGBaseWeapon* EquippedWeapon = UWOGBlueprintLibrary::GetEquippedWeapon(this);
+			if (EquippedWeapon && EquippedWeapon->GetCanParry())
 			{
 				TObjectPtr<AWOGBaseCharacter> AgressorCharacter = Cast<AWOGBaseCharacter>(AgressorActor);
 				if (AgressorCharacter)
@@ -689,7 +685,7 @@ void ABasePlayerCharacter::BroadcastHit_Implementation(AActor* AgressorActor, co
 			return;
 		}
 	}
-	if (Combat->GetEquippedWeapon() && (Combat->GetEquippedWeapon()->GetWeaponState() == EWeaponState::EWS_AttackLight))
+	if (HasMatchingGameplayTag(TAG_State_Weapon_AttackLight))
 	{
 		if (IsHitFrontal(60.f, this, AgressorActor))
 		{
@@ -738,9 +734,10 @@ void ABasePlayerCharacter::HandleCosmeticBodyHit(const FHitResult& Hit, const FV
 		PlayHitReactMontage(HitDirection);
 	}
 
-	if (Combat && Combat->EquippedWeapon && Combat->EquippedWeapon->GetWeaponData().HitSound)
+	AWOGBaseWeapon* EquippedWeapon = UWOGBlueprintLibrary::GetEquippedWeapon(this);
+	if (EquippedWeapon && EquippedWeapon->GetWeaponData().HitSound)
 	{
-		UGameplayStatics::PlaySoundAtLocation(this, Combat->GetEquippedWeapon()->GetWeaponData().HitSound, GetActorLocation());
+		UGameplayStatics::PlaySoundAtLocation(this, EquippedWeapon->GetWeaponData().HitSound, GetActorLocation());
 	}
 }
 
@@ -749,12 +746,14 @@ void ABasePlayerCharacter::PlayHitReactMontage(FName Section)
 	UAnimInstance* CharacterAnimInstance = GetMesh()->GetAnimInstance();
 	if (!CharacterAnimInstance) return;
 
-	if (Combat && Combat->GetEquippedWeapon() && Combat->GetEquippedWeapon()->GetWeaponData().HurtMontage)
+	AWOGBaseWeapon* EquippedWeapon = UWOGBlueprintLibrary::GetEquippedWeapon(this);
+	if (EquippedWeapon && EquippedWeapon->GetWeaponData().HurtMontage)
 	{
-		CharacterAnimInstance->Montage_Play(Combat->GetEquippedWeapon()->GetWeaponData().HurtMontage, 1.f);
+		CharacterAnimInstance->Montage_Play(EquippedWeapon->GetWeaponData().HurtMontage, 1.f);
 		CharacterAnimInstance->Montage_JumpToSection(Section);
 	}
-	else if (UnarmedHurtMontage)
+
+	if (UnarmedHurtMontage)
 	{
 		CharacterAnimInstance->Montage_Play(UnarmedHurtMontage, 1.f);
 		CharacterAnimInstance->Montage_JumpToSection(Section);
@@ -763,21 +762,22 @@ void ABasePlayerCharacter::PlayHitReactMontage(FName Section)
 
 void ABasePlayerCharacter::HandleCosmeticBlock(const AWOGBaseWeapon* InstigatorWeapon)
 {
-	if (!Combat->GetEquippedWeapon()) return;
+	AWOGBaseWeapon* EquippedWeapon = UWOGBlueprintLibrary::GetEquippedWeapon(this);
+	if (!EquippedWeapon) return;
 
-	if (Combat->GetEquippedWeapon()->GetWeaponData().BlockSound)
+	if (EquippedWeapon->GetWeaponData().BlockSound)
 	{
-		UGameplayStatics::PlaySoundAtLocation(this, Combat->GetEquippedWeapon()->GetWeaponData().BlockSound, GetActorLocation());
+		UGameplayStatics::PlaySoundAtLocation(this, EquippedWeapon->GetWeaponData().BlockSound, GetActorLocation());
 	}
 
-	if (Combat->GetEquippedWeapon()->GetWeaponData().BlockMontage)
+	if (EquippedWeapon->GetWeaponData().BlockMontage)
 	{
 		UAnimInstance* CharacterAnimInstance = GetMesh()->GetAnimInstance();
 		if (!CharacterAnimInstance) return;
 
 		if(InstigatorWeapon && InstigatorWeapon->GetWeaponState()==EWeaponState::EWS_AttackLight)
 		{
-			CharacterAnimInstance->Montage_Play(Combat->GetEquippedWeapon()->GetWeaponData().BlockMontage, 1.f);
+			CharacterAnimInstance->Montage_Play(EquippedWeapon->GetWeaponData().BlockMontage, 1.f);
 			CharacterAnimInstance->Montage_JumpToSection(FName("Impact"));
 		}
 		else if (InstigatorWeapon && InstigatorWeapon->GetWeaponState() == EWeaponState::EWS_AttackHeavy)

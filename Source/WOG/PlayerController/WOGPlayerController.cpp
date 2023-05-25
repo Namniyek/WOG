@@ -13,7 +13,6 @@
 #include "Data/TODEnum.h"
 #include "UI/EndgameWidget.h"
 #include "Net/UnrealNetwork.h"
-#include "ActorComponents/WOGCombatComponent.h"
 #include "Enemies/WOGPossessableEnemy.h"
 #include "Characters/WOGBaseCharacter.h"
 #include "AbilitySystemComponent.h"
@@ -94,8 +93,6 @@ void AWOGPlayerController::OnPossess(APawn* aPawn)
 	Server_SetPlayerIndex(WOGSavegame->PlayerProfile.UserIndex);
 
 	Client_ResetHUD();
-
-	PlayerCharacter->GetCombatComponent()->Server_CreateMainWeapon(PlayerCharacter->GetCombatComponent()->GetDefaultWeaponClass());
 }
 
 void AWOGPlayerController::BeginPlay()

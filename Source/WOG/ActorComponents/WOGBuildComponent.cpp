@@ -7,12 +7,13 @@
 #include "WOG/Interfaces/BuildingInterface.h"
 #include "Engine/EngineTypes.h"
 #include "Camera/CameraComponent.h"
-#include "WOG/ActorComponents/WOGCombatComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Components/BoxComponent.h"
 #include "TimerManager.h"
 #include "WOG/Weapons/WOGBaseWeapon.h"
 #include "EnhancedInputSubsystems.h"
+#include "Data/AGRLibrary.h"
+#include "Components/AGR_EquipmentManager.h"
 
 UWOGBuildComponent::UWOGBuildComponent()
 {
@@ -145,9 +146,21 @@ void UWOGBuildComponent::BuildCycle()
 	FCollisionQueryParams Params;
 
 	TArray<AActor*> ActorsToIgnore;
-	TObjectPtr<UWOGCombatComponent> Combat =  DefenderCharacter->GetCombatComponent();
-	ActorsToIgnore.AddUnique(Combat->GetMainWeapon());
-	ActorsToIgnore.AddUnique(Combat->GetSecondaryWeapon());
+	AActor* WeaponOne;
+	AActor* WeaponTwo;
+	UAGR_EquipmentManager* Equipment = UAGRLibrary::GetEquipment(DefenderCharacter);
+
+	if (Equipment)
+	{
+		if (Equipment->GetWeaponShortcutReference(FName("1"), WeaponOne) && WeaponOne)
+		{
+			ActorsToIgnore.AddUnique(WeaponOne);
+		}
+		if (Equipment->GetWeaponShortcutReference(FName("2"), WeaponTwo) && WeaponTwo)
+		{
+			ActorsToIgnore.AddUnique(WeaponTwo);
+		}
+	}
 
 	Params.AddIgnoredActors(ActorsToIgnore);
 	Params.bTraceComplex = false;

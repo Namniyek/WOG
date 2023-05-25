@@ -2,12 +2,12 @@
 
 
 #include "WOGDefender.h"
+#include "WOG.h"
 #include "TargetingHelperComponent.h"
 #include "LockOnTargetComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "WOG/ActorComponents/WOGBuildComponent.h"
-#include "WOG/ActorComponents/WOGCombatComponent.h"
 #include "WOG/ActorComponents/WOGAbilitiesComponent.h"
 #include "AbilitySystemComponent.h"
 #include "Types/WOGGameplayTags.h"
@@ -137,7 +137,7 @@ void AWOGDefender::AbilitiesButtonPressed(const FInputActionValue& Value)
 		AActor* OutItem = nullptr;
 		AActor* PrimaryItem = nullptr;
 		EquipmentManager->GetWeaponShortcutReference(FName("1"), OutItem);
-		EquipmentManager->GetItemInSlot(FName("Primary"), PrimaryItem);
+		EquipmentManager->GetItemInSlot(NAME_WeaponSlot_Primary, PrimaryItem);
 		if (PrimaryItem && OutItem && PrimaryItem == OutItem)
 		{
 			FGameplayEventData EventPayload;
@@ -178,7 +178,7 @@ void AWOGDefender::AbilitiesButtonPressed(const FInputActionValue& Value)
 		AActor* OutItem = nullptr;
 		AActor* PrimaryItem = nullptr;
 		EquipmentManager->GetWeaponShortcutReference(FName("2"), OutItem);
-		EquipmentManager->GetItemInSlot(FName("Primary"), PrimaryItem);
+		EquipmentManager->GetItemInSlot(NAME_WeaponSlot_Primary, PrimaryItem);
 		if (PrimaryItem && OutItem && PrimaryItem == OutItem)
 		{
 			FGameplayEventData EventPayload;
