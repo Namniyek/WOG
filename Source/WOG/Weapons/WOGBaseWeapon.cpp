@@ -12,7 +12,6 @@
 #include "WOG/Interfaces/BuildingInterface.h"
 #include "WOG/Interfaces/AttributesInterface.h"
 #include "Components/SphereComponent.h"
-#include "Components/AGR_ItemComponent.h"
 #include "Data/AGRLibrary.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "Types/WOGGameplayTags.h"
@@ -43,9 +42,6 @@ AWOGBaseWeapon::AWOGBaseWeapon()
 	MeshSecondary->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	MeshSecondary->SetIsReplicated(true);
 
-	TraceComponent = CreateDefaultSubobject <UDidItHitActorComponent>(TEXT("TraceComponent"));
-
-
 	ItemComponent = CreateDefaultSubobject <UAGR_ItemComponent>(TEXT("ItemComponent"));
 
 }
@@ -55,9 +51,6 @@ void AWOGBaseWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AWOGBaseWeapon, OwnerCharacter);
 	DOREPLIFETIME(AWOGBaseWeapon, WeaponState);
-	DOREPLIFETIME(AWOGBaseWeapon, bIsBlocking);
-	DOREPLIFETIME(AWOGBaseWeapon, bCanParry);
-	DOREPLIFETIME(AWOGBaseWeapon, bIsArmingHeavy);
 }
 
 void AWOGBaseWeapon::OnConstruction(const FTransform& Transform)
@@ -121,7 +114,7 @@ void AWOGBaseWeapon::InitWeaponData()
 		WeaponData.WeaponDamageEffect = WeaponDataRow->WeaponDamageEffect;
 	}
 
-	WeaponState = EWeaponState::EWS_Stored;
+	//WeaponState = EWeaponState::EWS_Stored;
 	ComboStreak = 0;
 	bAttackWindowOpen = false;
 
@@ -223,6 +216,8 @@ void AWOGBaseWeapon::OnWeaponPickedUp(UAGR_InventoryManager* Inventory)
 void AWOGBaseWeapon::OnWeaponEquip(AActor* User, FName SlotName)
 {
 	Multicast_OnWeaponEquip(User, SlotName);
+	SetTraceMeshes(SlotName, User);
+	UE_LOG(LogTemp, Display, TEXT("WeaponEquipped"));
 }
 
 void AWOGBaseWeapon::Multicast_OnWeaponEquip_Implementation(AActor* User, FName SlotName)
@@ -319,40 +314,12 @@ void AWOGBaseWeapon::AttachToBack()
 	MeshSecondary->AttachToComponent(OwnerCharacter->GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponData.BackSecondarySocket);
 }
 
-void AWOGBaseWeapon::InitTraceComponent()
-{
-	if (TraceComponent)
-	{
-		TraceComponent->bHitOtherSocketsAtDifferentTime = true;
-		TraceComponent->bHitOtherSocketsAtSameTime = true;
-		TraceComponent->bHitSameSocketAtDifferentTimes = true;
-
-		TraceComponent->SetupVariables(MeshMain, OwnerCharacter);
-		if (!TraceComponent->MyActorsToIgnore.Contains(OwnerCharacter))
-		{
-			TraceComponent->MyActorsToIgnore.Add(OwnerCharacter);
-		}
-		TraceComponent->ToggleTraceCheck(false);
-		TraceComponent->MyWorldContextObject = this;
-		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString("SetupVariables() called"));
-
-		if (HasAuthority())
-		{
-			TraceComponent->OnItemAdded.AddDynamic(this, &ThisClass::HitDetected);
-		}
-	}
-}
-
 void AWOGBaseWeapon::FinishAttacking()
 {
-	Server_SetWeaponState(EWeaponState::EWS_Equipped);
+	//Server_SetWeaponState(EWeaponState::EWS_Equipped);
 	if (OwnerCharacter)
 	{
 		OwnerCharacter->Server_SetCharacterState(ECharacterState::ECS_Unnoccupied);
-	}
-	if (TraceComponent)
-	{
-		TraceComponent->ToggleTraceCheck(false);
 	}
 }
 
@@ -361,25 +328,8 @@ void AWOGBaseWeapon::AttackLight()
 	if (!OwnerCharacter) return;
 	if (HasAuthority())
 	{
-		bIsArmingHeavy = false;
 		SetWeaponState(EWeaponState::EWS_AttackLight);
 		bAttackWindowOpen = false;
-	}
-	if (TraceComponent)
-	{
-		TraceComponent->ToggleTraceCheck(false);
-		HitActorsToIgnore.Empty();
-		AActor* WeaponOne;
-		if (UAGRLibrary::GetEquipment(OwnerCharacter)->GetWeaponShortcutReference(FName("1"), WeaponOne))
-		{
-			HitActorsToIgnore.Add(WeaponOne);
-		}
-
-		AActor* WeaponTwo;
-		if (UAGRLibrary::GetEquipment(OwnerCharacter)->GetWeaponShortcutReference(FName("1"), WeaponTwo))
-		{
-			HitActorsToIgnore.Add(WeaponTwo);
-		}
 	}
 }
 
@@ -388,18 +338,11 @@ void AWOGBaseWeapon::AttackHeavy()
 	if (!OwnerCharacter) return;
 	if (HasAuthority())
 	{
-		bIsArmingHeavy = false;
 		SetWeaponState(EWeaponState::EWS_AttackHeavy);
 		bAttackWindowOpen = false;
 	}
 
 	ComboStreak = 0;
-
-	if (TraceComponent)
-	{
-		TraceComponent->ToggleTraceCheck(false);
-		HitActorsToIgnore.Empty();
-	}
 }
 
 void AWOGBaseWeapon::Block()
@@ -415,6 +358,30 @@ void AWOGBaseWeapon::StopBlocking()
 {
 	if (!OwnerCharacter || !HasAuthority()) return;
 	SetWeaponState(EWeaponState::EWS_Equipped);
+}
+
+void AWOGBaseWeapon::SetTraceMeshes(const FName& Slot, AActor* OwnerActor)
+{
+	if (!OwnerActor) return;
+
+	UAGR_CombatManager* CombatManager = UAGRLibrary::GetCombatManager(OwnerActor);
+	if (!CombatManager) return;
+
+	if (Slot == NAME_WeaponSlot_Primary)
+	{
+		if (MeshMain)
+		{
+			CombatManager->AddTraceMesh(MeshMain, EAGR_CombatColliderType::ComplexBoxTrace);
+		}
+		if (MeshSecondary)
+		{
+			CombatManager->AddTraceMesh(MeshSecondary, EAGR_CombatColliderType::ComplexBoxTrace);
+		}
+	}
+	else
+	{
+		CombatManager->ClearAllMeshes();
+	}
 }
 
 void AWOGBaseWeapon::HitDetected(FHitResult Hit)

@@ -8,6 +8,7 @@
 #include "Sound/SoundCue.h"
 #include "DidItHitActorComponent.h"
 #include "Libraries/WOGBlueprintLibrary.h"
+#include "Data/AGRLibrary.h"
 
 void UWOGAnimNotifyAttackSwing::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration, const FAnimNotifyEventReference& EventReference)
 {
@@ -38,29 +39,42 @@ void UWOGAnimNotifyAttackSwing::NotifyBegin(USkeletalMeshComponent* MeshComp, UA
 		return;
 	}
 
-	if(Weapon->GetTraceComponent())
+	StartTrace(OwnerCharacter);
+}
+
+void UWOGAnimNotifyAttackSwing::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
+{
+	if (MeshComp->GetOwner())
 	{
-		Weapon->GetTraceComponent()->ToggleTraceCheck(true);
+		EndTrace(MeshComp->GetOwner());
+	}
+
+	Super::NotifyEnd(MeshComp, Animation, EventReference);
+}
+
+void UWOGAnimNotifyAttackSwing::StartTrace(AActor* Owner)
+{
+	if (!Owner || !Owner->HasAuthority()) return;
+
+	UAGR_CombatManager* CombatManager = UAGRLibrary::GetCombatManager(Owner);
+	if (CombatManager)
+	{
+		CombatManager->StartTrace();
+	}
+}
+
+void UWOGAnimNotifyAttackSwing::EndTrace(AActor* Owner)
+{
+	if (!Owner || !Owner->HasAuthority()) return;
+
+	UAGR_CombatManager* CombatManager = UAGRLibrary::GetCombatManager(Owner);
+	if (CombatManager)
+	{
+		CombatManager->EndTrace();
 	}
 }
 
 void UWOGAnimNotifyAttackSwing::NotifyTick(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float FrameDeltaTime, const FAnimNotifyEventReference& EventReference)
 {
 	Super::NotifyTick(MeshComp, Animation, FrameDeltaTime, EventReference);
-}
-
-void UWOGAnimNotifyAttackSwing::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
-{
-	Super::NotifyEnd(MeshComp, Animation, EventReference);
-
-	OwnerCharacter = OwnerCharacter == nullptr ? Cast<ABasePlayerCharacter>(MeshComp->GetOwner()) : OwnerCharacter;
-	if (!OwnerCharacter) return;
-
-	Weapon = Weapon == nullptr ? UWOGBlueprintLibrary::GetEquippedWeapon(OwnerCharacter) : Weapon;
-	if (!Weapon) return;
-
-	if (Weapon->GetTraceComponent())
-	{
-		Weapon->GetTraceComponent()->ToggleTraceCheck(false);
-	}
 }

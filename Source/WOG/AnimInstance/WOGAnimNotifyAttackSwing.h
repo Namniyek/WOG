@@ -21,4 +21,7 @@ class WOG_API UWOGAnimNotifyAttackSwing : public UAnimNotifyState_Trail
 	TObjectPtr<class ABasePlayerCharacter> OwnerCharacter;
 	TObjectPtr<class AWOGBaseWeapon> Weapon;
 
+	void StartTrace(AActor* Owner);
+	void EndTrace(AActor* Owner);
+
 };

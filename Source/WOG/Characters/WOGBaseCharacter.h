@@ -8,6 +8,7 @@
 #include "Interfaces/AttributesInterface.h"
 #include "Abilities/GameplayAbility.h"
 #include "AbilitySystemInterface.h"
+#include "Data/AGRLibrary.h"
 #include "WOGBaseCharacter.generated.h"
 
 class UWOGAbilitySystemComponent;
@@ -37,14 +38,29 @@ protected:
 	void SendAbilityLocalInput(const EWOGAbilityInputID InInputID);
 	virtual void OnHealthAttributeChanged(const FOnAttributeChangeData& Data);
 	virtual void OnMaxMovementSpeedAttributeChanged(const FOnAttributeChangeData& Data);
+	UFUNCTION()
+	virtual void OnStartAttack();
+	UFUNCTION()
+	virtual void OnAttackHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh);
+	virtual void ProcessHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh) { /*TO-BE OVERRIDEN IN CHILDREN*/ };
+
+	TArray<TObjectPtr<AActor>> HitActorsToIgnore;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Setup|Abilities and Effects")
 	FCharacterAbilityData DefaultAbilitiesAndEffects;
 
+	#pragma region Actor Components
 	UPROPERTY()
 	TObjectPtr<UWOGAbilitySystemComponent> AbilitySystemComponent;
 	UPROPERTY()
 	TObjectPtr<UWOGAttributeSetBase> AttributeSet;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<UAGR_CombatManager> CombatManager;
+
+	#pragma endregion
+
+
 
 	#pragma region  Character State
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly)

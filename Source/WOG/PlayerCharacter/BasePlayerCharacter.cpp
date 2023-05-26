@@ -30,6 +30,8 @@
 #include "Components/AGR_EquipmentManager.h"
 #include "Components/AGR_InventoryManager.h"
 #include "Libraries/WOGBlueprintLibrary.h"
+#include "WOG/Interfaces/BuildingInterface.h"
+#include "WOG/Interfaces/AttributesInterface.h"
 
 
 void ABasePlayerCharacter::OnConstruction(const FTransform& Transform)
@@ -718,6 +720,56 @@ void ABasePlayerCharacter::BroadcastHit_Implementation(AActor* AgressorActor, co
 		FGameplayEffectSpecHandle OutSpec = AbilitySystemComponent->MakeOutgoingSpec(Weapon->GetWeaponData().WeaponDamageEffect, 1, DamageContext);
 		UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(OutSpec, FGameplayTag::RequestGameplayTag(TEXT("Damage.Attribute.Health")), -DamageToApply);
 		AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*OutSpec.Data);
+	}
+}
+
+void ABasePlayerCharacter::ProcessHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh)
+{
+	if (!WeaponMesh) return;
+
+	AWOGBaseWeapon* AttackerWeapon = WeaponMesh->GetOwner() ? Cast<AWOGBaseWeapon>(WeaponMesh->GetOwner()) : nullptr;
+	if (!AttackerWeapon)
+	{
+		UE_LOG(LogTemp, Error, TEXT("No Attacker Weapon"));
+	}
+
+	AWOGBaseCharacter* AttackerCharacter = AttackerWeapon ? Cast<AWOGBaseCharacter>(AttackerWeapon->GetOwner()) : nullptr;
+	if (!AttackerCharacter)
+	{
+		UE_LOG(LogTemp, Error, TEXT("No Attacker Character"));
+		return;
+	}
+
+	//Get the Damage to apply values:
+	float DamageToApply = 0.f;
+	if (AttackerCharacter->HasMatchingGameplayTag(TAG_State_Weapon_AttackLight) && AttackerWeapon)
+	{
+		DamageToApply = AttackerWeapon->GetWeaponData().BaseDamage +
+			(AttackerWeapon->GetWeaponData().BaseDamage * AttackerWeapon->GetWeaponData().DamageMultiplier) +
+			(AttackerWeapon->GetWeaponData().BaseDamage * (AttackerWeapon->GetComboStreak() * AttackerWeapon->GetWeaponData().ComboDamageMultiplier));
+	}
+	if (AttackerCharacter->HasMatchingGameplayTag(TAG_State_Weapon_AttackHeavy) && AttackerWeapon)
+	{
+		DamageToApply = AttackerWeapon->GetWeaponData().BaseDamage +
+			(AttackerWeapon->GetWeaponData().BaseDamage * AttackerWeapon->GetWeaponData().DamageMultiplier) +
+			(AttackerWeapon->GetWeaponData().BaseDamage * AttackerWeapon->GetWeaponData().HeavyDamageMultiplier);
+	}
+
+	//Check if we hit build
+	TObjectPtr<IBuildingInterface> BuildInterface = Cast<IBuildingInterface>(Hit.GetActor());
+	if (BuildInterface)
+	{
+		BuildInterface->Execute_DealDamage(Hit.GetActor(), DamageToApply);
+		UE_LOG(LogTemp, Warning, TEXT("Build damaged with %f"), DamageToApply);
+		return;
+	}
+
+	//Check if we hit other character
+	TObjectPtr<IAttributesInterface> AttributesInterface = Cast<IAttributesInterface>(Hit.GetActor());
+	if (AttributesInterface)
+	{
+		AttributesInterface->Execute_BroadcastHit(Hit.GetActor(), AttackerCharacter, Hit, DamageToApply, AttackerWeapon);
+		UE_LOG(LogTemp, Warning, TEXT("%s damaged with %s, by %s, in the amount : %f"), *GetNameSafe(Hit.GetActor()), *GetNameSafe(AttackerWeapon), *GetNameSafe(AttackerCharacter), DamageToApply);
 	}
 }
 

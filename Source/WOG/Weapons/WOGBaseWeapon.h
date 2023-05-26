@@ -139,9 +139,6 @@ protected:
 	#pragma region ActorComponents
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	UDidItHitActorComponent* TraceComponent;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	UAGR_ItemComponent* ItemComponent;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
@@ -192,20 +189,17 @@ private:
 	UFUNCTION(BlueprintCallable)
 	void StopBlocking();
 
+	void SetTraceMeshes(const FName& Slot, AActor* OwnerActor);
+
 	UPROPERTY(VisibleAnywhere)
 	int32 ComboStreak;
 	UPROPERTY(VisibleAnywhere)
 	bool bAttackWindowOpen;
-	UPROPERTY(Replicated, VisibleAnywhere)
-	bool bIsBlocking;
-	UPROPERTY(Replicated, VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere)
 	bool bCanParry;
 	FTimerHandle ParryTimer;
 
 	void SetCanNotParry();
-
-	UPROPERTY(Replicated, VisibleAnywhere)
-	bool bIsArmingHeavy;
 
 	UPROPERTY(ReplicatedUsing = OnRep_WeaponStateChanged, VisibleAnywhere)
 	EWeaponState WeaponState;
@@ -218,8 +212,6 @@ private:
 	TArray<AActor*> HitActorsToIgnore;
 
 public:	
-	void InitTraceComponent();
-
 	UFUNCTION(BlueprintCallable)
 	void AttachToBack();
 	UFUNCTION(BlueprintCallable)
@@ -248,14 +240,10 @@ public:
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE FWeaponDataTable GetWeaponData() const { return WeaponData; }
 
-	UFUNCTION(BlueprintCallable)
-	FORCEINLINE bool GetIsBlocking() const { return bIsBlocking; }
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE int32 GetComboStreak() const { return ComboStreak; }
 	FORCEINLINE bool GetIsInCombo() const { return bAttackWindowOpen; }
 	FORCEINLINE bool GetCanParry() const { return bCanParry; }
-	FORCEINLINE bool GetIsArmingHeavy() const { return bIsArmingHeavy; }
-	FORCEINLINE UDidItHitActorComponent* GetTraceComponent() const { return TraceComponent; }
 
 	UFUNCTION(BlueprintCallable)
 	void SetOwnerCharacter(ABasePlayerCharacter* NewOwner);

@@ -331,6 +331,8 @@ protected:
 
 	#pragma endregion
 
+	virtual void ProcessHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh) override;
+
 	#pragma region Cosmetic Hits
 	//Handle cosmetic body hit
 	virtual void HandleCosmeticBodyHit(const FHitResult& Hit, const FVector& WeaponLocation, const class AWOGBaseWeapon* InstigatorWeapon) override;

@@ -31,6 +31,11 @@ AWOGBaseCharacter::AWOGBaseCharacter()
 
 	AttributeSet = CreateDefaultSubobject<UWOGAttributeSetBase>(TEXT("AttributeSet"));
 
+	CombatManager = CreateDefaultSubobject<UAGR_CombatManager>(TEXT("CombatManager"));
+	CombatManager->SetIsReplicated(true);
+	CombatManager->OnStartAttack.AddDynamic(this, &ThisClass::OnStartAttack);
+	CombatManager->OnAttackHitEvent.AddDynamic(this, &ThisClass::OnAttackHit);
+
 	SpeedRequiredForLeap = 750.f;
 }
 
@@ -149,6 +154,22 @@ void AWOGBaseCharacter::OnMaxMovementSpeedAttributeChanged(const FOnAttributeCha
 	{
 		GetCharacterMovement()->MaxWalkSpeed = Data.NewValue;
 	}
+}
+
+void AWOGBaseCharacter::OnStartAttack()
+{
+	HitActorsToIgnore.Empty();
+}
+
+void AWOGBaseCharacter::OnAttackHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh)
+{
+	//Handle early returns
+	if (!HasAuthority()  || !Hit.bBlockingHit || !Hit.GetActor()) return;
+	if (HitActorsToIgnore.Contains(Hit.GetActor())) return;
+
+	HitActorsToIgnore.AddUnique(Hit.GetActor());
+	
+	ProcessHit(Hit, WeaponMesh);
 }
 
 void AWOGBaseCharacter::Server_SetCharacterState_Implementation(ECharacterState NewState, AController* InstigatedBy)
