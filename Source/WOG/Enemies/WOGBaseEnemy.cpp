@@ -66,7 +66,7 @@ void AWOGBaseEnemy::Multicast_Elim_Implementation(bool bPlayerLeftGame)
 	GetMesh()->SetAllBodiesSimulatePhysics(true);
 	GetCharacterMovement()->DisableMovement();
 	GetCharacterMovement()->StopMovementImmediately();
-	FVector ImpulseDirection = LastHitDirection.GetSafeNormal() * 45000.f;
+	FVector ImpulseDirection = LastHitDirection.GetSafeNormal() * -45000.f;
 	GetMesh()->AddImpulse(ImpulseDirection);
 	LockOnTarget->ClearTargetManual();
 	TargetAttractor->bCanBeCaptured = false;
@@ -98,10 +98,6 @@ void AWOGBaseEnemy::PlayHitReactMontage(FName Section)
 }
 
 void AWOGBaseEnemy::HandleCosmeticBlock(const AWOGBaseWeapon* InstigatorWeapon)
-{
-}
-
-void AWOGBaseEnemy::HandleCosmeticWeaponClash()
 {
 }
 

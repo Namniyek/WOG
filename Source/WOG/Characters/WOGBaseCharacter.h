@@ -15,6 +15,7 @@ class UWOGAbilitySystemComponent;
 class UWOGAttributeSetBase;
 class UGameplayEffect;
 class UAbilitySystemComponent;
+class AWOGGameMode;
 
 UCLASS()
 class WOG_API AWOGBaseCharacter : public ACharacter, public IAttributesInterface, public IAbilitySystemInterface
@@ -60,8 +61,6 @@ protected:
 
 	#pragma endregion
 
-
-
 	#pragma region  Character State
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly)
 	bool bIsTargeting;
@@ -77,7 +76,6 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 	virtual void HandleStateElimmed(AController* InstigatedBy = nullptr) { /*TO-BE OVERRIDEN IN CHILDREN*/ };
-	virtual void HandleStateAttacking() { /*TO-BE OVERRIDEN IN CHILDREN*/ };
 	virtual void HandleStateStaggered() { /*TO-BE OVERRIDEN IN CHILDREN*/ };
 
 	#pragma endregion
@@ -93,17 +91,23 @@ protected:
 	#pragma region Interfaces functions
 
 	virtual void BroadcastHit_Implementation(AActor* AgressorActor, const FHitResult& Hit, const float& DamageToApply, AActor* InstigatorWeapon) override {/*To be overriden in Children*/};
+
+public:
+	UFUNCTION(BlueprintPure)
+	UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+
 	#pragma endregion
 
 	#pragma region Animation Variables
 
+protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setup|Animations")
 	float SpeedRequiredForLeap;
 
 	#pragma endregion
 
 	UPROPERTY()
-	TObjectPtr<class AWOGGameMode> WOGGameMode;
+	TObjectPtr<AWOGGameMode> WOGGameMode;
 
 	bool IsHitFrontal(const float& AngleTolerance, const AActor* Victim, const AActor* Agressor);
 	UFUNCTION(NetMulticast, reliable)
@@ -112,15 +116,14 @@ protected:
 	#pragma region Cosmetic Hits
 	//Handle cosmetic body hit
 	virtual void HandleCosmeticBodyHit(const FHitResult& Hit, const FVector& WeaponLocation, const AWOGBaseWeapon* InstigatorWeapon);
+
+	UFUNCTION(BlueprintPure)
 	FName CalculateHitDirection(const FHitResult& Hit, const FVector& WeaponLocation);
 	virtual void PlayHitReactMontage(FName Section);
 	FVector LastHitDirection;
 
 	//Handle cosmetic block
 	virtual void HandleCosmeticBlock(const AWOGBaseWeapon* InstigatorWeapon);
-
-	//Handle cosmetic weapon clash
-	virtual void HandleCosmeticWeaponClash();
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setup|Animations")
 	TObjectPtr<class UAnimMontage> UnarmedHurtMontage;
@@ -134,9 +137,6 @@ public:
 	virtual void Elim(bool bPlayerLeftGame);
 
 	bool HasMatchingGameplayTag(FGameplayTag TagToCheck) const;
-
-	UFUNCTION(BlueprintPure)
-	UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
 	UFUNCTION(Server, reliable, BlueprintCallable)
 	void Server_SetCharacterState(ECharacterState NewState, AController* InstigatedBy = nullptr);

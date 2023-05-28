@@ -164,7 +164,7 @@ void AWOGBaseCharacter::OnStartAttack()
 void AWOGBaseCharacter::OnAttackHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh)
 {
 	//Handle early returns
-	if (!HasAuthority()  || !Hit.bBlockingHit || !Hit.GetActor()) return;
+	if (!Hit.bBlockingHit || !Hit.GetActor()) return;
 	if (HitActorsToIgnore.Contains(Hit.GetActor())) return;
 
 	HitActorsToIgnore.AddUnique(Hit.GetActor());
@@ -192,9 +192,6 @@ void AWOGBaseCharacter::SetCharacterState(ECharacterState NewState, AController*
 
 	switch (CharacterState)
 	{
-	case ECharacterState::ECS_Attacking:
-		HandleStateAttacking();
-		break;
 	case ECharacterState::ECS_Staggered:
 		HandleStateStaggered();
 		break;
@@ -215,6 +212,8 @@ bool AWOGBaseCharacter::IsHitFrontal(const float& AngleTolerance, const AActor* 
 
 void AWOGBaseCharacter::Multicast_HandleCosmeticHit_Implementation(const ECosmeticHit& HitType, const FHitResult& Hit, const FVector& WeaponLocation, const AWOGBaseWeapon* InstigatorWeapon)
 {
+	//TO-DO rework the cosmetic hit using the GAS.
+
 	switch (HitType)
 	{
 	case ECosmeticHit::ECH_BodyHit:
@@ -222,9 +221,6 @@ void AWOGBaseCharacter::Multicast_HandleCosmeticHit_Implementation(const ECosmet
 		break;
 	case ECosmeticHit::ECH_BlockingWeapon:
 		HandleCosmeticBlock(InstigatorWeapon);
-		break;
-	case ECosmeticHit::ECH_AttackingWeapon:
-		HandleCosmeticWeaponClash();
 		break;
 	}
 }
@@ -238,6 +234,7 @@ FName AWOGBaseCharacter::CalculateHitDirection(const FHitResult& Hit, const FVec
 {
 	// Get the location of the impact point
 	FVector ImpactPoint = Hit.Location;
+	LastHitDirection = Hit.Normal;
 
 	FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(ImpactPoint, WeaponLocation);
 	FRotator DeltaRotator = UKismetMathLibrary::NormalizedDeltaRotator(GetActorRotation(), LookAtRotation);
@@ -279,11 +276,6 @@ void AWOGBaseCharacter::PlayHitReactMontage(FName Section)
 }
 
 void AWOGBaseCharacter::HandleCosmeticBlock(const AWOGBaseWeapon* InstigatorWeapon)
-{
-	//To be overriden in Children
-}
-
-void AWOGBaseCharacter::HandleCosmeticWeaponClash()
 {
 	//To be overriden in Children
 }

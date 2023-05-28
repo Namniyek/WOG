@@ -6,7 +6,6 @@
 #include "WOG/Weapons/WOGBaseWeapon.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundCue.h"
-#include "DidItHitActorComponent.h"
 #include "Libraries/WOGBlueprintLibrary.h"
 #include "Data/AGRLibrary.h"
 
@@ -54,7 +53,8 @@ void UWOGAnimNotifyAttackSwing::NotifyEnd(USkeletalMeshComponent* MeshComp, UAni
 
 void UWOGAnimNotifyAttackSwing::StartTrace(AActor* Owner)
 {
-	if (!Owner || !Owner->HasAuthority()) return;
+	if (!Owner) return;
+	if (!OwnerCharacter || (!OwnerCharacter->HasAuthority() && !OwnerCharacter->IsLocallyControlled())) return;
 
 	UAGR_CombatManager* CombatManager = UAGRLibrary::GetCombatManager(Owner);
 	if (CombatManager)
@@ -65,7 +65,8 @@ void UWOGAnimNotifyAttackSwing::StartTrace(AActor* Owner)
 
 void UWOGAnimNotifyAttackSwing::EndTrace(AActor* Owner)
 {
-	if (!Owner || !Owner->HasAuthority()) return;
+	if (!Owner) return;
+	if (!OwnerCharacter || (!OwnerCharacter->HasAuthority() && !OwnerCharacter->IsLocallyControlled())) return;
 
 	UAGR_CombatManager* CombatManager = UAGRLibrary::GetCombatManager(Owner);
 	if (CombatManager)

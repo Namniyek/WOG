@@ -6,7 +6,6 @@
 #include "Net/UnrealNetwork.h"
 #include "WOG/PlayerCharacter/BasePlayerCharacter.h"
 #include "WOG/Enemies/WOGBaseEnemy.h"
-#include "DidItHitActorComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundCue.h"
 #include "WOG/Interfaces/BuildingInterface.h"
@@ -50,7 +49,6 @@ void AWOGBaseWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AWOGBaseWeapon, OwnerCharacter);
-	DOREPLIFETIME(AWOGBaseWeapon, WeaponState);
 }
 
 void AWOGBaseWeapon::OnConstruction(const FTransform& Transform)
@@ -216,12 +214,13 @@ void AWOGBaseWeapon::OnWeaponPickedUp(UAGR_InventoryManager* Inventory)
 void AWOGBaseWeapon::OnWeaponEquip(AActor* User, FName SlotName)
 {
 	Multicast_OnWeaponEquip(User, SlotName);
-	SetTraceMeshes(SlotName, User);
 	UE_LOG(LogTemp, Display, TEXT("WeaponEquipped"));
 }
 
 void AWOGBaseWeapon::Multicast_OnWeaponEquip_Implementation(AActor* User, FName SlotName)
 {
+	SetTraceMeshes(SlotName, User);
+
 	if (SlotName == NAME_WeaponSlot_Primary)
 	{
 		AttachToHands();
@@ -244,58 +243,6 @@ void AWOGBaseWeapon::SetCanNotParry()
 	bCanParry = false;
 }
 
-void AWOGBaseWeapon::Server_SetWeaponState_Implementation(EWeaponState NewWeaponState)
-{
-	SetWeaponState(NewWeaponState);
-
-	switch (WeaponState)
-	{
-	case EWeaponState::EWS_Equipped:
-		AttachToHands();
-		break;
-	case EWeaponState::EWS_Stored:
-		AttachToBack();
-		break;
-	case EWeaponState::EWS_BeingEquipped:
-		break;
-	case EWeaponState::EWS_BeingStored:
-		break;
-	case EWeaponState::EWS_Dropped:
-		break;
-	case EWeaponState::EWS_AttackLight:
-		break;
-	case EWeaponState::EWS_AttackHeavy:
-		break;
-	default:
-		break;
-	}
-
-}
-
-
-
-void AWOGBaseWeapon::OnRep_WeaponStateChanged()
-{
-	switch (WeaponState)
-	{
-	case EWeaponState::EWS_Equipped:
-		AttachToHands();
-		break;
-	case EWeaponState::EWS_Stored:
-		AttachToBack();
-		break;
-	case EWeaponState::EWS_BeingEquipped:
-		break;
-	case EWeaponState::EWS_BeingStored:
-		break;
-	case EWeaponState::EWS_AttackHeavy:
-		AttackHeavy();
-		break;
-	default:
-		break;
-	}
-}
-
 void AWOGBaseWeapon::AttachToHands()
 {
 	if (!OwnerCharacter) return;
@@ -314,33 +261,18 @@ void AWOGBaseWeapon::AttachToBack()
 	MeshSecondary->AttachToComponent(OwnerCharacter->GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponData.BackSecondarySocket);
 }
 
-void AWOGBaseWeapon::FinishAttacking()
-{
-	//Server_SetWeaponState(EWeaponState::EWS_Equipped);
-	if (OwnerCharacter)
-	{
-		OwnerCharacter->Server_SetCharacterState(ECharacterState::ECS_Unnoccupied);
-	}
-}
-
 void AWOGBaseWeapon::AttackLight()
 {
 	if (!OwnerCharacter) return;
-	if (HasAuthority())
-	{
-		SetWeaponState(EWeaponState::EWS_AttackLight);
-		bAttackWindowOpen = false;
-	}
+
+	bAttackWindowOpen = false;
 }
 
 void AWOGBaseWeapon::AttackHeavy()
 {
 	if (!OwnerCharacter) return;
-	if (HasAuthority())
-	{
-		SetWeaponState(EWeaponState::EWS_AttackHeavy);
-		bAttackWindowOpen = false;
-	}
+
+	bAttackWindowOpen = false;
 
 	ComboStreak = 0;
 }
@@ -349,15 +281,13 @@ void AWOGBaseWeapon::Block()
 {
 	if (!OwnerCharacter || !HasAuthority()) return;
 
-	SetWeaponState(EWeaponState::EWS_Blocking);
 	bCanParry = true;
 	GetWorldTimerManager().SetTimer(ParryTimer, this, &ThisClass::SetCanNotParry, WeaponData.MaxParryThreshold);
 }
 
 void AWOGBaseWeapon::StopBlocking()
 {
-	if (!OwnerCharacter || !HasAuthority()) return;
-	SetWeaponState(EWeaponState::EWS_Equipped);
+	// Kept here just in case...
 }
 
 void AWOGBaseWeapon::SetTraceMeshes(const FName& Slot, AActor* OwnerActor)
@@ -381,61 +311,6 @@ void AWOGBaseWeapon::SetTraceMeshes(const FName& Slot, AActor* OwnerActor)
 	else
 	{
 		CombatManager->ClearAllMeshes();
-	}
-}
-
-void AWOGBaseWeapon::HitDetected(FHitResult Hit)
-{
-	if (!Hit.bBlockingHit || !Hit.GetActor()) return;
-
-	float DamageToApply = 0.f;
-	switch (WeaponState)
-	{
-	case EWeaponState::EWS_AttackLight:
-		DamageToApply = WeaponData.BaseDamage + (WeaponData.BaseDamage * WeaponData.DamageMultiplier) + (WeaponData.BaseDamage * (ComboStreak * WeaponData.ComboDamageMultiplier));
-		break;
-	case EWeaponState::EWS_AttackHeavy:
-		DamageToApply = WeaponData.BaseDamage + (WeaponData.BaseDamage * WeaponData.DamageMultiplier) + (WeaponData.BaseDamage * WeaponData.HeavyDamageMultiplier);
-		break;
-	}
-
-	TObjectPtr<IBuildingInterface> BuildInterface = Cast<IBuildingInterface>(Hit.GetActor());
-	
-	if (BuildInterface)
-	{
-		if (HitActorsToIgnore.Contains(Hit.GetActor()))
-		{
-			//Build already hit
-			return;
-		}
-
-		HitActorsToIgnore.AddUnique(Hit.GetActor());
-		BuildInterface->Execute_DealDamage(Hit.GetActor(), DamageToApply);
-		UE_LOG(LogTemp, Warning, TEXT("Build damaged with %f"), DamageToApply);
-		return;
-
-	}
-
-	TObjectPtr<AActor> HitActor;
-	if (Hit.GetActor()->GetClass()->IsChildOf<AWOGBaseCharacter>())
-	{
-		HitActor = Hit.GetActor();
-	}
-	else
-	{
-		if (Hit.GetActor()->GetOwner() && Hit.GetActor()->GetOwner()->GetClass()->IsChildOf<AWOGBaseCharacter>())
-		{
-			HitActor = Hit.GetActor()->GetOwner();
-		}
-	}
-
-	if (!HitActor || HitActorsToIgnore.Contains(HitActor)) return;
-	HitActorsToIgnore.AddUnique(HitActor);
-
-	TObjectPtr<IAttributesInterface> AttributesInterface = Cast<IAttributesInterface>(HitActor);
-	if (AttributesInterface)
-	{
-		AttributesInterface->Execute_BroadcastHit(HitActor, OwnerCharacter, Hit, DamageToApply, this);
 	}
 }
 

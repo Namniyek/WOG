@@ -54,9 +54,6 @@ protected:
 
 	//Handle cosmetic block
 	virtual void HandleCosmeticBlock(const AWOGBaseWeapon* InstigatorWeapon) override;
-
-	//Handle cosmetic weapon clash
-	virtual void HandleCosmeticWeaponClash() override;
 	#pragma endregion
 
 private:

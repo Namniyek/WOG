@@ -8,7 +8,6 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "WOG/ActorComponents/WOGBuildComponent.h"
-#include "WOG/ActorComponents/WOGAbilitiesComponent.h"
 #include "AbilitySystemComponent.h"
 #include "Types/WOGGameplayTags.h"
 #include "Components/AGR_EquipmentManager.h"
@@ -107,27 +106,12 @@ void AWOGDefender::AbilitiesButtonPressed(const FInputActionValue& Value)
 	{
 		//Button 4/Right pressed
 
-		if (!Abilities)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Abilities component invalid"));
-			return;
-		}
-
-		Abilities->Server_EquipAbility(1);
 
 	}
 	if (AbilitiesVector.X < 0)
 	{
 		//Button 1/Left pressed
-		if (!Abilities)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Abilities component invalid"));
-			return;
-		}
-		if (Abilities->EquippedAbility)
-		{
-			Abilities->Server_UnequipAbility();
-		}
+
 
 		if (!EquipmentManager)
 		{
@@ -160,15 +144,7 @@ void AWOGDefender::AbilitiesButtonPressed(const FInputActionValue& Value)
 	if (AbilitiesVector.Y > 0)
 	{
 		//Button 2/Up pressed
-		if (!Abilities)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Abilities component invalid"));
-			return;
-		}
-		if (Abilities->EquippedAbility)
-		{
-			Abilities->Server_UnequipAbility();
-		}
+
 
 		if (!EquipmentManager)
 		{
@@ -202,12 +178,5 @@ void AWOGDefender::AbilitiesButtonPressed(const FInputActionValue& Value)
 	{
 		//Button 3/Down pressed
 
-		if (!Abilities)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Abilities component invalid"));
-			return;
-		}
-
-		Abilities->Server_EquipAbility(0);
 	}
 }

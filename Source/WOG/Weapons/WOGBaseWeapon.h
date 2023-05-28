@@ -14,7 +14,6 @@
 class UAnimMontage;
 class USoundCue;
 class ABasePlayerCharacter;
-class UDidItHitActorComponent;
 class UGameplayEffect;
 class UAGR_ItemComponent;
 class USphereComponent;
@@ -26,100 +25,85 @@ struct FWeaponDataTable : public FTableRowBase
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Data")
-	FName WeaponName;
+	FName WeaponName = FName("");
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Data")
-	bool bIsAttacker;
+	bool bIsAttacker = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Data")
-	EWeaponType WeaponType;
+	EWeaponType WeaponType = EWeaponType::EWT_Relax;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Data")
-	UStaticMesh* MeshMain;
+	UStaticMesh* MeshMain = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Data")
-	UStaticMesh* MeshSecondary;
+	UStaticMesh* MeshSecondary = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Data")
-	FName MeshMainSocket;
+	FName MeshMainSocket = FName("");
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Data")
-	FName MeshSecondarySocket;
+	FName MeshSecondarySocket = FName("");
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Data")
-	FName BackMainSocket;
+	FName BackMainSocket = FName("");
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Data")
-	FName BackSecondarySocket;
+	FName BackSecondarySocket = FName("");
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Data")
-	FGameplayTag WeaponTag;
+	FGameplayTag WeaponTag = FGameplayTag();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Data")
-	FGameplayTag WeaponPoseTag;
+	FGameplayTag WeaponPoseTag = FGameplayTag();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animations")
-	UAnimMontage* AttackMontage;
+	UAnimMontage* AttackMontage = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animations")
-	UAnimMontage* DodgeMontage;
+	UAnimMontage* DodgeMontage = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animations")
-	UAnimMontage* BlockMontage;
+	UAnimMontage* BlockMontage = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animations")
-	UAnimMontage* EquipMontage;
+	UAnimMontage* EquipMontage = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animations")
-	UAnimMontage* HurtMontage;
+	UAnimMontage* HurtMontage = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-	float BaseDamage;
+	float BaseDamage = 0.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-	float HeavyDamageMultiplier;
+	float HeavyDamageMultiplier = 0.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-	float DamageMultiplier;
+	float DamageMultiplier = 0.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-	float ComboDamageMultiplier;
+	float ComboDamageMultiplier = 0.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-	int32 MaxComboStreak;
+	int32 MaxComboStreak = 0;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-	float MaxParryThreshold;
+	float MaxParryThreshold = 0.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
-	USoundCue* SwingSound;
+	USoundCue* SwingSound = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
-	USoundCue* HitSound;
+	USoundCue* HitSound = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
-	USoundCue* BlockSound;
+	USoundCue* BlockSound = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Data")
-	TSubclassOf<UGameplayEffect> WeaponDamageEffect;
+	TSubclassOf<UGameplayEffect> WeaponDamageEffect = nullptr;
 
 	//TO-DO SFX particles for weapon trail && hit FX
 
-};
-
-UENUM(BlueprintType)
-enum class EWeaponState : uint8
-{
-	EWS_Equipped UMETA(DisplayName = "Equipped"),
-	EWS_Stored UMETA(DisplayName = "Stored"),
-	EWS_BeingEquipped UMETA(DisplayName = "Being Equipped"),
-	EWS_BeingStored UMETA(DisplayName = "Being Stored"),
-	EWS_Dropped UMETA(DisplayName = "Dropped"),
-	EWS_AttackLight UMETA(DisplayName = "AttackLight"),
-	EWS_AttackHeavy UMETA(DisplayName = "AttackHeavy"),
-	EWS_Blocking UMETA(DisplayName = "Blocking"),
-
-	EWS_MAX UMETA(DisplayName = "DefaultMAX")
 };
 
 UCLASS()
@@ -201,14 +185,6 @@ private:
 
 	void SetCanNotParry();
 
-	UPROPERTY(ReplicatedUsing = OnRep_WeaponStateChanged, VisibleAnywhere)
-	EWeaponState WeaponState;
-
-	UFUNCTION()
-	void OnRep_WeaponStateChanged();
-
-	FORCEINLINE void SetWeaponState(EWeaponState NewWeaponState) { WeaponState = NewWeaponState; }
-
 	TArray<AActor*> HitActorsToIgnore;
 
 public:	
@@ -216,15 +192,6 @@ public:
 	void AttachToBack();
 	UFUNCTION(BlueprintCallable)
 	void AttachToHands();
-
-	UFUNCTION(BlueprintCallable)
-	void FinishAttacking();
-
-	UFUNCTION(Server, reliable, BlueprintCallable)
-	void Server_SetWeaponState(EWeaponState NewWeaponState);
-
-	UFUNCTION()
-	void HitDetected(FHitResult Hit);
 
 	UFUNCTION(BlueprintCallable)
 	void IncreaseCombo();
@@ -235,8 +202,6 @@ public:
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite)
 	TObjectPtr<ABasePlayerCharacter> OwnerCharacter;
 
-	UFUNCTION(BlueprintPure)
-	FORCEINLINE EWeaponState GetWeaponState() const { return WeaponState; }
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE FWeaponDataTable GetWeaponData() const { return WeaponData; }
 

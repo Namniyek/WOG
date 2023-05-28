@@ -56,7 +56,7 @@ void AWOGGameMode::HandleStartingPlayer(APlayerController* NewPlayer)
 			continue;
 		}
 
-		if (i <= 0)
+		if (i <= 2)
 		{
 			FActorSpawnParameters SpawnParams;
 			SpawnParams.Owner = NewPlayer;
@@ -115,7 +115,7 @@ void AWOGGameMode::CreateRandomCharacter(APlayerController* NewPlayer)
 			UPlayerProfileSaveGame* SaveGameObject = Cast<UPlayerProfileSaveGame>(UGameplayStatics::CreateSaveGameObject(UPlayerProfileSaveGame::StaticClass()));
 			if (SaveGameObject)
 			{
-				SaveGameObject->PlayerProfile.bIsAttacker = (i>0);
+				SaveGameObject->PlayerProfile.bIsAttacker = (i>2);
 				SaveGameObject->PlayerProfile.bIsMale = true; //FMath::RandBool();
 				SaveGameObject->PlayerProfile.BodyPaintColor = "0";
 				SaveGameObject->PlayerProfile.CharacterIndex = "1";

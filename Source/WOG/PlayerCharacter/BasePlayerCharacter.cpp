@@ -20,7 +20,6 @@
 #include "Kismet/GameplayStatics.h"
 #include "AnimInstance/WOGBaseAnimInstance.h"
 #include "Sound/SoundCue.h"
-#include "ActorComponents/WOGAbilitiesComponent.h"
 #include "ActorComponents/WOGAbilitySystemComponent.h"
 #include "GameplayEffectTypes.h"
 #include "AbilitySystemBlueprintLibrary.h"
@@ -54,8 +53,6 @@ ABasePlayerCharacter::ABasePlayerCharacter()
 	LockOnTarget->SetIsReplicated(true);
 	TargetAttractor = CreateDefaultSubobject<UTargetingHelperComponent>(TEXT("TargetAttractor"));
 	TargetAttractor->SetIsReplicated(true);
-	Abilities = CreateDefaultSubobject<UWOGAbilitiesComponent>(TEXT("AbilitiesComponent"));
-	Abilities->SetIsReplicated(true);
 	EquipmentManager = CreateDefaultSubobject<UAGR_EquipmentManager>(TEXT("EquipmentManager"));
 	EquipmentManager->SetIsReplicated(true);
 	InventoryManager = CreateDefaultSubobject<UAGR_InventoryManager>(TEXT("InventoryManager"));
@@ -211,7 +208,6 @@ void ABasePlayerCharacter::LookActionPressed(const FInputActionValue& Value)
 
 void ABasePlayerCharacter::JumpActionPressed(const FInputActionValue& Value)
 {
-	if (CharacterState == ECharacterState::ECS_Attacking) return;
 	if (CharacterState == ECharacterState::ECS_Staggered) return;
 
 	SendAbilityLocalInput(EWOGAbilityInputID::Jump);
@@ -261,15 +257,11 @@ void ABasePlayerCharacter::PrimaryLightButtonPressed(const FInputActionValue& Va
 	if (HasMatchingGameplayTag(TAG_State_Dodging)) return;
 	if (CharacterState == ECharacterState::ECS_Staggered) return;
 
-	if (!EquipmentManager || !Abilities) return;
+	if (!EquipmentManager) return;
 	AActor* OutItem;
 	if (EquipmentManager->GetItemInSlot(NAME_WeaponSlot_Primary, OutItem))
 	{
 		SendAbilityLocalInput(EWOGAbilityInputID::AttackLight);
-	}
-	if (Abilities->EquippedAbility)
-	{
-		Abilities->UseAbilityActionPressed();
 	}
 
 	if (AbilitySystemComponent.Get())
@@ -330,7 +322,6 @@ void ABasePlayerCharacter::SecondaryButtonPressed(const FInputActionValue& Value
 	if (!EquipmentManager->GetItemInSlot(NAME_WeaponSlot_Primary, OutItem) || !OutItem) return;
 
 	SendAbilityLocalInput(EWOGAbilityInputID::Block);
-	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Purple, FString("StartBlocking"));
 }
 
 void ABasePlayerCharacter::SecondaryButtonReleased(const FInputActionValue& Value)
@@ -645,11 +636,6 @@ void ABasePlayerCharacter::HandleStateElimmed(AController* InstigatedBy)
 	WOGGameMode->PlayerEliminated(this, Victim, Attacker);
 }
 
-void ABasePlayerCharacter::HandleStateAttacking()
-{
-	//TO-DO What happens when character attacks. 
-}
-
 void ABasePlayerCharacter::HandleStateStaggered()
 {
 	UAnimInstance* CharacterAnimInstance = GetMesh()->GetAnimInstance();
@@ -660,66 +646,6 @@ void ABasePlayerCharacter::HandleStateStaggered()
 	{
 		CharacterAnimInstance->Montage_Play(EquippedWeapon->GetWeaponData().BlockMontage, 1.f);
 		CharacterAnimInstance->Montage_JumpToSection(FName("Knockback"));
-	}
-}
-
-void ABasePlayerCharacter::BroadcastHit_Implementation(AActor* AgressorActor, const FHitResult& Hit, const float& DamageToApply, AActor* InstigatorWeapon)
-{
-	if (HasMatchingGameplayTag(TAG_State_Dead)) return;
-	if (HasMatchingGameplayTag(TAG_State_Dodging)) return;
-
-	if (HasMatchingGameplayTag(TAG_State_Weapon_Block))
-	{
-		if (IsHitFrontal(60.f, this, AgressorActor))
-		{
-			AWOGBaseWeapon* EquippedWeapon = UWOGBlueprintLibrary::GetEquippedWeapon(this);
-			if (EquippedWeapon && EquippedWeapon->GetCanParry())
-			{
-				TObjectPtr<AWOGBaseCharacter> AgressorCharacter = Cast<AWOGBaseCharacter>(AgressorActor);
-				if (AgressorCharacter)
-				{
-					AgressorCharacter->Server_SetCharacterState(ECharacterState::ECS_Staggered);
-				}
-			}
-
-			TObjectPtr<AWOGBaseWeapon> Weapon = Cast<AWOGBaseWeapon>(InstigatorWeapon);
-			Multicast_HandleCosmeticHit(ECosmeticHit::ECH_BlockingWeapon, Hit, InstigatorWeapon->GetActorLocation(), Weapon);
-			return;
-		}
-	}
-	if (HasMatchingGameplayTag(TAG_State_Weapon_AttackLight))
-	{
-		if (IsHitFrontal(60.f, this, AgressorActor))
-		{
-			TObjectPtr<AWOGBaseWeapon> Weapon = Cast<AWOGBaseWeapon>(InstigatorWeapon);
-			TObjectPtr<ABasePlayerCharacter> Agressor = Cast<ABasePlayerCharacter>(AgressorActor);
-
-			if (Agressor)
-			{
-				Agressor->Server_SetCharacterState(ECharacterState::ECS_Staggered);
-			}
-			Server_SetCharacterState(ECharacterState::ECS_Staggered);
-			Multicast_HandleCosmeticHit(ECosmeticHit::ECH_AttackingWeapon, Hit, InstigatorWeapon->GetActorLocation(), Weapon);
-			return;
-		}
-	}
-
-	TObjectPtr<AWOGBaseWeapon> Weapon = Cast<AWOGBaseWeapon>(InstigatorWeapon);
-	if (Weapon)
-	{
-		Multicast_HandleCosmeticHit(ECosmeticHit::ECH_BodyHit, Hit, InstigatorWeapon->GetActorLocation(), Weapon);
-	}
-
-	TObjectPtr<AWOGBaseCharacter> AgressorCharacter = Cast<AWOGBaseCharacter>(AgressorActor);
-	if (AgressorCharacter && AbilitySystemComponent.Get() && Weapon && Weapon->GetWeaponData().WeaponDamageEffect)
-	{
-		FGameplayEffectContextHandle DamageContext = AbilitySystemComponent.Get()->MakeEffectContext();
-		DamageContext.AddInstigator(AgressorCharacter, Weapon);
-		DamageContext.AddHitResult(Hit);
-
-		FGameplayEffectSpecHandle OutSpec = AbilitySystemComponent->MakeOutgoingSpec(Weapon->GetWeaponData().WeaponDamageEffect, 1, DamageContext);
-		UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(OutSpec, FGameplayTag::RequestGameplayTag(TEXT("Damage.Attribute.Health")), -DamageToApply);
-		AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*OutSpec.Data);
 	}
 }
 
@@ -755,9 +681,9 @@ void ABasePlayerCharacter::ProcessHit(FHitResult Hit, UPrimitiveComponent* Weapo
 			(AttackerWeapon->GetWeaponData().BaseDamage * AttackerWeapon->GetWeaponData().HeavyDamageMultiplier);
 	}
 
-	//Check if we hit build
+	//Check if we hit build and apply build damage
 	TObjectPtr<IBuildingInterface> BuildInterface = Cast<IBuildingInterface>(Hit.GetActor());
-	if (BuildInterface)
+	if (BuildInterface && HasAuthority())
 	{
 		BuildInterface->Execute_DealDamage(Hit.GetActor(), DamageToApply);
 		UE_LOG(LogTemp, Warning, TEXT("Build damaged with %f"), DamageToApply);
@@ -773,12 +699,94 @@ void ABasePlayerCharacter::ProcessHit(FHitResult Hit, UPrimitiveComponent* Weapo
 	}
 }
 
+void ABasePlayerCharacter::BroadcastHit_Implementation(AActor* AgressorActor, const FHitResult& Hit, const float& DamageToApply, AActor* InstigatorWeapon)
+{
+	if (HasMatchingGameplayTag(TAG_State_Dead)) return;
+	if (HasMatchingGameplayTag(TAG_State_Dodging)) return;
+
+	//Handle block hits && stagger && parry
+	if (HasMatchingGameplayTag(TAG_State_Weapon_Block))
+	{
+		if (IsHitFrontal(60.f, this, AgressorActor))
+		{
+			AWOGBaseWeapon* EquippedWeapon = UWOGBlueprintLibrary::GetEquippedWeapon(this);
+			if (EquippedWeapon && EquippedWeapon->GetCanParry())
+			{
+				if (AgressorActor)
+				{
+					FGameplayEventData EventPayload;
+					EventPayload.EventTag = TAG_Event_Debuff_Stagger;
+					UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(AgressorActor, TAG_Event_Debuff_Stagger, EventPayload);
+					UE_LOG(LogTemp, Warning, TEXT("Staggered"));
+
+					AWOGBaseCharacter* AgressorCharacter = Cast<AWOGBaseCharacter>(AgressorActor);
+					if (AgressorCharacter && AgressorCharacter->HasMatchingGameplayTag(TAG_State_Weapon_AttackHeavy))
+					{
+						FGameplayEventData EventKnockbackPayload;
+						UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Weapon_Block_Knockback, EventKnockbackPayload);
+						UE_LOG(LogTemp, Warning, TEXT("Knockback"));
+						return;
+					}
+				}
+			}
+
+			FGameplayEventData EventPayload;
+			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Weapon_Block_Impact, EventPayload);
+			UE_LOG(LogTemp, Warning, TEXT("Impact"));
+			return;
+		}
+	}
+
+	// Handle weapon clashes when both players are attacking at the same time
+	if (HasMatchingGameplayTag(TAG_State_Weapon_AttackLight))
+	{
+		if (IsHitFrontal(50.f, this, AgressorActor))
+		{
+			if (AgressorActor)
+			{
+				FGameplayEventData EventPayload;
+				EventPayload.EventTag = TAG_Event_Debuff_Stagger;
+				UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(AgressorActor, TAG_Event_Debuff_Stagger, EventPayload);
+				UE_LOG(LogTemp, Warning, TEXT("Agressor Staggered"));
+			}
+
+			FGameplayEventData EventPayload;
+			EventPayload.EventTag = TAG_Event_Debuff_Stagger;
+			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Debuff_Stagger, EventPayload);
+			UE_LOG(LogTemp, Warning, TEXT("Victim Staggered"));
+			return;
+		}
+	}
+
+
+	//TO-DO refactor this multicast into GAS ability
+	TObjectPtr<AWOGBaseWeapon> Weapon = Cast<AWOGBaseWeapon>(InstigatorWeapon);
+	if (Weapon)
+	{
+		Multicast_HandleCosmeticHit(ECosmeticHit::ECH_BodyHit, Hit, InstigatorWeapon->GetActorLocation(), Weapon);
+	}
+
+	//Apply damage to character if authority
+	TObjectPtr<AWOGBaseCharacter> AgressorCharacter = Cast<AWOGBaseCharacter>(AgressorActor);
+	if (HasAuthority() && AgressorCharacter && AbilitySystemComponent.Get() && Weapon && Weapon->GetWeaponData().WeaponDamageEffect)
+	{
+		FGameplayEffectContextHandle DamageContext = AbilitySystemComponent.Get()->MakeEffectContext();
+		DamageContext.AddInstigator(AgressorCharacter, Weapon);
+		DamageContext.AddHitResult(Hit);
+
+		FGameplayEffectSpecHandle OutSpec = AbilitySystemComponent->MakeOutgoingSpec(Weapon->GetWeaponData().WeaponDamageEffect, 1, DamageContext);
+		UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(OutSpec, FGameplayTag::RequestGameplayTag(TEXT("Damage.Attribute.Health")), -DamageToApply);
+		AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*OutSpec.Data);
+	}
+}
+
 void ABasePlayerCharacter::HandleCosmeticBodyHit(const FHitResult& Hit, const FVector& WeaponLocation, const AWOGBaseWeapon* InstigatorWeapon)
 {
-	FName HitDirection = CalculateHitDirection(Hit, InstigatorWeapon->OwnerCharacter->GetActorLocation());
+	FName HitDirection = CalculateHitDirection(Hit, InstigatorWeapon->GetOwnerCharacter()->GetActorLocation());
 
-	if (IsHitFrontal(60.f, this, InstigatorWeapon) && InstigatorWeapon->GetWeaponState() == EWeaponState::EWS_AttackHeavy)
+	if (IsHitFrontal(60.f, this, InstigatorWeapon) && InstigatorWeapon->GetOwnerCharacter()->HasMatchingGameplayTag(TAG_State_Weapon_AttackHeavy))
 	{
+		//TO-DO Apply proper KO effect here through GAS
 		PlayHitReactMontage(FName("KO"));
 	}
 	else
@@ -827,22 +835,19 @@ void ABasePlayerCharacter::HandleCosmeticBlock(const AWOGBaseWeapon* InstigatorW
 		UAnimInstance* CharacterAnimInstance = GetMesh()->GetAnimInstance();
 		if (!CharacterAnimInstance) return;
 
-		if(InstigatorWeapon && InstigatorWeapon->GetWeaponState()==EWeaponState::EWS_AttackLight)
+		if(InstigatorWeapon && InstigatorWeapon->GetOwnerCharacter() && InstigatorWeapon->GetOwnerCharacter()->HasMatchingGameplayTag(TAG_State_Weapon_AttackLight))
 		{
 			CharacterAnimInstance->Montage_Play(EquippedWeapon->GetWeaponData().BlockMontage, 1.f);
 			CharacterAnimInstance->Montage_JumpToSection(FName("Impact"));
 		}
-		else if (InstigatorWeapon && InstigatorWeapon->GetWeaponState() == EWeaponState::EWS_AttackHeavy)
+		else if (InstigatorWeapon && InstigatorWeapon->GetOwnerCharacter() && InstigatorWeapon->GetOwnerCharacter()->HasMatchingGameplayTag(TAG_State_Weapon_AttackHeavy))
 		{
-			Server_SetCharacterState(ECharacterState::ECS_Staggered);
+			FGameplayEventData EventPayload;
+			EventPayload.EventTag = TAG_Event_Debuff_Stagger;
+			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Debuff_Stagger, EventPayload);
+			UE_LOG(LogTemp, Warning, TEXT("Staggered"));
 		}
 	}
-}
-
-void ABasePlayerCharacter::HandleCosmeticWeaponClash()
-{
-
-	GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Blue, FString("Weapons Clashed!"));
 }
 
 void ABasePlayerCharacter::TargetLocked(UTargetingHelperComponent* Target, FName Socket)
@@ -892,7 +897,7 @@ void ABasePlayerCharacter::Multicast_Elim_Implementation(bool bPlayerLeftGame)
 	GetMesh()->SetAllBodiesSimulatePhysics(true);
 	GetCharacterMovement()->DisableMovement();
 	GetCharacterMovement()->StopMovementImmediately();
-	FVector ImpulseDirection = LastHitDirection.GetSafeNormal() * 30000.f;
+	FVector ImpulseDirection = LastHitDirection.GetSafeNormal() * -45000.f;
 	GetMesh()->AddImpulse(ImpulseDirection);
 	LockOnTarget->ClearTargetManual();
 	TargetAttractor->bCanBeCaptured = false;

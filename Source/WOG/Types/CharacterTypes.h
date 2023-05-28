@@ -10,7 +10,6 @@ enum class ECharacterState : uint8
 {
 	ECS_Unnoccupied UMETA(DisplayName = "Unnoccupied"),
 	ECS_Attacking UMETA(DisplayName = "Attacking"),
-	ECS_Blocking UMETA(DisplayName = "Blocking"),
 	ECS_Staggered UMETA(DisplayName = "Staggered"),
 
 	ECS_MAX UMETA(DisplayName = "DefaultMAX")
@@ -62,13 +61,13 @@ struct FCharacterAbilityData
 	GENERATED_USTRUCT_BODY();
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "GAS")
-	TArray<TSubclassOf<class UWOGGameplayAbilityBase>> Abilities;
+	TArray<TSubclassOf<class UWOGGameplayAbilityBase>> Abilities = { nullptr };
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "GAS")
-	TArray<TSubclassOf<class UGameplayEffect>> Effects;
+	TArray<TSubclassOf<class UGameplayEffect>> Effects = { nullptr };
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Inventory")
-	TArray<TSubclassOf<class AWOGBaseWeapon>> Weapons;
+	TArray<TSubclassOf<class AWOGBaseWeapon>> Weapons = { nullptr };
 };
 
 UENUM(BlueprintType)

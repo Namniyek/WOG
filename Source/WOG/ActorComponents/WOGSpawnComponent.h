@@ -18,26 +18,26 @@ struct FSpawnables : public FTableRowBase
 	GENERATED_BODY()
 public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Name"))
-	FText Name;
+	FText Name = FText();
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Icon"))
-	TObjectPtr<UTexture2D> Icon;
+	TObjectPtr<UTexture2D> Icon = nullptr;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Mesh", MakeStructureDefaultValue = "None"))
-	TObjectPtr<UStaticMesh> Mesh;
+	TObjectPtr<UStaticMesh> Mesh = nullptr;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Actor", MakeStructureDefaultValue = "None"))
-	TObjectPtr<UClass> Actor;
+	TObjectPtr<UClass> Actor = nullptr;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Health", MakeStructureDefaultValue = "0.000000"))
-	double MaxHealth;
+	double MaxHealth = 0.f;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Amount Units", MakeStructureDefaultValue = "1"))
-	int32 AmountUnits;
+	int32 AmountUnits = 0;
 
 	/**Capsule half height*/
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "HeightOffset", MakeStructureDefaultValue = "1"))
-	float HeightOffset;
+	float HeightOffset = 0.f;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Initial Setup")
 	FCharacterAbilityData DefaultAbilitiesAndEffects;

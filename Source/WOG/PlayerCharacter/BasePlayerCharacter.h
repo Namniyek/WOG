@@ -19,22 +19,22 @@ struct FMeshDataTables
 
 public:
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly)
-	class UDataTable* MaleBody;
+	class UDataTable* MaleBody = nullptr;
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly)
-	UDataTable* FemaleBody;
+	UDataTable* FemaleBody = nullptr;
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly)
-	UDataTable* PrimaryColors;
+	UDataTable* PrimaryColors = nullptr;
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly)
-	UDataTable* BodyPaintColor;
+	UDataTable* BodyPaintColor = nullptr;
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly)
-	UDataTable* SkinColor;
+	UDataTable* SkinColor = nullptr;
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly)
-	UDataTable* HairColor;
+	UDataTable* HairColor = nullptr;
 };
 
 USTRUCT(BlueprintType)
@@ -44,9 +44,9 @@ struct FMaterialColors : public FTableRowBase
 
 public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	FLinearColor ColorVector;
+	FLinearColor ColorVector = FLinearColor::Black;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	FLinearColor ColorVectorSec;
+	FLinearColor ColorVectorSec = FLinearColor::Black;
 };
 
 USTRUCT(BlueprintType)
@@ -56,55 +56,55 @@ struct FCharacterMesh : public FTableRowBase
 
 public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mesh")
-	USkeletalMesh* BaseMesh;
+	USkeletalMesh* BaseMesh = nullptr;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mesh")
-	USkeletalMesh* Head;
+	USkeletalMesh* Head = nullptr;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mesh")
-	USkeletalMesh* ArmUpperLeft;
+	USkeletalMesh* ArmUpperLeft = nullptr;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mesh")
-	USkeletalMesh* ArmUpperRight;
+	USkeletalMesh* ArmUpperRight = nullptr;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mesh")
-	USkeletalMesh* ArmLowerLeft;
+	USkeletalMesh* ArmLowerLeft = nullptr;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mesh")
-	USkeletalMesh* ArmLowerRight;
+	USkeletalMesh* ArmLowerRight = nullptr;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mesh")
-	USkeletalMesh* HandLeft;
+	USkeletalMesh* HandLeft = nullptr;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mesh")
-	USkeletalMesh* HandRight;
+	USkeletalMesh* HandRight = nullptr;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mesh")
-	USkeletalMesh* Torso;
+	USkeletalMesh* Torso = nullptr;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mesh")
-	USkeletalMesh* Hips;
+	USkeletalMesh* Hips = nullptr;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mesh")
-	USkeletalMesh* LegLeft;
+	USkeletalMesh* LegLeft = nullptr;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mesh")
-	USkeletalMesh* LegRight;
+	USkeletalMesh* LegRight = nullptr;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mesh")
-	USkeletalMesh* Beard;
+	USkeletalMesh* Beard = nullptr;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mesh")
-	USkeletalMesh* Eyebrows;
+	USkeletalMesh* Eyebrows = nullptr;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mesh")
-	USkeletalMesh* Hair;
+	USkeletalMesh* Hair = nullptr;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mesh")
-	USkeletalMesh* Helmet;
+	USkeletalMesh* Helmet = nullptr;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mesh")
-	USkeletalMesh* Ears;
+	USkeletalMesh* Ears = nullptr;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Animations")
-	TSubclassOf<UAnimInstance> AnimBP;
+	TSubclassOf<UAnimInstance> AnimBP = nullptr;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Animations")
-	TSubclassOf<UAnimInstance> AnimBPLobby;
+	TSubclassOf<UAnimInstance> AnimBPLobby = nullptr;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Animations")
-	UAnimMontage* RaiseHandMontage;
+	UAnimMontage* RaiseHandMontage = nullptr;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Animations")
-	UAnimMontage* UnarmedHurtMontage;
+	UAnimMontage* UnarmedHurtMontage = nullptr;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Animations")
-	UAnimMontage* DodgeMontage;
+	UAnimMontage* DodgeMontage = nullptr;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Animations")
-	USkeleton* Skeleton;
+	USkeleton* Skeleton = nullptr;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Animations")
-	UPhysicsAsset* PhysicsAsset;
+	UPhysicsAsset* PhysicsAsset = nullptr;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Initial Setup")
-	TSubclassOf<class AWOGBaseWeapon> DefaultWeapon;
+	TSubclassOf<class AWOGBaseWeapon> DefaultWeapon = nullptr;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Initial Setup")
 	FCharacterAbilityData DefaultAbilitiesAndEffects;
 };
@@ -120,7 +120,6 @@ class WOG_API ABasePlayerCharacter : public AWOGBaseCharacter
 public:
 	// Sets default values for this character's properties
 	ABasePlayerCharacter();
-	friend class UWOGAbilitiesComponent;
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void PossessedBy(AController* NewController) override;
@@ -302,7 +301,6 @@ public:
 
 protected:
 	virtual void HandleStateElimmed(AController* InstigatedBy = nullptr) override;
-	virtual void HandleStateAttacking() override;
 	virtual void HandleStateStaggered() override;
 
 	#pragma endregion
@@ -314,9 +312,6 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	class UTargetingHelperComponent* TargetAttractor;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<UWOGAbilitiesComponent> Abilities;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<class UAGR_EquipmentManager> EquipmentManager;
@@ -340,9 +335,6 @@ protected:
 
 	//Handle cosmetic block
 	virtual void HandleCosmeticBlock(const AWOGBaseWeapon* InstigatorWeapon) override;
-
-	//Handle cosmetic weapon clash
-	virtual void HandleCosmeticWeaponClash() override;
 	#pragma endregion
 
 	UFUNCTION()
