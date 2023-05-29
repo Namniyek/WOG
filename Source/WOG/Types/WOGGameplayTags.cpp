@@ -13,6 +13,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Movement_Sprint_Stop, "Event.Movement.Sprint.St
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Weapon_Block_Knockback, "Event.Weapon.Block.Knockback");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Weapon_Block_Impact, "Event.Weapon.Block.Impact");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Weapon_Block_Stop, "Event.Weapon.Block.Stop");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Weapon_Block_Parry, "Event.Weapon.Block.Parry");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Elim, "Event.Elim");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Weapon_HeavyAttackExecute, "Event.Weapon.HeavyAttack.Execute");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Weapon_HeavyAttackCancel, "Event.Weapon.HeavyAttack.Cancel");
