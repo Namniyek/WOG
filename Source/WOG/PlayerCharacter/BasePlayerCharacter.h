@@ -358,7 +358,6 @@ public:
 	FORCEINLINE USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 	FORCEINLINE ULockOnTargetComponent* GetLockOnTarget() const { return LockOnTarget; }
-	FORCEINLINE bool GetIsTargeting() const { return bIsTargeting; }
 	FORCEINLINE void SetOwnerPC(AWOGPlayerController* NewPC) { OwnerPC = NewPC; }
 	FORCEINLINE TObjectPtr<AWOGPlayerController> GetOwnerPC() { return OwnerPC; }
 	FORCEINLINE TObjectPtr<AActor>GetCurrentTarget() { return CurrentTarget; }

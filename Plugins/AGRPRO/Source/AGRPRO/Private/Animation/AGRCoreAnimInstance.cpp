@@ -1,7 +1,7 @@
 // Copyright 2021 Adam Grodzki All Rights Reserved.
 
 #include "Animation/AGRCoreAnimInstance.h"
-
+#include "Components/CapsuleComponent.h"
 #include "Data/AGRLibrary.h"
 #include "GameFramework/Character.h"
 #include "Kismet/KismetMathLibrary.h"
@@ -38,6 +38,7 @@ void UAGRCoreAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
     SetupLeaning();
     SetupAimOffset();
     SetupMovementStates();
+    UpdateMovementDirectionName();
 }
 
 void UAGRCoreAnimInstance::RecastOwnerComponents()
@@ -75,10 +76,15 @@ void UAGRCoreAnimInstance::SetMovementVectorsAndStates()
 {
     const FVector VelocityVector = PawnReference->GetVelocity();
     Velocity = VelocityVector.Size();
-    const FRotator Rotation = PawnReference->GetActorRotation();
+    Rotation = PawnReference->GetActorRotation();
+
+    FVector CapsuleAngularVelocity = OwningCharacter->GetCapsuleComponent()->GetPhysicsAngularVelocityInDegrees();
+    CurrentRotationRate = UKismetMathLibrary::MapRangeClamped(CapsuleAngularVelocity.Z, -360, 360, -1, 1);
 
     const FVector UnRotatedVelocityVector = Rotation.UnrotateVector(VelocityVector);
 
+    GroundVelocityLastFrame = GroundVelocity;
+    GroundVelocity = VelocityVector.Size2D();
     ForwardVelocity = UnRotatedVelocityVector.X;
     StrafeVelocity = UnRotatedVelocityVector.Y;
     UpVelocity = UnRotatedVelocityVector.Z;
@@ -93,6 +99,7 @@ void UAGRCoreAnimInstance::SetMovementVectorsAndStates()
     if(OwnerMovementComponent)
     {
         InputAcceleration = OwnerMovementComponent->GetCurrentAcceleration();
+        bIsAccelerating = InputAcceleration.Size() > 0.f;
     }
 }
 
@@ -102,7 +109,7 @@ void UAGRCoreAnimInstance::SetupLeaning()
         PreviousRotation,
         PawnReference->GetActorRotation());
     Lean = FMath::FInterpTo(Lean, NormalizeLean(Delta.Yaw), DeltaTick, LeanSmooth);
-    PreviousRotation = PawnReference->GetActorRotation();
+    PreviousRotation = Rotation;
 }
 
 void UAGRCoreAnimInstance::SetupAimOffset()
@@ -175,4 +182,24 @@ float UAGRCoreAnimInstance::NormalizeLean(const float InValue) const
 bool UAGRCoreAnimInstance::IsStanding() const
 {
     return !bCrouching;
+}
+
+void UAGRCoreAnimInstance::UpdateMovementDirectionName()
+{
+    if (UKismetMathLibrary::InRange_FloatFloat(Direction, -15.f, 0.f) || UKismetMathLibrary::InRange_FloatFloat(Direction, 0.f, 15.f))
+    {
+        MovementDirectionName = FName("Front");
+    }
+    else if (UKismetMathLibrary::InRange_FloatFloat(Direction, -100.f, -16.f))
+    {
+        MovementDirectionName = FName("Left");
+    }
+    else if (UKismetMathLibrary::InRange_FloatFloat(Direction, 16.f, 100.f))
+    {
+        MovementDirectionName = FName("Right");
+    }
+    else if (UKismetMathLibrary::InRange_FloatFloat(Direction, -180.f, -101.f) || UKismetMathLibrary::InRange_FloatFloat(Direction, 101, 180.f))
+    {
+        MovementDirectionName = FName("Back");
+    }
 }

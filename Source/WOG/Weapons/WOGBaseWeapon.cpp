@@ -14,6 +14,7 @@
 #include "Data/AGRLibrary.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "Types/WOGGameplayTags.h"
+#include "GameplayTags.h"
 
 // Sets default values
 AWOGBaseWeapon::AWOGBaseWeapon()
@@ -215,6 +216,19 @@ void AWOGBaseWeapon::OnWeaponEquip(AActor* User, FName SlotName)
 {
 	Multicast_OnWeaponEquip(User, SlotName);
 	UE_LOG(LogTemp, Display, TEXT("WeaponEquipped"));
+
+	if (!User) return;
+	UAGRAnimMasterComponent* AnimMaster = UAGRLibrary::GetAnimationMaster(User);
+	if (!AnimMaster) return;
+
+	if (SlotName == NAME_WeaponSlot_Primary)
+	{
+		AnimMaster->SetupBasePose(WeaponData.WeaponPoseTag);
+	}
+	else
+	{
+		AnimMaster->SetupBasePose(TAG_Pose_Relax);
+	}
 }
 
 void AWOGBaseWeapon::Multicast_OnWeaponEquip_Implementation(AActor* User, FName SlotName)

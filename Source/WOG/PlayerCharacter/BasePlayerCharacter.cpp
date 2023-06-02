@@ -28,9 +28,11 @@
 #include "Types/WOGGameplayTags.h"
 #include "Components/AGR_EquipmentManager.h"
 #include "Components/AGR_InventoryManager.h"
+#include "Components/AGRAnimMasterComponent.h"
 #include "Libraries/WOGBlueprintLibrary.h"
 #include "WOG/Interfaces/BuildingInterface.h"
 #include "WOG/Interfaces/AttributesInterface.h"
+
 
 
 void ABasePlayerCharacter::OnConstruction(const FTransform& Transform)
@@ -91,7 +93,6 @@ ABasePlayerCharacter::ABasePlayerCharacter()
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
 	CharacterState = ECharacterState::ECS_Unnoccupied;
-	bIsTargeting = false;
 
 	if (LockOnTarget)
 	{
@@ -191,7 +192,7 @@ void ABasePlayerCharacter::LookActionPressed(const FInputActionValue& Value)
 {
 	FVector2D LookAxisVector = Value.Get<FVector2D>();
 
-	if (bIsTargeting)
+	if (AnimManager && AnimManager->AimOffsetType == EAGR_AimOffsets::Aim)
 	{
 		//Disable mouse input if character is targeting
 	}
@@ -874,22 +875,28 @@ void ABasePlayerCharacter::TargetLocked(UTargetingHelperComponent* Target, FName
 		}
 
 		CurrentTarget = TargetOwner;
-		bIsTargeting = true;
-		if (!GetCharacterMovement()) return;
 
-		GetCharacterMovement()->bOrientRotationToMovement = false; // Character doesn't move in the direction of input...
-		GetCharacterMovement()->MaxWalkSpeed = 500;	//Sets the maximum run speed
+		ToggleStrafeMovement(true);
+
+		//bIsTargeting = true;
+		//if (!GetCharacterMovement()) return;
+
+		//GetCharacterMovement()->bOrientRotationToMovement = false; // Character doesn't move in the direction of input...
+		//GetCharacterMovement()->MaxWalkSpeed = 500;	//Sets the maximum run speed
 	}
 }
 
 void ABasePlayerCharacter::TargetUnlocked(UTargetingHelperComponent* UnlockedTarget, FName Socket)
 {
 	CurrentTarget = nullptr;
-	bIsTargeting = false;
-	if (!GetCharacterMovement()) return;
 
-	GetCharacterMovement()->MaxWalkSpeed = 500.f;	//Sets the maximum run speed
-	GetCharacterMovement()->bOrientRotationToMovement = true; // Character doesn't move in the direction of input...
+	ToggleStrafeMovement(false);
+
+	//bIsTargeting = false;
+	//if (!GetCharacterMovement()) return;
+
+	//GetCharacterMovement()->MaxWalkSpeed = 500.f;	//Sets the maximum run speed
+	//GetCharacterMovement()->bOrientRotationToMovement = true; // Character doesn't move in the direction of input...
 }
 
 void ABasePlayerCharacter::TargetNotFound()

@@ -23,5 +23,24 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Debuff_Stagger, "Event.Debuff.Stagger");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Debuff_KO, "Event.Debuff.KO");
 
 //Inventory tags
-UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Weapon_1H_HammerShield, "Inventory.Weapon.1H.HammerShield");
-UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Weapon_2H_GreatSword, "Inventory.Weapon.2H.GreatSword");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Weapon_Shield_Hammer, "Inventory.Weapon.Shield.Hammer");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Weapon_Shield_Sword, "Inventory.Weapon.Shield.Sword");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Weapon_Shield_Axe, "Inventory.Weapon.Shield.Axe");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Weapon_TwoHanded_Sword, "Inventory.Weapon.TwoHanded.Sword");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Weapon_TwoHanded_Hammer, "Inventory.Weapon.TwoHanded.Hammer");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Weapon_TwoHanded_Axe, "Inventory.Weapon.TwoHanded.Axe");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Weapon_DualWield_Axe, "Inventory.Weapon.DualWield.Axe");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Weapon_DualWield_Hammer, "Inventory.Weapon.DualWield.Hammer");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Weapon_DualWield_Sword, "Inventory.Weapon.DualWield.Sword");
+
+//Pose Tags
+UE_DEFINE_GAMEPLAY_TAG(TAG_Pose_Relax, "Pose.Relax");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Pose_Shield_Sword, "Pose.Shield.Sword");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Pose_Shield_Hammer, "Pose.Shield.Hammer");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Pose_Shield_Axe, "Pose.Shield.Axe");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Pose_TwoHanded_Sword, "Pose.TwoHanded.Sword");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Pose_TwoHanded_Hammer, "Pose.TwoHanded.Hammer");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Pose_TwoHanded_Axe, "Pose.TwoHanded.Axe");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Pose_DualWield_Sword, "Pose.DualWield.Sword");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Pose_DualWield_Hammer, "Pose.DualWield.Hammer");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Pose_DualWield_Axe, "Pose.DualWield.Axe");

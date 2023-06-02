@@ -36,6 +36,9 @@ AWOGBaseCharacter::AWOGBaseCharacter()
 	CombatManager->OnStartAttack.AddDynamic(this, &ThisClass::OnStartAttack);
 	CombatManager->OnAttackHitEvent.AddDynamic(this, &ThisClass::OnAttackHit);
 
+	AnimManager = CreateDefaultSubobject<UAGRAnimMasterComponent>(TEXT("AnimManager"));
+	AnimManager->SetIsReplicated(true);
+
 	SpeedRequiredForLeap = 750.f;
 }
 
@@ -170,6 +173,24 @@ void AWOGBaseCharacter::OnAttackHit(FHitResult Hit, UPrimitiveComponent* WeaponM
 	HitActorsToIgnore.AddUnique(Hit.GetActor());
 	
 	ProcessHit(Hit, WeaponMesh);
+}
+
+void AWOGBaseCharacter::ToggleStrafeMovement(bool bIsStrafe)
+{
+	if (!AnimManager) return;
+	if (bIsStrafe)
+	{
+		//Start strafe movement
+		AnimManager->SetupAimOffset(EAGR_AimOffsets::Aim, EAGR_AimOffsetClamp::Nearest, 90, false);
+		AnimManager->SetupRotation(EAGR_RotationMethod::DesiredAtAngle, 500.f, 90.f, 5.f);
+
+	}
+	else
+	{
+		//Stop strafe movement
+		AnimManager->SetupAimOffset(EAGR_AimOffsets::Look, EAGR_AimOffsetClamp::Left, 90, true);
+		AnimManager->SetupRotation(EAGR_RotationMethod::RotateToVelocity, 500.f, 90.f, 5.f);
+	}
 }
 
 void AWOGBaseCharacter::Server_SetCharacterState_Implementation(ECharacterState NewState, AController* InstigatedBy)

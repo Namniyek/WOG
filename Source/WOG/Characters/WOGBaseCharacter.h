@@ -16,6 +16,7 @@ class UWOGAttributeSetBase;
 class UGameplayEffect;
 class UAbilitySystemComponent;
 class AWOGGameMode;
+class UAGRAnimMasterComponent;
 
 UCLASS()
 class WOG_API AWOGBaseCharacter : public ACharacter, public IAttributesInterface, public IAbilitySystemInterface
@@ -45,6 +46,8 @@ protected:
 	virtual void OnAttackHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh);
 	virtual void ProcessHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh) { /*TO-BE OVERRIDEN IN CHILDREN*/ };
 
+	virtual void ToggleStrafeMovement(bool bIsStrafe);
+
 	TArray<TObjectPtr<AActor>> HitActorsToIgnore;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Setup|Abilities and Effects")
@@ -59,11 +62,12 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<UAGR_CombatManager> CombatManager;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<UAGRAnimMasterComponent> AnimManager;
+
 	#pragma endregion
 
 	#pragma region  Character State
-	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly)
-	bool bIsTargeting;
 
 	UFUNCTION(NetMulticast, reliable)
 	void Multicast_SetCharacterState(ECharacterState NewState, AController* InstigatedBy = nullptr);
@@ -109,6 +113,10 @@ protected:
 	UPROPERTY()
 	TObjectPtr<AWOGGameMode> WOGGameMode;
 
+	/*
+	**Calclualate if the hit is frontal
+	*/
+	UFUNCTION(BlueprintPure)
 	bool IsHitFrontal(const float& AngleTolerance, const AActor* Victim, const AActor* Agressor);
 	UFUNCTION(NetMulticast, reliable)
 	void Multicast_HandleCosmeticHit(const ECosmeticHit& HitType, const FHitResult& Hit, const FVector& WeaponLocation, const AWOGBaseWeapon* InstigatorWeapon);
@@ -117,6 +125,9 @@ protected:
 	//Handle cosmetic body hit
 	virtual void HandleCosmeticBodyHit(const FHitResult& Hit, const FVector& WeaponLocation, const AWOGBaseWeapon* InstigatorWeapon);
 
+	/*
+	**Calcualate Hit direction. Returns name of the direction
+	*/
 	UFUNCTION(BlueprintPure)
 	FName CalculateHitDirection(const FHitResult& Hit, const FVector& WeaponLocation);
 	virtual void PlayHitReactMontage(FName Section);

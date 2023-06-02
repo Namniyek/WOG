@@ -64,13 +64,25 @@ public:
     float DeltaTick;
 
     UPROPERTY(BlueprintReadOnly, Category = "AGR|Runtime")
+    FRotator Rotation;
+
+    UPROPERTY(BlueprintReadOnly, Category = "AGR|Runtime")
     FRotator PreviousRotation;
+
+    UPROPERTY(BlueprintReadOnly, Category = "AGR|Runtime")
+    float CurrentRotationRate;
 
     UPROPERTY(BlueprintReadOnly, Category = "AGR|Movement")
     FRotator PreviousFrameAim;
 
     UPROPERTY(BlueprintReadOnly, Category = "AGR|Movement")
     float Velocity;
+
+    UPROPERTY(BlueprintReadOnly, Category = "AGR|Movement")
+    float GroundVelocityLastFrame;
+
+    UPROPERTY(BlueprintReadOnly, Category = "AGR|Movement")
+    float GroundVelocity;
 
     UPROPERTY(BlueprintReadOnly, Category = "AGR|Movement")
     float ForwardVelocity;
@@ -84,8 +96,14 @@ public:
     UPROPERTY(BlueprintReadOnly, Category = "AGR|Movement")
     float Direction;
 
+    UPROPERTY(BlueprintReadOnly, Category = "AGR|Movement")
+    FName MovementDirectionName;
+
     UPROPERTY(BlueprintReadOnly, Category = "AGR|Runtime")
     FVector InputAcceleration;
+
+    UPROPERTY(BlueprintReadOnly, Category = "AGR|Runtime")
+    bool bIsAccelerating;
 
     UPROPERTY(BlueprintReadOnly, Category = "AGR|State")
     bool bFirstPerson;
@@ -117,6 +135,12 @@ public:
     UPROPERTY(BlueprintReadOnly, Category = "AGR|State")
     bool bFalling;
 
+    UPROPERTY(BlueprintReadWrite, Category = "AGR|State")
+    bool bStopFootLeft;
+
+    UPROPERTY(BlueprintReadWrite, Category = "AGR|State")
+    bool bIsLandingWhileMoving;
+
     UPROPERTY(BlueprintReadOnly, Category = "AGR|State")
     TEnumAsByte<EMovementMode> MovementMode;
 
@@ -135,12 +159,18 @@ public:
     UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "AGR|Setup")
     float AimSmooth;
 
+    UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "AGR|Setup")
+    float SpeedRequiredForLeap;
+
 private:
     UPROPERTY()
     APawn* PawnReference;
 
 public:
     UAGRCoreAnimInstance(const FObjectInitializer& ObjectInitializer);
+
+    UFUNCTION(BlueprintPure)
+    FORCEINLINE FName GetMovementDirection() const { return MovementDirectionName; }
 
 private:
     virtual void NativeInitializeAnimation() override;
@@ -154,4 +184,5 @@ private:
     void SetupMovementStates();
     float NormalizeLean(const float InValue) const;
     bool IsStanding() const;
+    void UpdateMovementDirectionName();
 };
