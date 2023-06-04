@@ -62,13 +62,21 @@ void AWOGAttacker::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 void AWOGAttacker::PossessActionPressed(const FInputActionValue& Value)
 {
 	if (HasMatchingGameplayTag(TAG_State_Dead)) return;
+	if (HasMatchingGameplayTag(TAG_State_Debuff_Knockback)) return;
+	if (HasMatchingGameplayTag(TAG_State_Debuff_KO)) return;
+	if (HasMatchingGameplayTag(TAG_State_Debuff_Stagger)) return;
+
 	PossessMinion();
 }
 
 void AWOGAttacker::RotateSpawnActionPressed(const FInputActionValue& Value)
 {
 	if (HasMatchingGameplayTag(TAG_State_Dead)) return;
+	if (HasMatchingGameplayTag(TAG_State_Debuff_Knockback)) return;
+	if (HasMatchingGameplayTag(TAG_State_Debuff_KO)) return;
+	if (HasMatchingGameplayTag(TAG_State_Debuff_Stagger)) return;
 	if (!SpawnComponent) return;
+
 	float Direction = Value.Get<float>();
 
 	if (Direction < 0)
@@ -86,7 +94,11 @@ void AWOGAttacker::RotateSpawnActionPressed(const FInputActionValue& Value)
 void AWOGAttacker::SpawnActionPressed(const FInputActionValue& Value)
 {
 	if (HasMatchingGameplayTag(TAG_State_Dead)) return;
+	if (HasMatchingGameplayTag(TAG_State_Debuff_Knockback)) return;
+	if (HasMatchingGameplayTag(TAG_State_Debuff_KO)) return;
+	if (HasMatchingGameplayTag(TAG_State_Debuff_Stagger)) return;
 	if (!SpawnComponent) return;
+
 	SpawnComponent->PlaceSpawn();
 }
 
@@ -94,7 +106,9 @@ void AWOGAttacker::AbilitiesButtonPressed(const FInputActionValue& Value)
 {
 	if (HasMatchingGameplayTag(TAG_State_Dead)) return;
 	if (HasMatchingGameplayTag(TAG_State_Dodging)) return;
-	if (CharacterState == ECharacterState::ECS_Staggered) return;
+	if (HasMatchingGameplayTag(TAG_State_Debuff_Knockback)) return;
+	if (HasMatchingGameplayTag(TAG_State_Debuff_KO)) return;
+	if (HasMatchingGameplayTag(TAG_State_Debuff_Stagger)) return;
 
 	FVector2D AbilitiesVector = Value.Get<FVector2D>();
 

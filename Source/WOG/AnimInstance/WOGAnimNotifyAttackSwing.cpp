@@ -54,7 +54,7 @@ void UWOGAnimNotifyAttackSwing::NotifyEnd(USkeletalMeshComponent* MeshComp, UAni
 void UWOGAnimNotifyAttackSwing::StartTrace(AActor* Owner)
 {
 	if (!Owner) return;
-	if (!OwnerCharacter || (!OwnerCharacter->HasAuthority() && !OwnerCharacter->IsLocallyControlled())) return;
+	if (!OwnerCharacter/* || (!OwnerCharacter->HasAuthority() && !OwnerCharacter->IsLocallyControlled())*/) return;
 
 	UAGR_CombatManager* CombatManager = UAGRLibrary::GetCombatManager(Owner);
 	if (CombatManager)
@@ -66,7 +66,7 @@ void UWOGAnimNotifyAttackSwing::StartTrace(AActor* Owner)
 void UWOGAnimNotifyAttackSwing::EndTrace(AActor* Owner)
 {
 	if (!Owner) return;
-	if (!OwnerCharacter || (!OwnerCharacter->HasAuthority() && !OwnerCharacter->IsLocallyControlled())) return;
+	if (!OwnerCharacter /*|| (!OwnerCharacter->HasAuthority() && !OwnerCharacter->IsLocallyControlled())*/) return;
 
 	UAGR_CombatManager* CombatManager = UAGRLibrary::GetCombatManager(Owner);
 	if (CombatManager)

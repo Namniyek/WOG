@@ -84,7 +84,6 @@ void AWOGBaseWeapon::InitWeaponData()
 		MeshSecondary->SetStaticMesh(WeaponDataRow->MeshSecondary);
 		WeaponData.bIsAttacker = WeaponDataRow->bIsAttacker;
 		WeaponData.WeaponName = WeaponDataRow->WeaponName;
-		WeaponData.WeaponType = WeaponDataRow->WeaponType;
 		WeaponData.WeaponTag = WeaponDataRow->WeaponTag;
 		WeaponData.WeaponPoseTag = WeaponDataRow->WeaponPoseTag;
 

@@ -19,6 +19,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	bool bDebugMode = false;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	int32 FirstAttackerIndex = 2;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	bool bHandleDropIn = false;
 

@@ -40,13 +40,14 @@ AWOGBaseCharacter::AWOGBaseCharacter()
 	AnimManager->SetIsReplicated(true);
 
 	SpeedRequiredForLeap = 750.f;
+
+	LastHitResult = FHitResult();
 }
 
 void AWOGBaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME(AWOGBaseCharacter, CharacterState);
 }
 
 void AWOGBaseCharacter::PossessedBy(AController* NewController)
@@ -61,7 +62,6 @@ void AWOGBaseCharacter::PossessedBy(AController* NewController)
 	// ASC MixedMode replication requires that the ASC Owner's Owner be the Controller.
 	SetOwner(NewController);
 }
-
 
 void AWOGBaseCharacter::BeginPlay()
 {
@@ -193,32 +193,6 @@ void AWOGBaseCharacter::ToggleStrafeMovement(bool bIsStrafe)
 	}
 }
 
-void AWOGBaseCharacter::Server_SetCharacterState_Implementation(ECharacterState NewState, AController* InstigatedBy)
-{
-	Multicast_SetCharacterState(NewState, InstigatedBy);
-	SetCharacterState(NewState, InstigatedBy);
-}
-
-void AWOGBaseCharacter::Multicast_SetCharacterState_Implementation(ECharacterState NewState, AController* InstigatedBy)
-{
-	if (!HasAuthority())
-	{
-		SetCharacterState(NewState, InstigatedBy);
-	}
-}
-
-void AWOGBaseCharacter::SetCharacterState(ECharacterState NewState, AController* InstigatedBy)
-{
-	CharacterState = NewState;
-
-	switch (CharacterState)
-	{
-	case ECharacterState::ECS_Staggered:
-		HandleStateStaggered();
-		break;
-	}
-}
-
 bool AWOGBaseCharacter::IsHitFrontal(const float& AngleTolerance, const AActor* Victim, const AActor* Agressor)
 {
 	FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(Victim->GetActorLocation(), Agressor->GetActorLocation());
@@ -231,32 +205,11 @@ bool AWOGBaseCharacter::IsHitFrontal(const float& AngleTolerance, const AActor* 
 	return bIsHitFrontal;
 }
 
-void AWOGBaseCharacter::Multicast_HandleCosmeticHit_Implementation(const ECosmeticHit& HitType, const FHitResult& Hit, const FVector& WeaponLocation, const AWOGBaseWeapon* InstigatorWeapon)
-{
-	//TO-DO rework the cosmetic hit using the GAS.
-
-	switch (HitType)
-	{
-	case ECosmeticHit::ECH_BodyHit:
-		HandleCosmeticBodyHit(Hit, WeaponLocation, InstigatorWeapon);
-		break;
-	case ECosmeticHit::ECH_BlockingWeapon:
-		HandleCosmeticBlock(InstigatorWeapon);
-		break;
-	}
-}
-
-void AWOGBaseCharacter::HandleCosmeticBodyHit(const FHitResult& Hit, const FVector& WeaponLocation, const AWOGBaseWeapon* InstigatorWeapon)
-{
-	//To be overriden in Children
-}
-
-FName AWOGBaseCharacter::CalculateHitDirection(const FHitResult& Hit, const FVector& WeaponLocation)
+FName AWOGBaseCharacter::CalculateHitDirection(const FVector& WeaponLocation)
 {
 	// Get the location of the impact point
-	FVector ImpactPoint = Hit.Location;
-	LastHitDirection = Hit.Normal;
-
+	FVector ImpactPoint = LastHitResult.Location;
+	LastHitDirection = LastHitResult.Normal;
 	FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(ImpactPoint, WeaponLocation);
 	FRotator DeltaRotator = UKismetMathLibrary::NormalizedDeltaRotator(GetActorRotation(), LookAtRotation);
 
@@ -289,16 +242,6 @@ FName AWOGBaseCharacter::CalculateHitDirection(const FHitResult& Hit, const FVec
 	}
 
 	return FName("");
-}
-
-void AWOGBaseCharacter::PlayHitReactMontage(FName Section)
-{
-	//To be overriden in Children
-}
-
-void AWOGBaseCharacter::HandleCosmeticBlock(const AWOGBaseWeapon* InstigatorWeapon)
-{
-	//To be overriden in Children
 }
 
 void AWOGBaseCharacter::Tick(float DeltaTime)

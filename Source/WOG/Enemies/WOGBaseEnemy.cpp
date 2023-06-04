@@ -12,6 +12,7 @@
 #include "AbilitySystemBlueprintLibrary.h"
 #include "GameplayEffectExtension.h"
 #include "Types/WOGGameplayTags.h"
+#include "Components/CapsuleComponent.h"
 
 // Sets default values
 AWOGBaseEnemy::AWOGBaseEnemy()
@@ -30,15 +31,44 @@ void AWOGBaseEnemy::BeginPlay()
 	Super::BeginPlay();
 }
 
+void AWOGBaseEnemy::ProcessHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh)
+{
+
+}
+
 void AWOGBaseEnemy::BroadcastHit_Implementation(AActor* AgressorActor, const FHitResult& Hit, const float& DamageToApply, AActor* InstigatorWeapon)
 {
 	if (HasMatchingGameplayTag(TAG_State_Dead)) return;
+	if (HasMatchingGameplayTag(TAG_State_Dodging)) return;
 
-	TObjectPtr<AWOGBaseWeapon> Weapon = Cast<AWOGBaseWeapon>(InstigatorWeapon);
-	Multicast_HandleCosmeticHit(ECosmeticHit::ECH_BodyHit, Hit, InstigatorWeapon->GetActorLocation(), Weapon);
+	//Store the last hit result
+	LastHitResult = Hit;
 
+	UE_LOG(LogTemp, Warning, TEXT("%s damaged with %s, by %s, in the amount : %f"), *GetNameSafe(Hit.GetActor()), *GetNameSafe(InstigatorWeapon), *GetNameSafe(AgressorActor), DamageToApply);
+
+	//Apply HitReact or KO to character
 	TObjectPtr<AWOGBaseCharacter> AgressorCharacter = Cast<AWOGBaseCharacter>(AgressorActor);
-	if (AgressorCharacter && Weapon && Weapon->GetWeaponData().WeaponDamageEffect)
+	if (AgressorCharacter && AgressorCharacter->HasMatchingGameplayTag(TAG_State_Weapon_AttackHeavy) && IsHitFrontal(60.f, this, InstigatorWeapon))
+	{
+		//Send event KO
+		FGameplayEventData EventKOPayload;
+		EventKOPayload.EventTag = TAG_Event_Debuff_KO;
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Debuff_KO, EventKOPayload);
+		UE_LOG(LogTemp, Warning, TEXT("Enemy KO Applied : %s"), *UEnum::GetValueAsString(GetLocalRole()));
+	}
+	else
+	{
+		//Send Event light HitReact 
+		FGameplayEventData EventHitReactPayload;
+		EventHitReactPayload.EventTag = TAG_Event_Debuff_HitReact;
+		EventHitReactPayload.Instigator = InstigatorWeapon;
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Debuff_HitReact, EventHitReactPayload);
+		UE_LOG(LogTemp, Warning, TEXT("Enemy Hit react applied : %s"), *UEnum::GetValueAsString(GetLocalRole()));
+	}
+
+	//Apply damage to character if authority
+	TObjectPtr<AWOGBaseWeapon> Weapon = Cast<AWOGBaseWeapon>(InstigatorWeapon);
+	if (HasAuthority() && AgressorCharacter && AbilitySystemComponent.Get() && Weapon && Weapon->GetWeaponData().WeaponDamageEffect)
 	{
 		FGameplayEffectContextHandle DamageContext = AbilitySystemComponent.Get()->MakeEffectContext();
 		DamageContext.AddInstigator(AgressorCharacter, Weapon);
@@ -66,7 +96,8 @@ void AWOGBaseEnemy::Multicast_Elim_Implementation(bool bPlayerLeftGame)
 	GetMesh()->SetAllBodiesSimulatePhysics(true);
 	GetCharacterMovement()->DisableMovement();
 	GetCharacterMovement()->StopMovementImmediately();
-	FVector ImpulseDirection = LastHitDirection.GetSafeNormal() * -45000.f;
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	FVector ImpulseDirection = LastHitDirection.GetSafeNormal() * -65000.f;
 	GetMesh()->AddImpulse(ImpulseDirection);
 	LockOnTarget->ClearTargetManual();
 	TargetAttractor->bCanBeCaptured = false;
@@ -80,24 +111,5 @@ void AWOGBaseEnemy::Multicast_Elim_Implementation(bool bPlayerLeftGame)
 void AWOGBaseEnemy::ElimTimerFinished()
 {
 	Destroy();
-}
-
-void AWOGBaseEnemy::HandleCosmeticBodyHit(const FHitResult& Hit, const FVector& WeaponLocation, const AWOGBaseWeapon* InstigatorWeapon)
-{
-	FName HitDirection = CalculateHitDirection(Hit, WeaponLocation);
-	PlayHitReactMontage(HitDirection);
-}
-
-void AWOGBaseEnemy::PlayHitReactMontage(FName Section)
-{
-	UAnimInstance* CharacterAnimInstance = GetMesh()->GetAnimInstance();
-	if (!CharacterAnimInstance || !UnarmedHurtMontage) return;
-
-	CharacterAnimInstance->Montage_Play(UnarmedHurtMontage, 1.f);
-	CharacterAnimInstance->Montage_JumpToSection(Section);
-}
-
-void AWOGBaseEnemy::HandleCosmeticBlock(const AWOGBaseWeapon* InstigatorWeapon)
-{
 }
 

@@ -127,9 +127,11 @@ public:
 	UPROPERTY(ReplicatedUsing = OnRep_PlayerProfile, EditDefaultsOnly, BlueprintReadWrite)
 	FPlayerData PlayerProfile;
 
-	#pragma region Handle Damage
+	#pragma region Handle Elim
 
 	virtual void Elim(bool bPlayerLeftGame) override;
+
+	virtual void HandleStateElimmed(AController* InstigatedBy = nullptr) override;
 
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_Elim(bool bPlayerLeftGame);
@@ -297,14 +299,6 @@ public:
 
 	#pragma endregion
 
-	#pragma region Character State variables
-
-protected:
-	virtual void HandleStateElimmed(AController* InstigatedBy = nullptr) override;
-	virtual void HandleStateStaggered() override;
-
-	#pragma endregion
-
 	#pragma region Actor Components
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
@@ -327,15 +321,6 @@ protected:
 	#pragma endregion
 
 	virtual void ProcessHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh) override;
-
-	#pragma region Cosmetic Hits
-	//Handle cosmetic body hit
-	virtual void HandleCosmeticBodyHit(const FHitResult& Hit, const FVector& WeaponLocation, const class AWOGBaseWeapon* InstigatorWeapon) override;
-	virtual void PlayHitReactMontage(FName Section) override;
-
-	//Handle cosmetic block
-	virtual void HandleCosmeticBlock(const AWOGBaseWeapon* InstigatorWeapon) override;
-	#pragma endregion
 
 	UFUNCTION()
 	void TargetLocked(UTargetingHelperComponent* Target, FName Socket);

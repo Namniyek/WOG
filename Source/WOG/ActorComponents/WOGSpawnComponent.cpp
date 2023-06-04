@@ -249,6 +249,7 @@ void UWOGSpawnComponent::Spawn(FTransform Transform, int32 ID)
 		Transform.SetLocation(Spawn + FVector(0.f, 0.f, Spawnables[ID]->HeightOffset));
 
 		FActorSpawnParameters Params;
+		Params.Owner = AttackerCharacter ? AttackerCharacter : nullptr;
 		Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
 		TObjectPtr<AActor> SpawnedActor = GetWorld()->SpawnActor<AActor>(Spawnables[ID]->Actor, Transform, Params);

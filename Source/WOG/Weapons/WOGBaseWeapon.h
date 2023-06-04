@@ -31,9 +31,6 @@ struct FWeaponDataTable : public FTableRowBase
 	bool bIsAttacker = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Data")
-	EWeaponType WeaponType = EWeaponType::EWT_Relax;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Data")
 	UStaticMesh* MeshMain = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Data")

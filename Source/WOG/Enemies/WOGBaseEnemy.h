@@ -29,6 +29,8 @@ protected:
 	#pragma endregion
 
 	#pragma region Interface Functions
+	virtual void ProcessHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh) override;
+
 	virtual void BroadcastHit_Implementation(AActor* AgressorActor, const FHitResult& Hit, const float& DamageToApply, AActor* InstigatorWeapon) override;
 
 	#pragma endregion
@@ -45,15 +47,6 @@ protected:
 	UFUNCTION()
 	void ElimTimerFinished();
 
-	#pragma endregion
-
-	#pragma region Cosmetic Hits
-	//Handle cosmetic body hit
-	virtual void HandleCosmeticBodyHit(const FHitResult& Hit, const FVector& WeaponLocation, const class AWOGBaseWeapon* InstigatorWeapon) override;
-	virtual void PlayHitReactMontage(FName Section) override;
-
-	//Handle cosmetic block
-	virtual void HandleCosmeticBlock(const AWOGBaseWeapon* InstigatorWeapon) override;
 	#pragma endregion
 
 private:

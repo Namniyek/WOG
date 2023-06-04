@@ -67,29 +67,16 @@ protected:
 
 	#pragma endregion
 
-	#pragma region  Character State
-
-	UFUNCTION(NetMulticast, reliable)
-	void Multicast_SetCharacterState(ECharacterState NewState, AController* InstigatedBy = nullptr);
-
-	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly)
-	ECharacterState CharacterState;
-
-	UFUNCTION(BlueprintCallable)
-	void SetCharacterState(ECharacterState NewState, AController* InstigatedBy = nullptr);
-
-	UFUNCTION(BlueprintCallable)
-	virtual void HandleStateElimmed(AController* InstigatedBy = nullptr) { /*TO-BE OVERRIDEN IN CHILDREN*/ };
-	virtual void HandleStateStaggered() { /*TO-BE OVERRIDEN IN CHILDREN*/ };
-
-	#pragma endregion
-
 	#pragma region Handle Elim
 	FTimerHandle ElimTimer;
 	FTimerDelegate ElimDelegate;
 
 	UPROPERTY(EditDefaultsOnly)
 	float ElimDelay = 6.f;
+
+	UFUNCTION(BlueprintCallable)
+	virtual void HandleStateElimmed(AController* InstigatedBy = nullptr) { /*TO-BE OVERRIDEN IN CHILDREN*/ };
+
 	#pragma endregion
 
 	#pragma region Interfaces functions
@@ -113,28 +100,21 @@ protected:
 	UPROPERTY()
 	TObjectPtr<AWOGGameMode> WOGGameMode;
 
+	#pragma region Cosmetic Hits
 	/*
-	**Calclualate if the hit is frontal
+	**Calculate if the hit is frontal
 	*/
 	UFUNCTION(BlueprintPure)
 	bool IsHitFrontal(const float& AngleTolerance, const AActor* Victim, const AActor* Agressor);
-	UFUNCTION(NetMulticast, reliable)
-	void Multicast_HandleCosmeticHit(const ECosmeticHit& HitType, const FHitResult& Hit, const FVector& WeaponLocation, const AWOGBaseWeapon* InstigatorWeapon);
-
-	#pragma region Cosmetic Hits
-	//Handle cosmetic body hit
-	virtual void HandleCosmeticBodyHit(const FHitResult& Hit, const FVector& WeaponLocation, const AWOGBaseWeapon* InstigatorWeapon);
 
 	/*
 	**Calcualate Hit direction. Returns name of the direction
 	*/
 	UFUNCTION(BlueprintPure)
-	FName CalculateHitDirection(const FHitResult& Hit, const FVector& WeaponLocation);
-	virtual void PlayHitReactMontage(FName Section);
+	FName CalculateHitDirection(const FVector& WeaponLocation);
 	FVector LastHitDirection;
-
-	//Handle cosmetic block
-	virtual void HandleCosmeticBlock(const AWOGBaseWeapon* InstigatorWeapon);
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+	FHitResult LastHitResult;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setup|Animations")
 	TObjectPtr<class UAnimMontage> UnarmedHurtMontage;
@@ -149,11 +129,6 @@ public:
 
 	bool HasMatchingGameplayTag(FGameplayTag TagToCheck) const;
 
-	UFUNCTION(Server, reliable, BlueprintCallable)
-	void Server_SetCharacterState(ECharacterState NewState, AController* InstigatedBy = nullptr);
-
-	UFUNCTION(BlueprintPure)
-	FORCEINLINE ECharacterState GetCharacterState() const { return CharacterState; }
 	FORCEINLINE float GetSpeedRequiredForLeap() const { return SpeedRequiredForLeap; }
 	FORCEINLINE UWOGAttributeSetBase* GetAttributeSetBase() const { return AttributeSet; }
 	FORCEINLINE void SetDefaultAbilitiesAndEffects(const FCharacterAbilityData& Data) { DefaultAbilitiesAndEffects = Data; }
