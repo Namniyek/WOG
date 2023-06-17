@@ -677,7 +677,7 @@ void ABasePlayerCharacter::BroadcastHit_Implementation(AActor* AgressorActor, co
 		AWOGBaseWeapon* EquippedWeapon = UWOGBlueprintLibrary::GetEquippedWeapon(this);
 		AWOGBaseCharacter* AgressorCharacter = Cast<AWOGBaseCharacter>(AgressorActor);
 
-		if (EquippedWeapon && EquippedWeapon->GetCanParry() && AgressorCharacter && !AgressorCharacter->HasMatchingGameplayTag(TAG_State_Weapon_AttackHeavy))
+		/*if (EquippedWeapon && EquippedWeapon->GetCanParry() && AgressorCharacter && !AgressorCharacter->HasMatchingGameplayTag(TAG_State_Weapon_AttackHeavy))
 		{
 
 			//Handle Parry sequence here:
@@ -693,7 +693,7 @@ void ABasePlayerCharacter::BroadcastHit_Implementation(AActor* AgressorActor, co
 			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(AgressorCharacter, TAG_Event_Debuff_Stagger, EventPayload);
 			UE_LOG(LogTemp, Warning, TEXT("Staggered"));
 			return;
-		}
+		}*/
 
 		if (InstigatorWeapon && AgressorCharacter && AgressorCharacter->HasMatchingGameplayTag(TAG_State_Weapon_AttackHeavy))
 		{

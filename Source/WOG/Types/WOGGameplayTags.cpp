@@ -49,6 +49,8 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Pose_DualWield_Sword, "Pose.DualWield.Sword");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Pose_DualWield_Hammer, "Pose.DualWield.Hammer");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Pose_DualWield_Axe, "Pose.DualWield.Axe");
 
+UE_DEFINE_GAMEPLAY_TAG(TAG_Pose_Overlay_Block, "Pose.Overlay.Block");
+
 //Gameplay Cue Tags
 UE_DEFINE_GAMEPLAY_TAG(TAG_Cue_Weapon_BodyHit, "GameplayCue.Weapon.BodyHit");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Cue_Weapon_Block_Impact, "GameplayCue.Weapon.Block.Impact");
