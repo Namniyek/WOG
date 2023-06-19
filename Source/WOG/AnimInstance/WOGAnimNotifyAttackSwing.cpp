@@ -8,6 +8,11 @@
 #include "Sound/SoundCue.h"
 #include "Libraries/WOGBlueprintLibrary.h"
 #include "Data/AGRLibrary.h"
+#include "AbilitySystemComponent.h"
+#include "WOG/Types/WOGGameplayTags.h"
+#include "GameplayEffect.h"
+
+
 
 void UWOGAnimNotifyAttackSwing::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration, const FAnimNotifyEventReference& EventReference)
 {
@@ -38,12 +43,20 @@ void UWOGAnimNotifyAttackSwing::NotifyBegin(USkeletalMeshComponent* MeshComp, UA
 		return;
 	}
 
+	if (OwnerCharacter->GetAbilitySystemComponent() && EffectToApply && OwnerCharacter->HasAuthority())
+	{
+		FGameplayEffectContextHandle EffectContext = OwnerCharacter->GetAbilitySystemComponent()->MakeEffectContext();
+
+		FGameplayEffectSpecHandle OutSpec = OwnerCharacter->GetAbilitySystemComponent()->MakeOutgoingSpec(EffectToApply, 1, EffectContext);
+		OwnerCharacter->GetAbilitySystemComponent()->ApplyGameplayEffectSpecToSelf(*OutSpec.Data);
+	}
+
 	StartTrace(OwnerCharacter);
 }
 
 void UWOGAnimNotifyAttackSwing::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
 {
-	if (MeshComp->GetOwner())
+	if (MeshComp->GetOwner()) 
 	{
 		EndTrace(MeshComp->GetOwner());
 	}
@@ -54,7 +67,7 @@ void UWOGAnimNotifyAttackSwing::NotifyEnd(USkeletalMeshComponent* MeshComp, UAni
 void UWOGAnimNotifyAttackSwing::StartTrace(AActor* Owner)
 {
 	if (!Owner) return;
-	if (!OwnerCharacter/* || (!OwnerCharacter->HasAuthority() && !OwnerCharacter->IsLocallyControlled())*/) return;
+	if (!OwnerCharacter) return;
 
 	UAGR_CombatManager* CombatManager = UAGRLibrary::GetCombatManager(Owner);
 	if (CombatManager)
@@ -66,7 +79,7 @@ void UWOGAnimNotifyAttackSwing::StartTrace(AActor* Owner)
 void UWOGAnimNotifyAttackSwing::EndTrace(AActor* Owner)
 {
 	if (!Owner) return;
-	if (!OwnerCharacter /*|| (!OwnerCharacter->HasAuthority() && !OwnerCharacter->IsLocallyControlled())*/) return;
+	if (!OwnerCharacter) return;
 
 	UAGR_CombatManager* CombatManager = UAGRLibrary::GetCombatManager(Owner);
 	if (CombatManager)
