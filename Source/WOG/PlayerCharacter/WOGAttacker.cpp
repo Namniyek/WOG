@@ -3,8 +3,7 @@
 
 #include "WOGAttacker.h"
 #include "WOG.h"
-#include "TargetingHelperComponent.h"
-#include "LockOnTargetComponent.h"
+#include "TargetSystemComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "WOG/PlayerController/WOGPlayerController.h"
@@ -42,7 +41,7 @@ void AWOGAttacker::PossessMinion()
 	}
 
 	OwnerPC->PossessMinion(CurrentTarget);
-	LockOnTarget->EnableTargeting();
+	TargetComponent->TargetLockOff();
 }
 
 void AWOGAttacker::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

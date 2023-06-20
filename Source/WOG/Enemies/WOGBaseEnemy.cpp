@@ -2,8 +2,6 @@
 
 
 #include "WOGBaseEnemy.h"
-#include "LockOnTargetComponent.h"
-#include "TargetingHelperComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "AIController.h"
 #include "WOG/Weapons/WOGBaseWeapon.h"
@@ -20,10 +18,6 @@ AWOGBaseEnemy::AWOGBaseEnemy()
 	PrimaryActorTick.bCanEverTick = false;
 	bReplicates = true;
 
-	LockOnTarget = CreateDefaultSubobject<ULockOnTargetComponent>(TEXT("LockOnTargetComponent"));
-	LockOnTarget->SetIsReplicated(true);
-	TargetAttractor = CreateDefaultSubobject<UTargetingHelperComponent>(TEXT("TargetAttractor"));
-	TargetAttractor->SetIsReplicated(true);
 }
 
 void AWOGBaseEnemy::BeginPlay()
@@ -99,8 +93,6 @@ void AWOGBaseEnemy::Multicast_Elim_Implementation(bool bPlayerLeftGame)
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	FVector ImpulseDirection = LastHitDirection.GetSafeNormal() * -65000.f;
 	GetMesh()->AddImpulse(ImpulseDirection);
-	LockOnTarget->ClearTargetManual();
-	TargetAttractor->bCanBeCaptured = false;
 
 	/*
 	**Handle destroy timer

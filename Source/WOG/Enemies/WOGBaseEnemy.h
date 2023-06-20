@@ -20,11 +20,6 @@ protected:
 
 	#pragma region Actor Components
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<class ULockOnTargetComponent> LockOnTarget;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<class UTargetingHelperComponent> TargetAttractor;
 
 	#pragma endregion
 

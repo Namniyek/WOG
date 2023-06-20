@@ -12,8 +12,6 @@
 #include "Net/UnrealNetwork.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
-#include "LockOnTargetComponent.h"
-#include "TargetingHelperComponent.h"
 #include "GameMode/WOGGameMode.h"
 #include "PlayerController/WOGPlayerController.h"
 #include "Weapons/WOGBaseWeapon.h"
@@ -32,6 +30,7 @@
 #include "Libraries/WOGBlueprintLibrary.h"
 #include "WOG/Interfaces/BuildingInterface.h"
 #include "WOG/Interfaces/AttributesInterface.h"
+#include "TargetSystemComponent.h"
 
 
 
@@ -51,14 +50,11 @@ ABasePlayerCharacter::ABasePlayerCharacter()
 	*Actor components
 	*/
 
-	LockOnTarget = CreateDefaultSubobject<ULockOnTargetComponent>(TEXT("LockOnTargetComponent"));
-	LockOnTarget->SetIsReplicated(true);
-	TargetAttractor = CreateDefaultSubobject<UTargetingHelperComponent>(TEXT("TargetAttractor"));
-	TargetAttractor->SetIsReplicated(true);
 	EquipmentManager = CreateDefaultSubobject<UAGR_EquipmentManager>(TEXT("EquipmentManager"));
 	EquipmentManager->SetIsReplicated(true);
 	InventoryManager = CreateDefaultSubobject<UAGR_InventoryManager>(TEXT("InventoryManager"));
 	InventoryManager->SetIsReplicated(true);
+	TargetComponent = CreateDefaultSubobject<UTargetSystemComponent>(TEXT("TargetComponent"));
 
 
 	// Set size for collision capsule
@@ -92,11 +88,10 @@ ABasePlayerCharacter::ABasePlayerCharacter()
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
-	if (LockOnTarget)
+	if (TargetComponent)
 	{
-		LockOnTarget->OnTargetLocked.AddDynamic(this, &ThisClass::TargetLocked);
-		LockOnTarget->OnTargetUnlocked.AddDynamic(this, &ThisClass::TargetUnlocked);
-		LockOnTarget->OnTargetNotFound.AddDynamic(this, &ThisClass::TargetNotFound);
+		TargetComponent->OnTargetLockedOn.AddDynamic(this, &ThisClass::TargetLocked);
+		TargetComponent->OnTargetLockedOff.AddDynamic(this, &ThisClass::TargetUnlocked);
 	}
 }
 
@@ -234,19 +229,18 @@ void ABasePlayerCharacter::TargetActionPressed(const FInputActionValue& Value)
 	if (HasMatchingGameplayTag(TAG_State_Dead)) return;
 	if (HasMatchingGameplayTag(TAG_State_Dodging)) return;
 
-	//if (!LockOnTarget) return;
-	//LockOnTarget->EnableTargeting();
+	if (!TargetComponent) return;
+	TargetComponent->TargetActor();
 }
 
 void ABasePlayerCharacter::CycleTargetActionPressed(const FInputActionValue& Value)
 {
 	if (HasMatchingGameplayTag(TAG_State_Dead)) return;
 
-	if (!LockOnTarget) return;
+	if (!TargetComponent) return;
 	float CycleFloat = Value.Get<float>();
-	FVector2D CycleVector = FVector2D(CycleFloat, 0.f);
 
-	LockOnTarget->SwitchTargetManual(CycleVector);
+	TargetComponent->TargetActorWithAxisInput(CycleFloat);
 }
 
 void ABasePlayerCharacter::PrimaryLightButtonPressed(const FInputActionValue& Value)
@@ -792,24 +786,20 @@ void ABasePlayerCharacter::BroadcastHit_Implementation(AActor* AgressorActor, co
 	}
 }
 
-void ABasePlayerCharacter::TargetLocked(UTargetingHelperComponent* Target, FName Socket)
+void ABasePlayerCharacter::TargetLocked(AActor* NewTarget)
 {
-	if (Target)
+	if (!NewTarget)
 	{
-		AActor* TargetOwner = Target->GetOwner();
-		if (!TargetOwner)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 4.f, FColor::Red, FString::Printf(TEXT("Target invalid")));
-			return;
+		GEngine->AddOnScreenDebugMessage(-1, 4.f, FColor::Red, FString::Printf(TEXT("Target invalid")));
+		return;
 	}
 
-	CurrentTarget = TargetOwner;
+	CurrentTarget = NewTarget;
 
 	ToggleStrafeMovement(true);
-	}
 }
 
-void ABasePlayerCharacter::TargetUnlocked(UTargetingHelperComponent* UnlockedTarget, FName Socket)
+void ABasePlayerCharacter::TargetUnlocked(AActor* OldTarget)
 {
 	CurrentTarget = nullptr;
 
@@ -836,8 +826,7 @@ void ABasePlayerCharacter::Multicast_Elim_Implementation(bool bPlayerLeftGame)
 	GetCharacterMovement()->StopMovementImmediately();
 	FVector ImpulseDirection = LastHitDirection.GetSafeNormal() * -45000.f;
 	GetMesh()->AddImpulse(ImpulseDirection);
-	LockOnTarget->ClearTargetManual();
-	TargetAttractor->bCanBeCaptured = false;
+	TargetComponent->TargetLockOff();
 	if(OwnerPC)	OwnerPC->SetDefaultPawn(nullptr);
 	
 

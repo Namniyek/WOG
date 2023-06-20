@@ -300,12 +300,8 @@ public:
 	#pragma endregion
 
 	#pragma region Actor Components
-
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	class ULockOnTargetComponent* LockOnTarget;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	class UTargetingHelperComponent* TargetAttractor;
+	class UTargetSystemComponent* TargetComponent;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<class UAGR_EquipmentManager> EquipmentManager;
@@ -323,10 +319,10 @@ public:
 	virtual void ProcessHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh) override;
 
 	UFUNCTION()
-	void TargetLocked(UTargetingHelperComponent* Target, FName Socket);
+	void TargetLocked(AActor* NewTarget);
 
 	UFUNCTION()
-	void TargetUnlocked(UTargetingHelperComponent* UnlockedTarget, FName Socket);
+	void TargetUnlocked(AActor* OldTarget);
 
 	UFUNCTION()
 	void TargetNotFound();
@@ -342,7 +338,6 @@ public:
 	//public Getters and Setters 
 	FORCEINLINE USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
-	FORCEINLINE ULockOnTargetComponent* GetLockOnTarget() const { return LockOnTarget; }
 	FORCEINLINE void SetOwnerPC(AWOGPlayerController* NewPC) { OwnerPC = NewPC; }
 	FORCEINLINE TObjectPtr<AWOGPlayerController> GetOwnerPC() { return OwnerPC; }
 	FORCEINLINE TObjectPtr<AActor>GetCurrentTarget() { return CurrentTarget; }

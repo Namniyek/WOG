@@ -3,8 +3,6 @@
 
 #include "WOGDefender.h"
 #include "WOG.h"
-#include "TargetingHelperComponent.h"
-#include "LockOnTargetComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "WOG/ActorComponents/WOGBuildComponent.h"
