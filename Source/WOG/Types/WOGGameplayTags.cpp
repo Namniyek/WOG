@@ -7,24 +7,31 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_State_Debuff_Stagger, "State.Debuff.Stagger");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Debuff_KO, "State.Debuff.KO");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Debuff_Knockback, "State.Debuff.Knockback");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Debuff_HitReact, "State.Debuff.HitReact");
+UE_DEFINE_GAMEPLAY_TAG(TAG_State_Debuff_Stun, "State.Debuff.Stun");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Weapon_AttackLight, "State.Weapon.AttackLight");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Weapon_AttackHeavy, "State.Weapon.AttackHeavy");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Weapon_Block, "State.Weapon.Block");
 
 //Event tags
+UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Elim, "Event.Elim");
+
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Movement_Sprint_Stop, "Event.Movement.Sprint.Stop");
-UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Weapon_Block_Knockback, "Event.Weapon.Block.Knockback");
-UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Weapon_Block_Impact, "Event.Weapon.Block.Impact");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Weapon_Block_Impact_Light, "Event.Weapon.Block.Impact.Light");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Weapon_Block_Impact_Heavy, "Event.Weapon.Block.Impact.Heavy");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Weapon_Block_Stop, "Event.Weapon.Block.Stop");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Weapon_Block_Parry, "Event.Weapon.Block.Parry");
-UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Elim, "Event.Elim");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Weapon_HeavyAttackExecute, "Event.Weapon.HeavyAttack.Execute");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Weapon_HeavyAttackCancel, "Event.Weapon.HeavyAttack.Cancel");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Weapon_Ranged, "Event.Weapon.Ranged");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Weapon_Equip, "Event.Weapon.Equip");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Weapon_Unequip, "Event.Weapon.Unequip");
+
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Debuff_Stagger, "Event.Debuff.Stagger");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Debuff_KO, "Event.Debuff.KO");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Debuff_HitReact, "Event.Debuff.HitReact");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Debuff_Knockback, "Event.Debuff.Knockback");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Debuff_Stun, "Event.Debuff.Stun");
 
 //Inventory tags
 UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Weapon_Shield_Hammer, "Inventory.Weapon.Shield.Hammer");

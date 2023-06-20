@@ -60,13 +60,11 @@ bool UTargetingHelperComponent::CanBeCapturedCustom_Implementation(const ULockOn
 	
 	FName OwnerTag = Instigator->ComponentTags[0];
 	bool bCanTarget = false;
-	UE_LOG(LogTemp, Warning, TEXT("OwnerTag is: %s"), *OwnerTag.ToString());
 	
 	if (!ComponentTags.IsEmpty())
 	{
 		for (auto TargetTag : ComponentTags)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("TargetTag is: %s"), *TargetTag.ToString());
 			bCanTarget = TargetTag == OwnerTag;
 			if (bCanTarget) break;
 		}

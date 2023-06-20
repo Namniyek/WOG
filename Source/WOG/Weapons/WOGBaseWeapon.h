@@ -8,6 +8,7 @@
 #include "WOG/Types/CharacterTypes.h"
 #include "Components/StaticMeshComponent.h"
 #include "GameplayTagContainer.h"
+#include "GameplayAbilitySpec.h"
 #include "WOGBaseWeapon.generated.h"
 
 
@@ -99,6 +100,9 @@ struct FWeaponDataTable : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Data")
 	TSubclassOf<UGameplayEffect> WeaponDamageEffect = nullptr;
 
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "GAS")
+	TArray<TSubclassOf<class UWOGGameplayAbilityBase>> Abilities = { nullptr };
+
 	//TO-DO SFX particles for weapon trail && hit FX
 
 };
@@ -155,6 +159,10 @@ protected:
 	UFUNCTION()
 	void OnWeaponUnequip(AActor* User, FName SlotName);
 
+	bool GrantWeaponAbilities(AActor* User);
+	bool RemoveGrantedAbilities(AActor* User);
+
+	TArray<FGameplayAbilitySpecHandle> GrantedAbilities;
 
 private:
 	void InitWeaponData();

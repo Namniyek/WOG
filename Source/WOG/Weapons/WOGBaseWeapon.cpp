@@ -15,6 +15,8 @@
 #include "AbilitySystemBlueprintLibrary.h"
 #include "Types/WOGGameplayTags.h"
 #include "GameplayTags.h"
+#include "AbilitySystem/Abilities/WOGGameplayAbilityBase.h"
+#include "AbilitySystemComponent.h"
 
 // Sets default values
 AWOGBaseWeapon::AWOGBaseWeapon()
@@ -110,6 +112,8 @@ void AWOGBaseWeapon::InitWeaponData()
 		WeaponData.BackSecondarySocket = WeaponDataRow->BackSecondarySocket;
 
 		WeaponData.WeaponDamageEffect = WeaponDataRow->WeaponDamageEffect;
+
+		WeaponData.Abilities = WeaponDataRow->Abilities;
 	}
 
 	//WeaponState = EWeaponState::EWS_Stored;
@@ -223,10 +227,16 @@ void AWOGBaseWeapon::OnWeaponEquip(AActor* User, FName SlotName)
 	if (SlotName == NAME_WeaponSlot_Primary)
 	{
 		AnimMaster->SetupBasePose(WeaponData.WeaponPoseTag);
+
+		bool Success = GrantWeaponAbilities(User);
+		UE_LOG(LogTemp, Display, TEXT("WeaponGrantedAbilities applied: %d"), Success);
 	}
 	else
 	{
 		AnimMaster->SetupBasePose(TAG_Pose_Relax);
+
+		bool Success = RemoveGrantedAbilities(User);
+		UE_LOG(LogTemp, Display, TEXT("WeaponAbilities removed: %d"), Success);
 	}
 }
 
@@ -249,6 +259,33 @@ void AWOGBaseWeapon::OnWeaponUnequip(AActor* User, FName SlotName)
 	/*
 	** BOUND AND KEPT HERE JUST IN CASE
 	*/
+}
+
+bool AWOGBaseWeapon::GrantWeaponAbilities(AActor* User)
+{
+	if (!HasAuthority() || WeaponData.Abilities.IsEmpty()) return false;
+	UAbilitySystemComponent* ASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(User);
+	if (!ASC) return false;
+	for (auto Ability : WeaponData.Abilities)
+	{
+		if (!Ability) continue;
+		FGameplayAbilitySpecHandle AbilitySpec = ASC->GiveAbility(FGameplayAbilitySpec(Ability, 1, static_cast<int32>(Ability.GetDefaultObject()->AbilityInputID), User));
+		UE_LOG(LogTemp, Display, TEXT("Ability granted: %s"), *Ability.GetDefaultObject()->GetName());
+	}
+	return true;
+}
+
+bool AWOGBaseWeapon::RemoveGrantedAbilities(AActor* User)
+{
+	if (!HasAuthority() || GrantedAbilities.IsEmpty()) return false;
+	UAbilitySystemComponent* ASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(User);
+	if (!ASC) return false;
+	for (auto GrantedAbility : GrantedAbilities)
+	{
+		ASC->ClearAbility(GrantedAbility);
+		UE_LOG(LogTemp, Display, TEXT("Ability cleared: %s"), *GrantedAbility.ToString())
+	}
+	return true;
 }
 
 void AWOGBaseWeapon::SetCanNotParry()

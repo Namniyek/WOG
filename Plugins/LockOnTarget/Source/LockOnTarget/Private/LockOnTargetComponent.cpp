@@ -215,7 +215,7 @@ void ULockOnTargetComponent::ProcessTargetHandlerResult(const FTargetInfo& Targe
 
 	if (bCanTargetBeCaptured && bIsTargetNotSame)
 	{
-		UpdateTargetInfo(TargetInfo);
+		//UpdateTargetInfo(TargetInfo);
 	}
 	else
 	{

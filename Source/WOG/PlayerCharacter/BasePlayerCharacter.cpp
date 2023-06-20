@@ -234,8 +234,8 @@ void ABasePlayerCharacter::TargetActionPressed(const FInputActionValue& Value)
 	if (HasMatchingGameplayTag(TAG_State_Dead)) return;
 	if (HasMatchingGameplayTag(TAG_State_Dodging)) return;
 
-	if (!LockOnTarget) return;
-	LockOnTarget->EnableTargeting();
+	//if (!LockOnTarget) return;
+	//LockOnTarget->EnableTargeting();
 }
 
 void ABasePlayerCharacter::CycleTargetActionPressed(const FInputActionValue& Value)
@@ -701,15 +701,15 @@ void ABasePlayerCharacter::BroadcastHit_Implementation(AActor* AgressorActor, co
 			//Handle knockback
 
 			FGameplayEventData EventKnockbackPayload;
-			EventKnockbackPayload.EventTag = TAG_Event_Weapon_Block_Knockback;
-			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Weapon_Block_Knockback, EventKnockbackPayload);
+			EventKnockbackPayload.EventTag = TAG_Event_Debuff_Knockback;
+			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Debuff_Knockback, EventKnockbackPayload);
 			UE_LOG(LogTemp, Warning, TEXT("Knockback"));
 			return;
 		}
 
 		//Regular impact on the defender 
 		FGameplayEventData EventPayload;
-		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Weapon_Block_Impact, EventPayload);
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Weapon_Block_Impact_Light, EventPayload);
 		UE_LOG(LogTemp, Warning, TEXT("Impact"));
 
 		FGameplayCueParameters CueParams;
@@ -717,6 +717,10 @@ void ABasePlayerCharacter::BroadcastHit_Implementation(AActor* AgressorActor, co
 		CueParams.EffectCauser = AgressorCharacter;
 		AbilitySystemComponent->ExecuteGameplayCue(TAG_Cue_Weapon_Block_Impact, CueParams);
 		return;
+	}
+	else
+	{
+		UE_LOG(LogTemp, Display, TEXT("NOT BLOCKING"));
 	}
 
 	// Handle weapon clashes when both players are attacking at the same time
@@ -738,6 +742,10 @@ void ABasePlayerCharacter::BroadcastHit_Implementation(AActor* AgressorActor, co
 			UE_LOG(LogTemp, Warning, TEXT("Victim Staggered"));
 			return;
 		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Display, TEXT("NOT ATTACKING LIGHT"));
 	}
 
 	//Apply HitReact or KO to character
@@ -778,6 +786,10 @@ void ABasePlayerCharacter::BroadcastHit_Implementation(AActor* AgressorActor, co
 		AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*OutSpec.Data);
 		UE_LOG(LogTemp, Error, TEXT("Damage applied to %s : %f"), *GetNameSafe(this), DamageToApply);
 	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("NOT APPLYING DAMAGE"));
+	}
 }
 
 void ABasePlayerCharacter::TargetLocked(UTargetingHelperComponent* Target, FName Socket)
@@ -789,11 +801,11 @@ void ABasePlayerCharacter::TargetLocked(UTargetingHelperComponent* Target, FName
 		{
 			GEngine->AddOnScreenDebugMessage(-1, 4.f, FColor::Red, FString::Printf(TEXT("Target invalid")));
 			return;
-		}
+	}
 
-		CurrentTarget = TargetOwner;
+	CurrentTarget = TargetOwner;
 
-		ToggleStrafeMovement(true);
+	ToggleStrafeMovement(true);
 	}
 }
 
