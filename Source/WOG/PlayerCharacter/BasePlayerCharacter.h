@@ -324,9 +324,6 @@ public:
 	UFUNCTION()
 	void TargetUnlocked(AActor* OldTarget);
 
-	UFUNCTION()
-	void TargetNotFound();
-
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class AWOGPlayerController> OwnerPC = nullptr;
 	TObjectPtr<AActor> CurrentTarget = nullptr;

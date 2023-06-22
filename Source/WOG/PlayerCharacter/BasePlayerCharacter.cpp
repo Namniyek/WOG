@@ -294,6 +294,8 @@ void ABasePlayerCharacter::SecondaryButtonPressed(const FInputActionValue& Value
 	if (!EquipmentManager->GetItemInSlot(NAME_WeaponSlot_Primary, OutItem) || !OutItem) return;
 
 	SendAbilityLocalInput(EWOGAbilityInputID::Block);
+
+	bSecondaryButtonPressed = true;
 }
 
 void ABasePlayerCharacter::SecondaryButtonReleased(const FInputActionValue& Value)
@@ -304,6 +306,8 @@ void ABasePlayerCharacter::SecondaryButtonReleased(const FInputActionValue& Valu
 	FGameplayEventData EventPayload;
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Weapon_Block_Stop, EventPayload);
 	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Purple, FString("StopBlocking"));
+
+	bSecondaryButtonPressed = false;
 }
 
 void ABasePlayerCharacter::Server_SetPlayerProfile_Implementation(const FPlayerData& NewPlayerProfile)
@@ -666,55 +670,58 @@ void ABasePlayerCharacter::BroadcastHit_Implementation(AActor* AgressorActor, co
 	//Handle block hits && stagger && parry
 	if (HasMatchingGameplayTag(TAG_State_Weapon_Block))
 	{
-		if (!AgressorActor || !IsHitFrontal(60.f, this, AgressorActor)) return;
+		if (!AgressorActor) return;
 
 		AWOGBaseWeapon* EquippedWeapon = UWOGBlueprintLibrary::GetEquippedWeapon(this);
 		AWOGBaseCharacter* AgressorCharacter = Cast<AWOGBaseCharacter>(AgressorActor);
 
-		if (EquippedWeapon && EquippedWeapon->GetCanParry() && AgressorCharacter && !AgressorCharacter->HasMatchingGameplayTag(TAG_State_Weapon_AttackHeavy))
+		if (IsHitFrontal(60.f, this, AgressorActor) && EquippedWeapon && EquippedWeapon->GetCanParry() && AgressorCharacter && !AgressorCharacter->HasMatchingGameplayTag(TAG_State_Weapon_AttackHeavy))
 		{
 
 			//Handle Parry sequence here:
 			//Victim handle parry anim:
-			FGameplayEventData EventParryPayload;
+
+			/*FGameplayEventData EventParryPayload;
 			EventParryPayload.EventTag = TAG_Event_Weapon_Block_Parry;
 			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Weapon_Block_Parry, EventParryPayload);
-			UE_LOG(LogTemp, Warning, TEXT("Parry"));
+			UE_LOG(LogTemp, Warning, TEXT("Parry"));*/
 
 			//Attacker being staggered:
-			FGameplayEventData EventPayload;
+
+			/*FGameplayEventData EventPayload;
 			EventPayload.EventTag = TAG_Event_Debuff_Stagger;
 			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(AgressorCharacter, TAG_Event_Debuff_Stagger, EventPayload);
-			UE_LOG(LogTemp, Warning, TEXT("Staggered"));
+			UE_LOG(LogTemp, Warning, TEXT("Staggered"));*/
 			return;
 		}
 
-		if (InstigatorWeapon && AgressorCharacter && AgressorCharacter->HasMatchingGameplayTag(TAG_State_Weapon_AttackHeavy))
+		if (IsHitFrontal(60.f, this, AgressorActor) && EquippedWeapon && AgressorCharacter && AgressorCharacter->HasMatchingGameplayTag(TAG_State_Weapon_AttackHeavy))
 		{
 			//Attacker used heavy attack on victim:
 			//Handle knockback
 
 			FGameplayEventData EventKnockbackPayload;
-			EventKnockbackPayload.EventTag = TAG_Event_Debuff_Knockback;
-			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Debuff_Knockback, EventKnockbackPayload);
-			UE_LOG(LogTemp, Warning, TEXT("Knockback"));
+			EventKnockbackPayload.EventTag = EquippedWeapon->GetWeaponData().BlockImpactHeavyTag;
+			EventKnockbackPayload.EventMagnitude = EquippedWeapon->GetWeaponData().StunDuration;
+			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, EquippedWeapon->GetWeaponData().BlockImpactHeavyTag, EventKnockbackPayload);
+			UE_LOG(LogTemp, Warning, TEXT("Impact HEAVY applied: %s"), *EquippedWeapon->GetWeaponData().BlockImpactHeavyTag.ToString());
 			return;
 		}
 
-		//Regular impact on the defender 
-		FGameplayEventData EventPayload;
-		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Weapon_Block_Impact_Light, EventPayload);
-		UE_LOG(LogTemp, Warning, TEXT("Impact"));
+		if (IsHitFrontal(60.f, this, AgressorActor))
+		{
+			//Regular impact on the defender 
+			FGameplayEventData EventPayload;
+			EventPayload.EventMagnitude = DamageToApply;
+			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Weapon_Block_Impact_Light, EventPayload);
+			UE_LOG(LogTemp, Warning, TEXT("Impact LIGHT"));
 
-		FGameplayCueParameters CueParams;
-		CueParams.Location = Hit.ImpactPoint;
-		CueParams.EffectCauser = AgressorCharacter;
-		AbilitySystemComponent->ExecuteGameplayCue(TAG_Cue_Weapon_Block_Impact, CueParams);
-		return;
-	}
-	else
-	{
-		UE_LOG(LogTemp, Display, TEXT("NOT BLOCKING"));
+			FGameplayCueParameters CueParams;
+			CueParams.Location = Hit.ImpactPoint;
+			CueParams.EffectCauser = AgressorCharacter;
+			AbilitySystemComponent->ExecuteGameplayCue(TAG_Cue_Weapon_Block_Impact, CueParams);
+			return;
+		}
 	}
 
 	// Handle weapon clashes when both players are attacking at the same time
@@ -726,20 +733,16 @@ void ABasePlayerCharacter::BroadcastHit_Implementation(AActor* AgressorActor, co
 			{
 				FGameplayEventData EventPayload;
 				EventPayload.EventTag = TAG_Event_Debuff_Stagger;
-				UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(AgressorActor, TAG_Event_Debuff_Stagger, EventPayload);
-				UE_LOG(LogTemp, Warning, TEXT("Agressor Staggered"));
+				UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(AgressorActor, TAG_Event_Debuff_Knockback, EventPayload);
+				UE_LOG(LogTemp, Warning, TEXT("Agressor knockback"));
 			}
 
 			FGameplayEventData EventPayload;
 			EventPayload.EventTag = TAG_Event_Debuff_Stagger;
-			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Debuff_Stagger, EventPayload);
-			UE_LOG(LogTemp, Warning, TEXT("Victim Staggered"));
+			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Debuff_Knockback, EventPayload);
+			UE_LOG(LogTemp, Warning, TEXT("Victim knockback"));
 			return;
 		}
-	}
-	else
-	{
-		UE_LOG(LogTemp, Display, TEXT("NOT ATTACKING LIGHT"));
 	}
 
 	//Apply HitReact or KO to character
@@ -750,7 +753,6 @@ void ABasePlayerCharacter::BroadcastHit_Implementation(AActor* AgressorActor, co
 		FGameplayEventData EventKOPayload;
 		EventKOPayload.EventTag = TAG_Event_Debuff_KO;
 		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Debuff_KO, EventKOPayload);
-		UE_LOG(LogTemp, Warning, TEXT("KO Applied : %s"), *UEnum::GetValueAsString(GetLocalRole()));
 	}
 	else
 	{
@@ -759,7 +761,6 @@ void ABasePlayerCharacter::BroadcastHit_Implementation(AActor* AgressorActor, co
 		EventHitReactPayload.EventTag = TAG_Event_Debuff_HitReact;
 		EventHitReactPayload.Instigator = InstigatorWeapon;
 		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Debuff_HitReact, EventHitReactPayload);
-		UE_LOG(LogTemp, Warning, TEXT("Hit react applied : %s"), *UEnum::GetValueAsString(GetLocalRole()));
 
 		FGameplayCueParameters CueParams;
 		CueParams.Location = Hit.ImpactPoint;
@@ -779,10 +780,6 @@ void ABasePlayerCharacter::BroadcastHit_Implementation(AActor* AgressorActor, co
 		UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(OutSpec, FGameplayTag::RequestGameplayTag(TEXT("Damage.Attribute.Health")), -DamageToApply);
 		AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*OutSpec.Data);
 		UE_LOG(LogTemp, Error, TEXT("Damage applied to %s : %f"), *GetNameSafe(this), DamageToApply);
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("NOT APPLYING DAMAGE"));
 	}
 }
 
@@ -804,11 +801,6 @@ void ABasePlayerCharacter::TargetUnlocked(AActor* OldTarget)
 	CurrentTarget = nullptr;
 
 	ToggleStrafeMovement(false);
-}
-
-void ABasePlayerCharacter::TargetNotFound()
-{
-
 }
 
 void ABasePlayerCharacter::Elim(bool bPlayerLeftGame)

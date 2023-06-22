@@ -101,6 +101,7 @@ void AWOGBaseWeapon::InitWeaponData()
 		WeaponData.ComboDamageMultiplier = WeaponDataRow->ComboDamageMultiplier;
 		WeaponData.MaxComboStreak = WeaponDataRow->MaxComboStreak;
 		WeaponData.MaxParryThreshold = WeaponDataRow->MaxParryThreshold;
+		WeaponData.StunDuration = WeaponDataRow->StunDuration;
 
 		WeaponData.SwingSound = WeaponDataRow->SwingSound;
 		WeaponData.HitSound = WeaponDataRow->HitSound;
@@ -114,6 +115,11 @@ void AWOGBaseWeapon::InitWeaponData()
 		WeaponData.WeaponDamageEffect = WeaponDataRow->WeaponDamageEffect;
 
 		WeaponData.Abilities = WeaponDataRow->Abilities;
+		WeaponData.BlockImpactLightTags = WeaponDataRow->BlockImpactLightTags;
+		WeaponData.BlockImpactHeavyTag = WeaponDataRow->BlockImpactHeavyTag;
+		WeaponData.ParryTag = WeaponDataRow->ParryTag;
+		WeaponData.RangedTags = WeaponDataRow->RangedTags;
+		WeaponData.AnimationSpeed = WeaponDataRow->AnimationSpeed;
 	}
 
 	//WeaponState = EWeaponState::EWS_Stored;

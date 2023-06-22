@@ -120,6 +120,9 @@ protected:
 	TObjectPtr<class UAnimMontage> UnarmedHurtMontage;
 	#pragma endregion
 
+	UPROPERTY(BlueprintReadWrite)
+	bool bSecondaryButtonPressed = false;
+
 public:	
 	virtual void Tick(float DeltaTime) override;
 

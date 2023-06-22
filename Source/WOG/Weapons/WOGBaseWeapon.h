@@ -88,6 +88,9 @@ struct FWeaponDataTable : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
 	float MaxParryThreshold = 0.f;
 
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "GAS")
+	float StunDuration = 0.f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
 	USoundCue* SwingSound = nullptr;
 
@@ -102,6 +105,21 @@ struct FWeaponDataTable : public FTableRowBase
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "GAS")
 	TArray<TSubclassOf<class UWOGGameplayAbilityBase>> Abilities = { nullptr };
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "GAS")
+	FGameplayTagContainer BlockImpactLightTags = FGameplayTagContainer();
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "GAS")
+	FGameplayTag BlockImpactHeavyTag = FGameplayTag();
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "GAS")
+	FGameplayTag ParryTag = FGameplayTag();
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "GAS")
+	FGameplayTagContainer RangedTags = FGameplayTagContainer();
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "GAS")
+	float AnimationSpeed = 1.f;
 
 	//TO-DO SFX particles for weapon trail && hit FX
 
