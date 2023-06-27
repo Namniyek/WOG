@@ -208,6 +208,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Spawn Mode", meta = (AllowPrivateAccess = "true"))
 	UInputAction* RotateSpawnAction;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Base Match", meta = (AllowPrivateAccess = "true"))
+	UInputAction* WeaponRangedAction;
+
 	#pragma endregion
 
 protected:
@@ -248,6 +251,8 @@ protected:
 	/**Called for Target input*/
 	void TargetActionPressed(const FInputActionValue& Value);
 	void CycleTargetActionPressed(const FInputActionValue& Value);
+
+	void WeaponRangedActionPressed(const FInputActionValue& Value);
 
 	/**Called for equip input*/
 	virtual void AbilitiesButtonPressed(const FInputActionValue& Value) { /*TO-BE OVERRIDEN IN CHILDREN*/ };
@@ -324,8 +329,13 @@ public:
 	UFUNCTION()
 	void TargetUnlocked(AActor* OldTarget);
 
+	UFUNCTION(Server, reliable)
+	void Server_SetCurrentTarget(AActor* NewTarget = nullptr);
+
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class AWOGPlayerController> OwnerPC = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Replicated)
 	TObjectPtr<AActor> CurrentTarget = nullptr;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setup|Animations")

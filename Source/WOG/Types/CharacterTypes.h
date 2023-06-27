@@ -57,6 +57,7 @@ enum class EWOGAbilityInputID : uint8
 	AttackLight		UMETA(DisplayName = "AttackLight"),
 	AttackHeavy		UMETA(DisplayName = "AttackHeavy"),
 	Block			UMETA(DisplayName = "Block"),
+	Ranged			UMETA(DisplayName = "Ranged"),
 
 	//Character
 	Sprint			UMETA(DisplayName = "Sprint"),

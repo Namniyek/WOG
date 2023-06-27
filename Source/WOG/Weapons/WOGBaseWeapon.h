@@ -18,6 +18,7 @@ class ABasePlayerCharacter;
 class UGameplayEffect;
 class UAGR_ItemComponent;
 class USphereComponent;
+class AWOGRangedWeaponBase;
 
 
 USTRUCT(BlueprintType)
@@ -103,6 +104,9 @@ struct FWeaponDataTable : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Data")
 	TSubclassOf<UGameplayEffect> WeaponDamageEffect = nullptr;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Data")
+	TSubclassOf<UGameplayEffect> RangedWeaponEffect = nullptr;
+
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "GAS")
 	TArray<TSubclassOf<class UWOGGameplayAbilityBase>> Abilities = { nullptr };
 
@@ -116,10 +120,13 @@ struct FWeaponDataTable : public FTableRowBase
 	FGameplayTag ParryTag = FGameplayTag();
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "GAS")
-	FGameplayTagContainer RangedTags = FGameplayTagContainer();
+	FGameplayTag RangedTag = FGameplayTag();
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "GAS")
 	float AnimationSpeed = 1.f;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "GAS")
+	TSubclassOf<class AWOGRangedWeaponBase> ThrowableClass = nullptr;
 
 	//TO-DO SFX particles for weapon trail && hit FX
 
@@ -183,7 +190,7 @@ protected:
 	TArray<FGameplayAbilitySpecHandle> GrantedAbilities;
 
 private:
-	void InitWeaponData();
+	virtual void InitWeaponData();
 
 	float TimeSinceBlockStarted;
 
@@ -210,6 +217,9 @@ private:
 
 	TArray<AActor*> HitActorsToIgnore;
 
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<AWOGRangedWeaponBase> SpawnedRangedWeapon;
+
 public:	
 	UFUNCTION(BlueprintCallable)
 	void AttachToBack();
@@ -221,6 +231,18 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void ResetCombo();
+
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
+	void ThrowWeapon(bool IsTargetValid, const FVector_NetQuantize& TargetLocation);
+
+	UFUNCTION(Server, reliable, BlueprintCallable)
+	void Server_ThrowWeapon(bool IsTargetValid, const FVector_NetQuantize& TargetLocation);
+
+	UFUNCTION(BlueprintCallable)
+	void RecallWeapon();
+
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
+	void CatchWeapon();
 
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite)
 	TObjectPtr<ABasePlayerCharacter> OwnerCharacter;

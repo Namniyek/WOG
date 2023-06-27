@@ -7,6 +7,8 @@
 #include "WOG/PlayerCharacter/BasePlayerCharacter.h"
 #include "WOG/Enemies/WOGBaseEnemy.h"
 #include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetSystemLibrary.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "Sound/SoundCue.h"
 #include "WOG/Interfaces/BuildingInterface.h"
 #include "WOG/Interfaces/AttributesInterface.h"
@@ -17,6 +19,7 @@
 #include "GameplayTags.h"
 #include "AbilitySystem/Abilities/WOGGameplayAbilityBase.h"
 #include "AbilitySystemComponent.h"
+#include "Weapons/WOGRangedWeaponBase.h"
 
 // Sets default values
 AWOGBaseWeapon::AWOGBaseWeapon()
@@ -113,20 +116,21 @@ void AWOGBaseWeapon::InitWeaponData()
 		WeaponData.BackSecondarySocket = WeaponDataRow->BackSecondarySocket;
 
 		WeaponData.WeaponDamageEffect = WeaponDataRow->WeaponDamageEffect;
+		WeaponData.RangedWeaponEffect = WeaponDataRow->RangedWeaponEffect;
 
 		WeaponData.Abilities = WeaponDataRow->Abilities;
 		WeaponData.BlockImpactLightTags = WeaponDataRow->BlockImpactLightTags;
 		WeaponData.BlockImpactHeavyTag = WeaponDataRow->BlockImpactHeavyTag;
 		WeaponData.ParryTag = WeaponDataRow->ParryTag;
-		WeaponData.RangedTags = WeaponDataRow->RangedTags;
+		WeaponData.RangedTag = WeaponDataRow->RangedTag;
 		WeaponData.AnimationSpeed = WeaponDataRow->AnimationSpeed;
+		WeaponData.ThrowableClass = WeaponDataRow->ThrowableClass;
 	}
 
-	//WeaponState = EWeaponState::EWS_Stored;
 	ComboStreak = 0;
 	bAttackWindowOpen = false;
 
-	AttachToBack();
+	//AttachToBack();
 
 }
 
@@ -275,7 +279,9 @@ bool AWOGBaseWeapon::GrantWeaponAbilities(AActor* User)
 	for (auto Ability : WeaponData.Abilities)
 	{
 		if (!Ability) continue;
-		FGameplayAbilitySpecHandle AbilitySpec = ASC->GiveAbility(FGameplayAbilitySpec(Ability, 1, static_cast<int32>(Ability.GetDefaultObject()->AbilityInputID), User));
+		FGameplayAbilitySpec AbilitySpec = FGameplayAbilitySpec(Ability, 1, static_cast<int32>(Ability.GetDefaultObject()->AbilityInputID), User);
+		FGameplayAbilitySpecHandle GrantedAbility = ASC->GiveAbility(AbilitySpec);
+		GrantedAbilities.AddUnique(GrantedAbility);
 		UE_LOG(LogTemp, Display, TEXT("Ability granted: %s"), *Ability.GetDefaultObject()->GetName());
 	}
 	return true;
@@ -380,6 +386,165 @@ void AWOGBaseWeapon::ResetCombo()
 {
 	ComboStreak = 0;
 	bAttackWindowOpen = false;
+}
+
+void AWOGBaseWeapon::ThrowWeapon(bool IsTargetValid, const FVector_NetQuantize& TargetLocation)
+{
+	OwnerCharacter = OwnerCharacter == nullptr ? Cast<ABasePlayerCharacter>(GetOwner()) : OwnerCharacter;
+	if (!OwnerCharacter) return;
+
+	//Spawn throwable weapon actor
+	if (UKismetSystemLibrary::IsValidClass(WeaponData.ThrowableClass))
+	{
+		FTransform SpawnTransform = FTransform();
+		FVector HandLocation = OwnerCharacter->GetMesh()->GetSocketLocation(FName("Hand_L"));
+		SpawnTransform.SetLocation(HandLocation);
+
+		if (IsTargetValid)
+		{
+			//Current target is valid. Throw weapon at target
+			FVector Direction;
+			Direction = TargetLocation - HandLocation;
+
+			SpawnTransform.SetRotation(Direction.ToOrientationQuat());
+		}
+		else
+		{
+			//No target, throw weapon to where the camera is pointing
+			SpawnTransform.SetRotation(OwnerCharacter->GetControlRotation().Quaternion());
+		}
+
+		//Spawn Ranged Weapon
+		UWorld* World = GetWorld();
+		if (World)
+		{
+			FActorSpawnParameters SpawnParams;
+			SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+			SpawnParams.Owner = OwnerCharacter;
+			SpawnedRangedWeapon = World->SpawnActor<AWOGRangedWeaponBase>(WeaponData.ThrowableClass, SpawnTransform, SpawnParams);
+
+			if (SpawnedRangedWeapon)
+			{
+				UE_LOG(LogTemp, Display, TEXT("Ranged Weapon %s spawned"), *SpawnedRangedWeapon.GetName());
+			}
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Throwable class invalid"));
+		return;
+	}
+
+	UAbilitySystemComponent* ASC = OwnerCharacter->GetAbilitySystemComponent();
+	if (ASC)
+	{
+		FGameplayEffectContextHandle RangedContext = ASC->MakeEffectContext();
+		FGameplayEffectSpecHandle OutSpec = ASC->MakeOutgoingSpec(WeaponData.RangedWeaponEffect, 1, RangedContext);
+		ASC->ApplyGameplayEffectSpecToSelf(*OutSpec.Data);
+		UE_LOG(LogTemp, Display, TEXT("Ranged effect applied"));
+	}
+
+	MeshSecondary->SetVisibility(false);
+}
+
+void AWOGBaseWeapon::RecallWeapon()
+{
+	if (SpawnedRangedWeapon)
+	{
+		SpawnedRangedWeapon->RecallWeapon();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Failed to recall weapon"));
+	}
+}
+
+void AWOGBaseWeapon::Server_ThrowWeapon_Implementation(bool IsTargetValid, const FVector_NetQuantize& TargetLocation)
+{
+	OwnerCharacter = OwnerCharacter == nullptr ? Cast<ABasePlayerCharacter>(GetOwner()) : OwnerCharacter;
+	if (!OwnerCharacter) return;
+
+	//Spawn throwable weapon actor
+	if (UKismetSystemLibrary::IsValidClass(WeaponData.ThrowableClass))
+	{
+		FTransform SpawnTransform = FTransform();
+		FVector HandLocation = OwnerCharacter->GetMesh()->GetSocketLocation(FName("Hand_L"));
+		SpawnTransform.SetLocation(HandLocation);
+
+		if (IsTargetValid)
+		{
+			//Current target is valid. Throw weapon at target
+			FVector Direction;
+			Direction = TargetLocation - HandLocation;
+
+			SpawnTransform.SetRotation(Direction.ToOrientationQuat());
+		}
+		else
+		{
+			//No target, throw weapon to where the camera is pointing
+			SpawnTransform.SetRotation(OwnerCharacter->GetControlRotation().Quaternion());
+		}
+
+		//Spawn Ranged Weapon
+		UWorld* World = GetWorld();
+		if (World)
+		{
+			FActorSpawnParameters SpawnParams;
+			SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+			SpawnParams.Owner = OwnerCharacter;
+			SpawnedRangedWeapon = World->SpawnActor<AWOGRangedWeaponBase>(WeaponData.ThrowableClass, SpawnTransform, SpawnParams);
+
+			if (SpawnedRangedWeapon)
+			{
+				UE_LOG(LogTemp, Display, TEXT("Ranged Weapon %s spawned"), *SpawnedRangedWeapon.GetName());
+			}
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Throwable class invalid"));
+		return;
+	}
+
+	UAbilitySystemComponent* ASC = OwnerCharacter->GetAbilitySystemComponent();
+	if (ASC)
+	{
+		FGameplayEffectContextHandle RangedContext = ASC->MakeEffectContext();
+		FGameplayEffectSpecHandle OutSpec = ASC->MakeOutgoingSpec(WeaponData.RangedWeaponEffect, 1, RangedContext);
+		ASC->ApplyGameplayEffectSpecToSelf(*OutSpec.Data);
+		UE_LOG(LogTemp, Display, TEXT("Ranged effect applied"));
+	}
+
+	MeshSecondary->SetVisibility(false);
+}
+
+void AWOGBaseWeapon::CatchWeapon()
+{
+	OwnerCharacter = OwnerCharacter == nullptr ? Cast<ABasePlayerCharacter>(GetOwner()) : OwnerCharacter;
+	if (!OwnerCharacter) return;
+
+	UE_LOG(LogTemp, Warning, TEXT("Running Catch ability c++"));
+
+	UAbilitySystemComponent* ASC = OwnerCharacter->GetAbilitySystemComponent();
+	if (ASC)
+	{
+		FGameplayTagContainer EffectsToRemove;
+		EffectsToRemove.AddTag(TAG_State_Weapon_Ranged);
+		ASC->RemoveActiveEffectsWithTags(EffectsToRemove);
+		UE_LOG(LogTemp, Warning, TEXT("Ranged effect removed"));
+	}
+
+	MeshSecondary->SetVisibility(true);
+
+	if (SpawnedRangedWeapon)
+	{
+		SpawnedRangedWeapon->Destroy();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Failed to destroy weapon"));
+	}
+
 }
 
 void AWOGBaseWeapon::SetOwnerCharacter(ABasePlayerCharacter* NewOwner)

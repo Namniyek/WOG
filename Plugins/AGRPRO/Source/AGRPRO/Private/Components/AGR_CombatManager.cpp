@@ -54,6 +54,7 @@ void UAGR_CombatManager::StartTrace()
     }
 
     OnStartAttack.Broadcast();
+     
     TraceTick();
 }
 
