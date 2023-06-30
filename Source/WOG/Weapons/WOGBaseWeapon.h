@@ -19,6 +19,7 @@ class UGameplayEffect;
 class UAGR_ItemComponent;
 class USphereComponent;
 class AWOGRangedWeaponBase;
+class AActor;
 
 
 USTRUCT(BlueprintType)
@@ -126,7 +127,7 @@ struct FWeaponDataTable : public FTableRowBase
 	float AnimationSpeed = 1.f;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "GAS")
-	TSubclassOf<class AWOGRangedWeaponBase> ThrowableClass = nullptr;
+	TSubclassOf<AActor> RangedClass = nullptr;
 
 	//TO-DO SFX particles for weapon trail && hit FX
 
@@ -207,18 +208,14 @@ private:
 
 	UPROPERTY(VisibleAnywhere)
 	int32 ComboStreak;
-	UPROPERTY(VisibleAnywhere)
-	bool bAttackWindowOpen;
-	UPROPERTY(VisibleAnywhere)
-	bool bCanParry;
-	FTimerHandle ParryTimer;
-
-	void SetCanNotParry();
 
 	TArray<AActor*> HitActorsToIgnore;
 
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<AWOGRangedWeaponBase> SpawnedRangedWeapon;
+
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<AActor> SpawnedAOEAttack;
 
 public:	
 	UFUNCTION(BlueprintCallable)
@@ -232,11 +229,11 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void ResetCombo();
 
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
-	void ThrowWeapon(bool IsTargetValid, const FVector_NetQuantize& TargetLocation);
-
 	UFUNCTION(Server, reliable, BlueprintCallable)
 	void Server_ThrowWeapon(bool IsTargetValid, const FVector_NetQuantize& TargetLocation);
+
+	UFUNCTION(Server, reliable, BlueprintCallable)
+	void Server_SpawnWeaponAOE(const FVector_NetQuantize& TargetLocation);
 
 	UFUNCTION(BlueprintCallable)
 	void RecallWeapon();
@@ -252,8 +249,6 @@ public:
 
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE int32 GetComboStreak() const { return ComboStreak; }
-	FORCEINLINE bool GetIsInCombo() const { return bAttackWindowOpen; }
-	FORCEINLINE bool GetCanParry() const { return bCanParry; }
 
 	UFUNCTION(BlueprintCallable)
 	void SetOwnerCharacter(ABasePlayerCharacter* NewOwner);

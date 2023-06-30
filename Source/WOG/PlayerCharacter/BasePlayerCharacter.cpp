@@ -166,6 +166,7 @@ void ABasePlayerCharacter::MoveActionPressed(const FInputActionValue& Value)
 	if (HasMatchingGameplayTag(TAG_State_Debuff_Knockback)) return;
 	if (HasMatchingGameplayTag(TAG_State_Debuff_KO)) return;
 	if (HasMatchingGameplayTag(TAG_State_Debuff_Stagger)) return;
+	if (HasMatchingGameplayTag(TAG_State_Debuff_Stun)) return;
 
 	FVector2D MovementVector = Value.Get<FVector2D>();
 	if (Controller != nullptr)
@@ -724,7 +725,10 @@ void ABasePlayerCharacter::BroadcastHit_Implementation(AActor* AgressorActor, co
 		//Victim hit by two handed ranged attack
 		if (AgressorWeapon->GetWeaponData().WeaponTag.MatchesTag(TAG_Inventory_Weapon_TwoHanded))
 		{
-
+			FGameplayEventData EventPayload;
+			EventPayload.EventTag = AgressorWeapon->GetWeaponData().RangedTag;
+			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, AgressorWeapon->GetWeaponData().RangedTag, EventPayload);
+			UE_LOG(LogTemp, Warning, TEXT("Weapon AOE hit and applied: %s"), *AgressorWeapon->GetWeaponData().RangedTag.ToString());
 		}
 	}
 

@@ -38,4 +38,7 @@ public:
 	UFUNCTION(BlueprintPure)
 	float GetAdrenalinePercent();
 
+	UFUNCTION(BlueprintPure)
+	float GetStaminaPercent();
+
 };

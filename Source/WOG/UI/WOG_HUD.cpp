@@ -75,3 +75,18 @@ float UWOG_HUD::GetAdrenalinePercent()
         return 0.f;
     }
 }
+
+float UWOG_HUD::GetStaminaPercent()
+{
+    OwnerPlayerController = OwnerPlayerController == nullptr ? Cast<AWOGPlayerController>(GetOwningPlayer()) : OwnerPlayerController;
+    OwnerPlayerCharacter = Cast<ABasePlayerCharacter>(OwnerPlayerController->K2_GetPawn());
+    if (OwnerPlayerCharacter && OwnerPlayerCharacter->GetAttributeSetBase())
+    {
+        return OwnerPlayerCharacter->GetAttributeSetBase()->GetStamina() / OwnerPlayerCharacter->GetAttributeSetBase()->GetMaxStamina();
+    }
+    else
+    {
+        GEngine->AddOnScreenDebugMessage(1, 2.f, FColor::Red, FString("Pawn Error"));
+        return 0.f;
+    }
+}
