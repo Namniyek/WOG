@@ -7,3 +7,6 @@
 static FName NAME_WeaponSlot_Primary = FName("Primary");
 static FName NAME_WeaponSlot_BackMain = FName("BackMain");
 static FName NAME_WeaponSlot_BackSecondary = FName("BackSecondary");
+static FName NAME_MagicSlot_MagicPrimary = FName("MagicPrimary");
+static FName NAME_MagicSlot_MagicBackMain = FName("MagicBackMain");
+static FName NAME_MagicSlot_MagicBackSecondary = FName("MagicBackSecondary");

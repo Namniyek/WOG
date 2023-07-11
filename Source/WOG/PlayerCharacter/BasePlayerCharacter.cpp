@@ -588,6 +588,84 @@ void ABasePlayerCharacter::Server_UnequipWeapon_Implementation(const FName& Key,
 	return;
 }
 
+void ABasePlayerCharacter::Server_EquipMagic_Implementation(const FName& Key, AActor* InMagic)
+{
+	if (!InMagic) return;
+
+	//Determine the back slots names
+	FName RelevantBackSlot;
+	FName OtherBackSlot;
+	if (Key == FName("1"))
+	{
+		RelevantBackSlot = NAME_MagicSlot_MagicBackMain;
+		OtherBackSlot = NAME_MagicSlot_MagicBackSecondary;
+	}
+	else if (Key == FName("2"))
+	{
+		RelevantBackSlot = NAME_MagicSlot_MagicBackSecondary;
+		OtherBackSlot = NAME_MagicSlot_MagicBackMain;
+	}
+
+	//Determine where to equip magic
+	AActor* PrimarySlotActor;
+	EquipmentManager->GetItemInSlot(NAME_MagicSlot_MagicPrimary, PrimarySlotActor);
+	if (PrimarySlotActor == InMagic)
+	{
+		//InMagic already equipped. Put it on the back
+		FText Note;
+		EquipmentManager->UnEquipByReference(InMagic, Note);
+		AActor* PreviousItem;
+		AActor* NewItem;
+		EquipmentManager->EquipItemInSlot(RelevantBackSlot, InMagic, PreviousItem, NewItem);
+		UE_LOG(LogTemp, Display, TEXT("Same magic as MagicPrimary - Equipping to MagicBackMain"));
+		return;
+	}
+	else
+	{
+		//InMagic NOT equipped as primary
+		//Determine where to equip weapons
+		AActor* BackSlotActor;
+		EquipmentManager->GetItemInSlot(RelevantBackSlot, BackSlotActor);
+		if (BackSlotActor == InMagic)
+		{
+			//InWeapon equipped on the back releavant slot
+			if (EquipmentManager->GetItemInSlot(NAME_MagicSlot_MagicPrimary, PrimarySlotActor))
+			{
+				//Primary slot taken. Send Previous weapon to back.
+				FText Note;
+				EquipmentManager->UnEquipByReference(PrimarySlotActor, Note);
+				AActor* PreviousItem;
+				AActor* NewItem;
+				EquipmentManager->EquipItemInSlot(OtherBackSlot, PrimarySlotActor, PreviousItem, NewItem);
+			}
+
+			//Equip InWeapon to primary
+			FText Note;
+			EquipmentManager->UnEquipByReference(InMagic, Note);
+			AActor* PreviousItem;
+			AActor* NewItem;
+			EquipmentManager->EquipItemInSlot(NAME_MagicSlot_MagicPrimary, InMagic, PreviousItem, NewItem);
+			UE_LOG(LogTemp, Display, TEXT("Same as MagicBackMain - Equipping to MagicPrimary"));
+			return;
+		}
+		else
+		{
+			//InWeapon was never equipped before
+			AActor* PreviousItem;
+			AActor* NewItem;
+			EquipmentManager->EquipItemInSlot(RelevantBackSlot, InMagic, PreviousItem, NewItem);
+			UE_LOG(LogTemp, Display, TEXT("Magic Never equipped before - Equipping to MagicRelevantBack Slot"));
+			return;
+		}
+	}
+	UE_LOG(LogTemp, Error, TEXT("ERROR WHILE EQUIPPING"));
+}
+
+void ABasePlayerCharacter::Server_UnequipMagic_Implementation(const FName& Key, AActor* InWeapon)
+{
+
+}
+
 void ABasePlayerCharacter::HandleStateElimmed(AController* InstigatedBy)
 {
 	if (!HasAuthority()) return;

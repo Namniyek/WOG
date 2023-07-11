@@ -37,6 +37,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Debuff_Knockback, "Event.Debuff.Knockback");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Debuff_Stun, "Event.Debuff.Stun");
 
 //Inventory tags
+//Weapons
 UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Weapon_Shield, "Inventory.Weapon.Shield");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Weapon_TwoHanded, "Inventory.Weapon.TwoHanded");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Weapon_DualWield, "Inventory.Weapon.DualWield");
@@ -50,6 +51,14 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Weapon_TwoHanded_Axe, "Inventory.Weapon.Two
 UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Weapon_DualWield_Axe, "Inventory.Weapon.DualWield.Axe");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Weapon_DualWield_Hammer, "Inventory.Weapon.DualWield.Hammer");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Weapon_DualWield_Sword, "Inventory.Weapon.DualWield.Sword");
+
+//Magic
+UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Magic_AOE, "Inventory.Magic.AOE");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Magic_Projectile, "Inventory.Magic.Projectile");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Magic_Instant, "Inventory.Magic.Instant");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Magic_Buff, "Inventory.Magic.Buff");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Magic_Debuff, "Inventory.Magic.Debuff");
+
 
 //Pose Tags
 UE_DEFINE_GAMEPLAY_TAG(TAG_Pose_Relax, "Pose.Relax");

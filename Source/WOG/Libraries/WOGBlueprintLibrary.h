@@ -10,6 +10,7 @@
  * 
  */
 class AWOGBaseWeapon;
+class AWOGBaseMagic;
 
 UCLASS()
 class WOG_API UWOGBlueprintLibrary : public UBlueprintFunctionLibrary
@@ -19,12 +20,21 @@ class WOG_API UWOGBlueprintLibrary : public UBlueprintFunctionLibrary
 public:
 	static AWOGBaseWeapon* GetEquippedWeapon(const AActor* Owner);
 
+	static AWOGBaseMagic* GetEquippedMagic(const AActor* Owner);
+
 private:
 	//Can return nullptr 
 	UFUNCTION(BlueprintCallable, BlueprintPure, DisplayName = "Get Equipped Weapon", Category = "WOG Library")
 	static AWOGBaseWeapon* K2_GetEquippedWeapon(AActor* Owner)
 	{
 		return GetEquippedWeapon(Owner);
+	};
+
+	//Can return nullptr 
+	UFUNCTION(BlueprintCallable, BlueprintPure, DisplayName = "Get Equipped Magic", Category = "WOG Library")
+	static AWOGBaseMagic* K2_GetEquippedMagic(AActor* Owner)
+	{
+		return GetEquippedMagic(Owner);
 	};
 
 };

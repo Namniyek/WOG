@@ -37,6 +37,9 @@ public:
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Replicated, Category = "AGR|Game Play")
     TArray<FShortcutItemReference> WeaponShortcutReferences;
 
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Replicated, Category = "AGR|Game Play")
+    TArray<FShortcutItemReference> MagicShortcutReferences;
+
 public:
     UAGR_EquipmentManager();
 
@@ -97,6 +100,14 @@ public:
     bool GetWeaponShortcutReference(
         const FName Key,
         AActor*& OutItem);
+
+    UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "AGR")
+    bool SaveMagicShortcutReference(FShortcutItemReference InItem);
+
+    UFUNCTION(BlueprintCallable, Category = "AGR")
+    bool GetMagicShortcutReference(
+            const FName Key,
+            AActor*& OutItem);
 
 protected:
     virtual void BeginPlay() override;

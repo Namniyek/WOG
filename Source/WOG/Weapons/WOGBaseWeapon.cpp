@@ -10,8 +10,6 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Sound/SoundCue.h"
-#include "WOG/Interfaces/BuildingInterface.h"
-#include "WOG/Interfaces/AttributesInterface.h"
 #include "Components/SphereComponent.h"
 #include "Data/AGRLibrary.h"
 #include "AbilitySystemBlueprintLibrary.h"
@@ -367,7 +365,6 @@ void AWOGBaseWeapon::ResetCombo()
 {
 	ComboStreak = 0;
 }
-
 
 void AWOGBaseWeapon::Server_ThrowWeapon_Implementation(bool IsTargetValid, const FVector_NetQuantize& TargetLocation)
 {

@@ -36,6 +36,7 @@ void UAGR_EquipmentManager::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
 
     DOREPLIFETIME(ThisClass, EquipmentList);
     DOREPLIFETIME(ThisClass, WeaponShortcutReferences);
+    DOREPLIFETIME(ThisClass, MagicShortcutReferences);
 }
 
 bool UAGR_EquipmentManager::GetAllItems(TArray<AActor*>& OutItems)
@@ -292,6 +293,55 @@ bool UAGR_EquipmentManager::GetWeaponShortcutReference(const FName Key, AActor*&
         if (WeaponRef.Key == Key)
         {
             OutItem = WeaponRef.ItemShortcut;
+            return true;
+        }
+        else
+        {
+            continue;
+        }
+    }
+    return false;
+}
+
+bool UAGR_EquipmentManager::SaveMagicShortcutReference(FShortcutItemReference InItem)
+{
+    if (MagicShortcutReferences.IsEmpty())
+    {
+        MagicShortcutReferences.Add(InItem);
+        UE_LOG(LogTemp, Warning, TEXT("Magic Added!"));
+        return true;
+    }
+
+    for (auto MagicRef : MagicShortcutReferences)
+    {
+        if (MagicRef.Key == InItem.Key)
+        {
+            UE_LOG(LogTemp, Error, TEXT("Magic Looped but NOT added"));
+            continue;
+        }
+        else
+        {
+            MagicShortcutReferences.Add(InItem);
+            UE_LOG(LogTemp, Warning, TEXT("Magic Looped but Added!"));
+            return true;
+        }
+    }
+    return false;
+}
+
+bool UAGR_EquipmentManager::GetMagicShortcutReference(const FName Key, AActor*& OutItem)
+{
+    if (MagicShortcutReferences.IsEmpty())
+    {
+        OutItem = nullptr;
+        return false;
+    }
+
+    for (auto MagicRef : MagicShortcutReferences)
+    {
+        if (MagicRef.Key == Key)
+        {
+            OutItem = MagicRef.ItemShortcut;
             return true;
         }
         else

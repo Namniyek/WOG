@@ -302,6 +302,12 @@ public:
 	UFUNCTION(Server, reliable, BlueprintCallable)
 	void Server_UnequipWeapon(const FName& Key, AActor* InWeapon);
 
+	UFUNCTION(Server, reliable, BlueprintCallable)
+	void Server_EquipMagic(const FName& Key, AActor* InMagic);
+
+	UFUNCTION(Server, reliable, BlueprintCallable)
+	void Server_UnequipMagic(const FName& Key, AActor* InMagic);
+
 	#pragma endregion
 
 	#pragma region Actor Components
