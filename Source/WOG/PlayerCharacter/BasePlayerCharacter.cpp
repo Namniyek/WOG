@@ -663,7 +663,27 @@ void ABasePlayerCharacter::Server_EquipMagic_Implementation(const FName& Key, AA
 
 void ABasePlayerCharacter::Server_UnequipMagic_Implementation(const FName& Key, AActor* InWeapon)
 {
+	if (!InWeapon) return;
 
+	//Determine the back slots names
+	FName BackSlot;
+	if (Key == FName("1"))
+	{
+		BackSlot = NAME_MagicSlot_MagicBackMain;
+	}
+	else if (Key == FName("2"))
+	{
+		BackSlot = NAME_MagicSlot_MagicBackSecondary;
+	}
+
+	//Unequip from primary and equip to back
+	FText Note;
+	EquipmentManager->UnEquipByReference(InWeapon, Note);
+	AActor* PreviousItem;
+	AActor* NewItem;
+	EquipmentManager->EquipItemInSlot(BackSlot, InWeapon, PreviousItem, NewItem);
+	UE_LOG(LogTemp, Display, TEXT("MagicUnequipped"));
+	return;
 }
 
 void ABasePlayerCharacter::HandleStateElimmed(AController* InstigatedBy)

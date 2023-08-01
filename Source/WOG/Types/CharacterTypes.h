@@ -16,7 +16,6 @@ enum class ECosmeticHit : uint8
 UENUM(BlueprintType)
 enum class EAbilityType : uint8
 {
-	EAT_Relax UMETA(DisplayName = "Relax"),
 	EAT_Projectile UMETA(DisplayName = "Projectile"),
 	EAT_AOE UMETA(DisplayName = "Area Of Effect"),
 	EAT_Instant UMETA(DisplayName = "Instant"),

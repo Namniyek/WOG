@@ -16,6 +16,7 @@
 #include "GameplayTags.h"
 #include "AbilitySystem/Abilities/WOGGameplayAbilityBase.h"
 #include "AbilitySystemComponent.h"
+#include "Magic/WOGBaseIdleMagic.h"
 
 AWOGBaseMagic::AWOGBaseMagic()
 {
@@ -70,6 +71,55 @@ void AWOGBaseMagic::InitMagicData()
 	if (MagicDataRow)
 	{
 		MagicData = *MagicDataRow;
+	}
+}
+
+void AWOGBaseMagic::SpawnIdleClass()
+{
+	OwnerCharacter = OwnerCharacter == nullptr ? Cast<ABasePlayerCharacter>(GetOwner()) : OwnerCharacter;
+	if (!OwnerCharacter) return;
+	if (MagicData.AbilityType != EAbilityType::EAT_Projectile && MagicData.AbilityType != EAbilityType::EAT_AOE) return;
+
+	TSubclassOf<AWOGBaseIdleMagic> IdleClass;
+
+	switch (MagicData.AbilityType)
+	{
+	case EAbilityType::EAT_Projectile:
+		if (UKismetSystemLibrary::IsValidClass(MagicData.IdleProjectileClass))
+		{
+			IdleClass = MagicData.IdleProjectileClass;
+		}
+		break;
+
+	case EAbilityType::EAT_AOE:
+		if (UKismetSystemLibrary::IsValidClass(MagicData.IdleAOEClass))
+		{
+			IdleClass = MagicData.IdleAOEClass;
+		}
+		break;
+	}
+
+	if (UKismetSystemLibrary::IsValidClass(IdleClass))
+	{
+		FTransform SpawnTransform = FTransform();
+		SpawnTransform.SetLocation(OwnerCharacter->GetActorLocation());
+
+		//Spawn Ranged Weapon
+		UWorld* World = GetWorld();
+		if (World)
+		{
+			FActorSpawnParameters SpawnParams;
+			SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+			SpawnParams.Owner = OwnerCharacter;
+			
+			IdleActor = World->SpawnActor<AWOGBaseIdleMagic>(IdleClass, SpawnTransform, SpawnParams);
+
+			if (IdleActor)
+			{
+				IdleActor->AttachToActor(OwnerCharacter, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+				UE_LOG(LogTemp, Display, TEXT("Idle class spawned"));
+			}
+		}
 	}
 }
 
@@ -155,6 +205,7 @@ void AWOGBaseMagic::OnMagicOverlap(UPrimitiveComponent* OverlappedComponent, AAc
 			{
 				UE_LOG(LogTemp, Warning, TEXT("OWNER CHARACTER SET"));
 				OwnerCharacter->Server_EquipMagic(MagicRef.Key, this);
+				AttachToActor(OwnerCharacter, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 			}
 			return;
 		}
@@ -183,6 +234,7 @@ void AWOGBaseMagic::OnMagicEquip(AActor* User, FName SlotName)
 
 		bool Success = GrantMagicAbilities(User);
 		UE_LOG(LogTemp, Display, TEXT("WeaponGrantedAbilities applied: %d"), Success);
+		SpawnIdleClass();
 	}
 	else
 	{
@@ -190,6 +242,11 @@ void AWOGBaseMagic::OnMagicEquip(AActor* User, FName SlotName)
 
 		bool Success = RemoveGrantedAbilities(User);
 		UE_LOG(LogTemp, Display, TEXT("WeaponAbilities removed: %d"), Success);
+
+		if (IdleActor)
+		{
+			IdleActor->Destroy();
+		}
 	}
 }
 
@@ -224,10 +281,10 @@ void AWOGBaseMagic::AttachToBack()
 
 bool AWOGBaseMagic::GrantMagicAbilities(AActor* User)
 {
-	if (!HasAuthority() || MagicData.Abilities.IsEmpty()) return false;
+	if (!HasAuthority() || MagicData.AbilitiesToGrant.IsEmpty()) return false;
 	UAbilitySystemComponent* ASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(User);
 	if (!ASC) return false;
-	for (auto Ability : MagicData.Abilities)
+	for (auto Ability : MagicData.AbilitiesToGrant)
 	{
 		if (!Ability) continue;
 		FGameplayAbilitySpec AbilitySpec = FGameplayAbilitySpec(Ability, 1, static_cast<int32>(Ability.GetDefaultObject()->AbilityInputID), User);

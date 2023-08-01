@@ -7,6 +7,7 @@
 #include "GameplayTagContainer.h"
 #include "Engine/DataTable.h"
 #include "GameplayAbilitySpec.h"
+#include "Types/CharacterTypes.h"
 #include "WOGBaseMagic.generated.h"
 
 class UAnimMontage;
@@ -17,74 +18,94 @@ class UAGR_ItemComponent;
 class UAGR_InventoryManager;
 class USphereComponent;
 class UNiagaraSystem;
+class UWOGGameplayAbilityBase;
+class AWOGBaseIdleMagic;
 
 USTRUCT(BlueprintType)
 struct FMagicDataTable : public FTableRowBase
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Magic Data")
-	FName MagicName = FName("");
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "1 - Base")
+	EAbilityType AbilityType = EAbilityType::EAT_Projectile;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Magic Data")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "1 - Base")
 	bool bIsAttacker = false;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Magic Data")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "2 - Animations")
 	FName LeftHandSocket = FName("");
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Magic Data")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "2 - Animations")
 	FName RighHandSocket = FName("");
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Magic Data")
-	FGameplayTag MagicTag = FGameplayTag();
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Magic Data")
-	FGameplayTag MagicPoseTag = FGameplayTag();
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animations")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "2 - Animations")
 	UAnimMontage* AttackMontage = nullptr;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animations")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "2 - Animations")
 	UAnimMontage* EquipMontage = nullptr;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animations")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "2 - Animations")
 	UAnimMontage* HurtMontage = nullptr;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-	float BaseDamage = 0.f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-	float DamageMultiplier = 0.f;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "GAS")
-	float StunDuration = 0.f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
-	USoundCue* CastSound = nullptr;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
-	USoundCue* HitSound = nullptr;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
-	TObjectPtr<UNiagaraSystem> IdleParticleSystem = nullptr;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Magic Data")
-	TSubclassOf<UGameplayEffect> WeaponDamageEffect = nullptr;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Magic Data")
-	TSubclassOf<UGameplayEffect> RangedWeaponEffect = nullptr;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "GAS")
-	TArray<TSubclassOf<class UWOGGameplayAbilityBase>> Abilities = { nullptr };
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "GAS")
-	FGameplayTag RangedTag = FGameplayTag();
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Animations")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "2 - Animations")
 	float AnimationSpeed = 1.f;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "GAS")
-	TSubclassOf<AActor> RangedClass = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "3 - GAS")
+	FGameplayTag MagicTag = FGameplayTag();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "3 - GAS")
+	FGameplayTag MagicPoseTag = FGameplayTag();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "3 - GAS")
+	TSubclassOf<UGameplayEffect> DamageEffect = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "3 - GAS")
+	TSubclassOf<UGameplayEffect> EffectToApply = nullptr;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "3 - GAS")
+	float EffectDuration = 0.f;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "3 - GAS")
+	TArray<TSubclassOf<UWOGGameplayAbilityBase>> AbilitiesToGrant = { nullptr };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "4 - Stats")
+	float Value = 0.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "4 - Stats")
+	float ValueMultiplier = 0.f;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "4 - Stats")
+	float Cost = 0.f;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "4 - Stats")
+	float Cooldown = 0.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "5 - Cosmetic")
+	USoundCue* CastSound = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "5 - Cosmetic")
+	USoundCue* HitSound = nullptr;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Projectile", meta = (EditCondition = "AbilityType == EAbilityType::EAT_Projectile", EditConditionHides))
+	TSubclassOf<AWOGBaseIdleMagic> IdleProjectileClass = nullptr;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Projectile", meta = (EditCondition = "AbilityType == EAbilityType::EAT_Projectile", EditConditionHides))
+	TSubclassOf<AActor> ProjectileClass = nullptr;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "AOE", meta = (EditCondition = "AbilityType == EAbilityType::EAT_AOE", EditConditionHides))
+	TSubclassOf<AWOGBaseIdleMagic> IdleAOEClass = nullptr;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "AOE", meta = (EditCondition = "AbilityType == EAbilityType::EAT_AOE", EditConditionHides))
+	TSubclassOf<AActor> AOEClass = nullptr;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Instant", meta = (EditCondition = "AbilityType == EAbilityType::EAT_Instant", EditConditionHides))
+	float Magnitude = 0.f;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Instant", meta = (EditCondition = "AbilityType == EAbilityType::EAT_Instant", EditConditionHides))
+	float Range = 0.f;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Buff", meta = (EditCondition = "AbilityType == EAbilityType::EAT_Buff", EditConditionHides))
+	float Duration = 0.f;
 
 	//TO-DO SFX particles for weapon trail && hit FX
 
@@ -154,6 +175,8 @@ protected:
 private:
 	virtual void InitMagicData();
 
+	void SpawnIdleClass();
+	TObjectPtr<AWOGBaseIdleMagic> IdleActor;
 
 public:	
 
