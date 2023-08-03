@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
+#include "Types/CharacterTypes.h"
 #include "WOGBlueprintLibrary.generated.h"
 
 /**
@@ -22,6 +23,8 @@ public:
 
 	static AWOGBaseMagic* GetEquippedMagic(const AActor* Owner);
 
+	static FCharacterData GetCharacterData(AActor* Owner);
+
 private:
 	//Can return nullptr 
 	UFUNCTION(BlueprintCallable, BlueprintPure, DisplayName = "Get Equipped Weapon", Category = "WOG Library")
@@ -35,6 +38,13 @@ private:
 	static AWOGBaseMagic* K2_GetEquippedMagic(AActor* Owner)
 	{
 		return GetEquippedMagic(Owner);
+	};
+
+	//Can return nullptr
+	UFUNCTION(BlueprintCallable, BlueprintPure, DisplayName = "Get Character Data", Category = "WOG Library")
+	static FCharacterData K2_GetCharacterData(AActor* Owner)
+	{
+		return GetCharacterData(Owner);
 	};
 
 };

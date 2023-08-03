@@ -3,6 +3,8 @@
 #include "CoreMinimal.h"
 #include "CharacterTypes.generated.h"
 
+class USoundCue;
+
 UENUM(BlueprintType)
 enum class ECosmeticHit : uint8
 {
@@ -62,5 +64,23 @@ enum class EWOGAbilityInputID : uint8
 	Sprint			UMETA(DisplayName = "Sprint"),
 	Dodge			UMETA(DisplayName = "Dodge"),
 	Jump			UMETA(DisplayName = "Jump")
+};
+
+USTRUCT(BlueprintType)
+struct FCharacterData
+{
+	GENERATED_USTRUCT_BODY();
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Base Data")
+	bool bIsAttacker = false;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Base Data")
+	bool bIsMale = false;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Vocals")
+	TObjectPtr<USoundCue> AttackLightSound = nullptr;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Vocals")
+	TObjectPtr<USoundCue> AttackHeavySound = nullptr;
 };
 

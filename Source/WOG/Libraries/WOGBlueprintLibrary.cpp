@@ -6,6 +6,7 @@
 #include "Weapons/WOGBaseWeapon.h"
 #include "Magic/WOGBaseMagic.h"
 #include "Data/AGRLibrary.h"
+#include "Characters/WOGBaseCharacter.h"
 
 AWOGBaseWeapon* UWOGBlueprintLibrary::GetEquippedWeapon(const AActor* Owner)
 {
@@ -39,4 +40,18 @@ AWOGBaseMagic* UWOGBlueprintLibrary::GetEquippedMagic(const AActor* Owner)
 	}
 
 	return nullptr;
+}
+
+FCharacterData UWOGBlueprintLibrary::GetCharacterData(AActor* Owner)
+{
+	if (!Owner) return FCharacterData();
+	
+	TObjectPtr<AWOGBaseCharacter> OwnerCharacter = Cast<AWOGBaseCharacter>(Owner);
+
+	if (OwnerCharacter)
+	{
+		return OwnerCharacter->GetCharacterData();
+	}
+
+	return FCharacterData();
 }

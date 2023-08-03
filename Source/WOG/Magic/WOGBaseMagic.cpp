@@ -13,10 +13,12 @@
 #include "Data/AGRLibrary.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "Types/WOGGameplayTags.h"
+#include "Types/CharacterTypes.h"
 #include "GameplayTags.h"
 #include "AbilitySystem/Abilities/WOGGameplayAbilityBase.h"
 #include "AbilitySystemComponent.h"
 #include "Magic/WOGBaseIdleMagic.h"
+#include "Libraries/WOGBlueprintLibrary.h"
 
 AWOGBaseMagic::AWOGBaseMagic()
 {
@@ -179,7 +181,7 @@ void AWOGBaseMagic::OnMagicOverlap(UPrimitiveComponent* OverlappedComponent, AAc
 	**
 	*/
 
-	int32 MaxAmountMagics = MagicData.bIsAttacker ? 2 : 1;
+	int32 MaxAmountMagics = UWOGBlueprintLibrary::GetCharacterData(OtherActor).bIsAttacker ? 2 : 1;
 	if (Equipment->MagicShortcutReferences.Num() < MaxAmountMagics)
 	{
 		FShortcutItemReference MagicRef;

@@ -14,10 +14,12 @@
 #include "Data/AGRLibrary.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "Types/WOGGameplayTags.h"
+#include "Types/CharacterTypes.h"
 #include "GameplayTags.h"
 #include "AbilitySystem/Abilities/WOGGameplayAbilityBase.h"
 #include "AbilitySystemComponent.h"
 #include "Weapons/WOGRangedWeaponBase.h"
+#include "Libraries/WOGBlueprintLibrary.h"
 
 // Sets default values
 AWOGBaseWeapon::AWOGBaseWeapon()
@@ -85,44 +87,8 @@ void AWOGBaseWeapon::InitWeaponData()
 	{
 		MeshMain->SetStaticMesh(WeaponDataRow->MeshMain);
 		MeshSecondary->SetStaticMesh(WeaponDataRow->MeshSecondary);
-		WeaponData.bIsAttacker = WeaponDataRow->bIsAttacker;
-		WeaponData.WeaponName = WeaponDataRow->WeaponName;
-		WeaponData.WeaponTag = WeaponDataRow->WeaponTag;
-		WeaponData.WeaponPoseTag = WeaponDataRow->WeaponPoseTag;
 
-		WeaponData.AttackMontage = WeaponDataRow->AttackMontage;
-		WeaponData.DodgeMontage = WeaponDataRow->DodgeMontage;
-		WeaponData.BlockMontage = WeaponDataRow->BlockMontage;
-		WeaponData.EquipMontage = WeaponDataRow->EquipMontage;
-		WeaponData.HurtMontage = WeaponDataRow->HurtMontage;
-
-		WeaponData.BaseDamage = WeaponDataRow->BaseDamage;
-		WeaponData.HeavyDamageMultiplier = WeaponDataRow->HeavyDamageMultiplier;
-		WeaponData.DamageMultiplier = WeaponDataRow->DamageMultiplier;
-		WeaponData.ComboDamageMultiplier = WeaponDataRow->ComboDamageMultiplier;
-		WeaponData.MaxComboStreak = WeaponDataRow->MaxComboStreak;
-		WeaponData.MaxParryThreshold = WeaponDataRow->MaxParryThreshold;
-		WeaponData.StunDuration = WeaponDataRow->StunDuration;
-
-		WeaponData.SwingSound = WeaponDataRow->SwingSound;
-		WeaponData.HitSound = WeaponDataRow->HitSound;
-		WeaponData.BlockSound = WeaponDataRow->BlockSound;
-
-		WeaponData.MeshMainSocket = WeaponDataRow->MeshMainSocket;
-		WeaponData.MeshSecondarySocket = WeaponDataRow->MeshSecondarySocket;
-		WeaponData.BackMainSocket = WeaponDataRow->BackMainSocket;
-		WeaponData.BackSecondarySocket = WeaponDataRow->BackSecondarySocket;
-
-		WeaponData.WeaponDamageEffect = WeaponDataRow->WeaponDamageEffect;
-		WeaponData.RangedWeaponEffect = WeaponDataRow->RangedWeaponEffect;
-
-		WeaponData.Abilities = WeaponDataRow->Abilities;
-		WeaponData.BlockImpactLightTags = WeaponDataRow->BlockImpactLightTags;
-		WeaponData.BlockImpactHeavyTag = WeaponDataRow->BlockImpactHeavyTag;
-		WeaponData.ParryTag = WeaponDataRow->ParryTag;
-		WeaponData.RangedTag = WeaponDataRow->RangedTag;
-		WeaponData.AnimationSpeed = WeaponDataRow->AnimationSpeed;
-		WeaponData.RangedClass = WeaponDataRow->RangedClass;
+		WeaponData = *WeaponDataRow;
 	}
 
 	ComboStreak = 0;
@@ -177,7 +143,7 @@ void AWOGBaseWeapon::OnWeaponOverlap(UPrimitiveComponent* OverlappedComponent, A
 	**
 	*/
 
-	int32 MaxAmountWeapons = WeaponData.bIsAttacker ? 1 : 2;
+	int32 MaxAmountWeapons = UWOGBlueprintLibrary::GetCharacterData(OtherActor).bIsAttacker ? 1 : 2;
 	if (Equipment->WeaponShortcutReferences.Num() < MaxAmountWeapons)
 	{
 		FShortcutItemReference WeaponRef;

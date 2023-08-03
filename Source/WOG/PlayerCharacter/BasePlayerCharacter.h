@@ -8,6 +8,7 @@
 #include "InputActionValue.h"
 #include "Engine/DataTable.h"
 #include "WOG/FunctionLibrary/MeshMergeFunctionLibrary.h"
+#include "Types/CharacterTypes.h"
 #include "BasePlayerCharacter.generated.h"
 
 
@@ -105,8 +106,12 @@ public:
 	UPhysicsAsset* PhysicsAsset = nullptr;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Initial Setup")
 	TSubclassOf<class AWOGBaseWeapon> DefaultWeapon = nullptr;
+
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Initial Setup")
 	FCharacterAbilityData DefaultAbilitiesAndEffects;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Initial Setup")
+	FCharacterData 	CharacterData;
 };
 
 

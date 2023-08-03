@@ -53,6 +53,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Setup|Abilities and Effects")
 	FCharacterAbilityData DefaultAbilitiesAndEffects;
 
+	UPROPERTY(VisibleAnywhere, Category = "Setup|Character Data")
+	FCharacterData CharacterData;
+
 	#pragma region Actor Components
 	UPROPERTY()
 	TObjectPtr<UWOGAbilitySystemComponent> AbilitySystemComponent;
@@ -135,4 +138,5 @@ public:
 	FORCEINLINE float GetSpeedRequiredForLeap() const { return SpeedRequiredForLeap; }
 	FORCEINLINE UWOGAttributeSetBase* GetAttributeSetBase() const { return AttributeSet; }
 	FORCEINLINE void SetDefaultAbilitiesAndEffects(const FCharacterAbilityData& Data) { DefaultAbilitiesAndEffects = Data; }
+	FORCEINLINE FCharacterData GetCharacterData() const { return CharacterData; }
 };

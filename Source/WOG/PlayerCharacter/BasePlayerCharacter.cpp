@@ -460,6 +460,9 @@ void ABasePlayerCharacter::SetDefaultAbilitiesAndEffects(bool bIsMale, FName Row
 
 	GiveDefaultAbilities();
 	ApplyDefaultEffects();
+
+	CharacterData = MeshRow->CharacterData;
+	CharacterData.bIsMale = bIsMale;
 }
 
 void ABasePlayerCharacter::Client_SaveShortcutReferences_Implementation(AActor* InItem, const FGameplayTag& InItemTag, const FName& Key)
