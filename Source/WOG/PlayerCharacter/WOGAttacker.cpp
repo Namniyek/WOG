@@ -125,6 +125,36 @@ void AWOGAttacker::AbilitiesButtonPressed(const FInputActionValue& Value)
 			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Equipment component invalid"));
 			return;
 		}
+
+		/*
+		**
+		**Unequip any potential magics
+		**
+		*/
+		AActor* OutMagicOne = nullptr;
+		AActor* OutMagicTwo = nullptr;
+		AActor* PrimaryMagic = nullptr;
+		EquipmentManager->GetMagicShortcutReference(FName("1"), OutMagicOne);
+		EquipmentManager->GetItemInSlot(NAME_MagicSlot_MagicPrimary, PrimaryMagic);
+		if (PrimaryMagic && OutMagicOne && PrimaryMagic == OutMagicOne)
+		{
+			Server_UnequipMagic(FName("1"), PrimaryMagic);
+		}
+		else
+		{
+			EquipmentManager->GetMagicShortcutReference(FName("2"), OutMagicTwo);
+			EquipmentManager->GetItemInSlot(NAME_MagicSlot_MagicPrimary, PrimaryMagic);
+			if (PrimaryMagic && OutMagicTwo && PrimaryMagic == OutMagicTwo)
+			{
+				Server_UnequipMagic(FName("2"), PrimaryMagic);
+			}
+		}
+
+		/*
+		**
+		**Equip Weapons
+		**
+		*/
 		AActor* OutItem = nullptr;
 		AActor* PrimaryItem = nullptr;
 		EquipmentManager->GetWeaponShortcutReference(FName("1"), OutItem);
@@ -151,12 +181,83 @@ void AWOGAttacker::AbilitiesButtonPressed(const FInputActionValue& Value)
 	if (AbilitiesVector.Y > 0)
 	{
 		//Button 2/Up pressed
+		if (!EquipmentManager)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Equipment component invalid"));
+			return;
+		}
 
+		/*
+		**
+		**Unequip any potential weapons
+		**
+		*/
+		AActor* OutItem = nullptr;
+		AActor* PrimaryItem = nullptr;
+		EquipmentManager->GetWeaponShortcutReference(FName("1"), OutItem);
+		EquipmentManager->GetItemInSlot(NAME_WeaponSlot_Primary, PrimaryItem);
+		if (PrimaryItem && OutItem && PrimaryItem == OutItem)
+		{
+			Server_UnequipWeaponSwap(NAME_WeaponSlot_BackMain, PrimaryItem);
+		}
 
+		/*
+		**
+		**Equip Magic
+		**
+		*/
+		AActor* OutMagic = nullptr;
+		AActor* PrimaryMagic = nullptr;
+		EquipmentManager->GetMagicShortcutReference(FName("1"), OutMagic);
+		EquipmentManager->GetItemInSlot(NAME_MagicSlot_MagicPrimary, PrimaryMagic);
+		if (PrimaryMagic && OutMagic && PrimaryMagic == OutMagic)
+		{
+			Server_UnequipMagic(FName("1"), PrimaryMagic);
+		}
+		else if (OutMagic)
+		{
+			Server_EquipMagic(FName("1"), OutMagic);
+		}
 	}
 	if (AbilitiesVector.Y < 0)
 	{
 		//Button 3/Down pressed
+		if (!EquipmentManager)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Equipment component invalid"));
+			return;
+		}
 
+		/*
+		**
+		**Unequip any potential weapons
+		**
+		*/
+		AActor* OutItem = nullptr;
+		AActor* PrimaryItem = nullptr;
+		EquipmentManager->GetWeaponShortcutReference(FName("1"), OutItem);
+		EquipmentManager->GetItemInSlot(NAME_WeaponSlot_Primary, PrimaryItem);
+		if (PrimaryItem && OutItem && PrimaryItem == OutItem)
+		{
+			Server_UnequipWeaponSwap(NAME_WeaponSlot_BackMain, PrimaryItem);
+		}
+
+		/*
+		**
+		**Equip Magic
+		**
+		*/
+		AActor* OutMagic = nullptr;
+		AActor* PrimaryMagic = nullptr;
+		EquipmentManager->GetMagicShortcutReference(FName("2"), OutMagic);
+		EquipmentManager->GetItemInSlot(NAME_MagicSlot_MagicPrimary, PrimaryMagic);
+		if (PrimaryMagic && OutMagic && PrimaryMagic == OutMagic)
+		{
+			Server_UnequipMagic(FName("2"), PrimaryMagic);
+		}
+		else if (OutMagic)
+		{
+			Server_EquipMagic(FName("2"), OutMagic);
+		}
 	}
 }

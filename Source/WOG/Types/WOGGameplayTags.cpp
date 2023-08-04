@@ -62,6 +62,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Magic_Debuff, "Inventory.Magic.Debuff");
 
 //Pose Tags
 UE_DEFINE_GAMEPLAY_TAG(TAG_Pose_Relax, "Pose.Relax");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Pose_Magic, "Pose.Magic");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Pose_Shield_Sword, "Pose.Shield.Sword");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Pose_Shield_Hammer, "Pose.Shield.Hammer");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Pose_Shield_Axe, "Pose.Shield.Axe");

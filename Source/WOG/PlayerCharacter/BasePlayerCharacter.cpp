@@ -32,8 +32,6 @@
 #include "WOG/Interfaces/AttributesInterface.h"
 #include "TargetSystemComponent.h"
 
-
-
 void ABasePlayerCharacter::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
@@ -254,9 +252,8 @@ void ABasePlayerCharacter::WeaponRangedActionPressed(const FInputActionValue& Va
 
 void ABasePlayerCharacter::PrimaryLightButtonPressed(const FInputActionValue& Value)
 {
-	if (!EquipmentManager) return;
-	AActor* OutItem;
-	if (EquipmentManager->GetItemInSlot(NAME_WeaponSlot_Primary, OutItem))
+
+	if (UWOGBlueprintLibrary::GetEquippedWeapon(this) || UWOGBlueprintLibrary::GetEquippedMagic(this))
 	{
 		SendAbilityLocalInput(EWOGAbilityInputID::AttackLight);
 	}
@@ -589,6 +586,15 @@ void ABasePlayerCharacter::Server_UnequipWeapon_Implementation(const FName& Key,
 	EquipmentManager->EquipItemInSlot(BackSlot, InWeapon, PreviousItem, NewItem);
 	UE_LOG(LogTemp, Display, TEXT("WeaponUnequipped"));
 	return;
+}
+
+void ABasePlayerCharacter::Server_UnequipWeaponSwap_Implementation(const FName& Key, AActor* InWeapon)
+{
+	FText Note;
+	EquipmentManager->UnEquipByReference(InWeapon, Note);
+	AActor* PreviousItem;
+	AActor* NewItem;
+	EquipmentManager->EquipItemInSlot(Key, InWeapon, PreviousItem, NewItem);
 }
 
 void ABasePlayerCharacter::Server_EquipMagic_Implementation(const FName& Key, AActor* InMagic)
