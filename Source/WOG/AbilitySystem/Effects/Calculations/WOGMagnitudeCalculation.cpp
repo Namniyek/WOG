@@ -5,8 +5,9 @@
 #include "AbilitySystemComponent.h"
 #include "Libraries/WOGBlueprintLibrary.h"
 #include "Magic/WOGBaseMagic.h"
+#include "Weapons/WOGBaseWeapon.h"
 
-float UWOGMagnitudeCalculation::CalculateMagicCost(const FGameplayEffectSpec& Spec) const
+float UWOGMagnitudeCalculation::CalculateManaCost(const FGameplayEffectSpec& Spec) const
 {
 	TObjectPtr<AActor> Owner = Spec.GetEffectContext().GetInstigatorAbilitySystemComponent()->GetOwner();
 	if (Owner)
@@ -48,6 +49,75 @@ float UWOGMagnitudeCalculation::CalculateMagicCooldown(const FGameplayEffectSpec
 	else
 	{
 		UE_LOG(LogTemp, Error, TEXT("No owner for cooldown calculation"));
+		return 0.0f;
+	}
+}
+
+float UWOGMagnitudeCalculation::CalculateWeaponLightAttackCost(const FGameplayEffectSpec& Spec) const
+{
+	TObjectPtr<AActor> Owner = Spec.GetEffectContext().GetInstigatorAbilitySystemComponent()->GetOwner();
+	if (Owner)
+	{
+		TObjectPtr<AWOGBaseWeapon> Weapon = UWOGBlueprintLibrary::GetEquippedWeapon(Owner);
+		if (Weapon)
+		{
+			return -Weapon->GetWeaponData().Cost;
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("No magic for cost calculation"));
+			return 0.0f;
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("No owner for cost calculation"));
+		return 0.0f;
+	}
+}
+
+float UWOGMagnitudeCalculation::CalculateWeaponHeavyAttackCost(const FGameplayEffectSpec& Spec) const
+{
+	TObjectPtr<AActor> Owner = Spec.GetEffectContext().GetInstigatorAbilitySystemComponent()->GetOwner();
+	if (Owner)
+	{
+		TObjectPtr<AWOGBaseWeapon> Weapon = UWOGBlueprintLibrary::GetEquippedWeapon(Owner);
+		if (Weapon)
+		{
+			return -Weapon->GetWeaponData().Cost * Weapon->GetWeaponData().HeavyDamageMultiplier;
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("No weapon for cost calculation"));
+			return 0.0f;
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("No owner for cost calculation"));
+		return 0.0f;
+	}
+}
+
+float UWOGMagnitudeCalculation::CalculateWeaponBlockCost(const FGameplayEffectSpec& Spec) const
+{
+	TObjectPtr<AActor> Owner = Spec.GetEffectContext().GetInstigatorAbilitySystemComponent()->GetOwner();
+	if (Owner)
+	{
+		TObjectPtr<AWOGBaseWeapon> Weapon = UWOGBlueprintLibrary::GetEquippedWeapon(Owner);
+		if (Weapon)
+		{
+			return -Weapon->GetWeaponData().Cost / 2;
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("No weapon for cost calculation"));
+			return 0.0f;
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("No owner for cost calculation"));
 		return 0.0f;
 	}
 }

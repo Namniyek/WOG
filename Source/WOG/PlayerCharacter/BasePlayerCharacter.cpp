@@ -231,7 +231,7 @@ void ABasePlayerCharacter::TargetActionPressed(const FInputActionValue& Value)
 	if (HasMatchingGameplayTag(TAG_State_Dead)) return;
 	if (HasMatchingGameplayTag(TAG_State_Dodging)) return;
 
-	if (!TargetComponent) return;
+	if (!TargetComponent || HasMatchingGameplayTag(TAG_State_Weapon_Ranged_AOE)) return;
 	TargetComponent->TargetActor();
 }
 
@@ -247,7 +247,15 @@ void ABasePlayerCharacter::CycleTargetActionPressed(const FInputActionValue& Val
 
 void ABasePlayerCharacter::WeaponRangedActionPressed(const FInputActionValue& Value)
 {
-	SendAbilityLocalInput(EWOGAbilityInputID::Ranged);
+	if (HasMatchingGameplayTag(TAG_State_Weapon_Ranged_AOE) && AbilitySystemComponent.Get())
+	{
+		AbilitySystemComponent->LocalInputCancel();
+		UE_LOG(LogTemp, Warning, TEXT("Cancelled Input"))
+	}
+	else
+	{
+		SendAbilityLocalInput(EWOGAbilityInputID::Ranged);
+	}
 }
 
 void ABasePlayerCharacter::PrimaryLightButtonPressed(const FInputActionValue& Value)
@@ -296,10 +304,10 @@ void ABasePlayerCharacter::PrimaryExecuteHeavyAttack(const FInputActionValue& Va
 
 void ABasePlayerCharacter::SecondaryButtonPressed(const FInputActionValue& Value)
 {
-	AActor* OutItem;
-	if (!EquipmentManager->GetItemInSlot(NAME_WeaponSlot_Primary, OutItem) || !OutItem) return;
-
-	SendAbilityLocalInput(EWOGAbilityInputID::Block);
+	if (UWOGBlueprintLibrary::GetEquippedWeapon(this))
+	{
+		SendAbilityLocalInput(EWOGAbilityInputID::Block);
+	}
 
 	bSecondaryButtonPressed = true;
 }
@@ -804,10 +812,8 @@ void ABasePlayerCharacter::BroadcastHit_Implementation(AActor* AgressorActor, co
 	LastHitResult = Hit;
 	float LocalDamageToApply = DamageToApply;
 
-	//UE_LOG(LogTemp, Warning, TEXT("%s damaged with %s, by %s, in the amount : %f"), *GetNameSafe(Hit.GetActor()), *GetNameSafe(InstigatorWeapon), *GetNameSafe(AgressorActor), DamageToApply);
-
 	//Handle Ranged Weapon Throw Hit
-	if (AgressorCharacter->HasMatchingGameplayTag(TAG_State_Weapon_Ranged))
+	if (AgressorCharacter->HasMatchingGameplayTag(TAG_State_Weapon_Ranged_Throw) || AgressorCharacter->HasMatchingGameplayTag(TAG_State_Weapon_Ranged_AOE))
 	{
 		//Victim hit by shield throw
 		if (AgressorWeapon->GetWeaponData().WeaponTag.MatchesTag(TAG_Inventory_Weapon_Shield))

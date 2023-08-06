@@ -27,107 +27,105 @@ struct FWeaponDataTable : public FTableRowBase
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Data")
-	FName WeaponName = FName("");
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Data")
-	bool bIsAttacker = false;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Data")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "1 - Base")
 	UStaticMesh* MeshMain = nullptr;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Data")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "1 - Base")
 	UStaticMesh* MeshSecondary = nullptr;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Data")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "2 - Animations")
 	FName MeshMainSocket = FName("");
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Data")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "2 - Animations")
 	FName MeshSecondarySocket = FName("");
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Data")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "2 - Animations")
 	FName BackMainSocket = FName("");
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Data")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "2 - Animations")
 	FName BackSecondarySocket = FName("");
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Data")
-	FGameplayTag WeaponTag = FGameplayTag();
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Data")
-	FGameplayTag WeaponPoseTag = FGameplayTag();
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animations")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "2 - Animations")
 	UAnimMontage* AttackMontage = nullptr;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animations")
+	//Used for dual wield weapons. Set as the one handed montage for the same weapon type
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "2 - Animations")
+	UAnimMontage* AlternativeAttackMontage = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "2 - Animations")
 	UAnimMontage* DodgeMontage = nullptr;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animations")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "2 - Animations")
 	UAnimMontage* BlockMontage = nullptr;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animations")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "2 - Animations")
 	UAnimMontage* EquipMontage = nullptr;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animations")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "2 - Animations")
 	UAnimMontage* HurtMontage = nullptr;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-	float BaseDamage = 0.f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-	float HeavyDamageMultiplier = 0.f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-	float DamageMultiplier = 0.f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-	float ComboDamageMultiplier = 0.f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-	int32 MaxComboStreak = 0;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-	float MaxParryThreshold = 0.f;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "GAS")
-	float StunDuration = 0.f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
-	USoundCue* SwingSound = nullptr;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
-	USoundCue* HitSound = nullptr;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
-	USoundCue* BlockSound = nullptr;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Data")
-	TSubclassOf<UGameplayEffect> WeaponDamageEffect = nullptr;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Data")
-	TSubclassOf<UGameplayEffect> RangedWeaponEffect = nullptr;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "GAS")
-	TArray<TSubclassOf<class UWOGGameplayAbilityBase>> Abilities = { nullptr };
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "GAS")
-	FGameplayTagContainer BlockImpactLightTags = FGameplayTagContainer();
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "GAS")
-	FGameplayTag BlockImpactHeavyTag = FGameplayTag();
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "GAS")
-	FGameplayTag ParryTag = FGameplayTag();
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "GAS")
-	FGameplayTag RangedTag = FGameplayTag();
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "GAS")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "2 - Animations")
 	float AnimationSpeed = 1.f;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "GAS")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "3 - GAS")
+	FGameplayTag WeaponTag = FGameplayTag();
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "3 - GAS")
+	FGameplayTag WeaponPoseTag = FGameplayTag();
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "3 - GAS")
+	TArray<TSubclassOf<class UWOGGameplayAbilityBase>> Abilities = { nullptr };
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "3 - GAS")
+	FGameplayTagContainer BlockImpactLightTags = FGameplayTagContainer();
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "3 - GAS")
+	FGameplayTag BlockImpactHeavyTag = FGameplayTag();
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "3 - GAS")
+	FGameplayTag ParryTag = FGameplayTag();
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "3 - GAS")
+	FGameplayTag RangedTag = FGameplayTag();
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "3 - GAS")
 	TSubclassOf<AActor> RangedClass = nullptr;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "3 - GAS")
+	TSubclassOf<UGameplayEffect> WeaponDamageEffect = nullptr;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "3 - GAS")
+	TSubclassOf<UGameplayEffect> RangedWeaponEffect = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "4 - Stats")
+	float BaseDamage = 0.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "4 - Stats")
+	float HeavyDamageMultiplier = 0.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "4 - Stats")
+	float DamageMultiplier = 0.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "4 - Stats")
+	float ComboDamageMultiplier = 0.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "4 - Stats")
+	int32 MaxComboStreak = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "4 - Stats")
+	float StunDuration = 0.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "4 - Stats")
+	float Cost = 0.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "5 - Cosmetic")
+	USoundCue* SwingSound = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "5 - Cosmetic")
+	USoundCue* HitSound = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "5 - Cosmetic")
+	USoundCue* BlockSound = nullptr;
 
 	//TO-DO SFX particles for weapon trail && hit FX
 

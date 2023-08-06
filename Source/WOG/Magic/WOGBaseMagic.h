@@ -29,9 +29,6 @@ struct FMagicDataTable : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "1 - Base")
 	EAbilityType AbilityType = EAbilityType::EAT_Projectile;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "1 - Base")
-	bool bIsAttacker = false;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "2 - Animations")
 	FName LeftHandSocket = FName("");
 
@@ -169,8 +166,18 @@ protected:
 	TArray<FGameplayAbilitySpecHandle> GrantedAbilities;
 	#pragma endregion
 
+	UFUNCTION(BlueprintCallable)
+	void SpawnProjectile();
+
+	UFUNCTION(Server, Reliable)
+	void Server_SpawnProjectile(const FTransform& SpawnTransform);
+
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite)
 	TObjectPtr<ABasePlayerCharacter> OwnerCharacter;
+
+	//Line trace for item under the crosshairs
+	bool TraceUnderCrosshairs(FHitResult& OutHitResult, FVector& OutHitLocation);
+	void GetBeamEndLocation(const FVector& StartLocation, FHitResult& OutHitResult);
 
 private:
 	virtual void InitMagicData();

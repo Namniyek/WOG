@@ -103,19 +103,7 @@ void AWOGRangedWeaponBase::InitWeapon()
 	if (WeaponDataRow)
 	{
 		Mesh->SetStaticMesh(WeaponDataRow->MeshSecondary);
-		WeaponData.bIsAttacker = WeaponDataRow->bIsAttacker;
-		WeaponData.WeaponName = WeaponDataRow->WeaponName;
-		WeaponData.WeaponTag = WeaponDataRow->WeaponTag;
-
-		WeaponData.BaseDamage = WeaponDataRow->BaseDamage;
-		WeaponData.StunDuration = WeaponDataRow->StunDuration;
-
-		WeaponData.SwingSound = WeaponDataRow->SwingSound;
-		WeaponData.HitSound = WeaponDataRow->HitSound;
-		WeaponData.BlockSound = WeaponDataRow->BlockSound;
-
-		WeaponData.WeaponDamageEffect = WeaponDataRow->WeaponDamageEffect;
-		WeaponData.RangedTag = WeaponDataRow->RangedTag;
+		WeaponData = *WeaponDataRow;
 	}
 }
 

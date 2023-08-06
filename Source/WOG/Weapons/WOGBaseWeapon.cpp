@@ -446,15 +446,13 @@ void AWOGBaseWeapon::CatchWeapon()
 	OwnerCharacter = OwnerCharacter == nullptr ? Cast<ABasePlayerCharacter>(GetOwner()) : OwnerCharacter;
 	if (!OwnerCharacter) return;
 
-	UE_LOG(LogTemp, Warning, TEXT("Running Catch ability c++"));
-
 	UAbilitySystemComponent* ASC = OwnerCharacter->GetAbilitySystemComponent();
 	if (ASC)
 	{
 		FGameplayTagContainer EffectsToRemove;
-		EffectsToRemove.AddTag(TAG_State_Weapon_Ranged);
-		ASC->RemoveActiveEffectsWithTags(EffectsToRemove);
-		UE_LOG(LogTemp, Warning, TEXT("Ranged effect removed"));
+		EffectsToRemove.AddTag(TAG_State_Weapon_Ranged_Throw);
+		int32 EffectsRemoved = ASC->RemoveActiveEffectsWithTags(EffectsToRemove);
+		UE_LOG(LogTemp, Display, TEXT("Ranged effect removed, %d"), EffectsRemoved);
 	}
 
 	MeshSecondary->SetVisibility(true);
@@ -465,7 +463,7 @@ void AWOGBaseWeapon::CatchWeapon()
 	}
 	else
 	{
-		UE_LOG(LogTemp, Error, TEXT("Failed to destroy weapon"));
+		UE_LOG(LogTemp, Error, TEXT("Failed to destroy ranged weapon"));
 	}
 
 }

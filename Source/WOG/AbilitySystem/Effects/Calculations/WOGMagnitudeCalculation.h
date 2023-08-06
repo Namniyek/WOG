@@ -16,9 +16,18 @@ class WOG_API UWOGMagnitudeCalculation : public UGameplayModMagnitudeCalculation
 
 public:
 	UFUNCTION(BlueprintCallable, Category = "Calculation")
-	float CalculateMagicCost(const FGameplayEffectSpec& Spec) const;
+	float CalculateManaCost(const FGameplayEffectSpec& Spec) const;
 
 	UFUNCTION(BlueprintCallable, Category = "Calculation")
 	float CalculateMagicCooldown(const FGameplayEffectSpec& Spec) const;
+
+	UFUNCTION(BlueprintCallable, Category = "Calculation")
+	float CalculateWeaponLightAttackCost(const FGameplayEffectSpec& Spec) const;
+
+	UFUNCTION(BlueprintCallable, Category = "Calculation")
+	float CalculateWeaponHeavyAttackCost(const FGameplayEffectSpec& Spec) const;
+
+	UFUNCTION(BlueprintCallable, Category = "Calculation")
+	float CalculateWeaponBlockCost(const FGameplayEffectSpec& Spec) const;
 
 };

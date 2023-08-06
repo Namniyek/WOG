@@ -359,6 +359,7 @@ public:
 	//public Getters and Setters 
 	FORCEINLINE USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+	FORCEINLINE UTargetSystemComponent* GetTargetComponent() const { return TargetComponent; }
 	FORCEINLINE void SetOwnerPC(AWOGPlayerController* NewPC) { OwnerPC = NewPC; }
 	FORCEINLINE TObjectPtr<AWOGPlayerController> GetOwnerPC() { return OwnerPC; }
 	FORCEINLINE TObjectPtr<AActor>GetCurrentTarget() { return CurrentTarget; }
