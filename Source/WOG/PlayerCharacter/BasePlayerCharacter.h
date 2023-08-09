@@ -330,12 +330,18 @@ public:
 
 	#pragma endregion
 
-	#pragma region Interface functions
+	#pragma region Handle Combat
+
 	virtual void BroadcastHit_Implementation(AActor* AgressorActor, const FHitResult& Hit, const float& DamageToApply, AActor* InstigatorWeapon) override;
+
+	virtual void BroadcastMagicHit_Implementation(AActor* AgressorActor, const FHitResult& Hit, const struct FMagicDataTable& AgressorMagicData);
+
+	virtual void ProcessHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh) override;
+
+	virtual void ProcessMagicHit(const FHitResult& Hit, const struct FMagicDataTable& MagicData) override;
 
 	#pragma endregion
 
-	virtual void ProcessHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh) override;
 
 	UFUNCTION()
 	void TargetLocked(AActor* NewTarget);

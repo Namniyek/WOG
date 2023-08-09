@@ -42,7 +42,7 @@ void AWOGBaseEnemy::BroadcastHit_Implementation(AActor* AgressorActor, const FHi
 
 	//Apply HitReact or KO to character
 	TObjectPtr<AWOGBaseCharacter> AgressorCharacter = Cast<AWOGBaseCharacter>(AgressorActor);
-	if (AgressorCharacter && AgressorCharacter->HasMatchingGameplayTag(TAG_State_Weapon_AttackHeavy) && IsHitFrontal(60.f, this, InstigatorWeapon))
+	if (AgressorCharacter && AgressorCharacter->HasMatchingGameplayTag(TAG_State_Weapon_AttackHeavy) && IsHitFrontal(60.f, this, FVector::Zero(), InstigatorWeapon))
 	{
 		//Send event KO
 		FGameplayEventData EventKOPayload;

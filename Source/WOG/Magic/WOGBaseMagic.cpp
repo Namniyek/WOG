@@ -313,16 +313,15 @@ bool AWOGBaseMagic::RemoveGrantedAbilities(AActor* User)
 
 void AWOGBaseMagic::SpawnProjectile()
 {
-	if (!OwnerCharacter) return;
+	if (!OwnerCharacter || !OwnerCharacter->IsLocallyControlled()) return;
 	if (MagicData.AbilityType != EAbilityType::EAT_Projectile) return;
 	if (!UKismetSystemLibrary::IsValidClass(MagicData.ProjectileClass)) return;
 
-	FVector StartLocation = OwnerCharacter->GetActorLocation() + (OwnerCharacter->GetActorForwardVector() * 50);
+	FVector StartLocation = OwnerCharacter->GetActorLocation() + OwnerCharacter->GetActorForwardVector()*50.f;
 	FVector EndLocation;
 	if (OwnerCharacter->GetCurrentTarget())
 	{
 		EndLocation = OwnerCharacter->GetCurrentTarget()->GetActorLocation();
-		UE_LOG(LogTemp, Warning, TEXT("Projectile towards target"));
 	}
 	else
 	{
@@ -330,14 +329,14 @@ void AWOGBaseMagic::SpawnProjectile()
 
 		GetBeamEndLocation(StartLocation, TraceHitResult);
 		EndLocation = TraceHitResult.Location;
-		UE_LOG(LogTemp, Warning, TEXT("EndLocation Vector: %s"), *EndLocation.ToString());
 	}
 
 	FRotator StartRotation = (EndLocation - StartLocation).GetSafeNormal().Rotation();
-
+	
 	FTransform SpawnTransform;
 	SpawnTransform.SetRotation(FQuat::MakeFromRotator(StartRotation));
 	SpawnTransform.SetLocation(StartLocation);
+
 
 	Server_SpawnProjectile(SpawnTransform);
 }
@@ -363,7 +362,6 @@ bool AWOGBaseMagic::TraceUnderCrosshairs(FHitResult& OutHitResult, FVector& OutH
 	if (GEngine && GEngine->GameViewport)
 	{
 		GEngine->GameViewport->GetViewportSize(ViewportSize);
-		UE_LOG(LogTemp, Warning, TEXT("Viewport size: %s"), *ViewportSize.ToString());
 	}
 
 	//Get screen space location of the crosshair
@@ -372,7 +370,10 @@ bool AWOGBaseMagic::TraceUnderCrosshairs(FHitResult& OutHitResult, FVector& OutH
 	FVector CrosshairWorldDirection;
 
 	//Get world position and direction of the crosshair
-	bool bScreenToWorld = UGameplayStatics::DeprojectScreenToWorld(UGameplayStatics::GetPlayerController(this, 0), CrosshairLocation, CrosshairWorldPosition, CrosshairWorldDirection);
+	TObjectPtr<APlayerController> PlayerController = Cast<APlayerController>(OwnerCharacter->GetController());
+	if (!PlayerController) return false;
+
+	bool bScreenToWorld = UGameplayStatics::DeprojectScreenToWorld(PlayerController, CrosshairLocation, CrosshairWorldPosition, CrosshairWorldDirection);
 
 	if (bScreenToWorld)
 	{
@@ -385,7 +386,6 @@ bool AWOGBaseMagic::TraceUnderCrosshairs(FHitResult& OutHitResult, FVector& OutH
 		if (OutHitResult.bBlockingHit)
 		{
 			OutHitLocation = OutHitResult.Location;
-			UE_LOG(LogTemp, Warning, TEXT("OutHitLocation: %s"), *OutHitLocation.ToString());
 			return true;
 		}
 	}
@@ -405,15 +405,11 @@ void AWOGBaseMagic::GetBeamEndLocation(const FVector& StartLocation, FHitResult&
 		//Tentative beam location
 		OutBeamLocation = CrosshairHitResult.Location;
 	}
-	else //no crosshair trace hit
-	{
-		//OutBeamLocaton is end location of line trace
-	}
 
 	//Perform a second trace from character barrel
 	const FVector TraceStart = StartLocation;
 	const FVector StartToEnd = OutBeamLocation - StartLocation;
-	const FVector TraceEnd = OutBeamLocation + StartToEnd * 1.25f;
+	const FVector TraceEnd = OutBeamLocation; // + StartToEnd * 1.25f;
 
 	GetWorld()->LineTraceSingleByChannel(OutHitResult, TraceStart, TraceEnd, ECollisionChannel::ECC_Visibility);
 

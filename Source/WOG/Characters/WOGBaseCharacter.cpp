@@ -193,9 +193,14 @@ void AWOGBaseCharacter::ToggleStrafeMovement(bool bIsStrafe)
 	}
 }
 
-bool AWOGBaseCharacter::IsHitFrontal(const float& AngleTolerance, const AActor* Victim, const AActor* Agressor)
+bool AWOGBaseCharacter::IsHitFrontal(const float& AngleTolerance, const AActor* Victim, const FVector& Location, const AActor* Agressor)
 {
-	FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(Victim->GetActorLocation(), Agressor->GetActorLocation());
+	//We check first if the Agressor actor is valid.
+	//If it is we use it, if it's not, we use the vector param.
+	FRotator LookAtRotation = Agressor != nullptr ? 
+		UKismetMathLibrary::FindLookAtRotation(Victim->GetActorLocation(), Agressor->GetActorLocation()) :
+		UKismetMathLibrary::FindLookAtRotation(Victim->GetActorLocation(), Location);
+
 	FRotator DeltaRotator = UKismetMathLibrary::NormalizedDeltaRotator(GetActorRotation(), LookAtRotation);
 
 	bool bIsHitFrontal = 

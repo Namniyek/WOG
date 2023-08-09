@@ -45,6 +45,8 @@ protected:
 	UFUNCTION()
 	virtual void OnAttackHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh);
 	virtual void ProcessHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh) { /*TO-BE OVERRIDEN IN CHILDREN*/ };
+	UFUNCTION(BlueprintCallable)
+	virtual void ProcessMagicHit(const FHitResult& Hit, const struct FMagicDataTable& MagicData) { /*TO-BE OVERRIDEN IN CHILDREN*/ };
 
 	virtual void ToggleStrafeMovement(bool bIsStrafe);
 
@@ -106,9 +108,10 @@ protected:
 	#pragma region Cosmetic Hits
 	/*
 	**Calculate if the hit is frontal
+	**Will check Agressor param first, and if not valid will fallback to vector
 	*/
 	UFUNCTION(BlueprintPure)
-	bool IsHitFrontal(const float& AngleTolerance, const AActor* Victim, const AActor* Agressor);
+	bool IsHitFrontal(const float& AngleTolerance, const AActor * Victim, const FVector& Location, const AActor* Agressor = nullptr);
 
 	/*
 	**Calcualate Hit direction. Returns name of the direction

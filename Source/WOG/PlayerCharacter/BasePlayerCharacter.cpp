@@ -31,6 +31,7 @@
 #include "WOG/Interfaces/BuildingInterface.h"
 #include "WOG/Interfaces/AttributesInterface.h"
 #include "TargetSystemComponent.h"
+#include "Magic/WOGBaseMagic.h"
 
 void ABasePlayerCharacter::OnConstruction(const FTransform& Transform)
 {
@@ -781,6 +782,35 @@ void ABasePlayerCharacter::ProcessHit(FHitResult Hit, UPrimitiveComponent* Weapo
 	}
 }
 
+void ABasePlayerCharacter::ProcessMagicHit(const FHitResult& Hit, const FMagicDataTable& MagicData)
+{
+	if (!Hit.GetActor())
+	{
+		UE_LOG(LogTemp, Error, TEXT("No Victim actor"));
+		return;
+	}
+
+	//Get the Damage to apply values:
+	float DamageToApply = MagicData.Value * MagicData.ValueMultiplier;
+
+	//Check if we hit build and apply build damage
+	TObjectPtr<IBuildingInterface> BuildInterface = Cast<IBuildingInterface>(Hit.GetActor());
+	if (BuildInterface && HasAuthority())
+	{
+		BuildInterface->Execute_DealDamage(Hit.GetActor(), DamageToApply);
+		UE_LOG(LogTemp, Warning, TEXT("Build damaged with %f"), DamageToApply);
+		return;
+	}
+
+	//Check if we hit other character
+	TObjectPtr<IAttributesInterface> AttributesInterface = Cast<IAttributesInterface>(Hit.GetActor());
+	if (AttributesInterface)
+	{
+		AttributesInterface->Execute_BroadcastMagicHit(Hit.GetActor(), this, Hit, MagicData);
+		return;
+	}
+}
+
 void ABasePlayerCharacter::BroadcastHit_Implementation(AActor* AgressorActor, const FHitResult& Hit, const float& DamageToApply, AActor* InstigatorWeapon)
 {
 	//Handle early returns
@@ -846,7 +876,7 @@ void ABasePlayerCharacter::BroadcastHit_Implementation(AActor* AgressorActor, co
 	}
 
 	//Handle parrying for agressor
-	if (HasMatchingGameplayTag(TAG_State_Weapon_Parry) && AgressorCharacter->HasMatchingGameplayTag(TAG_State_Weapon_AttackLight) && IsHitFrontal(60.f, this, AgressorActor))
+	if (HasMatchingGameplayTag(TAG_State_Weapon_Parry) && AgressorCharacter->HasMatchingGameplayTag(TAG_State_Weapon_AttackLight) && IsHitFrontal(60.f, this, FVector::Zero(), AgressorActor))
 	{
 		//Handle parry on the agressor character
 
@@ -865,7 +895,7 @@ void ABasePlayerCharacter::BroadcastHit_Implementation(AActor* AgressorActor, co
 	}
 
 	//Handle blocked hits for victim and agressor
-	if (HasMatchingGameplayTag(TAG_State_Weapon_Block) && IsHitFrontal(60.f, this, AgressorActor))
+	if (HasMatchingGameplayTag(TAG_State_Weapon_Block) && IsHitFrontal(60.f, this, FVector::Zero(), AgressorActor))
 	{
 		if (AgressorCharacter->HasMatchingGameplayTag(TAG_State_Weapon_AttackHeavy))
 		{
@@ -910,7 +940,7 @@ void ABasePlayerCharacter::BroadcastHit_Implementation(AActor* AgressorActor, co
 	}
 
 	// Handle weapon clashes when victim and agressor attack at the same time
-	if (AgressorCharacter->HasMatchingGameplayTag(TAG_State_Weapon_AttackLight) && HasMatchingGameplayTag(TAG_State_Weapon_AttackLight) && IsHitFrontal(60.f, this, AgressorActor))
+	if (AgressorCharacter->HasMatchingGameplayTag(TAG_State_Weapon_AttackLight) && HasMatchingGameplayTag(TAG_State_Weapon_AttackLight) && IsHitFrontal(60.f, this, FVector::Zero(), AgressorActor))
 	{
 		//Apply knockback to agressor 
 		FGameplayEventData EventPayload;
@@ -929,7 +959,7 @@ void ABasePlayerCharacter::BroadcastHit_Implementation(AActor* AgressorActor, co
 	//Handle unguarded hit to victim
 	if (!HasMatchingGameplayTag(TAG_State_Weapon_Block) && !HasMatchingGameplayTag(TAG_State_Weapon_Parry))
 	{
-		if (IsHitFrontal(60.f, this, InstigatorWeapon) && AgressorCharacter->HasMatchingGameplayTag(TAG_State_Weapon_AttackHeavy))
+		if (IsHitFrontal(60.f, this, FVector::Zero(), InstigatorWeapon) && AgressorCharacter->HasMatchingGameplayTag(TAG_State_Weapon_AttackHeavy))
 		{
 			//Send event KO to victim
 			FGameplayEventData EventKOPayload;
@@ -960,6 +990,108 @@ void ABasePlayerCharacter::BroadcastHit_Implementation(AActor* AgressorActor, co
 		DamageContext.AddHitResult(Hit);
 
 		FGameplayEffectSpecHandle OutSpec = AbilitySystemComponent->MakeOutgoingSpec(AgressorWeapon->GetWeaponData().WeaponDamageEffect, 1, DamageContext);
+		UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(OutSpec, FGameplayTag::RequestGameplayTag(TEXT("Damage.Attribute.Health")), -LocalDamageToApply);
+		AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*OutSpec.Data);
+		UE_LOG(LogTemp, Error, TEXT("Damage applied to %s : %f"), *GetNameSafe(this), LocalDamageToApply);
+	}
+}
+
+void ABasePlayerCharacter::BroadcastMagicHit_Implementation(AActor* AgressorActor, const FHitResult& Hit, const FMagicDataTable& AgressorMagicData)
+{
+	//Handle early returns
+	if (HasMatchingGameplayTag(TAG_State_Dead)) return;
+	if (HasMatchingGameplayTag(TAG_State_Dodging)) return;
+
+	if (!AgressorActor) return;
+	TObjectPtr<AWOGBaseWeapon> EquippedWeapon = UWOGBlueprintLibrary::GetEquippedWeapon(this);
+	TObjectPtr<AWOGBaseCharacter> AgressorCharacter = Cast<AWOGBaseCharacter>(AgressorActor);
+
+	//Handle more early returns and warnings
+	if (!EquippedWeapon)
+	{
+		UE_LOG(LogTemp, Error, TEXT("No Valid Equipped weapon"));
+	}
+	if (!AgressorCharacter)
+	{
+		UE_LOG(LogTemp, Error, TEXT("No valid Agressor Character"));
+		return;
+	}
+
+	//Store the last hit result
+	LastHitResult = Hit;
+	float LocalDamageToApply = AgressorMagicData.Value * AgressorMagicData.ValueMultiplier;
+
+	//Handle blocked hits for victim and agressor
+	if (HasMatchingGameplayTag(TAG_State_Weapon_Block) && IsHitFrontal(60.f, this, Hit.ImpactPoint, nullptr))
+	{
+		//Condition to sort out different types of magic
+		//TO-DO clean up
+		if (true)
+		{
+			//Attacker used light attack on victim while guarding:
+			//Regular impact on the victim 
+
+			FGameplayEventData EventPayload;
+			EventPayload.EventMagnitude = AgressorMagicData.Value;
+			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Weapon_Block_Impact_Light, EventPayload);
+			UE_LOG(LogTemp, Warning, TEXT("Impact LIGHT"));
+
+
+			LocalDamageToApply = 0.f;
+			UE_LOG(LogTemp, Warning, TEXT("Blocked with other weapon. No damage incoming"));
+		}
+
+		//Apply the block impact cue
+		FGameplayCueParameters CueParams;
+		CueParams.Location = Hit.ImpactPoint;
+		CueParams.EffectCauser = AgressorCharacter;
+		AbilitySystemComponent->ExecuteGameplayCue(TAG_Cue_Weapon_Block_Impact, CueParams);
+	}
+
+	//Handle unguarded hit to victim
+	if (!HasMatchingGameplayTag(TAG_State_Weapon_Block) && !HasMatchingGameplayTag(TAG_State_Weapon_Parry))
+	{
+		//Condition to sort out different types of magic
+		//TO-DO clean up
+		if (true)
+		{
+			//Send Event light HitReact to victim
+			FGameplayEventData EventHitReactPayload;
+			EventHitReactPayload.EventTag = TAG_Event_Debuff_HitReact;
+			EventHitReactPayload.Instigator = AgressorCharacter;
+			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Debuff_HitReact, EventHitReactPayload);
+
+			FGameplayCueParameters CueParams;
+			CueParams.Location = Hit.ImpactPoint;
+			CueParams.EffectCauser = AgressorCharacter;
+			AbilitySystemComponent->ExecuteGameplayCue(TAG_Cue_Weapon_BodyHit, CueParams);
+		}
+	}
+
+	//Apply Secondary effect
+	if (UKismetSystemLibrary::IsValidClass(AgressorMagicData.SecondaryEffect) && AbilitySystemComponent.Get())
+	{
+		FGameplayEffectContextHandle EffectContext = AbilitySystemComponent->MakeEffectContext();
+		FGameplayEffectSpecHandle SpecHandle = AbilitySystemComponent->MakeOutgoingSpec(AgressorMagicData.SecondaryEffect, 1, EffectContext);
+		
+		if (SpecHandle.IsValid())
+		{
+			FActiveGameplayEffectHandle ActiveGEHandle = AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+			if (!ActiveGEHandle.WasSuccessfullyApplied())
+			{
+				UE_LOG(LogTemp, Error, TEXT("failed to apply secondary effect! %s"), *GetNameSafe(AgressorMagicData.SecondaryEffect));
+			}
+		}
+	}
+
+	//Apply damage to victim if authority
+	if (HasAuthority() && AgressorCharacter && AbilitySystemComponent.Get() && AgressorMagicData.DamageEffect)
+	{
+		FGameplayEffectContextHandle DamageContext = AbilitySystemComponent.Get()->MakeEffectContext();
+		DamageContext.AddInstigator(AgressorCharacter, AgressorCharacter);
+		DamageContext.AddHitResult(Hit);
+
+		FGameplayEffectSpecHandle OutSpec = AbilitySystemComponent->MakeOutgoingSpec(AgressorMagicData.DamageEffect, 1, DamageContext);
 		UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(OutSpec, FGameplayTag::RequestGameplayTag(TEXT("Damage.Attribute.Health")), -LocalDamageToApply);
 		AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*OutSpec.Data);
 		UE_LOG(LogTemp, Error, TEXT("Damage applied to %s : %f"), *GetNameSafe(this), LocalDamageToApply);

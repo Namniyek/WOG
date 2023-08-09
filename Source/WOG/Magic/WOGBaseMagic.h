@@ -57,10 +57,10 @@ struct FMagicDataTable : public FTableRowBase
 	TSubclassOf<UGameplayEffect> DamageEffect = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "3 - GAS")
-	TSubclassOf<UGameplayEffect> EffectToApply = nullptr;
+	TSubclassOf<UGameplayEffect> SecondaryEffect = nullptr;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "3 - GAS")
-	float EffectDuration = 0.f;
+	float SecondaryEffectDuration = 0.f;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "3 - GAS")
 	TArray<TSubclassOf<UWOGGameplayAbilityBase>> AbilitiesToGrant = { nullptr };
