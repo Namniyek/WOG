@@ -147,8 +147,6 @@ public:
 	#pragma endregion
 	
 	#pragma region Material variables
-	UPROPERTY(EditAnywhere)
-	UMaterialInterface* Material;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	UMaterialInstanceDynamic* CharacterMI;
@@ -279,9 +277,6 @@ protected:
 	UFUNCTION()
 	void OnRep_PlayerProfile();
 
-	UFUNCTION(BlueprintNativeEvent)
-	void UpdatePlayerProfile(const FPlayerData& NewPlayerProfile);
-
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setup|Character Data")
 	FMeshDataTables CharacterDataTables;
 
@@ -372,6 +367,9 @@ public:
 
 	UFUNCTION(Server, reliable, BlueprintCallable)
 	void Server_SetPlayerProfile(const FPlayerData& NewPlayerProfile);
+
+	UFUNCTION(BlueprintNativeEvent)
+	void UpdatePlayerProfile(const FPlayerData& NewPlayerProfile);
 
 
 

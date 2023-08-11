@@ -28,6 +28,7 @@ AWOGBaseCharacter::AWOGBaseCharacter()
 
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetHealthAttribute()).AddUObject(this, &ThisClass::OnHealthAttributeChanged);
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetMaxMovementSpeedAttribute()).AddUObject(this, &ThisClass::OnMaxMovementSpeedAttributeChanged);
+	AbilitySystemComponent->OnGameplayEffectAppliedDelegateToSelf.AddUObject(this, &ThisClass::OnGameplayEffectAppliedToSelf);
 
 	AttributeSet = CreateDefaultSubobject<UWOGAttributeSetBase>(TEXT("AttributeSet"));
 
@@ -159,6 +160,21 @@ void AWOGBaseCharacter::OnMaxMovementSpeedAttributeChanged(const FOnAttributeCha
 	}
 }
 
+void AWOGBaseCharacter::OnGameplayEffectAppliedToSelf(UAbilitySystemComponent* Source, const FGameplayEffectSpec& Spec, FActiveGameplayEffectHandle Handle)
+{
+	if (!HasAuthority()) return;
+	UE_LOG(LogTemp, Warning, TEXT("Local role: %s"), *UEnum::GetValueAsString(GetLocalRole()));
+	FGameplayTagContainer GrantedTags;
+	Spec.GetAllGrantedTags(GrantedTags);
+	for (auto Tag : GrantedTags)
+	{
+		if (Tag == TAG_State_Debuff_Freeze)
+		{
+			Multicast_SetCharacterFrozen(true);
+		}
+	}
+}
+
 void AWOGBaseCharacter::OnStartAttack()
 {
 	HitActorsToIgnore.Empty();
@@ -173,6 +189,51 @@ void AWOGBaseCharacter::OnAttackHit(FHitResult Hit, UPrimitiveComponent* WeaponM
 	HitActorsToIgnore.AddUnique(Hit.GetActor());
 	
 	ProcessHit(Hit, WeaponMesh);
+}
+
+void AWOGBaseCharacter::Multicast_SetCharacterFrozen_Implementation(bool bIsFrozen)
+{
+	SetCharacterFrozen(bIsFrozen);
+}
+
+void AWOGBaseCharacter::SetCharacterFrozen_Implementation(bool bIsFrozen)
+{
+	if (bIsFrozen)
+	{
+		//Character is freezing
+		UE_LOG(LogTemp, Warning, TEXT("SetCharacterFrozen(TRUE) called from c++"));
+
+		//Pause animations and stop movemement
+		if (GetMesh())
+		{
+			GetMesh()->bPauseAnims = true;
+		}
+		if (GetCharacterMovement())
+		{
+			GetCharacterMovement()->StopMovementImmediately();
+		}
+	}
+	else
+	{
+		//Character is unfreezing
+		TObjectPtr<ABasePlayerCharacter> PlayerCharacter = Cast<ABasePlayerCharacter>(this);
+		if (PlayerCharacter && PlayerCharacter->GetMesh())
+		{
+			int32 MatNum = PlayerCharacter->GetMesh()->GetSkeletalMeshAsset()->GetNumMaterials();
+			for (int32 i = 0; i < MatNum; i++)
+			{
+				PlayerCharacter->GetMesh()->SetMaterial(i, PlayerCharacter->CharacterMI);
+			}
+
+			PlayerCharacter->UpdatePlayerProfile_Implementation(PlayerCharacter->PlayerProfile);
+		}
+
+		//UnPause animations
+		if (GetMesh())
+		{
+			GetMesh()->bPauseAnims = false;
+		}
+	}
 }
 
 void AWOGBaseCharacter::ToggleStrafeMovement(bool bIsStrafe)

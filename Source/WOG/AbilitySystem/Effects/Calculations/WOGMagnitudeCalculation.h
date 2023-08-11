@@ -30,4 +30,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Calculation")
 	float CalculateWeaponBlockCost(const FGameplayEffectSpec& Spec) const;
 
+	UFUNCTION(BlueprintCallable, Category = "Calculation")
+	float CalculateMagicEffectDuration(const FGameplayEffectSpec& Spec) const;
+
 };

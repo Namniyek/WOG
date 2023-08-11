@@ -17,6 +17,7 @@ class UGameplayEffect;
 class UAbilitySystemComponent;
 class AWOGGameMode;
 class UAGRAnimMasterComponent;
+class UMaterialInterface;
 
 UCLASS()
 class WOG_API AWOGBaseCharacter : public ACharacter, public IAttributesInterface, public IAbilitySystemInterface
@@ -35,11 +36,16 @@ public:
 	void GiveDefaultAbilities();
 	void ApplyDefaultEffects();
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UMaterialInterface* Material;
+
+
 protected:
 	virtual void BeginPlay() override;
 	void SendAbilityLocalInput(const EWOGAbilityInputID InInputID);
 	virtual void OnHealthAttributeChanged(const FOnAttributeChangeData& Data);
 	virtual void OnMaxMovementSpeedAttributeChanged(const FOnAttributeChangeData& Data);
+	virtual void OnGameplayEffectAppliedToSelf(UAbilitySystemComponent* Source, const FGameplayEffectSpec& Spec, FActiveGameplayEffectHandle Handle);
 	UFUNCTION()
 	virtual void OnStartAttack();
 	UFUNCTION()
@@ -47,6 +53,13 @@ protected:
 	virtual void ProcessHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh) { /*TO-BE OVERRIDEN IN CHILDREN*/ };
 	UFUNCTION(BlueprintCallable)
 	virtual void ProcessMagicHit(const FHitResult& Hit, const struct FMagicDataTable& MagicData) { /*TO-BE OVERRIDEN IN CHILDREN*/ };
+	
+
+	UFUNCTION(NetMulticast, Reliable, BlueprintCallable)
+	void Multicast_SetCharacterFrozen(bool bIsFrozen);
+
+	UFUNCTION(BlueprintNativeEvent)
+	void SetCharacterFrozen(bool bIsFrozen);
 
 	virtual void ToggleStrafeMovement(bool bIsStrafe);
 

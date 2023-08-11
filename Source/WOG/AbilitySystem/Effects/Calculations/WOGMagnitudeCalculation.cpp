@@ -121,3 +121,26 @@ float UWOGMagnitudeCalculation::CalculateWeaponBlockCost(const FGameplayEffectSp
 		return 0.0f;
 	}
 }
+
+float UWOGMagnitudeCalculation::CalculateMagicEffectDuration(const FGameplayEffectSpec& Spec) const
+{
+	TObjectPtr<AActor> Owner = Spec.GetEffectContext().GetInstigatorAbilitySystemComponent()->GetOwner();
+	if (Owner)
+	{
+		TObjectPtr<AWOGBaseMagic> Magic = UWOGBlueprintLibrary::GetEquippedMagic(Owner);
+		if (Magic)
+		{
+			return Magic->GetMagicData().SecondaryEffectDuration;
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("No magic for duration calculation"));
+			return 2.0f;
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("No owner for duration calculation"));
+		return 2.0f;
+	}
+}

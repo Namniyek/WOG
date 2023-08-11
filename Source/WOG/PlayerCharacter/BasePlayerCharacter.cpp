@@ -166,6 +166,7 @@ void ABasePlayerCharacter::MoveActionPressed(const FInputActionValue& Value)
 	if (HasMatchingGameplayTag(TAG_State_Debuff_KO)) return;
 	if (HasMatchingGameplayTag(TAG_State_Debuff_Stagger)) return;
 	if (HasMatchingGameplayTag(TAG_State_Debuff_Stun)) return;
+	if (HasMatchingGameplayTag(TAG_State_Debuff_Freeze)) return;
 
 	FVector2D MovementVector = Value.Get<FVector2D>();
 	if (Controller != nullptr)
@@ -998,9 +999,11 @@ void ABasePlayerCharacter::BroadcastHit_Implementation(AActor* AgressorActor, co
 
 void ABasePlayerCharacter::BroadcastMagicHit_Implementation(AActor* AgressorActor, const FHitResult& Hit, const FMagicDataTable& AgressorMagicData)
 {
-	//Handle early returns
+	//Handle early returnswg
 	if (HasMatchingGameplayTag(TAG_State_Dead)) return;
 	if (HasMatchingGameplayTag(TAG_State_Dodging)) return;
+
+	
 
 	if (!AgressorActor) return;
 	TObjectPtr<AWOGBaseWeapon> EquippedWeapon = UWOGBlueprintLibrary::GetEquippedWeapon(this);
@@ -1068,20 +1071,14 @@ void ABasePlayerCharacter::BroadcastMagicHit_Implementation(AActor* AgressorActo
 		}
 	}
 
-	//Apply Secondary effect
-	if (UKismetSystemLibrary::IsValidClass(AgressorMagicData.SecondaryEffect) && AbilitySystemComponent.Get())
+	//Apply secondary effect
+	//The secondary effect handles the attribute manipulation, gives an ability to the victim and has a duration that comes from the data table
+	//The granted ability needs to activated on grated and can apply an infinte GameplayCue effect if needed.
+	if (UKismetSystemLibrary::IsValidClass(AgressorMagicData.SecondaryEffect))
 	{
-		FGameplayEffectContextHandle EffectContext = AbilitySystemComponent->MakeEffectContext();
-		FGameplayEffectSpecHandle SpecHandle = AbilitySystemComponent->MakeOutgoingSpec(AgressorMagicData.SecondaryEffect, 1, EffectContext);
-		
-		if (SpecHandle.IsValid())
-		{
-			FActiveGameplayEffectHandle ActiveGEHandle = AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
-			if (!ActiveGEHandle.WasSuccessfullyApplied())
-			{
-				UE_LOG(LogTemp, Error, TEXT("failed to apply secondary effect! %s"), *GetNameSafe(AgressorMagicData.SecondaryEffect));
-			}
-		}
+		FGameplayEffectContextHandle SecondaryContext = AbilitySystemComponent.Get()->MakeEffectContext();
+		SecondaryContext.AddInstigator(AgressorCharacter, AgressorCharacter);
+		ApplyGameplayEffectToSelf(AgressorMagicData.SecondaryEffect, SecondaryContext);
 	}
 
 	//Apply damage to victim if authority

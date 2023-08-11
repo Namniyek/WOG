@@ -9,9 +9,9 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_State_Debuff_KO, "State.Debuff.KO");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Debuff_Knockback, "State.Debuff.Knockback");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Debuff_HitReact, "State.Debuff.HitReact");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Debuff_Stun, "State.Debuff.Stun");
-UE_DEFINE_GAMEPLAY_TAG(TAG_State_Debuff_HealthDrain, "State.Debuff.HealthDrain");
+UE_DEFINE_GAMEPLAY_TAG(TAG_State_Debuff_Burn, "State.Debuff.Burn");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Debuff_Freeze, "State.Debuff.Freeze");
-UE_DEFINE_GAMEPLAY_TAG(TAG_State_Debuff_StaminaDrain, "State.Debuff.StaminaDrain");
+UE_DEFINE_GAMEPLAY_TAG(TAG_State_Debuff_Shock, "State.Debuff.Shock");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Weapon_AttackLight, "State.Weapon.AttackLight");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Weapon_AttackHeavy, "State.Weapon.AttackHeavy");
@@ -42,6 +42,11 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Debuff_KO, "Event.Debuff.KO");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Debuff_HitReact, "Event.Debuff.HitReact");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Debuff_Knockback, "Event.Debuff.Knockback");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Debuff_Stun, "Event.Debuff.Stun");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Debuff_HealthDrain, "Event.Debuff.HealthDrain");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Debuff_Freeze, "Event.Debuff.Freeze");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Debuff_StaminaDrain, "Event.Debuff.StaminaDrain");
+
+
 
 //Inventory tags
 //Weapons
