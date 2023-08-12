@@ -120,6 +120,8 @@ class WOG_API ABasePlayerCharacter : public AWOGBaseCharacter
 {
 	GENERATED_BODY()
 
+	friend class AWOGBaseCharacter;
+
 	virtual void OnConstruction(const FTransform& Transform) override;
 
 public:

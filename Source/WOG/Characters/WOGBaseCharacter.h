@@ -147,7 +147,7 @@ public:
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	virtual void Elim(bool bPlayerLeftGame);
+	virtual void Elim(bool bPlayerLeftGame) { /*To be overriden in Children*/ };
 
 	bool HasMatchingGameplayTag(FGameplayTag TagToCheck) const;
 

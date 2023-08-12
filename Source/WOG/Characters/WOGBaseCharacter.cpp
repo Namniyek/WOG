@@ -163,7 +163,6 @@ void AWOGBaseCharacter::OnMaxMovementSpeedAttributeChanged(const FOnAttributeCha
 void AWOGBaseCharacter::OnGameplayEffectAppliedToSelf(UAbilitySystemComponent* Source, const FGameplayEffectSpec& Spec, FActiveGameplayEffectHandle Handle)
 {
 	if (!HasAuthority()) return;
-	UE_LOG(LogTemp, Warning, TEXT("Local role: %s"), *UEnum::GetValueAsString(GetLocalRole()));
 	FGameplayTagContainer GrantedTags;
 	Spec.GetAllGrantedTags(GrantedTags);
 	for (auto Tag : GrantedTags)
@@ -201,8 +200,6 @@ void AWOGBaseCharacter::SetCharacterFrozen_Implementation(bool bIsFrozen)
 	if (bIsFrozen)
 	{
 		//Character is freezing
-		UE_LOG(LogTemp, Warning, TEXT("SetCharacterFrozen(TRUE) called from c++"));
-
 		//Pause animations and stop movemement
 		if (GetMesh())
 		{
@@ -225,7 +222,11 @@ void AWOGBaseCharacter::SetCharacterFrozen_Implementation(bool bIsFrozen)
 				PlayerCharacter->GetMesh()->SetMaterial(i, PlayerCharacter->CharacterMI);
 			}
 
-			PlayerCharacter->UpdatePlayerProfile_Implementation(PlayerCharacter->PlayerProfile);
+			PlayerCharacter->SetColors(
+				PlayerCharacter->PlayerProfile.PrimaryColor, 
+				PlayerCharacter->PlayerProfile.SkinColor, 
+				PlayerCharacter->PlayerProfile.BodyPaintColor, 
+				PlayerCharacter->PlayerProfile.HairColor);
 		}
 
 		//UnPause animations
@@ -320,11 +321,6 @@ void AWOGBaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-}
-
-void AWOGBaseCharacter::Elim(bool bPlayerLeftGame)
-{
-	//To be overriden in Children
 }
 
 bool AWOGBaseCharacter::HasMatchingGameplayTag(FGameplayTag TagToCheck) const
