@@ -414,7 +414,7 @@ void AWOGBaseWeapon::Server_SpawnWeaponAOE_Implementation(const FVector_NetQuant
 			FActorSpawnParameters SpawnParams;
 			SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 			SpawnParams.Owner = OwnerCharacter;
-			SpawnedAOEAttack = World->SpawnActor<AActor>(WeaponData.RangedClass, SpawnTransform, SpawnParams);
+			TObjectPtr<AActor> SpawnedAOEAttack = World->SpawnActor<AActor>(WeaponData.RangedClass, SpawnTransform, SpawnParams);
 
 			if (SpawnedAOEAttack)
 			{

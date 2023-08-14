@@ -92,6 +92,11 @@ ABasePlayerCharacter::ABasePlayerCharacter()
 		TargetComponent->OnTargetLockedOn.AddDynamic(this, &ThisClass::TargetLocked);
 		TargetComponent->OnTargetLockedOff.AddDynamic(this, &ThisClass::TargetUnlocked);
 	}
+
+	PreviousWeapon = NAME_None;
+	PreviousMagic = NAME_None;
+	CurrentMagic = NAME_None;
+
 }
 
 void ABasePlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -100,6 +105,9 @@ void ABasePlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 	
 	DOREPLIFETIME(ABasePlayerCharacter, PlayerProfile);
 	DOREPLIFETIME(ABasePlayerCharacter, CurrentTarget);
+	DOREPLIFETIME(ABasePlayerCharacter, CurrentMagic);
+	DOREPLIFETIME(ABasePlayerCharacter, PreviousMagic);
+	DOREPLIFETIME(ABasePlayerCharacter, PreviousWeapon);
 }
 
 void ABasePlayerCharacter::PossessedBy(AController* NewController)
@@ -262,8 +270,10 @@ void ABasePlayerCharacter::WeaponRangedActionPressed(const FInputActionValue& Va
 
 void ABasePlayerCharacter::PrimaryLightButtonPressed(const FInputActionValue& Value)
 {
+	bool bCanActivateAbility = UWOGBlueprintLibrary::GetEquippedWeapon(this)
+		|| UWOGBlueprintLibrary::GetEquippedMagic(this);
 
-	if (UWOGBlueprintLibrary::GetEquippedWeapon(this) || UWOGBlueprintLibrary::GetEquippedMagic(this))
+	if (bCanActivateAbility)
 	{
 		SendAbilityLocalInput(EWOGAbilityInputID::AttackLight);
 	}
@@ -277,8 +287,7 @@ void ABasePlayerCharacter::PrimaryLightButtonPressed(const FInputActionValue& Va
 
 void ABasePlayerCharacter::PrimaryArmHeavyAttack(FInputActionValue ActionValue, float ElapsedTime, float TriggeredTime)
 {
-	AActor* OutItem;
-	if (!EquipmentManager->GetItemInSlot(NAME_WeaponSlot_Primary, OutItem) || !OutItem) return;
+	if (!UWOGBlueprintLibrary::GetEquippedWeapon(this)) return;
 	
 	if (ElapsedTime > 0.21f)
 	{
@@ -297,11 +306,12 @@ void ABasePlayerCharacter::PrimaryHeavyAttackCanceled(const FInputActionValue& V
 
 void ABasePlayerCharacter::PrimaryExecuteHeavyAttack(const FInputActionValue& Value)
 {
-	AActor* OutItem;
-	if (!EquipmentManager->GetItemInSlot(NAME_WeaponSlot_Primary, OutItem) || !OutItem) return;
-
-	FGameplayEventData EventPayload;
-	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Weapon_HeavyAttackExecute, EventPayload);
+	if (UWOGBlueprintLibrary::GetEquippedWeapon(this))
+	{
+		FGameplayEventData EventPayload;
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Weapon_HeavyAttackExecute, EventPayload);
+		return;
+	}
 }
 
 void ABasePlayerCharacter::SecondaryButtonPressed(const FInputActionValue& Value)
@@ -472,6 +482,81 @@ void ABasePlayerCharacter::SetDefaultAbilitiesAndEffects(bool bIsMale, FName Row
 	CharacterData.bIsMale = bIsMale;
 }
 
+void ABasePlayerCharacter::ResetPreviouslyEquippedMaterial()
+{
+	if (!EquipmentManager)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Equipment component invalid"));
+		return;
+	}
+
+	//Unequip current magic
+	if (CurrentMagic != NAME_None)
+	{
+		AActor* PrimaryMagic = nullptr;
+		EquipmentManager->GetItemInSlot(NAME_MagicSlot_MagicPrimary, PrimaryMagic);
+		if (PrimaryMagic)
+		{
+			Server_UnequipMagic(CurrentMagic, PrimaryMagic);
+			UE_LOG(LogTemp, Warning, TEXT("Unequipped Magic: %s"), *GetNameSafe(PrimaryMagic));
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("Equipped magic invalid"));
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("CurrentMagic FName == NAME_None"));
+	}
+
+	//Reequip previous weapon
+	if (PreviousWeapon != NAME_None)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("PreviousWeapon key == %s"), *PreviousWeapon.ToString());
+		AActor* OutItem = nullptr;
+		EquipmentManager->GetWeaponShortcutReference(PreviousWeapon, OutItem);
+		if (OutItem)
+		{
+			FGameplayEventData EventPayload;
+			EventPayload.EventTag = TAG_Event_Weapon_Equip;
+			EventPayload.OptionalObject = OutItem;
+			int32 Key = FCString::Atoi(*PreviousWeapon.ToString());
+			EventPayload.EventMagnitude = Key;
+			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Weapon_Equip, EventPayload);
+			UE_LOG(LogTemp, Warning, TEXT("Equipped Previous Weapon: %s"), *GetNameSafe(OutItem));
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("Previous weapon invalid"));
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("PreviousWeapon FName == NAME_None"));
+	}
+
+	//Reequip previous magic
+	if (PreviousMagic != NAME_None)
+	{
+		AActor* OutMagic = nullptr;
+		EquipmentManager->GetMagicShortcutReference(PreviousMagic, OutMagic);
+		if (OutMagic)
+		{
+			Server_EquipMagic(PreviousMagic, OutMagic);
+			UE_LOG(LogTemp, Warning, TEXT("Equipped Previous Magic: %s"), *GetNameSafe(OutMagic));
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("Previous magic invalid"));
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("PreviousMagic FName == NAME_None"));
+	}
+}
+
 void ABasePlayerCharacter::Client_SaveShortcutReferences_Implementation(AActor* InItem, const FGameplayTag& InItemTag, const FName& Key)
 {
 	if (!InventoryManager || !EquipmentManager) return;
@@ -518,6 +603,8 @@ void ABasePlayerCharacter::Server_EquipWeapon_Implementation(const FName& Key, A
 		OtherBackSlot = NAME_WeaponSlot_BackMain;
 	}
 
+	PreviousWeapon = NAME_None;
+
 	//Determine where to equip weapons
 	AActor* PrimarySlotActor;
 	EquipmentManager->GetItemInSlot(NAME_WeaponSlot_Primary, PrimarySlotActor);
@@ -549,6 +636,16 @@ void ABasePlayerCharacter::Server_EquipWeapon_Implementation(const FName& Key, A
 				AActor* PreviousItem;
 				AActor* NewItem;
 				EquipmentManager->EquipItemInSlot(OtherBackSlot, PrimarySlotActor, PreviousItem, NewItem);
+
+
+				if (OtherBackSlot == NAME_WeaponSlot_BackMain)
+				{
+					PreviousWeapon = FName("2");
+				}
+				else if (OtherBackSlot == NAME_WeaponSlot_BackSecondary)
+				{
+					PreviousWeapon = FName("1");
+				}
 			}
 
 			//Equip InWeapon to primary
@@ -557,6 +654,7 @@ void ABasePlayerCharacter::Server_EquipWeapon_Implementation(const FName& Key, A
 			AActor* PreviousItem;
 			AActor* NewItem;
 			EquipmentManager->EquipItemInSlot(NAME_WeaponSlot_Primary, InWeapon, PreviousItem, NewItem);
+			PreviousWeapon = Key;
 			UE_LOG(LogTemp, Display, TEXT("Same as BackMain - Equipping to Primary"));
 			return;
 		}
@@ -587,6 +685,8 @@ void ABasePlayerCharacter::Server_UnequipWeapon_Implementation(const FName& Key,
 	{
 		BackSlot = NAME_WeaponSlot_BackSecondary;
 	}
+
+	PreviousWeapon = NAME_None;
 
 	//Unequip from primary and equip to back
 	FText Note;
@@ -625,6 +725,8 @@ void ABasePlayerCharacter::Server_EquipMagic_Implementation(const FName& Key, AA
 		OtherBackSlot = NAME_MagicSlot_MagicBackMain;
 	}
 
+	PreviousMagic = NAME_None;
+
 	//Determine where to equip magic
 	AActor* PrimarySlotActor;
 	EquipmentManager->GetItemInSlot(NAME_MagicSlot_MagicPrimary, PrimarySlotActor);
@@ -636,6 +738,7 @@ void ABasePlayerCharacter::Server_EquipMagic_Implementation(const FName& Key, AA
 		AActor* PreviousItem;
 		AActor* NewItem;
 		EquipmentManager->EquipItemInSlot(RelevantBackSlot, InMagic, PreviousItem, NewItem);
+		CurrentMagic = NAME_None;
 		UE_LOG(LogTemp, Display, TEXT("Same magic as MagicPrimary - Equipping to MagicBackMain"));
 		return;
 	}
@@ -656,6 +759,15 @@ void ABasePlayerCharacter::Server_EquipMagic_Implementation(const FName& Key, AA
 				AActor* PreviousItem;
 				AActor* NewItem;
 				EquipmentManager->EquipItemInSlot(OtherBackSlot, PrimarySlotActor, PreviousItem, NewItem);
+
+				if (OtherBackSlot == NAME_MagicSlot_MagicBackMain)
+				{
+					PreviousMagic = FName("1");
+				}
+				else if (OtherBackSlot == NAME_MagicSlot_MagicBackSecondary)
+				{
+					PreviousMagic = FName("2");
+				}
 			}
 
 			//Equip InWeapon to primary
@@ -664,6 +776,7 @@ void ABasePlayerCharacter::Server_EquipMagic_Implementation(const FName& Key, AA
 			AActor* PreviousItem;
 			AActor* NewItem;
 			EquipmentManager->EquipItemInSlot(NAME_MagicSlot_MagicPrimary, InMagic, PreviousItem, NewItem);
+			CurrentMagic = Key;
 			UE_LOG(LogTemp, Display, TEXT("Same as MagicBackMain - Equipping to MagicPrimary"));
 			return;
 		}
@@ -701,7 +814,7 @@ void ABasePlayerCharacter::Server_UnequipMagic_Implementation(const FName& Key, 
 	AActor* PreviousItem;
 	AActor* NewItem;
 	EquipmentManager->EquipItemInSlot(BackSlot, InWeapon, PreviousItem, NewItem);
-	UE_LOG(LogTemp, Display, TEXT("MagicUnequipped"));
+	CurrentMagic == NAME_None;
 	return;
 }
 
@@ -1003,8 +1116,6 @@ void ABasePlayerCharacter::BroadcastMagicHit_Implementation(AActor* AgressorActo
 	if (HasMatchingGameplayTag(TAG_State_Dead)) return;
 	if (HasMatchingGameplayTag(TAG_State_Dodging)) return;
 
-	
-
 	if (!AgressorActor) return;
 	TObjectPtr<AWOGBaseWeapon> EquippedWeapon = UWOGBlueprintLibrary::GetEquippedWeapon(this);
 	TObjectPtr<AWOGBaseCharacter> AgressorCharacter = Cast<AWOGBaseCharacter>(AgressorActor);
@@ -1024,39 +1135,42 @@ void ABasePlayerCharacter::BroadcastMagicHit_Implementation(AActor* AgressorActo
 	LastHitResult = Hit;
 	float LocalDamageToApply = AgressorMagicData.Value * AgressorMagicData.ValueMultiplier;
 
+	//Handle AOE KO
+	if (AgressorMagicData.AbilityType == EAbilityType::EAT_AOE)
+	{
+		//Send event KO to victim
+		FGameplayEventData EventKOPayload;
+		EventKOPayload.EventTag = TAG_Event_Debuff_KO;
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Debuff_KO, EventKOPayload);
+	}
+
 	//Handle blocked hits for victim and agressor
 	if (HasMatchingGameplayTag(TAG_State_Weapon_Block) && IsHitFrontal(60.f, this, Hit.ImpactPoint, nullptr))
 	{
 		//Condition to sort out different types of magic
-		//TO-DO clean up
-		if (true)
+		if (AgressorMagicData.AbilityType == EAbilityType::EAT_Projectile)
 		{
 			//Attacker used light attack on victim while guarding:
 			//Regular impact on the victim 
-
 			FGameplayEventData EventPayload;
 			EventPayload.EventMagnitude = AgressorMagicData.Value;
 			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Weapon_Block_Impact_Light, EventPayload);
-			UE_LOG(LogTemp, Warning, TEXT("Impact LIGHT"));
-
 
 			LocalDamageToApply = 0.f;
-			UE_LOG(LogTemp, Warning, TEXT("Blocked with other weapon. No damage incoming"));
-		}
 
-		//Apply the block impact cue
-		FGameplayCueParameters CueParams;
-		CueParams.Location = Hit.ImpactPoint;
-		CueParams.EffectCauser = AgressorCharacter;
-		AbilitySystemComponent->ExecuteGameplayCue(TAG_Cue_Weapon_Block_Impact, CueParams);
+			//Apply the block impact cue
+			FGameplayCueParameters CueParams;
+			CueParams.Location = Hit.ImpactPoint;
+			CueParams.EffectCauser = AgressorCharacter;
+			AbilitySystemComponent->ExecuteGameplayCue(TAG_Cue_Weapon_Block_Impact, CueParams);
+		}
 	}
 
 	//Handle unguarded hit to victim
 	if (!HasMatchingGameplayTag(TAG_State_Weapon_Block) && !HasMatchingGameplayTag(TAG_State_Weapon_Parry))
 	{
 		//Condition to sort out different types of magic
-		//TO-DO clean up
-		if (true)
+		if (AgressorMagicData.AbilityType == EAbilityType::EAT_Projectile)
 		{
 			//Send Event light HitReact to victim
 			FGameplayEventData EventHitReactPayload;

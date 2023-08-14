@@ -20,6 +20,9 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_State_Weapon_Parry, "State.Weapon.Parry");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Weapon_Ranged_Throw, "State.Weapon.Ranged.Throw");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Weapon_Ranged_AOE, "State.Weapon.Ranged.AOE");
 
+UE_DEFINE_GAMEPLAY_TAG(TAG_State_Magic_AOE, "State.Magic.AOE");
+UE_DEFINE_GAMEPLAY_TAG(TAG_State_Magic_Projectile, "State.Magic.Projectile");
+
 
 //Event tags
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Elim, "Event.Elim");
@@ -36,6 +39,8 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Weapon_Ranged_Throw, "Event.Weapon.Ranged.Throw
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Weapon_Ranged_Catch, "Event.Weapon.Ranged.Catch");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Weapon_Equip, "Event.Weapon.Equip");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Weapon_Unequip, "Event.Weapon.Unequip");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Magic_SpawnAOE, "Event.Magic.SpawnAOE");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Debuff_Stagger, "Event.Debuff.Stagger");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Debuff_KO, "Event.Debuff.KO");

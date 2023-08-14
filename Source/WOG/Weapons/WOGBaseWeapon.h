@@ -212,8 +212,8 @@ private:
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<AWOGRangedWeaponBase> SpawnedRangedWeapon;
 
-	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<AActor> SpawnedAOEAttack;
+	/*UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<AActor> SpawnedAOEAttack;*/
 
 public:	
 	UFUNCTION(BlueprintCallable)

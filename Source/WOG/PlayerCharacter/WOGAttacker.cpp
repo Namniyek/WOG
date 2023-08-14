@@ -109,6 +109,12 @@ void AWOGAttacker::AbilitiesButtonPressed(const FInputActionValue& Value)
 	if (HasMatchingGameplayTag(TAG_State_Debuff_KO)) return;
 	if (HasMatchingGameplayTag(TAG_State_Debuff_Stagger)) return;
 
+	if (!EquipmentManager)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Equipment component invalid"));
+		return;
+	}
+
 	FVector2D AbilitiesVector = Value.Get<FVector2D>();
 
 	if (AbilitiesVector.X > 0)
@@ -120,11 +126,6 @@ void AWOGAttacker::AbilitiesButtonPressed(const FInputActionValue& Value)
 	if (AbilitiesVector.X < 0)
 	{
 		//Button 1/Left pressed
-		if (!EquipmentManager)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Equipment component invalid"));
-			return;
-		}
 
 		/*
 		**
@@ -181,11 +182,7 @@ void AWOGAttacker::AbilitiesButtonPressed(const FInputActionValue& Value)
 	if (AbilitiesVector.Y > 0)
 	{
 		//Button 2/Up pressed
-		if (!EquipmentManager)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Equipment component invalid"));
-			return;
-		}
+
 
 		/*
 		**
@@ -222,11 +219,6 @@ void AWOGAttacker::AbilitiesButtonPressed(const FInputActionValue& Value)
 	if (AbilitiesVector.Y < 0)
 	{
 		//Button 3/Down pressed
-		if (!EquipmentManager)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Equipment component invalid"));
-			return;
-		}
 
 		/*
 		**

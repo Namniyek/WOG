@@ -19,6 +19,7 @@
 #include "AbilitySystemComponent.h"
 #include "Magic/WOGBaseIdleMagic.h"
 #include "Magic/Projectile/WOGBaseMagicProjectile.h"
+#include "Magic/AOE/WOGBaseMagicAOE.h"
 #include "Libraries/WOGBlueprintLibrary.h"
 
 AWOGBaseMagic::AWOGBaseMagic()
@@ -352,6 +353,40 @@ void AWOGBaseMagic::Server_SpawnProjectile_Implementation(const FTransform& Spaw
 	if (SpawnedProjectile)
 	{
 		SpawnedProjectile->SetMagicData(MagicData);
+	}
+}
+
+void AWOGBaseMagic::Server_SpawnAOE_Implementation(const FVector_NetQuantize& TargetLocation)
+{
+	OwnerCharacter = OwnerCharacter == nullptr ? Cast<ABasePlayerCharacter>(GetOwner()) : OwnerCharacter;
+	if (!OwnerCharacter) return;
+
+	//Set the correct transform
+	if (UKismetSystemLibrary::IsValidClass(MagicData.AOEClass))
+	{
+		FTransform SpawnTransform = FTransform();
+		SpawnTransform.SetLocation(TargetLocation);
+
+		//Spawn Ranged Weapon
+		UWorld* World = GetWorld();
+		if (World)
+		{
+			FActorSpawnParameters SpawnParams;
+			SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+			SpawnParams.Owner = OwnerCharacter;
+			TObjectPtr<AWOGBaseMagicAOE> SpawnedAOEAttack = World->SpawnActor<AWOGBaseMagicAOE>(MagicData.AOEClass, SpawnTransform, SpawnParams);
+
+			if (SpawnedAOEAttack)
+			{
+				SpawnedAOEAttack->SetMagicData(MagicData);
+				UE_LOG(LogTemp, Warning, TEXT("AOE spawned: %s"), *GetNameSafe(SpawnedAOEAttack));
+			}
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Magic AOE class invalid"));
+		return;
 	}
 }
 

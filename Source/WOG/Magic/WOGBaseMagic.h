@@ -20,6 +20,8 @@ class USphereComponent;
 class UNiagaraSystem;
 class UWOGGameplayAbilityBase;
 class AWOGBaseIdleMagic;
+class AWOGBaseMagicProjectile;
+class AWOGBaseMagicAOE;
 
 USTRUCT(BlueprintType)
 struct FMagicDataTable : public FTableRowBase
@@ -87,13 +89,13 @@ struct FMagicDataTable : public FTableRowBase
 	TSubclassOf<AWOGBaseIdleMagic> IdleProjectileClass = nullptr;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Projectile", meta = (EditCondition = "AbilityType == EAbilityType::EAT_Projectile", EditConditionHides))
-	TSubclassOf<AActor> ProjectileClass = nullptr;
+	TSubclassOf<AWOGBaseMagicProjectile> ProjectileClass = nullptr;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "AOE", meta = (EditCondition = "AbilityType == EAbilityType::EAT_AOE", EditConditionHides))
 	TSubclassOf<AWOGBaseIdleMagic> IdleAOEClass = nullptr;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "AOE", meta = (EditCondition = "AbilityType == EAbilityType::EAT_AOE", EditConditionHides))
-	TSubclassOf<AActor> AOEClass = nullptr;
+	TSubclassOf<AWOGBaseMagicAOE> AOEClass = nullptr;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Instant", meta = (EditCondition = "AbilityType == EAbilityType::EAT_Instant", EditConditionHides))
 	float Magnitude = 0.f;
@@ -171,6 +173,9 @@ protected:
 
 	UFUNCTION(Server, Reliable)
 	void Server_SpawnProjectile(const FTransform& SpawnTransform);
+
+	UFUNCTION(Server, Reliable, BlueprintCallable)
+	void Server_SpawnAOE(const FVector_NetQuantize& TargetLocation);
 
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite)
 	TObjectPtr<ABasePlayerCharacter> OwnerCharacter;

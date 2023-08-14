@@ -297,6 +297,17 @@ protected:
 	UFUNCTION(Client, reliable, BlueprintCallable)
 	void Client_SaveShortcutReferences(AActor* InItem, const FGameplayTag& InItemTag, const FName& Key);
 
+	UPROPERTY(Replicated)
+	FName PreviousWeapon;
+	UPROPERTY(Replicated)
+	FName PreviousMagic;
+	UPROPERTY(Replicated)
+	FName CurrentMagic;
+
+	UFUNCTION(BlueprintCallable)
+	void ResetPreviouslyEquippedMaterial();
+
+
 public:
 	UFUNCTION(Server, reliable, BlueprintCallable)
 	void Server_EquipWeapon(const FName& Key, AActor* InWeapon);
