@@ -101,3 +101,6 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Cue_Movement_Dodge, "GameplayCue.Movement.Dodge");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Cue_Movement_Jump, "GameplayCue.Movement.Jump");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Cue_KO, "GameplayCue.KO");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Cue_Elim, "GameplayCue.Elim");
+
+//Cooldown tags
+UE_DEFINE_GAMEPLAY_TAG(TAG_Cooldown_Input, "Cooldown.Input");

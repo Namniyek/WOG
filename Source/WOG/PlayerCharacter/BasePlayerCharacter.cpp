@@ -419,6 +419,8 @@ void ABasePlayerCharacter::SetMeshesAndAnimations(bool bIsMale, FName RowName)
 		return;
 	}
 
+	MergeParams.bNeedsCpuAccess = true;
+
 	MergeParams.MeshesToMerge.Add(MeshRow->Head);
 	MergeParams.MeshesToMerge.Add(MeshRow->Torso);
 	MergeParams.MeshesToMerge.Add(MeshRow->Hips);
@@ -441,6 +443,9 @@ void ABasePlayerCharacter::SetMeshesAndAnimations(bool bIsMale, FName RowName)
 	USkeletalMesh* NewMesh = UMeshMergeFunctionLibrary::MergeMeshes(MergeParams);
 	if (NewMesh)
 	{
+		//UE_LOG(LogTemp, Warning, TEXT("%d Amount of LODs"), NewMesh->GetLODNum());
+		//NewMesh->GetLODInfo(NewMesh->GetLODNum())->bAllowCPUAccess = true;
+
 		GetMesh()->SetSkinnedAssetAndUpdate(NewMesh, true);
 		GetMesh()->SetMaterial(0, CharacterMI);
 		GetMesh()->SetMaterial(1, CharacterMI);

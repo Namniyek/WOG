@@ -12,6 +12,8 @@
 #include "Types/WOGGameplayTags.h"
 #include "Components/AGR_EquipmentManager.h"
 #include "AbilitySystemBlueprintLibrary.h"
+#include "ActorComponents/WOGAbilitySystemComponent.h"
+#include "Magic/WOGBaseMagic.h"
 
 
 AWOGAttacker::AWOGAttacker()
@@ -183,6 +185,17 @@ void AWOGAttacker::AbilitiesButtonPressed(const FInputActionValue& Value)
 	{
 		//Button 2/Up pressed
 
+		//Check for cooldown tag
+		AActor* OutMagic = nullptr;
+		EquipmentManager->GetMagicShortcutReference(FName("1"), OutMagic);
+		if (!OutMagic) return;
+
+		TObjectPtr<AWOGBaseMagic> MagicToEquip = Cast<AWOGBaseMagic>(OutMagic);
+		if (MagicToEquip && HasMatchingGameplayTag(MagicToEquip->GetMagicData().CooldownTag))
+		{
+			UE_LOG(LogTemp, Error, TEXT("Cooldown in effect. Can't equip"));
+			return;
+		}
 
 		/*
 		**
@@ -203,9 +216,7 @@ void AWOGAttacker::AbilitiesButtonPressed(const FInputActionValue& Value)
 		**Equip Magic
 		**
 		*/
-		AActor* OutMagic = nullptr;
 		AActor* PrimaryMagic = nullptr;
-		EquipmentManager->GetMagicShortcutReference(FName("1"), OutMagic);
 		EquipmentManager->GetItemInSlot(NAME_MagicSlot_MagicPrimary, PrimaryMagic);
 		if (PrimaryMagic && OutMagic && PrimaryMagic == OutMagic)
 		{
@@ -220,6 +231,18 @@ void AWOGAttacker::AbilitiesButtonPressed(const FInputActionValue& Value)
 	{
 		//Button 3/Down pressed
 
+		//Check for cooldown tag
+		AActor* OutMagic = nullptr;
+		EquipmentManager->GetMagicShortcutReference(FName("2"), OutMagic);
+		if (!OutMagic) return;
+
+		TObjectPtr<AWOGBaseMagic> MagicToEquip = Cast<AWOGBaseMagic>(OutMagic);
+		if (MagicToEquip && HasMatchingGameplayTag(MagicToEquip->GetMagicData().CooldownTag))
+		{
+			UE_LOG(LogTemp, Error, TEXT("Cooldown in effect. Can't equip"));
+			return;
+		}
+
 		/*
 		**
 		**Unequip any potential weapons
@@ -239,9 +262,7 @@ void AWOGAttacker::AbilitiesButtonPressed(const FInputActionValue& Value)
 		**Equip Magic
 		**
 		*/
-		AActor* OutMagic = nullptr;
 		AActor* PrimaryMagic = nullptr;
-		EquipmentManager->GetMagicShortcutReference(FName("2"), OutMagic);
 		EquipmentManager->GetItemInSlot(NAME_MagicSlot_MagicPrimary, PrimaryMagic);
 		if (PrimaryMagic && OutMagic && PrimaryMagic == OutMagic)
 		{

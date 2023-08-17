@@ -79,6 +79,9 @@ struct FMagicDataTable : public FTableRowBase
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "4 - Stats")
 	float Cooldown = 0.f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "4 - Stats")
+	FGameplayTag CooldownTag = FGameplayTag();
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "5 - Cosmetic")
 	USoundCue* CastSound = nullptr;
 
