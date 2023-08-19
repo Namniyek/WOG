@@ -8,7 +8,7 @@ public class WOG : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "OnlineSubsystem", "OnlineSubsystemSteam", "OnlineSubsystemEOS", "EnhancedInput", "AnimGraphRuntime", "Niagara", "AGRPRO", "TargetSystem" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "OnlineSubsystem", "OnlineSubsystemSteam", "OnlineSubsystemEOS", "EnhancedInput", "AnimGraphRuntime", "Niagara", "AGRPRO", "TargetSystem", "MotionWarping" });
 
         PublicIncludePaths.Add("WOG/");
 

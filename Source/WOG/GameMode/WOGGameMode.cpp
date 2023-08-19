@@ -56,7 +56,7 @@ void AWOGGameMode::HandleStartingPlayer(APlayerController* NewPlayer)
 			continue;
 		}
 
-		if (i <= FirstAttackerIndex)
+		if (i <= LastDefenderIndex)
 		{
 			FActorSpawnParameters SpawnParams;
 			SpawnParams.Owner = NewPlayer;
@@ -66,6 +66,7 @@ void AWOGGameMode::HandleStartingPlayer(APlayerController* NewPlayer)
 			if (Defender)
 			{
 				NewPlayer->Possess(Cast<APawn>(Defender));
+				Defender->SetOwner(NewPlayer);
 			}
 		}
 		else
@@ -78,6 +79,7 @@ void AWOGGameMode::HandleStartingPlayer(APlayerController* NewPlayer)
 			if (Attacker)
 			{
 				NewPlayer->Possess(Cast<APawn>(Attacker));
+				Attacker->SetOwner(NewPlayer);
 			}
 		}
 	}
@@ -115,7 +117,7 @@ void AWOGGameMode::CreateRandomCharacter(APlayerController* NewPlayer)
 			UPlayerProfileSaveGame* SaveGameObject = Cast<UPlayerProfileSaveGame>(UGameplayStatics::CreateSaveGameObject(UPlayerProfileSaveGame::StaticClass()));
 			if (SaveGameObject)
 			{
-				SaveGameObject->PlayerProfile.bIsAttacker = (i>FirstAttackerIndex);
+				SaveGameObject->PlayerProfile.bIsAttacker = (i>LastDefenderIndex);
 				SaveGameObject->PlayerProfile.bIsMale = true; //FMath::RandBool();
 				SaveGameObject->PlayerProfile.BodyPaintColor = "0";
 				SaveGameObject->PlayerProfile.CharacterIndex = "1";

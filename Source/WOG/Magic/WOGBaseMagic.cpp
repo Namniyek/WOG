@@ -166,7 +166,10 @@ void AWOGBaseMagic::BeginPlay()
 
 void AWOGBaseMagic::OnMagicOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (!HasAuthority() || !ItemComponent) return;
+	if (!HasAuthority() || !ItemComponent || !OtherActor) return;
+
+	bool bIsActorAttacker = UWOGBlueprintLibrary::GetCharacterData(OtherActor).bIsAttacker;
+	if (MagicData.bIsAttacker != bIsActorAttacker) return;
 
 	UAGR_EquipmentManager* Equipment = UAGRLibrary::GetEquipment(OtherActor);
 	UAGR_InventoryManager* Inventory = UAGRLibrary::GetInventory(OtherActor);

@@ -20,7 +20,7 @@ public:
 	bool bDebugMode = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	int32 FirstAttackerIndex = 2;
+	int32 LastDefenderIndex = 2;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	bool bHandleDropIn = false;

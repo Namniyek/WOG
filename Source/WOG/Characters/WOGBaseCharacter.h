@@ -18,6 +18,7 @@ class UAbilitySystemComponent;
 class AWOGGameMode;
 class UAGRAnimMasterComponent;
 class UMaterialInterface;
+class UMotionWarpingComponent;
 
 UCLASS()
 class WOG_API AWOGBaseCharacter : public ACharacter, public IAttributesInterface, public IAbilitySystemInterface
@@ -54,8 +55,10 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	virtual void ProcessMagicHit(const FHitResult& Hit, const struct FMagicDataTable& MagicData) { /*TO-BE OVERRIDEN IN CHILDREN*/ };
 	
+	UFUNCTION(Server, Reliable, BlueprintCallable)
+	void Server_SetCharacterFrozen(bool bIsFrozen);
 
-	UFUNCTION(NetMulticast, Reliable, BlueprintCallable)
+	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_SetCharacterFrozen(bool bIsFrozen);
 
 	UFUNCTION(BlueprintNativeEvent)
@@ -82,6 +85,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<UAGRAnimMasterComponent> AnimManager;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<UMotionWarpingComponent> MotionWarping;
 
 	#pragma endregion
 
@@ -155,4 +161,5 @@ public:
 	FORCEINLINE UWOGAttributeSetBase* GetAttributeSetBase() const { return AttributeSet; }
 	FORCEINLINE void SetDefaultAbilitiesAndEffects(const FCharacterAbilityData& Data) { DefaultAbilitiesAndEffects = Data; }
 	FORCEINLINE FCharacterData GetCharacterData() const { return CharacterData; }
+	FORCEINLINE TObjectPtr<UMotionWarpingComponent> GetMotionWarpingComponent() const { return MotionWarping; }
 };

@@ -16,6 +16,7 @@
 #include "Enemies/WOGBaseEnemy.h"
 #include "Types/WOGGameplayTags.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "MotionWarpingComponent.h"
 
 
 AWOGBaseCharacter::AWOGBaseCharacter()
@@ -24,7 +25,7 @@ AWOGBaseCharacter::AWOGBaseCharacter()
 
 	AbilitySystemComponent = CreateDefaultSubobject<UWOGAbilitySystemComponent>(TEXT("Ability System Component"));
 	AbilitySystemComponent->SetIsReplicated(true);
-	AbilitySystemComponent->ReplicationMode = EGameplayEffectReplicationMode::Mixed;
+	AbilitySystemComponent->ReplicationMode = EGameplayEffectReplicationMode::Full;
 
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetHealthAttribute()).AddUObject(this, &ThisClass::OnHealthAttributeChanged);
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetMaxMovementSpeedAttribute()).AddUObject(this, &ThisClass::OnMaxMovementSpeedAttributeChanged);
@@ -39,6 +40,8 @@ AWOGBaseCharacter::AWOGBaseCharacter()
 
 	AnimManager = CreateDefaultSubobject<UAGRAnimMasterComponent>(TEXT("AnimManager"));
 	AnimManager->SetIsReplicated(true);
+
+	MotionWarping = CreateDefaultSubobject<UMotionWarpingComponent>(TEXT("MotionWarping"));
 
 	SpeedRequiredForLeap = 750.f;
 
@@ -169,7 +172,8 @@ void AWOGBaseCharacter::OnGameplayEffectAppliedToSelf(UAbilitySystemComponent* S
 	{
 		if (Tag == TAG_State_Debuff_Freeze)
 		{
-			Multicast_SetCharacterFrozen(true);
+			Server_SetCharacterFrozen(true);
+			UE_LOG(LogTemp, Display, TEXT("Server_SetCharacterFrozen(true) called"));
 		}
 	}
 }
@@ -188,6 +192,11 @@ void AWOGBaseCharacter::OnAttackHit(FHitResult Hit, UPrimitiveComponent* WeaponM
 	HitActorsToIgnore.AddUnique(Hit.GetActor());
 	
 	ProcessHit(Hit, WeaponMesh);
+}
+
+void AWOGBaseCharacter::Server_SetCharacterFrozen_Implementation(bool bIsFrozen)
+{
+	Multicast_SetCharacterFrozen(bIsFrozen);
 }
 
 void AWOGBaseCharacter::Multicast_SetCharacterFrozen_Implementation(bool bIsFrozen)

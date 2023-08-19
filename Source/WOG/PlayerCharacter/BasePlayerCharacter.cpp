@@ -113,6 +113,7 @@ void ABasePlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 void ABasePlayerCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
+	SetOwner(NewController);
 }
 
 void ABasePlayerCharacter::BeginPlay()
@@ -523,12 +524,15 @@ void ABasePlayerCharacter::ResetPreviouslyEquippedMaterial()
 		EquipmentManager->GetWeaponShortcutReference(PreviousWeapon, OutItem);
 		if (OutItem)
 		{
-			FGameplayEventData EventPayload;
+			/*FGameplayEventData EventPayload;
 			EventPayload.EventTag = TAG_Event_Weapon_Equip;
 			EventPayload.OptionalObject = OutItem;
 			int32 Key = FCString::Atoi(*PreviousWeapon.ToString());
 			EventPayload.EventMagnitude = Key;
 			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Weapon_Equip, EventPayload);
+			UE_LOG(LogTemp, Warning, TEXT("Equipped Previous Weapon: %s"), *GetNameSafe(OutItem));*/
+
+			Server_EquipWeapon(PreviousWeapon, OutItem);
 			UE_LOG(LogTemp, Warning, TEXT("Equipped Previous Weapon: %s"), *GetNameSafe(OutItem));
 		}
 		else
@@ -1009,7 +1013,7 @@ void ABasePlayerCharacter::BroadcastHit_Implementation(AActor* AgressorActor, co
 		FGameplayCueParameters CueParams;
 		CueParams.Location = Hit.ImpactPoint;
 		CueParams.EffectCauser = AgressorCharacter;
-		AbilitySystemComponent->ExecuteGameplayCue(TAG_Cue_Weapon_Block_Impact, CueParams);
+		AbilitySystemComponent->ExecuteGameplayCueLocal(TAG_Cue_Weapon_Block_Impact, CueParams);
 		return;
 	}
 
@@ -1055,7 +1059,7 @@ void ABasePlayerCharacter::BroadcastHit_Implementation(AActor* AgressorActor, co
 		FGameplayCueParameters CueParams;
 		CueParams.Location = Hit.ImpactPoint;
 		CueParams.EffectCauser = AgressorCharacter;
-		AbilitySystemComponent->ExecuteGameplayCue(TAG_Cue_Weapon_Block_Impact, CueParams);
+		AbilitySystemComponent->ExecuteGameplayCueLocal(TAG_Cue_Weapon_Block_Impact, CueParams);
 	}
 
 	// Handle weapon clashes when victim and agressor attack at the same time
@@ -1097,7 +1101,7 @@ void ABasePlayerCharacter::BroadcastHit_Implementation(AActor* AgressorActor, co
 			FGameplayCueParameters CueParams;
 			CueParams.Location = Hit.ImpactPoint;
 			CueParams.EffectCauser = AgressorCharacter;
-			AbilitySystemComponent->ExecuteGameplayCue(TAG_Cue_Weapon_BodyHit, CueParams);
+			AbilitySystemComponent->ExecuteGameplayCueLocal(TAG_Cue_Weapon_BodyHit, CueParams);
 		}
 	}
 
@@ -1117,6 +1121,8 @@ void ABasePlayerCharacter::BroadcastHit_Implementation(AActor* AgressorActor, co
 
 void ABasePlayerCharacter::BroadcastMagicHit_Implementation(AActor* AgressorActor, const FHitResult& Hit, const FMagicDataTable& AgressorMagicData)
 {
+	UE_LOG(LogLevel, Warning, TEXT("Local role of the hit actor: %s"), *UEnum::GetValueAsString(GetLocalRole()))
+
 	//Handle early returnswg
 	if (HasMatchingGameplayTag(TAG_State_Dead)) return;
 	if (HasMatchingGameplayTag(TAG_State_Dodging)) return;
@@ -1139,6 +1145,15 @@ void ABasePlayerCharacter::BroadcastMagicHit_Implementation(AActor* AgressorActo
 	//Store the last hit result
 	LastHitResult = Hit;
 	float LocalDamageToApply = AgressorMagicData.Value * AgressorMagicData.ValueMultiplier;
+
+	//Apply secondary effect
+	if (UKismetSystemLibrary::IsValidClass(AgressorMagicData.SecondaryEffect))
+	{
+		FGameplayEffectContextHandle SecondaryContext = AbilitySystemComponent.Get()->MakeEffectContext();
+		SecondaryContext.AddInstigator(AgressorCharacter, AgressorCharacter);
+		ApplyGameplayEffectToSelf(AgressorMagicData.SecondaryEffect, SecondaryContext);
+		UE_LOG(LogLevel, Warning, TEXT("Local role of the secondary effect: %s"), *UEnum::GetValueAsString(GetLocalRole()))
+	}
 
 	//Handle AOE KO
 	if (AgressorMagicData.AbilityType == EAbilityType::EAT_AOE)
@@ -1167,7 +1182,7 @@ void ABasePlayerCharacter::BroadcastMagicHit_Implementation(AActor* AgressorActo
 			FGameplayCueParameters CueParams;
 			CueParams.Location = Hit.ImpactPoint;
 			CueParams.EffectCauser = AgressorCharacter;
-			AbilitySystemComponent->ExecuteGameplayCue(TAG_Cue_Weapon_Block_Impact, CueParams);
+			AbilitySystemComponent->ExecuteGameplayCueLocal(TAG_Cue_Weapon_Block_Impact, CueParams);
 		}
 	}
 
@@ -1186,18 +1201,8 @@ void ABasePlayerCharacter::BroadcastMagicHit_Implementation(AActor* AgressorActo
 			FGameplayCueParameters CueParams;
 			CueParams.Location = Hit.ImpactPoint;
 			CueParams.EffectCauser = AgressorCharacter;
-			AbilitySystemComponent->ExecuteGameplayCue(TAG_Cue_Weapon_BodyHit, CueParams);
+			AbilitySystemComponent->ExecuteGameplayCueLocal(TAG_Cue_Weapon_BodyHit, CueParams);
 		}
-	}
-
-	//Apply secondary effect
-	//The secondary effect handles the attribute manipulation, gives an ability to the victim and has a duration that comes from the data table
-	//The granted ability needs to activated on grated and can apply an infinte GameplayCue effect if needed.
-	if (UKismetSystemLibrary::IsValidClass(AgressorMagicData.SecondaryEffect))
-	{
-		FGameplayEffectContextHandle SecondaryContext = AbilitySystemComponent.Get()->MakeEffectContext();
-		SecondaryContext.AddInstigator(AgressorCharacter, AgressorCharacter);
-		ApplyGameplayEffectToSelf(AgressorMagicData.SecondaryEffect, SecondaryContext);
 	}
 
 	//Apply damage to victim if authority

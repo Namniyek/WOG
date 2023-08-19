@@ -31,6 +31,9 @@ struct FMagicDataTable : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "1 - Base")
 	EAbilityType AbilityType = EAbilityType::EAT_Projectile;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "1 - Base")
+	bool bIsAttacker = false;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "2 - Animations")
 	FName LeftHandSocket = FName("");
 

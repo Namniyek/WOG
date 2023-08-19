@@ -22,6 +22,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_State_Weapon_Ranged_AOE, "State.Weapon.Ranged.AOE");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Magic_AOE, "State.Magic.AOE");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Magic_Projectile, "State.Magic.Projectile");
+UE_DEFINE_GAMEPLAY_TAG(TAG_State_Magic_Instant, "State.Magic.Instant");
 
 
 //Event tags
