@@ -7,6 +7,9 @@
 #include "Magic/WOGBaseMagic.h"
 #include "WOGBaseMagicAOE.generated.h"
 
+class USphereComponent;
+class UNiagaraComponent;
+
 UCLASS()
 class WOG_API AWOGBaseMagicAOE : public AActor
 {
@@ -20,6 +23,23 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	void Init();
+
+	UFUNCTION()
+	void OnOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	FTimerHandle InitDelayTimer;
+
+	UPROPERTY(EditDefaultsOnly)
+	float InitDelay;
+
+	#pragma region ActorComponents
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<USphereComponent> OverlapSphere;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<UNiagaraComponent> AOEEffect;
+	#pragma endregion
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated)
 	FMagicDataTable MagicData;

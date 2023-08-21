@@ -40,6 +40,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	UMaterialInterface* Material;
 
+	UFUNCTION(BlueprintCallable)
+	virtual void ProcessMagicHit(const FHitResult& Hit, const struct FMagicDataTable& MagicData) { /*TO-BE OVERRIDEN IN CHILDREN*/ };
 
 protected:
 	virtual void BeginPlay() override;
@@ -52,8 +54,7 @@ protected:
 	UFUNCTION()
 	virtual void OnAttackHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh);
 	virtual void ProcessHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh) { /*TO-BE OVERRIDEN IN CHILDREN*/ };
-	UFUNCTION(BlueprintCallable)
-	virtual void ProcessMagicHit(const FHitResult& Hit, const struct FMagicDataTable& MagicData) { /*TO-BE OVERRIDEN IN CHILDREN*/ };
+
 	
 	UFUNCTION(Server, Reliable, BlueprintCallable)
 	void Server_SetCharacterFrozen(bool bIsFrozen);

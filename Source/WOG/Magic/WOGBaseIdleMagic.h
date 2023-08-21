@@ -6,21 +6,38 @@
 #include "GameFramework/Actor.h"
 #include "WOGBaseIdleMagic.generated.h"
 
+class USkeletalMeshComponent;
+class UNiagaraComponent;
+
 UCLASS()
 class WOG_API AWOGBaseIdleMagic : public AActor
 {
 	GENERATED_BODY()
 	
 public:	
-	// Sets default values for this actor's properties
 	AWOGBaseIdleMagic();
 
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	virtual void Destroyed() override;
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_AttachToHands(USkeletalMeshComponent* Mesh, const FName& RightHand, const FName& LeftHand);
+
+	#pragma region ActorComponents
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<USceneComponent> SceneRoot;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<UNiagaraComponent> RightHandEffect;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<UNiagaraComponent> LeftHandEffect;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<UAudioComponent > IdleSound;
+	#pragma endregion
 
 public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
 
 };

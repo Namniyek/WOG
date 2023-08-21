@@ -22,6 +22,7 @@ class UWOGGameplayAbilityBase;
 class AWOGBaseIdleMagic;
 class AWOGBaseMagicProjectile;
 class AWOGBaseMagicAOE;
+class AGameplayAbilityTargetActor_GroundTrace;
 
 USTRUCT(BlueprintType)
 struct FMagicDataTable : public FTableRowBase
@@ -97,11 +98,17 @@ struct FMagicDataTable : public FTableRowBase
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Projectile", meta = (EditCondition = "AbilityType == EAbilityType::EAT_Projectile", EditConditionHides))
 	TSubclassOf<AWOGBaseMagicProjectile> ProjectileClass = nullptr;
 
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Projectile", meta = (EditCondition = "AbilityType == EAbilityType::EAT_Projectile", EditConditionHides))
+	TObjectPtr<UNiagaraSystem> HitVFX = nullptr;
+
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "AOE", meta = (EditCondition = "AbilityType == EAbilityType::EAT_AOE", EditConditionHides))
 	TSubclassOf<AWOGBaseIdleMagic> IdleAOEClass = nullptr;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "AOE", meta = (EditCondition = "AbilityType == EAbilityType::EAT_AOE", EditConditionHides))
 	TSubclassOf<AWOGBaseMagicAOE> AOEClass = nullptr;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "AOE", meta = (EditCondition = "AbilityType == EAbilityType::EAT_AOE", EditConditionHides))
+	TSubclassOf<AGameplayAbilityTargetActor_GroundTrace> AOEMarkerClass = nullptr;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Instant", meta = (EditCondition = "AbilityType == EAbilityType::EAT_Instant", EditConditionHides))
 	float Magnitude = 0.f;

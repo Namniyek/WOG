@@ -39,7 +39,6 @@ void ABasePlayerCharacter::OnConstruction(const FTransform& Transform)
 	CharacterMI = UMaterialInstanceDynamic::Create(Material, this);
 }
 
-// Sets default values
 ABasePlayerCharacter::ABasePlayerCharacter()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
@@ -129,7 +128,6 @@ void ABasePlayerCharacter::BeginPlay()
 	}
 }
 
-// Called to bind functionality to input
 void ABasePlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	check(PlayerInputComponent);
