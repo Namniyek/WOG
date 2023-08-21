@@ -239,8 +239,17 @@ void AWOGBaseMagic::OnMagicEquip(AActor* User, FName SlotName)
 	{
 		AnimMaster->SetupBasePose(MagicData.MagicPoseTag);
 
-		bool Success = GrantMagicAbilities(User);
-		UE_LOG(LogTemp, Display, TEXT("WeaponGrantedAbilities applied: %d"), Success);
+		FLatentActionInfo LatentActionInfo;
+		LatentActionInfo.CallbackTarget = this;
+		LatentActionInfo.ExecutionFunction = "GrantMagicAbilities";
+		LatentActionInfo.UUID = 123;
+		LatentActionInfo.Linkage = 0;
+
+		UKismetSystemLibrary::Delay(this, 0.05f, LatentActionInfo);
+		//UKismetSystemLibrary::DelayUntilNextTick(this, LatentActionInfo);
+
+		//bool Success = GrantMagicAbilities();
+		//UE_LOG(LogTemp, Display, TEXT("WeaponGrantedAbilities applied: %d"), Success);
 		SpawnIdleClass();
 	}
 	else
@@ -286,15 +295,15 @@ void AWOGBaseMagic::AttachToBack()
 	//Deactivate idle Effects on hands
 }
 
-bool AWOGBaseMagic::GrantMagicAbilities(AActor* User)
+bool AWOGBaseMagic::GrantMagicAbilities()
 {
 	if (!HasAuthority() || MagicData.AbilitiesToGrant.IsEmpty()) return false;
-	UAbilitySystemComponent* ASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(User);
+	UAbilitySystemComponent* ASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(OwnerCharacter);
 	if (!ASC) return false;
 	for (auto Ability : MagicData.AbilitiesToGrant)
 	{
 		if (!Ability) continue;
-		FGameplayAbilitySpec AbilitySpec = FGameplayAbilitySpec(Ability, 1, static_cast<int32>(Ability.GetDefaultObject()->AbilityInputID), User);
+		FGameplayAbilitySpec AbilitySpec = FGameplayAbilitySpec(Ability, 1, static_cast<int32>(Ability.GetDefaultObject()->AbilityInputID), OwnerCharacter);
 		FGameplayAbilitySpecHandle GrantedAbility = ASC->GiveAbility(AbilitySpec);
 		GrantedAbilities.AddUnique(GrantedAbility);
 		UE_LOG(LogTemp, Display, TEXT("Ability granted: %s"), *Ability.GetDefaultObject()->GetName());

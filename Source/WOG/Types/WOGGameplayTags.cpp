@@ -42,6 +42,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Weapon_Equip, "Event.Weapon.Equip");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Weapon_Unequip, "Event.Weapon.Unequip");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Magic_SpawnAOE, "Event.Magic.SpawnAOE");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Magic_SpawnInstant, "Event.Magic.SpawnInstant");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Debuff_Stagger, "Event.Debuff.Stagger");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Debuff_KO, "Event.Debuff.KO");

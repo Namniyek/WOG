@@ -168,7 +168,8 @@ protected:
 	#pragma endregion
 
 	#pragma region GAS
-	bool GrantMagicAbilities(AActor* User);
+	UFUNCTION(BlueprintCallable)
+	bool GrantMagicAbilities();
 	bool RemoveGrantedAbilities(AActor* User);
 
 	TArray<FGameplayAbilitySpecHandle> GrantedAbilities;
