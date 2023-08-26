@@ -52,6 +52,7 @@ protected:
 	void SpawnActionPressed(const FInputActionValue& Value);
 
 	virtual void AbilitiesButtonPressed(const FInputActionValue& Value) override;
+	virtual void AbilitiesHoldButtonPressed(const FInputActionValue& Value) override;
 
 	#pragma endregion
 

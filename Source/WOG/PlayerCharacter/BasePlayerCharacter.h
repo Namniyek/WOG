@@ -196,6 +196,9 @@ public:
 	UInputAction* AbilitiesAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Base Match", meta = (AllowPrivateAccess = "true"))
+	UInputAction* AbilitiesHoldAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Base Match", meta = (AllowPrivateAccess = "true"))
 	UInputAction* PrimaryLightAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Base Match", meta = (AllowPrivateAccess = "true"))
@@ -261,6 +264,8 @@ protected:
 
 	/**Called for equip input*/
 	virtual void AbilitiesButtonPressed(const FInputActionValue& Value) { /*TO-BE OVERRIDEN IN CHILDREN*/ };
+	/**Called for hold ability input*/
+	virtual void AbilitiesHoldButtonPressed(const FInputActionValue& Value) { /*TO-BE OVERRIDEN IN CHILDREN*/ };
 
 	UFUNCTION()
 	void PrimaryLightButtonPressed(const FInputActionValue& Value);
@@ -307,6 +312,8 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void ResetPreviouslyEquippedMaterial();
 
+	void UnequipMagic(const bool& bIsAttacker, const FName& Slot);
+
 
 public:
 	UFUNCTION(Server, reliable, BlueprintCallable)
@@ -323,6 +330,12 @@ public:
 
 	UFUNCTION(Server, reliable, BlueprintCallable)
 	void Server_UnequipWeaponSwap(const FName& Key, AActor* InWeapon);
+
+	UFUNCTION(Server, reliable, BlueprintCallable)
+	void Server_DropWeapon(const FName& Key);
+
+	UFUNCTION(Server, reliable, BlueprintCallable)
+	void Server_DropMagic(const FName& Key);
 
 	#pragma endregion
 

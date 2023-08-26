@@ -18,6 +18,7 @@ class UAGR_ItemComponent;
 class UAGR_InventoryManager;
 class USphereComponent;
 class UNiagaraSystem;
+class UNiagaraComponent;
 class UWOGGameplayAbilityBase;
 class AWOGBaseIdleMagic;
 class AWOGBaseMagicProjectile;
@@ -31,6 +32,9 @@ struct FMagicDataTable : public FTableRowBase
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "1 - Base")
 	EAbilityType AbilityType = EAbilityType::EAT_Projectile;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "1 - Base")
+	EAbilityInputType AbilityInputType = EAbilityInputType::EAI_Instant;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "1 - Base")
 	bool bIsAttacker = false;
@@ -129,6 +133,9 @@ class WOG_API AWOGBaseMagic : public AActor
 	GENERATED_BODY()
 	
 public:	
+
+	friend class ABasePlayerCharacter;
+
 	AWOGBaseMagic();
 	virtual void OnConstruction(const FTransform& Transform) override;
 	virtual void PostInitializeComponents();
@@ -144,6 +151,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	USphereComponent* SphereComponent;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	UNiagaraComponent* StandbyEffect;
 	#pragma endregion
 
 	#pragma region MagicVariables
@@ -180,6 +190,19 @@ protected:
 	bool RemoveGrantedAbilities(AActor* User);
 
 	TArray<FGameplayAbilitySpecHandle> GrantedAbilities;
+	#pragma endregion
+
+	#pragma region Drop magic functionality
+
+	virtual void InitMagicDefaults();
+
+
+	UFUNCTION(BlueprintCallable, Server, Reliable)
+	virtual void Server_DropMagic();
+
+	UFUNCTION(NetMulticast, unreliable)
+	void Multicast_HandleStandbyCosmetics(bool NewEnabled);
+
 	#pragma endregion
 
 	UFUNCTION(BlueprintCallable)

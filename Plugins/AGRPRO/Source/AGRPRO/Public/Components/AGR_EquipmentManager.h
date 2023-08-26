@@ -22,6 +22,8 @@ public:
     AActor* ItemShortcut = nullptr;
 };
 
+bool operator==(const FShortcutItemReference& lhs, const FShortcutItemReference& rhs);
+
 UCLASS(BlueprintType, Blueprintable, ClassGroup=("AGR"), meta=(BlueprintSpawnableComponent))
 class AGRPRO_API UAGR_EquipmentManager : public UActorComponent
 {
@@ -102,12 +104,18 @@ public:
         AActor*& OutItem);
 
     UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "AGR")
+    bool RemoveWeaponShortcutReference(const AActor* WeaponToRemove);
+
+    UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "AGR")
     bool SaveMagicShortcutReference(FShortcutItemReference InItem);
 
     UFUNCTION(BlueprintCallable, Category = "AGR")
     bool GetMagicShortcutReference(
             const FName Key,
             AActor*& OutItem);
+
+    UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "AGR")
+    bool RemoveMagicShortcutReference(const AActor* MagicToRemove);
 
 protected:
     virtual void BeginPlay() override;

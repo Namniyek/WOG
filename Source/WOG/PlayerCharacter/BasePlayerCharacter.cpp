@@ -152,6 +152,7 @@ void ABasePlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 		EnhancedInputComponent->BindAction(CycleTargetAction, ETriggerEvent::Triggered, this, &ThisClass::CycleTargetActionPressed);
 		//Equip
 		EnhancedInputComponent->BindAction(AbilitiesAction, ETriggerEvent::Triggered, this, &ThisClass::AbilitiesButtonPressed);
+		EnhancedInputComponent->BindAction(AbilitiesHoldAction, ETriggerEvent::Triggered, this, &ThisClass::AbilitiesHoldButtonPressed);
 		//PrimaryLightAction
 		EnhancedInputComponent->BindAction(PrimaryLightAction, ETriggerEvent::Triggered, this, &ThisClass::PrimaryLightButtonPressed);
 		EnhancedInputComponent->BindAction(PrimaryHeavyAction, ETriggerEvent::Ongoing, this, TEXT("PrimaryArmHeavyAttack"));
@@ -277,7 +278,8 @@ void ABasePlayerCharacter::PrimaryLightButtonPressed(const FInputActionValue& Va
 		SendAbilityLocalInput(EWOGAbilityInputID::AttackLight);
 	}
 
-	if (AbilitySystemComponent.Get())
+	TObjectPtr<AWOGBaseMagic> EquippedMagic = UWOGBlueprintLibrary::GetEquippedMagic(this);
+	if (EquippedMagic && EquippedMagic->GetMagicData().AbilityType != EAbilityType::EAT_AOE && AbilitySystemComponent.Get())
 	{
 		AbilitySystemComponent->LocalInputConfirm();
 		UE_LOG(LogTemp, Warning, TEXT("Confirmed Input"))
@@ -286,21 +288,24 @@ void ABasePlayerCharacter::PrimaryLightButtonPressed(const FInputActionValue& Va
 
 void ABasePlayerCharacter::PrimaryArmHeavyAttack(FInputActionValue ActionValue, float ElapsedTime, float TriggeredTime)
 {
-	if (!UWOGBlueprintLibrary::GetEquippedWeapon(this)) return;
-	
-	if (ElapsedTime > 0.21f)
+	if (UWOGBlueprintLibrary::GetEquippedWeapon(this))
 	{
-		SendAbilityLocalInput(EWOGAbilityInputID::AttackHeavy);
+		if (ElapsedTime > 0.21f)
+		{
+			SendAbilityLocalInput(EWOGAbilityInputID::AttackHeavy);
+			return;
+		}
 	}
 }
 
 void ABasePlayerCharacter::PrimaryHeavyAttackCanceled(const FInputActionValue& Value)
 {
-	AActor* OutItem;
-	if (!EquipmentManager->GetItemInSlot(NAME_WeaponSlot_Primary, OutItem) || !OutItem) return;
-
-	FGameplayEventData EventPayload;
-	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Weapon_HeavyAttackCancel, EventPayload);
+	if (UWOGBlueprintLibrary::GetEquippedWeapon(this))
+	{
+		FGameplayEventData EventPayload;
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Weapon_HeavyAttackCancel, EventPayload);
+		return;
+	}
 }
 
 void ABasePlayerCharacter::PrimaryExecuteHeavyAttack(const FInputActionValue& Value)
@@ -310,6 +315,13 @@ void ABasePlayerCharacter::PrimaryExecuteHeavyAttack(const FInputActionValue& Va
 		FGameplayEventData EventPayload;
 		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Weapon_HeavyAttackExecute, EventPayload);
 		return;
+	}
+
+	TObjectPtr<AWOGBaseMagic> EquippedMagic = UWOGBlueprintLibrary::GetEquippedMagic(this);
+	if (EquippedMagic && EquippedMagic->GetMagicData().AbilityType == EAbilityType::EAT_AOE && AbilitySystemComponent.Get())
+	{
+		AbilitySystemComponent->LocalInputConfirm();
+		UE_LOG(LogTemp, Warning, TEXT("Confirmed Input"))
 	}
 }
 
@@ -561,6 +573,35 @@ void ABasePlayerCharacter::ResetPreviouslyEquippedMaterial()
 	else
 	{
 		UE_LOG(LogTemp, Error, TEXT("PreviousMagic FName == NAME_None"));
+	}
+}
+
+void ABasePlayerCharacter::UnequipMagic(const bool& bIsAttacker, const FName& Slot)
+{
+	if (!EquipmentManager)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Equipment component invalid"));
+		return;
+	}
+
+	FName OtherSlot = Slot == FName("1") ? FName("2") : FName("1");
+
+	AActor* OutMagic = nullptr;
+	AActor* PrimaryMagic = nullptr;
+	EquipmentManager->GetMagicShortcutReference(Slot, OutMagic);
+	EquipmentManager->GetItemInSlot(NAME_MagicSlot_MagicPrimary, PrimaryMagic);
+	if (PrimaryMagic && OutMagic && PrimaryMagic == OutMagic)
+	{
+		Server_UnequipMagic(Slot, PrimaryMagic);
+	}
+	else if (bIsAttacker)
+	{
+		EquipmentManager->GetMagicShortcutReference(OtherSlot, OutMagic);
+		EquipmentManager->GetItemInSlot(NAME_MagicSlot_MagicPrimary, PrimaryMagic);
+		if (PrimaryMagic && OutMagic && PrimaryMagic == OutMagic)
+		{
+			Server_UnequipMagic(OtherSlot, PrimaryMagic);
+		}
 	}
 }
 
@@ -1119,8 +1160,6 @@ void ABasePlayerCharacter::BroadcastHit_Implementation(AActor* AgressorActor, co
 
 void ABasePlayerCharacter::BroadcastMagicHit_Implementation(AActor* AgressorActor, const FHitResult& Hit, const FMagicDataTable& AgressorMagicData)
 {
-	UE_LOG(LogLevel, Warning, TEXT("Local role of the hit actor: %s"), *UEnum::GetValueAsString(GetLocalRole()))
-
 	//Handle early returnswg
 	if (HasMatchingGameplayTag(TAG_State_Dead)) return;
 	if (HasMatchingGameplayTag(TAG_State_Dodging)) return;
@@ -1130,10 +1169,6 @@ void ABasePlayerCharacter::BroadcastMagicHit_Implementation(AActor* AgressorActo
 	TObjectPtr<AWOGBaseCharacter> AgressorCharacter = Cast<AWOGBaseCharacter>(AgressorActor);
 
 	//Handle more early returns and warnings
-	if (!EquippedWeapon)
-	{
-		UE_LOG(LogTemp, Error, TEXT("No Valid Equipped weapon"));
-	}
 	if (!AgressorCharacter)
 	{
 		UE_LOG(LogTemp, Error, TEXT("No valid Agressor Character"));
@@ -1149,8 +1184,7 @@ void ABasePlayerCharacter::BroadcastMagicHit_Implementation(AActor* AgressorActo
 	{
 		FGameplayEffectContextHandle SecondaryContext = AbilitySystemComponent.Get()->MakeEffectContext();
 		SecondaryContext.AddInstigator(AgressorCharacter, AgressorCharacter);
-		ApplyGameplayEffectToSelf(AgressorMagicData.SecondaryEffect, SecondaryContext);
-		UE_LOG(LogLevel, Warning, TEXT("Local role of the secondary effect: %s"), *UEnum::GetValueAsString(GetLocalRole()))
+		ApplyGameplayEffectToSelf(AgressorMagicData.SecondaryEffect, SecondaryContext, AgressorMagicData.SecondaryEffectDuration);
 	}
 
 	//Handle AOE KO
@@ -1275,4 +1309,40 @@ void ABasePlayerCharacter::ElimTimerFinished()
 	{
 		WOGGameMode->RequestRespawn(this, PlayerController);
 	}
+}
+
+void ABasePlayerCharacter::Server_DropWeapon_Implementation(const FName& Key)
+{
+	if (!EquipmentManager) return;
+	AActor* OutItem = nullptr;
+	EquipmentManager->GetWeaponShortcutReference(Key, OutItem);
+
+	if (!OutItem)
+	{
+		UE_LOG(LogTemp, Error, TEXT("NO VALID ITEM REFERENCE AT KEY : %s"), *Key.ToString());
+		return;
+	}
+
+	TObjectPtr<AWOGBaseWeapon> Weapon = Cast<AWOGBaseWeapon>(OutItem);
+	if(!Weapon)	return;
+
+	Weapon->Server_DropWeapon();
+}
+
+void ABasePlayerCharacter::Server_DropMagic_Implementation(const FName& Key)
+{
+	if (!EquipmentManager) return;
+	AActor* OutItem = nullptr;
+	EquipmentManager->GetMagicShortcutReference(Key, OutItem);
+
+	if (!OutItem)
+	{
+		UE_LOG(LogTemp, Error, TEXT("NO VALID ITEM REFERENCE AT KEY : %s"), *Key.ToString());
+		return;
+	}
+
+	TObjectPtr<AWOGBaseMagic> Magic = Cast<AWOGBaseMagic>(OutItem);
+	if (!Magic)	return;
+
+	Magic->Server_DropMagic();
 }

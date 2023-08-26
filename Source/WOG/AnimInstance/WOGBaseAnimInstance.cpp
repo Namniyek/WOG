@@ -83,6 +83,8 @@ void UWOGBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 	#pragma endregion
 
+	bIsRagdolling = PlayerCharacter->GetIsRagdolling();
+	bIsLayingOnBack = PlayerCharacter->GetIsLayingOnBack();
 }
 
 void UWOGBaseAnimInstance::UpdateMovementDirection()

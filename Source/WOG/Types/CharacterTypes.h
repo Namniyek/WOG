@@ -26,6 +26,15 @@ enum class EAbilityType : uint8
 	EAT_MAX UMETA(DisplayName = "DefaultMAX")
 };
 
+UENUM(BlueprintType)
+enum class EAbilityInputType : uint8
+{
+	EAI_Instant UMETA(DisplayName = "Instant"),
+	EAI_Hold UMETA(DisplayName = "Hold"),
+
+	EAI_MAX UMETA(DisplayName = "DefaultMAX")
+};
+
 USTRUCT(BlueprintType)
 struct FCharacterAbilityData
 {

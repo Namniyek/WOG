@@ -14,7 +14,6 @@
 
 class UAnimMontage;
 class USoundCue;
-class ABasePlayerCharacter;
 class UGameplayEffect;
 class UAGR_ItemComponent;
 class USphereComponent;
@@ -26,6 +25,9 @@ USTRUCT(BlueprintType)
 struct FWeaponDataTable : public FTableRowBase
 {
 	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "1 - Base")
+	bool bIsAttacker = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "1 - Base")
 	UStaticMesh* MeshMain = nullptr;
@@ -137,6 +139,9 @@ class WOG_API AWOGBaseWeapon : public AActor
 	GENERATED_BODY()
 	
 public:	
+
+	friend class ABasePlayerCharacter;
+
 	AWOGBaseWeapon();
 	virtual void OnConstruction(const FTransform& Transform) override;
 	virtual void PostInitializeComponents();
@@ -188,9 +193,20 @@ protected:
 
 	TArray<FGameplayAbilitySpecHandle> GrantedAbilities;
 
-private:
 	virtual void InitWeaponData();
 
+	#pragma region Drop weapon functionality
+
+	virtual void InitWeaponDefaults();
+	FTransform MeshMainOriginalTransform;
+	FTransform MeshSecOriginalTransform;
+
+	UFUNCTION(BlueprintCallable, Server, Reliable)
+	virtual void Server_DropWeapon();
+
+	#pragma endregion
+
+private:
 	float TimeSinceBlockStarted;
 
 	UFUNCTION(BlueprintCallable)

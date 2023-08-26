@@ -41,6 +41,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Weapon_Ranged_Catch, "Event.Weapon.Ranged.Catch
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Weapon_Equip, "Event.Weapon.Equip");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Weapon_Unequip, "Event.Weapon.Unequip");
 
+UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Magic_Cast, "Event.Magic.Cast");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Magic_SpawnAOE, "Event.Magic.SpawnAOE");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Magic_SpawnInstant, "Event.Magic.SpawnInstant");
 

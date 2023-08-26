@@ -8,6 +8,11 @@
 #include "Data/AGRTypes.h"
 #include "Net/UnrealNetwork.h"
 
+bool operator==(const FShortcutItemReference& lhs, const FShortcutItemReference& rhs)
+{
+    return lhs.ItemShortcut == rhs.ItemShortcut && lhs.Key == rhs.Key;
+}
+
 UAGR_EquipmentManager::UAGR_EquipmentManager()
 {
     PrimaryComponentTick.bCanEverTick = true;
@@ -303,6 +308,24 @@ bool UAGR_EquipmentManager::GetWeaponShortcutReference(const FName Key, AActor*&
     return false;
 }
 
+bool UAGR_EquipmentManager::RemoveWeaponShortcutReference(const AActor* WeaponToRemove)
+{
+    if (!WeaponToRemove) return false;
+
+    FShortcutItemReference RefToRemove = FShortcutItemReference();
+
+    for (FShortcutItemReference Weapon : WeaponShortcutReferences)
+    {
+        if (Weapon.ItemShortcut == WeaponToRemove)
+        {
+            RefToRemove = Weapon;
+            break;
+        }
+    }
+
+    return WeaponShortcutReferences.Remove(RefToRemove) > 0;
+}
+
 bool UAGR_EquipmentManager::SaveMagicShortcutReference(FShortcutItemReference InItem)
 {
     if (MagicShortcutReferences.IsEmpty())
@@ -350,6 +373,28 @@ bool UAGR_EquipmentManager::GetMagicShortcutReference(const FName Key, AActor*& 
         }
     }
     return false;
+}
+
+bool UAGR_EquipmentManager::RemoveMagicShortcutReference(const AActor* MagicToRemove)
+{
+    if (!MagicToRemove)
+    {
+        UE_LOG(LogTemp, Error, TEXT("Invalid MAGIC to remove"));
+        return false;
+    }
+
+    FShortcutItemReference RefToRemove = FShortcutItemReference();
+
+    for (FShortcutItemReference Magic : MagicShortcutReferences)
+    {
+        if (Magic.ItemShortcut == MagicToRemove)
+        {
+            RefToRemove = Magic;
+            break;
+        }
+    }
+
+    return MagicShortcutReferences.Remove(RefToRemove) > 0;
 }
 
 bool UAGR_EquipmentManager::GetShortcutReference(const FName Key, AActor*& OutActor)

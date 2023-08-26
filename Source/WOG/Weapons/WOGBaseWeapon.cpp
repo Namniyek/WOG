@@ -94,6 +94,48 @@ void AWOGBaseWeapon::InitWeaponData()
 	ComboStreak = 0;
 }
 
+void AWOGBaseWeapon::InitWeaponDefaults()
+{
+	MeshMainOriginalTransform = MeshMain->GetRelativeTransform();
+	MeshSecOriginalTransform = MeshSecondary->GetRelativeTransform();
+}
+
+void AWOGBaseWeapon::Server_DropWeapon_Implementation()
+{
+	UAGR_EquipmentManager* Equipment = UAGRLibrary::GetEquipment(OwnerCharacter);
+	if (Equipment)
+	{
+		Equipment->RemoveWeaponShortcutReference(this);
+	}
+
+	ItemComponent->DropItem();
+
+	DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+	SetActorLocation(
+		OwnerCharacter->GetActorLocation() +
+		(OwnerCharacter->GetActorForwardVector() * 200));
+
+	MeshMain->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+	MeshSecondary->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+
+	MeshMain->SetRelativeTransform(MeshMainOriginalTransform);
+	MeshSecondary->SetRelativeTransform(MeshSecOriginalTransform);
+
+	SphereComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	SphereComponent->SetCollisionResponseToAllChannels(ECR_Ignore);
+	SphereComponent->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+	SphereComponent->SetGenerateOverlapEvents(true);
+
+	UAGRAnimMasterComponent* AnimMaster = UAGRLibrary::GetAnimationMaster(OwnerCharacter);
+	if (AnimMaster)
+	{
+		AnimMaster->SetupBasePose(TAG_Pose_Relax);
+	}
+
+	OwnerCharacter = nullptr;
+	SetOwner(nullptr);
+}
+
 void AWOGBaseWeapon::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
@@ -122,11 +164,16 @@ void AWOGBaseWeapon::BeginPlay()
 		UE_LOG(LogTemp, Error, TEXT("NO OWNER CHARACTER AT BEGINPLAY"));
 	}
 
+	InitWeaponDefaults();
+
 }
 
 void AWOGBaseWeapon::OnWeaponOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (!HasAuthority() || !ItemComponent) return;
+
+	bool bIsActorAttacker = UWOGBlueprintLibrary::GetCharacterData(OtherActor).bIsAttacker;
+	if (WeaponData.bIsAttacker != bIsActorAttacker) return;
 
 	UAGR_EquipmentManager* Equipment = UAGRLibrary::GetEquipment(OtherActor);
 	UAGR_InventoryManager* Inventory = UAGRLibrary::GetInventory(OtherActor);
@@ -147,7 +194,14 @@ void AWOGBaseWeapon::OnWeaponOverlap(UPrimitiveComponent* OverlappedComponent, A
 	if (Equipment->WeaponShortcutReferences.Num() < MaxAmountWeapons)
 	{
 		FShortcutItemReference WeaponRef;
-		int32 KeyInt = Equipment->WeaponShortcutReferences.Num() + 1;
+		int32 KeyInt = 1;
+
+		if (Equipment->WeaponShortcutReferences.Num() == 1)
+		{
+			FName ExistingKey = Equipment->WeaponShortcutReferences[0].Key;
+			KeyInt = ExistingKey == FName("1") ? 2 : 1;
+		}
+
 		WeaponRef.Key = *FString::FromInt(KeyInt);
 		WeaponRef.ItemShortcut = this;
 

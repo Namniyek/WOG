@@ -3,8 +3,8 @@
 
 #include "WOGBaseCharacter.h"
 #include "Net/UnrealNetwork.h"
-#include "Kismet/KismetMathLibrary.h"
 #include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetSystemLibrary.h"
 #include "PlayerState/WOGPlayerState.h"
 #include "ActorComponents/WOGAbilitySystemComponent.h"
 #include "GameplayEffectExtension.h"
@@ -17,6 +17,7 @@
 #include "Types/WOGGameplayTags.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "MotionWarpingComponent.h"
+#include "Components/CapsuleComponent.h"
 
 
 AWOGBaseCharacter::AWOGBaseCharacter()
@@ -46,12 +47,20 @@ AWOGBaseCharacter::AWOGBaseCharacter()
 	SpeedRequiredForLeap = 750.f;
 
 	LastHitResult = FHitResult();
+
+	bIsRagdolling = false;
+	bIsLayingOnBack = false;
+	MeshLocation = FVector();
+	TargetGroundLocation = FVector();
+	PelvisOffset = FVector();
+	SpringState = FVectorSpringState();
 }
 
 void AWOGBaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
+	DOREPLIFETIME(AWOGBaseCharacter, bIsRagdolling);
 }
 
 void AWOGBaseCharacter::PossessedBy(AController* NewController)
@@ -70,6 +79,8 @@ void AWOGBaseCharacter::PossessedBy(AController* NewController)
 void AWOGBaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	InitPhysics();
 }
 
 void AWOGBaseCharacter::SendAbilityLocalInput(const EWOGAbilityInputID InInputID)
@@ -106,11 +117,11 @@ void AWOGBaseCharacter::ApplyDefaultEffects()
 	}
 }
 
-bool AWOGBaseCharacter::ApplyGameplayEffectToSelf(TSubclassOf<UGameplayEffect> Effect, FGameplayEffectContextHandle InEffectContext)
+bool AWOGBaseCharacter::ApplyGameplayEffectToSelf(TSubclassOf<UGameplayEffect> Effect, FGameplayEffectContextHandle InEffectContext, float Duration)
 {
 	if (!Effect.Get()) return false;
 
-	FGameplayEffectSpecHandle SpecHandle = AbilitySystemComponent->MakeOutgoingSpec(Effect, 1, InEffectContext);
+	FGameplayEffectSpecHandle SpecHandle = AbilitySystemComponent->MakeOutgoingSpec(Effect, Duration, InEffectContext);
 	if (SpecHandle.IsValid())
 	{
 		FActiveGameplayEffectHandle ActiveGEHandle = AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
@@ -320,10 +331,151 @@ FName AWOGBaseCharacter::CalculateHitDirection(const FVector& WeaponLocation)
 	return FName("");
 }
 
+void AWOGBaseCharacter::Server_ToRagdoll_Implementation(const float& Radius, const float& Strength, const FVector_NetQuantize& Origin)
+{
+	bIsRagdolling = true;
+	Multicast_ToRagdoll(Radius, Strength, Origin);
+
+	FTimerHandle TimerHandle;
+
+	GetWorldTimerManager().SetTimer(TimerHandle, this, &ThisClass::Server_ToAnimation, 3.f);
+}
+
+void AWOGBaseCharacter::Multicast_ToRagdoll_Implementation(const float& Radius, const float& Strength, const FVector_NetQuantize& Origin)
+{
+	GetMesh()->SetCollisionProfileName(FName("Ragdoll"));
+	GetMesh()->SetAllBodiesBelowSimulatePhysics(FName("Pelvis"), true, true);
+	GetCharacterMovement()->DisableMovement();
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetMesh()->bUpdateJointsFromAnimation = true;
+	GetMesh()->AddRadialImpulse(Origin, Radius, Strength, ERadialImpulseFalloff::RIF_Constant, true);
+}
+
+void AWOGBaseCharacter::Server_ToAnimation_Implementation()
+{
+	Multicast_ToAnimation();
+}
+
+void AWOGBaseCharacter::Multicast_ToAnimation_Implementation()
+{
+	if (!bIsRagdolling) return;
+
+	FindCharacterOrientation();
+	SetCapsuleOrientation();
+
+	FLatentActionInfo LatentActionInfo;
+	LatentActionInfo.CallbackTarget = this;
+	LatentActionInfo.ExecutionFunction = "ToAnimationSecondStage";
+	LatentActionInfo.UUID = 125;
+	LatentActionInfo.Linkage = 0;
+
+	UKismetSystemLibrary::Delay(this, 0.01f, LatentActionInfo);
+}
+
+void AWOGBaseCharacter::ToAnimationSecondStage()
+{
+	GetMesh()->GetAnimInstance()->SavePoseSnapshot(FName("RagdollFinalPose"));
+
+	FLatentActionInfo LatentActionInfo;
+	LatentActionInfo.CallbackTarget = this;
+	LatentActionInfo.ExecutionFunction = "ToAnimationThirdStage";
+	LatentActionInfo.UUID = 124;
+	LatentActionInfo.Linkage = 0;
+
+	UKismetSystemLibrary::DelayUntilNextTick(this, LatentActionInfo);
+}
+
+void AWOGBaseCharacter::ToAnimationThirdStage()
+{
+	if (HasAuthority())
+	{
+		bIsRagdolling = false;
+	}
+
+	GetMesh()->SetCollisionProfileName(FName("Custom"));
+	GetMesh()->SetCollisionResponseToAllChannels(ECR_Ignore);
+	GetMesh()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+	GetMesh()->SetCollisionResponseToChannel(ECC_GameTraceChannel6, ECR_Block);
+	GetMesh()->SetAllBodiesSimulatePhysics(false);
+	GetMesh()->bUpdateJointsFromAnimation = false;
+
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+}
+
+void AWOGBaseCharacter::ToAnimationFinal()
+{
+	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking, 0);
+}
+
+void AWOGBaseCharacter::FindCharacterOrientation()
+{
+	FRotator Rotation = GetMesh()->GetSocketRotation(FName("Pelvis"));
+	FVector RotationRightVector = UKismetMathLibrary::GetRightVector(Rotation);
+
+	bIsLayingOnBack = RotationRightVector.Z < 0.f;
+}
+
+void AWOGBaseCharacter::SetCapsuleOrientation()
+{
+	FVector NeckLocation = GetMesh()->GetSocketLocation(FName("neck_01"));
+	FVector PelvisLocation = GetMesh()->GetSocketLocation(FName("Pelvis"));
+
+	FVector Orientation = bIsLayingOnBack ? ((NeckLocation-PelvisLocation) * -1) : (NeckLocation - PelvisLocation);
+
+	FRotator NewRotation = UKismetMathLibrary::MakeRotFromXZ(Orientation, FVector::UpVector);
+}
+
+void AWOGBaseCharacter::UpdateCapsuleLocation()
+{
+	if (bIsRagdolling)
+	{
+		FHitResult Hit;
+		FVector Start = GetMesh()->GetSocketLocation(FName("Pelvis"));
+		FVector End = Start - FVector(0, 0, 100);
+		FCollisionQueryParams QueryParams;
+		QueryParams.AddIgnoredActor(this);
+
+		GetWorld()->LineTraceSingleByChannel(Hit, Start, End, ECC_Visibility, QueryParams);
+
+		if (Hit.bBlockingHit)
+		{
+			TargetGroundLocation = Hit.Location;
+		}
+		else
+		{
+			TargetGroundLocation = GetMesh()->GetSocketLocation(FName("Pelvis"));
+		}
+
+		MeshLocation = UKismetMathLibrary::VectorSpringInterp(
+			MeshLocation,
+			(TargetGroundLocation - PelvisOffset),
+			SpringState,
+			400.f,
+			1.f,
+			UGameplayStatics::GetWorldDeltaSeconds(this));
+
+		GetCapsuleComponent()->SetWorldLocation(MeshLocation);
+		
+	}
+	else
+	{
+		MeshLocation = GetCapsuleComponent()->GetComponentLocation();
+		
+		FVector PhysicsLinearVelocity = GetMesh()->GetPhysicsLinearVelocity();
+		SpringState.Velocity = PhysicsLinearVelocity;
+	}
+}
+
+void AWOGBaseCharacter::InitPhysics()
+{
+	PelvisOffset = GetMesh()->GetRelativeLocation();
+}
+
 void AWOGBaseCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	UpdateCapsuleLocation();
 }
 
 void AWOGBaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

@@ -10,6 +10,7 @@
 #include "Types/WOGGameplayTags.h"
 #include "Components/AGR_EquipmentManager.h"
 #include "AbilitySystemBlueprintLibrary.h"
+#include "Magic/WOGBaseMagic.h"
 
 AWOGDefender::AWOGDefender()
 {
@@ -132,14 +133,17 @@ void AWOGDefender::AbilitiesButtonPressed(const FInputActionValue& Value)
 		**Unequip any potential magics
 		**
 		*/
-		AActor* OutMagic = nullptr;
+
+		UnequipMagic(false, FName("1"));
+
+		/*AActor* OutMagic = nullptr;
 		AActor* PrimaryMagic = nullptr;
 		EquipmentManager->GetMagicShortcutReference(FName("1"), OutMagic);
 		EquipmentManager->GetItemInSlot(NAME_MagicSlot_MagicPrimary, PrimaryMagic);
 		if (PrimaryMagic && OutMagic && PrimaryMagic == OutMagic)
 		{
 			Server_UnequipMagic(FName("1"), PrimaryMagic);
-		}
+		}*/
 
 		/*
 		**
@@ -183,14 +187,19 @@ void AWOGDefender::AbilitiesButtonPressed(const FInputActionValue& Value)
 		**Unequip any potential magics
 		**
 		*/
-		AActor* OutMagic = nullptr;
-		AActor* PrimaryMagic = nullptr;
-		EquipmentManager->GetMagicShortcutReference(FName("1"), OutMagic);
-		EquipmentManager->GetItemInSlot(NAME_MagicSlot_MagicPrimary, PrimaryMagic);
-		if (PrimaryMagic && OutMagic && PrimaryMagic == OutMagic)
-		{
-			Server_UnequipMagic(FName("1"), PrimaryMagic);
-		}
+
+		UnequipMagic(false, FName("1"));
+
+		//AActor* OutMagic = nullptr;
+		//AActor* PrimaryMagic = nullptr;
+		//EquipmentManager->GetMagicShortcutReference(FName("1"), OutMagic);
+		//EquipmentManager->GetItemInSlot(NAME_MagicSlot_MagicPrimary, PrimaryMagic);
+		//if (PrimaryMagic && OutMagic && PrimaryMagic == OutMagic)
+		//{
+		//	Server_UnequipMagic(FName("1"), PrimaryMagic);
+		//}
+
+
 
 		/*
 		**
@@ -230,24 +239,22 @@ void AWOGDefender::AbilitiesButtonPressed(const FInputActionValue& Value)
 			return;
 		}
 
+		AActor* OutMagic = nullptr;
+		EquipmentManager->GetMagicShortcutReference(FName("1"), OutMagic);
+		TObjectPtr<AWOGBaseMagic> Magic = Cast<AWOGBaseMagic>(OutMagic);
+		if (Magic && Magic->GetMagicData().AbilityInputType != EAbilityInputType::EAI_Instant) return;
+
 		/*
 		**
 		**Unequip any potential weapons
 		**
 		*/
+
 		AActor* OutItemOne = nullptr;
 		AActor* OutItemTwo = nullptr;
 		AActor* PrimaryItem = nullptr;
 		EquipmentManager->GetWeaponShortcutReference(FName("1"), OutItemOne);
 		EquipmentManager->GetItemInSlot(NAME_WeaponSlot_Primary, PrimaryItem);
-		if (OutItemOne)
-		{
-			UE_LOG(LogTemp, Error, TEXT("%s"), *GetNameSafe(OutItemOne));
-		}
-		if (PrimaryItem)
-		{
-			UE_LOG(LogTemp, Error, TEXT("%s"), *GetNameSafe(PrimaryItem));
-		}
 
 		if (PrimaryItem && OutItemOne && PrimaryItem == OutItemOne) //Weapon #1 equipped
 		{
@@ -268,9 +275,78 @@ void AWOGDefender::AbilitiesButtonPressed(const FInputActionValue& Value)
 		**Equip Magic
 		**
 		*/
-		AActor* OutMagic = nullptr;
+
 		AActor* PrimaryMagic = nullptr;
+		EquipmentManager->GetItemInSlot(NAME_MagicSlot_MagicPrimary, PrimaryMagic);
+		if (PrimaryMagic && OutMagic && PrimaryMagic == OutMagic)
+		{
+			Server_UnequipMagic(FName("1"), PrimaryMagic);
+		}
+		else if (OutMagic)
+		{
+			Server_EquipMagic(FName("1"), OutMagic);
+		}
+	}
+}
+
+void AWOGDefender::AbilitiesHoldButtonPressed(const FInputActionValue& Value)
+{
+	if (HasMatchingGameplayTag(TAG_State_Dead)) return;
+	if (HasMatchingGameplayTag(TAG_State_Dodging)) return;
+	if (HasMatchingGameplayTag(TAG_State_Debuff_Knockback)) return;
+	if (HasMatchingGameplayTag(TAG_State_Debuff_KO)) return;
+	if (HasMatchingGameplayTag(TAG_State_Debuff_Stagger)) return;
+
+	FVector2D AbilitiesVector = Value.Get<FVector2D>();
+
+	if (AbilitiesVector.Y < 0)
+	{
+		//Button 3/Down pressed
+
+		if (!EquipmentManager)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Equipment component invalid"));
+			return;
+		}
+
+		AActor* OutMagic = nullptr;
 		EquipmentManager->GetMagicShortcutReference(FName("1"), OutMagic);
+		TObjectPtr<AWOGBaseMagic> Magic = Cast<AWOGBaseMagic>(OutMagic);
+		if (Magic && Magic->GetMagicData().AbilityInputType != EAbilityInputType::EAI_Hold) return;
+
+		/*
+		**
+		**Unequip any potential weapons
+		**
+		*/
+
+		AActor* OutItemOne = nullptr;
+		AActor* OutItemTwo = nullptr;
+		AActor* PrimaryItem = nullptr;
+		EquipmentManager->GetWeaponShortcutReference(FName("1"), OutItemOne);
+		EquipmentManager->GetItemInSlot(NAME_WeaponSlot_Primary, PrimaryItem);
+
+		if (PrimaryItem && OutItemOne && PrimaryItem == OutItemOne) //Weapon #1 equipped
+		{
+			Server_UnequipWeaponSwap(NAME_WeaponSlot_BackMain, PrimaryItem);
+		}
+		else //Weapon #2 equipped
+		{
+			EquipmentManager->GetWeaponShortcutReference(FName("2"), OutItemTwo);
+			EquipmentManager->GetItemInSlot(NAME_WeaponSlot_Primary, PrimaryItem);
+			if (PrimaryItem && OutItemTwo && PrimaryItem == OutItemTwo)
+			{
+				Server_UnequipWeaponSwap(NAME_WeaponSlot_BackSecondary, PrimaryItem);
+			}
+		}
+
+		/*
+		**
+		**Equip Magic
+		**
+		*/
+
+		AActor* PrimaryMagic = nullptr;
 		EquipmentManager->GetItemInSlot(NAME_MagicSlot_MagicPrimary, PrimaryMagic);
 		if (PrimaryMagic && OutMagic && PrimaryMagic == OutMagic)
 		{

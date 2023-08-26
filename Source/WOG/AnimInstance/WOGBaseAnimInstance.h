@@ -77,6 +77,12 @@ protected:
 
 	void UpdateMovementDirection();
 
+	UPROPERTY(BlueprintReadOnly, Category = "Character|Ragdoll", meta = (AllowPrivateAccess = "true"))
+	bool bIsRagdolling;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Character|Ragdoll", meta = (AllowPrivateAccess = "true"))
+	bool bIsLayingOnBack;
+
 public:
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE FName GetMovementDirection() const { return MovementDirection; }

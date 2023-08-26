@@ -9,6 +9,7 @@
 #include "Abilities/GameplayAbility.h"
 #include "AbilitySystemInterface.h"
 #include "Data/AGRLibrary.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "WOGBaseCharacter.generated.h"
 
 class UWOGAbilitySystemComponent;
@@ -32,7 +33,7 @@ public:
 
 	virtual void PossessedBy(AController* NewController) override;
 
-	bool ApplyGameplayEffectToSelf(TSubclassOf<UGameplayEffect> Effect, FGameplayEffectContextHandle InEffectContext);
+	bool ApplyGameplayEffectToSelf(TSubclassOf<UGameplayEffect> Effect, FGameplayEffectContextHandle InEffectContext, float Duration = 1.f);
 	
 	void GiveDefaultAbilities();
 	void ApplyDefaultEffects();
@@ -149,6 +150,47 @@ protected:
 	UPROPERTY(BlueprintReadWrite)
 	bool bSecondaryButtonPressed = false;
 
+	#pragma region Ragdoll
+
+	UFUNCTION(BlueprintCallable, Server, Reliable)
+	void Server_ToRagdoll(const float& Radius, const float& Strength, const FVector_NetQuantize& Origin);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_ToRagdoll(const float& Radius, const float& Strength, const FVector_NetQuantize& Origin);
+
+	UFUNCTION(BlueprintCallable, Server, Reliable)
+	void Server_ToAnimation();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_ToAnimation();
+
+	UFUNCTION(BlueprintCallable)
+	void ToAnimationSecondStage();
+	UFUNCTION(BlueprintCallable)
+	void ToAnimationThirdStage();
+
+	UFUNCTION(BlueprintCallable)
+	void ToAnimationFinal();
+
+	void FindCharacterOrientation();
+	void SetCapsuleOrientation();
+	void UpdateCapsuleLocation();
+
+	void InitPhysics();
+
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+	bool bIsLayingOnBack;
+	UPROPERTY(Replicated, BlueprintReadOnly, VisibleAnywhere)
+	bool bIsRagdolling;
+
+	FVector MeshLocation;
+	FVector TargetGroundLocation;
+	FVector PelvisOffset;
+
+	FVectorSpringState SpringState;
+
+	#pragma endregion
+
 public:	
 	virtual void Tick(float DeltaTime) override;
 
@@ -163,4 +205,8 @@ public:
 	FORCEINLINE void SetDefaultAbilitiesAndEffects(const FCharacterAbilityData& Data) { DefaultAbilitiesAndEffects = Data; }
 	FORCEINLINE FCharacterData GetCharacterData() const { return CharacterData; }
 	FORCEINLINE TObjectPtr<UMotionWarpingComponent> GetMotionWarpingComponent() const { return MotionWarping; }
+	UFUNCTION(BlueprintPure)
+	FORCEINLINE bool GetIsRagdolling() const { return bIsRagdolling; }
+	UFUNCTION(BlueprintPure)
+	FORCEINLINE bool GetIsLayingOnBack() const { return bIsLayingOnBack; }
 };

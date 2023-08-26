@@ -21,12 +21,14 @@
 #include "Magic/Projectile/WOGBaseMagicProjectile.h"
 #include "Magic/AOE/WOGBaseMagicAOE.h"
 #include "Libraries/WOGBlueprintLibrary.h"
+#include "NiagaraComponent.h"
 
 AWOGBaseMagic::AWOGBaseMagic()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 	bReplicates = true;
+	SetReplicateMovement(true);
 	bNetLoadOnClient = false;
 
 	SphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("OverlapSphere"));
@@ -40,6 +42,10 @@ AWOGBaseMagic::AWOGBaseMagic()
 
 	ItemComponent = CreateDefaultSubobject <UAGR_ItemComponent>(TEXT("ItemComponent"));
 
+	StandbyEffect = CreateDefaultSubobject<UNiagaraComponent>(TEXT("Standby Effect"));
+	StandbyEffect->SetupAttachment(GetRootComponent());
+	StandbyEffect->bAutoActivate = true;
+	StandbyEffect->SetIsReplicated(true);
 }
 
 void AWOGBaseMagic::OnConstruction(const FTransform& Transform)
@@ -108,7 +114,7 @@ void AWOGBaseMagic::SpawnIdleClass()
 		FTransform SpawnTransform = FTransform();
 		SpawnTransform.SetLocation(OwnerCharacter->GetActorLocation());
 
-		//Spawn Ranged Weapon
+		//Spawn Idle class
 		UWorld* World = GetWorld();
 		if (World)
 		{
@@ -157,11 +163,8 @@ void AWOGBaseMagic::BeginPlay()
 {
 	Super::BeginPlay();
 	OwnerCharacter = OwnerCharacter != nullptr ? OwnerCharacter : GetOwner() ? Cast<ABasePlayerCharacter>(GetOwner()) : nullptr;
-	if (!OwnerCharacter)
-	{
-		UE_LOG(LogTemp, Error, TEXT("NO OWNER CHARACTER AT BEGINPLAY"));
-	}
 	
+	InitMagicDefaults();
 }
 
 void AWOGBaseMagic::OnMagicOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -190,7 +193,14 @@ void AWOGBaseMagic::OnMagicOverlap(UPrimitiveComponent* OverlappedComponent, AAc
 	if (Equipment->MagicShortcutReferences.Num() < MaxAmountMagics)
 	{
 		FShortcutItemReference MagicRef;
-		int32 KeyInt = Equipment->MagicShortcutReferences.Num() + 1;
+		int32 KeyInt = 1;
+
+		if (Equipment->MagicShortcutReferences.Num() == 1)
+		{
+			FName ExistingKey = Equipment->MagicShortcutReferences[0].Key;
+			KeyInt = ExistingKey == FName("1") ? 2 : 1;
+		}
+
 		MagicRef.Key = *FString::FromInt(KeyInt);
 		MagicRef.ItemShortcut = this;
 
@@ -201,16 +211,14 @@ void AWOGBaseMagic::OnMagicOverlap(UPrimitiveComponent* OverlappedComponent, AAc
 			{
 				SetOwnerCharacter(NewOwnerCharacter);
 			}
-			else
-			{
-				UE_LOG(LogTemp, Error, TEXT("OWNER CHARACTER NOT VALID"));
-			}
 			SphereComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 			SphereComponent->SetGenerateOverlapEvents(false);
 			ItemComponent->PickUpItem(Inventory);
+
+			Multicast_HandleStandbyCosmetics(false);
+
 			if (OwnerCharacter)
 			{
-				UE_LOG(LogTemp, Warning, TEXT("OWNER CHARACTER SET"));
 				OwnerCharacter->Server_EquipMagic(MagicRef.Key, this);
 				AttachToActor(OwnerCharacter, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 			}
@@ -229,9 +237,10 @@ void AWOGBaseMagic::OnMagicPickedUp(UAGR_InventoryManager* Inventory)
 
 void AWOGBaseMagic::OnMagicEquip(AActor* User, FName SlotName)
 {
+	if (!User) return;
+
 	Multicast_OnMagicEquip(User, SlotName);
 
-	if (!User) return;
 	UAGRAnimMasterComponent* AnimMaster = UAGRLibrary::GetAnimationMaster(User);
 	if (!AnimMaster) return;
 
@@ -246,10 +255,6 @@ void AWOGBaseMagic::OnMagicEquip(AActor* User, FName SlotName)
 		LatentActionInfo.Linkage = 0;
 
 		UKismetSystemLibrary::Delay(this, 0.05f, LatentActionInfo);
-		//UKismetSystemLibrary::DelayUntilNextTick(this, LatentActionInfo);
-
-		//bool Success = GrantMagicAbilities();
-		//UE_LOG(LogTemp, Display, TEXT("WeaponGrantedAbilities applied: %d"), Success);
 		SpawnIdleClass();
 	}
 	else
@@ -272,14 +277,16 @@ void AWOGBaseMagic::OnMagicUnequip(AActor* User, FName SlotName)
 
 void AWOGBaseMagic::Multicast_OnMagicEquip_Implementation(AActor* User, FName SlotName)
 {
-	if (SlotName == NAME_MagicSlot_MagicPrimary)
+	/*if (SlotName == NAME_MagicSlot_MagicPrimary)
 	{
 		AttachToHands();
 	}
 	else
 	{
 		AttachToBack();
-	}
+	}*/
+
+	AttachToActor(User, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 }
 
 void AWOGBaseMagic::AttachToHands()
@@ -322,6 +329,61 @@ bool AWOGBaseMagic::RemoveGrantedAbilities(AActor* User)
 		UE_LOG(LogTemp, Display, TEXT("Ability cleared: %s"), *GrantedAbility.ToString())
 	}
 	return true;
+}
+
+void AWOGBaseMagic::InitMagicDefaults()
+{
+
+}
+
+void AWOGBaseMagic::Server_DropMagic_Implementation()
+{
+	UAGR_EquipmentManager* Equipment = UAGRLibrary::GetEquipment(OwnerCharacter);
+	if (Equipment)
+	{
+		bool bSuccess = Equipment->RemoveMagicShortcutReference(this);
+		UE_LOG(LogTemp, Warning, TEXT("Dropped magic: %d"), bSuccess);
+	}
+
+	ItemComponent->DropItem();
+
+	DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+	SetActorLocation(
+		OwnerCharacter->GetActorLocation() +
+		(OwnerCharacter->GetActorForwardVector() * 200));
+
+	if (IdleActor)
+	{
+		IdleActor->Destroy();
+	}
+
+	SphereComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	SphereComponent->SetCollisionResponseToAllChannels(ECR_Ignore);
+	SphereComponent->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+	SphereComponent->SetGenerateOverlapEvents(true);
+
+	Multicast_HandleStandbyCosmetics(true);
+
+	UAGRAnimMasterComponent* AnimMaster = UAGRLibrary::GetAnimationMaster(OwnerCharacter);
+	if (AnimMaster)
+	{
+		AnimMaster->SetupBasePose(TAG_Pose_Relax);
+	}
+
+	OwnerCharacter = nullptr;
+	SetOwner(nullptr);
+}
+
+void AWOGBaseMagic::Multicast_HandleStandbyCosmetics_Implementation(bool NewEnabled)
+{
+	if (NewEnabled)
+	{
+		StandbyEffect->Activate(true);
+	}
+	else
+	{
+		StandbyEffect->Deactivate();
+	}
 }
 
 void AWOGBaseMagic::SpawnProjectile()
