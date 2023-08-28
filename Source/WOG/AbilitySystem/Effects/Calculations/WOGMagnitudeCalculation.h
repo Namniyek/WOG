@@ -31,6 +31,12 @@ public:
 	float CalculateWeaponBlockCost(const FGameplayEffectSpec& Spec) const;
 
 	UFUNCTION(BlueprintCallable, Category = "Calculation")
-	float CalculateMagicEffectDuration(const FGameplayEffectSpec& Spec) const;
+	float CalculateMagicSecondaryEffectDuration(const FGameplayEffectSpec& Spec) const;
+
+	UFUNCTION(BlueprintCallable, Category = "Calculation")
+	float CalculateMagicValue(const FGameplayEffectSpec& Spec) const;
+
+	UFUNCTION(BlueprintCallable, Category = "Calculation")
+	float CalculateMagicDuration(const FGameplayEffectSpec& Spec) const;
 
 };

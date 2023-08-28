@@ -58,8 +58,11 @@ enum class EWOGAbilityInputID : uint8
 	Confirm			UMETA(DisplayName = "Confirm"),
 	Cancel			UMETA(DisplayName = "Cancel"),
 
-	//Powers
+	//Input abilities
 	Ability1		UMETA(DisplayName = "Ability1"),
+	Ability2		UMETA(DisplayName = "Ability2"),
+	Ability3		UMETA(DisplayName = "Ability3"),
+	Ability4		UMETA(DisplayName = "Ability4"),
 
 	//Weapons
 	WeaponEquip		UMETA(DisplayName = "WeaponEquip"),
@@ -85,6 +88,9 @@ struct FCharacterData
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Base Data")
 	bool bIsMale = false;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "GAS")
+	TSubclassOf<UGameplayEffect> SwitchAbilityCooldownEffect = nullptr;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Vocals")
 	TObjectPtr<USoundCue> AttackLightSound = nullptr;

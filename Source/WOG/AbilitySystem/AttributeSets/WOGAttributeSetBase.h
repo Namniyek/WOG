@@ -60,6 +60,14 @@ public:
 	FGameplayAttributeData MaxMovementSpeed;
 	ATTRIBUTE_ACCESSORS(UWOGAttributeSetBase, MaxMovementSpeed)
 
+	UPROPERTY(BlueprintReadOnly, Category = "Attributes", ReplicatedUsing = OnRep_StrengthMultiplier)
+	FGameplayAttributeData StrengthMultiplier;
+	ATTRIBUTE_ACCESSORS(UWOGAttributeSetBase, StrengthMultiplier)
+
+	UPROPERTY(BlueprintReadOnly, Category = "Attributes", ReplicatedUsing = OnRep_DamageReduction)
+	FGameplayAttributeData DamageReduction;
+	ATTRIBUTE_ACCESSORS(UWOGAttributeSetBase, DamageReduction)
+
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 protected:
@@ -92,4 +100,10 @@ protected:
 	UFUNCTION()
 	virtual void OnRep_MaxMovementSpeed(const FGameplayAttributeData& OldMaxMovementSpeed);
 	
+	UFUNCTION()
+	virtual void OnRep_StrengthMultiplier(const FGameplayAttributeData& OldStrengthMultiplier);
+
+	UFUNCTION()
+	virtual void OnRep_DamageReduction(const FGameplayAttributeData& OldDamageReduction);
+
 };

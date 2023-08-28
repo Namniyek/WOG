@@ -243,6 +243,9 @@ protected:
 	/** Called for movement input */
 	void MoveActionPressed(const FInputActionValue& Value);
 
+	UFUNCTION(BlueprintCallable)
+	void MoveCharacter(const FVector2D& MovementVector);
+
 	/** Called for looking input */
 	void LookActionPressed(const FInputActionValue& Value);
 
@@ -263,9 +266,9 @@ protected:
 	void WeaponRangedActionPressed(const FInputActionValue& Value);
 
 	/**Called for equip input*/
-	virtual void AbilitiesButtonPressed(const FInputActionValue& Value) { /*TO-BE OVERRIDEN IN CHILDREN*/ };
+	virtual void AbilitiesButtonPressed(const FInputActionValue& Value) {/*To bo overriden in children*/ };
 	/**Called for hold ability input*/
-	virtual void AbilitiesHoldButtonPressed(const FInputActionValue& Value) { /*TO-BE OVERRIDEN IN CHILDREN*/ };
+	virtual void AbilitiesHoldButtonPressed(const FInputActionValue& Value) {/*To bo overriden in children*/ };
 
 	UFUNCTION()
 	void PrimaryLightButtonPressed(const FInputActionValue& Value);
@@ -312,8 +315,14 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void ResetPreviouslyEquippedMaterial();
 
+	UFUNCTION(BlueprintCallable)
 	void UnequipMagic(const bool& bIsAttacker, const FName& Slot);
-
+	UFUNCTION(BlueprintCallable)
+	void UnequipWeapon(const bool& bIsAttacker, const FName& Slot);
+	UFUNCTION(BlueprintCallable)
+	void EquipMagic(const FName& Slot);
+	UFUNCTION(BlueprintCallable)
+	void EquipWeapon(const FName& Slot);
 
 public:
 	UFUNCTION(Server, reliable, BlueprintCallable)

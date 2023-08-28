@@ -32,6 +32,7 @@
 #include "WOG/Interfaces/AttributesInterface.h"
 #include "TargetSystemComponent.h"
 #include "Magic/WOGBaseMagic.h"
+#include "AbilitySystem/AttributeSets/WOGAttributeSetBase.h"
 
 void ABasePlayerCharacter::OnConstruction(const FTransform& Transform)
 {
@@ -168,15 +169,24 @@ void ABasePlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 
 void ABasePlayerCharacter::MoveActionPressed(const FInputActionValue& Value)
 {
-	if (HasMatchingGameplayTag(TAG_State_Dead)) return;
-	if (HasMatchingGameplayTag(TAG_State_Dodging)) return;
-	if (HasMatchingGameplayTag(TAG_State_Debuff_Knockback)) return;
-	if (HasMatchingGameplayTag(TAG_State_Debuff_KO)) return;
-	if (HasMatchingGameplayTag(TAG_State_Debuff_Stagger)) return;
-	if (HasMatchingGameplayTag(TAG_State_Debuff_Stun)) return;
-	if (HasMatchingGameplayTag(TAG_State_Debuff_Freeze)) return;
-
 	FVector2D MovementVector = Value.Get<FVector2D>();
+
+	if (MovementVector.X != 0)
+	{
+		FGameplayEventData EventPayload;
+		EventPayload.EventMagnitude = MovementVector.X;
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Movement_Right, EventPayload);
+	}
+	if (MovementVector.Y != 0)
+	{
+		FGameplayEventData EventPayload;
+		EventPayload.EventMagnitude = MovementVector.Y;
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Movement_Forward, EventPayload);
+	}
+}
+
+void ABasePlayerCharacter::MoveCharacter(const FVector2D& MovementVector)
+{
 	if (Controller != nullptr)
 	{
 		// find out which way is forward
@@ -605,6 +615,84 @@ void ABasePlayerCharacter::UnequipMagic(const bool& bIsAttacker, const FName& Sl
 	}
 }
 
+void ABasePlayerCharacter::UnequipWeapon(const bool& bIsAttacker, const FName& Slot)
+{
+	if (!EquipmentManager)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Equipment component invalid"));
+		return;
+	}
+
+	FName OtherSlot = Slot == FName("1") ? FName("2") : FName("1");
+
+	AActor* OutItem = nullptr;
+	AActor* PrimaryItem = nullptr;
+	EquipmentManager->GetWeaponShortcutReference(Slot, OutItem);
+	EquipmentManager->GetItemInSlot(NAME_WeaponSlot_Primary, PrimaryItem);
+
+	if (PrimaryItem && OutItem && PrimaryItem == OutItem) //Weapon #1 equipped
+	{
+		Server_UnequipWeaponSwap(NAME_WeaponSlot_BackMain, PrimaryItem);
+	}
+	else if(!bIsAttacker) //Weapon #2 equipped && is Defender
+	{
+		EquipmentManager->GetWeaponShortcutReference(OtherSlot, OutItem);
+		EquipmentManager->GetItemInSlot(NAME_WeaponSlot_Primary, PrimaryItem);
+		if (PrimaryItem && OutItem && PrimaryItem == OutItem)
+		{
+			Server_UnequipWeaponSwap(NAME_WeaponSlot_BackSecondary, PrimaryItem);
+		}
+	}
+}
+
+void ABasePlayerCharacter::EquipMagic(const FName& Slot)
+{
+	if (!EquipmentManager)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Equipment component invalid"));
+		return;
+	}
+
+	AActor* PrimaryMagic = nullptr;
+	AActor* OutMagic = nullptr;
+	EquipmentManager->GetMagicShortcutReference(Slot, OutMagic);
+	EquipmentManager->GetItemInSlot(NAME_MagicSlot_MagicPrimary, PrimaryMagic);
+	if (PrimaryMagic && OutMagic && PrimaryMagic == OutMagic)
+	{
+		Server_UnequipMagic(Slot, PrimaryMagic);
+	}
+	else if (OutMagic)
+	{
+		Server_EquipMagic(Slot, OutMagic);
+	}
+}
+
+void ABasePlayerCharacter::EquipWeapon(const FName& Slot)
+{
+	AActor* OutItem = nullptr;
+	AActor* PrimaryItem = nullptr;
+	EquipmentManager->GetWeaponShortcutReference(Slot, OutItem);
+	EquipmentManager->GetItemInSlot(NAME_WeaponSlot_Primary, PrimaryItem);
+	if (PrimaryItem && OutItem && PrimaryItem == OutItem)
+	{
+		FGameplayEventData EventPayload;
+		EventPayload.EventTag = TAG_Event_Weapon_Unequip;
+		EventPayload.OptionalObject = PrimaryItem;
+		int32 Key = FCString::Atoi(*Slot.ToString());
+		EventPayload.EventMagnitude = Key;
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Weapon_Unequip, EventPayload);
+	}
+	else if (OutItem)
+	{
+		FGameplayEventData EventPayload;
+		EventPayload.EventTag = TAG_Event_Weapon_Equip;
+		EventPayload.OptionalObject = OutItem;
+		int32 Key = FCString::Atoi(*Slot.ToString());
+		EventPayload.EventMagnitude = Key;
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Weapon_Equip, EventPayload);
+	}
+}
+
 void ABasePlayerCharacter::Client_SaveShortcutReferences_Implementation(AActor* InItem, const FGameplayTag& InItemTag, const FName& Key)
 {
 	if (!InventoryManager || !EquipmentManager) return;
@@ -914,17 +1002,26 @@ void ABasePlayerCharacter::ProcessHit(FHitResult Hit, UPrimitiveComponent* Weapo
 
 	//Get the Damage to apply values:
 	float DamageToApply = 0.f;
-	if (AttackerCharacter->HasMatchingGameplayTag(TAG_State_Weapon_AttackLight) && AttackerWeapon)
+	if (HasAuthority())
 	{
-		DamageToApply = AttackerWeapon->GetWeaponData().BaseDamage +
-			(AttackerWeapon->GetWeaponData().BaseDamage * AttackerWeapon->GetWeaponData().DamageMultiplier) +
-			(AttackerWeapon->GetWeaponData().BaseDamage * (AttackerWeapon->GetComboStreak() * AttackerWeapon->GetWeaponData().ComboDamageMultiplier));
-	}
-	if (AttackerCharacter->HasMatchingGameplayTag(TAG_State_Weapon_AttackHeavy) && AttackerWeapon)
-	{
-		DamageToApply = AttackerWeapon->GetWeaponData().BaseDamage +
-			(AttackerWeapon->GetWeaponData().BaseDamage * AttackerWeapon->GetWeaponData().DamageMultiplier) +
-			(AttackerWeapon->GetWeaponData().BaseDamage * AttackerWeapon->GetWeaponData().HeavyDamageMultiplier);
+		if (AttackerCharacter->HasMatchingGameplayTag(TAG_State_Weapon_AttackLight) && AttackerWeapon)
+		{
+			DamageToApply = AttackerWeapon->GetWeaponData().BaseDamage +
+				(AttackerWeapon->GetWeaponData().BaseDamage * AttackerWeapon->GetWeaponData().DamageMultiplier) +
+				(AttackerWeapon->GetWeaponData().BaseDamage * (AttackerWeapon->GetComboStreak() * AttackerWeapon->GetWeaponData().ComboDamageMultiplier));
+		}
+		if (AttackerCharacter->HasMatchingGameplayTag(TAG_State_Weapon_AttackHeavy) && AttackerWeapon)
+		{
+			DamageToApply = AttackerWeapon->GetWeaponData().BaseDamage +
+				(AttackerWeapon->GetWeaponData().BaseDamage * AttackerWeapon->GetWeaponData().DamageMultiplier) +
+				(AttackerWeapon->GetWeaponData().BaseDamage * AttackerWeapon->GetWeaponData().HeavyDamageMultiplier);
+		}
+
+		UE_LOG(LogTemp, Warning, TEXT("Base DamageToApply : %f"), DamageToApply);
+
+		float StrenghtMultiplier = AttributeSet->GetStrengthMultiplier();
+		DamageToApply *= StrenghtMultiplier;
+		UE_LOG(LogTemp, Warning, TEXT("DamageToApply after StrengthMultiplier : %f"), DamageToApply);
 	}
 
 	//Check if we hit build and apply build damage
@@ -940,6 +1037,11 @@ void ABasePlayerCharacter::ProcessHit(FHitResult Hit, UPrimitiveComponent* Weapo
 	TObjectPtr<IAttributesInterface> AttributesInterface = Cast<IAttributesInterface>(Hit.GetActor());
 	if (AttributesInterface)
 	{
+		bool FoundAttribute;
+		float DamageReduction = UAbilitySystemBlueprintLibrary::GetFloatAttribute(Hit.GetActor(), AttributeSet->GetDamageReductionAttribute(), FoundAttribute);
+		DamageToApply *= (1 - DamageReduction);
+		UE_LOG(LogTemp, Warning, TEXT("DamageToApply after DamageReduction of %f : %f"), DamageReduction, DamageToApply);
+
 		AttributesInterface->Execute_BroadcastHit(Hit.GetActor(), AttackerCharacter, Hit, DamageToApply, AttackerWeapon);
 	}
 }
@@ -953,7 +1055,16 @@ void ABasePlayerCharacter::ProcessMagicHit(const FHitResult& Hit, const FMagicDa
 	}
 
 	//Get the Damage to apply values:
-	float DamageToApply = MagicData.Value * MagicData.ValueMultiplier;
+	float DamageToApply = 0.f;;
+	if (HasAuthority())
+	{
+		DamageToApply = MagicData.Value * MagicData.ValueMultiplier;
+		UE_LOG(LogTemp, Warning, TEXT("Base DamageToApply : %f"), DamageToApply);
+
+		float StrenghtMultiplier = AttributeSet->GetStrengthMultiplier();
+		DamageToApply *= StrenghtMultiplier;
+		UE_LOG(LogTemp, Warning, TEXT("DamageToApply after StrengthMultiplier : %f"), DamageToApply);
+	}
 
 	//Check if we hit build and apply build damage
 	TObjectPtr<IBuildingInterface> BuildInterface = Cast<IBuildingInterface>(Hit.GetActor());
@@ -969,7 +1080,6 @@ void ABasePlayerCharacter::ProcessMagicHit(const FHitResult& Hit, const FMagicDa
 	if (AttributesInterface)
 	{
 		AttributesInterface->Execute_BroadcastMagicHit(Hit.GetActor(), this, Hit, MagicData);
-		return;
 	}
 }
 
@@ -1175,9 +1285,14 @@ void ABasePlayerCharacter::BroadcastMagicHit_Implementation(AActor* AgressorActo
 		return;
 	}
 
-	//Store the last hit result
+	//Store the last hit result and calculate damage
 	LastHitResult = Hit;
 	float LocalDamageToApply = AgressorMagicData.Value * AgressorMagicData.ValueMultiplier;
+
+	bool FoundAttribute;
+	float DamageReduction = UAbilitySystemBlueprintLibrary::GetFloatAttribute(Hit.GetActor(), AttributeSet->GetDamageReductionAttribute(), FoundAttribute);
+	LocalDamageToApply *= (1 - DamageReduction);
+	UE_LOG(LogTemp, Warning, TEXT("DamageToApply after DamageReduction of %f : %f"), DamageReduction, LocalDamageToApply);
 
 	//Apply secondary effect
 	if (UKismetSystemLibrary::IsValidClass(AgressorMagicData.SecondaryEffect))

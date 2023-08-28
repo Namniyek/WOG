@@ -122,8 +122,54 @@ float UWOGMagnitudeCalculation::CalculateWeaponBlockCost(const FGameplayEffectSp
 	}
 }
 
-float UWOGMagnitudeCalculation::CalculateMagicEffectDuration(const FGameplayEffectSpec& Spec) const
+float UWOGMagnitudeCalculation::CalculateMagicSecondaryEffectDuration(const FGameplayEffectSpec& Spec) const
 {
 	UE_LOG(LogTemp, Warning, TEXT("Secondary Magic effect duration: %f"), Spec.GetLevel());
 	return Spec.GetLevel();
+}
+
+float UWOGMagnitudeCalculation::CalculateMagicValue(const FGameplayEffectSpec& Spec) const
+{
+	TObjectPtr<AActor> Owner = Spec.GetEffectContext().GetInstigatorAbilitySystemComponent()->GetOwner();
+	if (Owner)
+	{
+		TObjectPtr<AWOGBaseMagic> Magic = UWOGBlueprintLibrary::GetEquippedMagic(Owner);
+		if (Magic)
+		{
+			return Magic->GetMagicData().Value * Magic->GetMagicData().ValueMultiplier;
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("No magic for value calculation"));
+			return 0.0f;
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("No owner for cooldown calculation"));
+		return 0.0f;
+	}
+}
+
+float UWOGMagnitudeCalculation::CalculateMagicDuration(const FGameplayEffectSpec& Spec) const
+{
+	TObjectPtr<AActor> Owner = Spec.GetEffectContext().GetInstigatorAbilitySystemComponent()->GetOwner();
+	if (Owner)
+	{
+		TObjectPtr<AWOGBaseMagic> Magic = UWOGBlueprintLibrary::GetEquippedMagic(Owner);
+		if (Magic)
+		{
+			return Magic->GetMagicData().Duration;
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("No magic for duration calculation"));
+			return 3.f;
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("No owner for cooldown calculation"));
+		return 3.0f;
+	}
 }

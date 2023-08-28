@@ -105,90 +105,25 @@ void AWOGAttacker::SpawnActionPressed(const FInputActionValue& Value)
 
 void AWOGAttacker::AbilitiesButtonPressed(const FInputActionValue& Value)
 {
-	if (HasMatchingGameplayTag(TAG_State_Dead)) return;
-	if (HasMatchingGameplayTag(TAG_State_Dodging)) return;
-	if (HasMatchingGameplayTag(TAG_State_Debuff_Knockback)) return;
-	if (HasMatchingGameplayTag(TAG_State_Debuff_KO)) return;
-	if (HasMatchingGameplayTag(TAG_State_Debuff_Stagger)) return;
-
-	if (!EquipmentManager)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Equipment component invalid"));
-		return;
-	}
-
 	FVector2D AbilitiesVector = Value.Get<FVector2D>();
 
 	if (AbilitiesVector.X > 0)
 	{
 		//Button 4/Right pressed
-
-
+		SendAbilityLocalInput(EWOGAbilityInputID::Ability4);
 	}
 	if (AbilitiesVector.X < 0)
 	{
 		//Button 1/Left pressed
-
-		/*
-		**
-		**Unequip any potential magics
-		**
-		*/
-
-		UnequipMagic(true, FName("1"));
-
-		/*AActor* OutMagicOne = nullptr;
-		AActor* OutMagicTwo = nullptr;
-		AActor* PrimaryMagic = nullptr;
-		EquipmentManager->GetMagicShortcutReference(FName("1"), OutMagicOne);
-		EquipmentManager->GetItemInSlot(NAME_MagicSlot_MagicPrimary, PrimaryMagic);
-		if (PrimaryMagic && OutMagicOne && PrimaryMagic == OutMagicOne)
-		{
-			Server_UnequipMagic(FName("1"), PrimaryMagic);
-		}
-		else
-		{
-			EquipmentManager->GetMagicShortcutReference(FName("2"), OutMagicTwo);
-			EquipmentManager->GetItemInSlot(NAME_MagicSlot_MagicPrimary, PrimaryMagic);
-			if (PrimaryMagic && OutMagicTwo && PrimaryMagic == OutMagicTwo)
-			{
-				Server_UnequipMagic(FName("2"), PrimaryMagic);
-			}
-		}*/
-
-		/*
-		**
-		**Equip Weapons
-		**
-		*/
-		AActor* OutItem = nullptr;
-		AActor* PrimaryItem = nullptr;
-		EquipmentManager->GetWeaponShortcutReference(FName("1"), OutItem);
-		EquipmentManager->GetItemInSlot(NAME_WeaponSlot_Primary, PrimaryItem);
-		if (PrimaryItem && OutItem && PrimaryItem == OutItem)
-		{
-			FGameplayEventData EventPayload;
-			EventPayload.EventTag = TAG_Event_Weapon_Unequip;
-			EventPayload.OptionalObject = PrimaryItem;
-			int32 Key = FCString::Atoi(*FName("1").ToString());
-			EventPayload.EventMagnitude = Key;
-			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Weapon_Unequip, EventPayload);
-		}
-		else if (OutItem)
-		{
-			FGameplayEventData EventPayload;
-			EventPayload.EventTag = TAG_Event_Weapon_Equip;
-			EventPayload.OptionalObject = OutItem;
-			int32 Key = FCString::Atoi(*FName("1").ToString());
-			EventPayload.EventMagnitude = Key;
-			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Weapon_Equip, EventPayload);
-		}
+		SendAbilityLocalInput(EWOGAbilityInputID::Ability1);
 	}
 	if (AbilitiesVector.Y > 0)
 	{
 		//Button 2/Up pressed
 
-		//Check for cooldown tag
+		if (!EquipmentManager) return;
+
+		//Check for cooldown tag and 
 		AActor* OutMagic = nullptr;
 		EquipmentManager->GetMagicShortcutReference(FName("1"), OutMagic);
 		if (!OutMagic) return;
@@ -201,39 +136,12 @@ void AWOGAttacker::AbilitiesButtonPressed(const FInputActionValue& Value)
 			return;
 		}
 
-		/*
-		**
-		**Unequip any potential weapons
-		**
-		*/
-		AActor* OutItem = nullptr;
-		AActor* PrimaryItem = nullptr;
-		EquipmentManager->GetWeaponShortcutReference(FName("1"), OutItem);
-		EquipmentManager->GetItemInSlot(NAME_WeaponSlot_Primary, PrimaryItem);
-		if (PrimaryItem && OutItem && PrimaryItem == OutItem)
-		{
-			Server_UnequipWeaponSwap(NAME_WeaponSlot_BackMain, PrimaryItem);
-		}
-
-		/*
-		**
-		**Equip Magic
-		**
-		*/
-		AActor* PrimaryMagic = nullptr;
-		EquipmentManager->GetItemInSlot(NAME_MagicSlot_MagicPrimary, PrimaryMagic);
-		if (PrimaryMagic && OutMagic && PrimaryMagic == OutMagic)
-		{
-			Server_UnequipMagic(FName("1"), PrimaryMagic);
-		}
-		else if (OutMagic)
-		{
-			Server_EquipMagic(FName("1"), OutMagic);
-		}
+		SendAbilityLocalInput(EWOGAbilityInputID::Ability2);
 	}
 	if (AbilitiesVector.Y < 0)
 	{
 		//Button 3/Down pressed
+		if (!EquipmentManager) return;
 
 		//Check for cooldown tag
 		AActor* OutMagic = nullptr;
@@ -248,57 +156,18 @@ void AWOGAttacker::AbilitiesButtonPressed(const FInputActionValue& Value)
 			return;
 		}
 
-		/*
-		**
-		**Unequip any potential weapons
-		**
-		*/
-		AActor* OutItem = nullptr;
-		AActor* PrimaryItem = nullptr;
-		EquipmentManager->GetWeaponShortcutReference(FName("1"), OutItem);
-		EquipmentManager->GetItemInSlot(NAME_WeaponSlot_Primary, PrimaryItem);
-		if (PrimaryItem && OutItem && PrimaryItem == OutItem)
-		{
-			Server_UnequipWeaponSwap(NAME_WeaponSlot_BackMain, PrimaryItem);
-		}
-
-		/*
-		**
-		**Equip Magic
-		**
-		*/
-		AActor* PrimaryMagic = nullptr;
-		EquipmentManager->GetItemInSlot(NAME_MagicSlot_MagicPrimary, PrimaryMagic);
-		if (PrimaryMagic && OutMagic && PrimaryMagic == OutMagic)
-		{
-			Server_UnequipMagic(FName("2"), PrimaryMagic);
-		}
-		else if (OutMagic)
-		{
-			Server_EquipMagic(FName("2"), OutMagic);
-		}
+		SendAbilityLocalInput(EWOGAbilityInputID::Ability3);
 	}
 }
 
 void AWOGAttacker::AbilitiesHoldButtonPressed(const FInputActionValue& Value)
 {
-	if (HasMatchingGameplayTag(TAG_State_Dead)) return;
-	if (HasMatchingGameplayTag(TAG_State_Dodging)) return;
-	if (HasMatchingGameplayTag(TAG_State_Debuff_Knockback)) return;
-	if (HasMatchingGameplayTag(TAG_State_Debuff_KO)) return;
-	if (HasMatchingGameplayTag(TAG_State_Debuff_Stagger)) return;
-
-	if (!EquipmentManager)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Equipment component invalid"));
-		return;
-	}
-
 	FVector2D AbilitiesVector = Value.Get<FVector2D>();
 
 	if (AbilitiesVector.Y > 0)
 	{
 		//Button 2/Up pressed
+		if (!EquipmentManager) return;
 
 		//Check for cooldown tag
 		AActor* OutMagic = nullptr;
@@ -313,39 +182,13 @@ void AWOGAttacker::AbilitiesHoldButtonPressed(const FInputActionValue& Value)
 			return;
 		}
 
-		/*
-		**
-		**Unequip any potential weapons
-		**
-		*/
-		AActor* OutItem = nullptr;
-		AActor* PrimaryItem = nullptr;
-		EquipmentManager->GetWeaponShortcutReference(FName("1"), OutItem);
-		EquipmentManager->GetItemInSlot(NAME_WeaponSlot_Primary, PrimaryItem);
-		if (PrimaryItem && OutItem && PrimaryItem == OutItem)
-		{
-			Server_UnequipWeaponSwap(NAME_WeaponSlot_BackMain, PrimaryItem);
-		}
-
-		/*
-		**
-		**Equip Magic
-		**
-		*/
-		AActor* PrimaryMagic = nullptr;
-		EquipmentManager->GetItemInSlot(NAME_MagicSlot_MagicPrimary, PrimaryMagic);
-		if (PrimaryMagic && OutMagic && PrimaryMagic == OutMagic)
-		{
-			Server_UnequipMagic(FName("1"), PrimaryMagic);
-		}
-		else if (OutMagic)
-		{
-			Server_EquipMagic(FName("1"), OutMagic);
-		}
+		//Execute ability
+		SendAbilityLocalInput(EWOGAbilityInputID::Ability2);
 	}
 	if (AbilitiesVector.Y < 0)
 	{
 		//Button 3/Down pressed
+		if (!EquipmentManager) return;
 
 		//Check for cooldown tag
 		AActor* OutMagic = nullptr;
@@ -360,34 +203,7 @@ void AWOGAttacker::AbilitiesHoldButtonPressed(const FInputActionValue& Value)
 			return;
 		}
 
-		/*
-		**
-		**Unequip any potential weapons
-		**
-		*/
-		AActor* OutItem = nullptr;
-		AActor* PrimaryItem = nullptr;
-		EquipmentManager->GetWeaponShortcutReference(FName("1"), OutItem);
-		EquipmentManager->GetItemInSlot(NAME_WeaponSlot_Primary, PrimaryItem);
-		if (PrimaryItem && OutItem && PrimaryItem == OutItem)
-		{
-			Server_UnequipWeaponSwap(NAME_WeaponSlot_BackMain, PrimaryItem);
-		}
-
-		/*
-		**
-		**Equip Magic
-		**
-		*/
-		AActor* PrimaryMagic = nullptr;
-		EquipmentManager->GetItemInSlot(NAME_MagicSlot_MagicPrimary, PrimaryMagic);
-		if (PrimaryMagic && OutMagic && PrimaryMagic == OutMagic)
-		{
-			Server_UnequipMagic(FName("2"), PrimaryMagic);
-		}
-		else if (OutMagic)
-		{
-			Server_EquipMagic(FName("2"), OutMagic);
-		}
+		//Execute ability
+		SendAbilityLocalInput(EWOGAbilityInputID::Ability3);
 	}
 }

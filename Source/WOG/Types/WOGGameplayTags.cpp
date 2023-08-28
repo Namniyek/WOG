@@ -13,6 +13,9 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_State_Debuff_Burn, "State.Debuff.Burn");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Debuff_Freeze, "State.Debuff.Freeze");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Debuff_Shock, "State.Debuff.Shock");
 
+UE_DEFINE_GAMEPLAY_TAG(TAG_State_Buff_DamageReduction, "State.Buff.DamageReduction");
+UE_DEFINE_GAMEPLAY_TAG(TAG_State_Buff_Strength, "State.Buff.Strength");
+
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Weapon_AttackLight, "State.Weapon.AttackLight");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Weapon_AttackHeavy, "State.Weapon.AttackHeavy");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Weapon_Block, "State.Weapon.Block");
@@ -29,6 +32,8 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_State_Magic_Instant, "State.Magic.Instant");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Elim, "Event.Elim");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Movement_Sprint_Stop, "Event.Movement.Sprint.Stop");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Movement_Forward , "Event.Movement.Forward");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Movement_Right, "Event.Movement.Right");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Weapon_Block_Impact_Light, "Event.Weapon.Block.Impact.Light");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Weapon_Block_Impact_Heavy, "Event.Weapon.Block.Impact.Heavy");
@@ -107,3 +112,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Cue_Elim, "GameplayCue.Elim");
 
 //Cooldown tags
 UE_DEFINE_GAMEPLAY_TAG(TAG_Cooldown_Input, "Cooldown.Input");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Cooldown_Input_AbilitySwitch, "Cooldown.Input.AbilitySwitch");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Cooldown_Input_Magic_AOE, "Cooldown.Input.Magic.AOE");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Cooldown_Input_Magic_Instant, "Cooldown.Input.Magic.Instant");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Cooldown_Input_Magic_Buff, "Cooldown.Input.Magic.Buff");

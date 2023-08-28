@@ -20,6 +20,8 @@ void UWOGAttributeSetBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 	DOREPLIFETIME_CONDITION_NOTIFY(UWOGAttributeSetBase, Stamina, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UWOGAttributeSetBase, MaxStamina, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UWOGAttributeSetBase, MaxMovementSpeed, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UWOGAttributeSetBase, StrengthMultiplier, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UWOGAttributeSetBase, DamageReduction, COND_None, REPNOTIFY_Always);
 }
 
 void UWOGAttributeSetBase::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
@@ -41,6 +43,14 @@ void UWOGAttributeSetBase::PostGameplayEffectExecute(const FGameplayEffectModCal
 	else if (Data.EvaluatedData.Attribute == GetStaminaAttribute())
 	{
 		SetStamina(FMath::Clamp(GetStamina(), 0.0f, GetMaxStamina()));
+	}
+	else if (Data.EvaluatedData.Attribute == GetStrengthMultiplierAttribute())
+	{
+		SetStrengthMultiplier(FMath::Clamp(GetStrengthMultiplier(), 0.f, 2.f));
+	}
+	else if (Data.EvaluatedData.Attribute == GetDamageReductionAttribute())
+	{
+		SetDamageReduction(FMath::Clamp(GetDamageReduction(), 0.f, 1.f));
 	}
 }
 
@@ -87,4 +97,14 @@ void UWOGAttributeSetBase::OnRep_MaxStamina(const FGameplayAttributeData& OldMax
 void UWOGAttributeSetBase::OnRep_MaxMovementSpeed(const FGameplayAttributeData& OldMaxMovementSpeed)
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UWOGAttributeSetBase, MaxMovementSpeed, OldMaxMovementSpeed);
+}
+
+void UWOGAttributeSetBase::OnRep_StrengthMultiplier(const FGameplayAttributeData& OldStrengthMultiplier)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UWOGAttributeSetBase, StrengthMultiplier, OldStrengthMultiplier);
+}
+
+void UWOGAttributeSetBase::OnRep_DamageReduction(const FGameplayAttributeData& OldDamageReduction)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UWOGAttributeSetBase, DamageReduction, OldDamageReduction);
 }
