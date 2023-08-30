@@ -20,6 +20,7 @@ class AWOGGameMode;
 class UAGRAnimMasterComponent;
 class UMaterialInterface;
 class UMotionWarpingComponent;
+class UWOGHoldProgressBar;
 
 UCLASS()
 class WOG_API AWOGBaseCharacter : public ACharacter, public IAttributesInterface, public IAbilitySystemInterface
@@ -189,6 +190,19 @@ protected:
 
 	FVectorSpringState SpringState;
 
+	#pragma endregion
+
+	#pragma region UI
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UUserWidget> HoldProgressBarWidgetClass;
+
+	UPROPERTY()
+	TObjectPtr<UWOGHoldProgressBar> HoldProgressBarWidget;
+
+	UFUNCTION(Client, unreliable)
+	void Client_AddHoldProgressBar();
+
+	void RemoveHoldProgressBarWidget();
 	#pragma endregion
 
 public:	

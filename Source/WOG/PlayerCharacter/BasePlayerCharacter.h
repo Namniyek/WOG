@@ -196,9 +196,6 @@ public:
 	UInputAction* AbilitiesAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Base Match", meta = (AllowPrivateAccess = "true"))
-	UInputAction* AbilitiesHoldAction;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Base Match", meta = (AllowPrivateAccess = "true"))
 	UInputAction* PrimaryLightAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Base Match", meta = (AllowPrivateAccess = "true"))
@@ -266,12 +263,24 @@ protected:
 	void WeaponRangedActionPressed(const FInputActionValue& Value);
 
 	/**Called for equip input*/
-	virtual void AbilitiesButtonPressed(const FInputActionValue& Value) {/*To bo overriden in children*/ };
+	virtual void AbilitiesButtonPressed(const FInputActionValue& Value) { /*To be overriden in children*/ };
+	
 	/**Called for hold ability input*/
-	virtual void AbilitiesHoldButtonPressed(const FInputActionValue& Value) {/*To bo overriden in children*/ };
+	virtual void Ability2HoldButtonStarted(const FInputActionValue& Value) { /*To be overriden in children*/ };
+	virtual void Ability2HoldButtonTriggered(const FInputActionValue& Value) { /*To be overriden in children*/ };
+	virtual void Ability3HoldButtonStarted(const FInputActionValue& Value) { /*To be overriden in children*/ };
+	virtual void Ability3HoldButtonTriggered(const FInputActionValue& Value) { /*To be overriden in children*/ };
+
+	void AbilityHoldStarted(const FName& Slot);
+
+	UFUNCTION()
+	void AbilityHoldButtonElapsed(FInputActionValue ActionValue, float ElapsedTime, float TriggeredTime);
+	void AbilityHoldButtonCanceled(const FInputActionValue& Value);
 
 	UFUNCTION()
 	void PrimaryLightButtonPressed(const FInputActionValue& Value);
+	void PrimaryHeavyAttackStarted(const FInputActionValue& Value);
+	void ConfirmHoldStarted();
 
 	UFUNCTION()
 	void PrimaryArmHeavyAttack(FInputActionValue ActionValue, float ElapsedTime, float TriggeredTime);
@@ -280,6 +289,8 @@ protected:
 	void PrimaryExecuteHeavyAttack(const FInputActionValue& Value);
 	void SecondaryButtonPressed(const FInputActionValue& Value);
 	void SecondaryButtonReleased(const FInputActionValue& Value);
+
+
 	
 	#pragma endregion
 

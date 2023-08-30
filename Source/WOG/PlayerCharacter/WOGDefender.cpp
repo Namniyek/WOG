@@ -39,6 +39,12 @@ void AWOGDefender::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		EnhancedInputComponent->BindAction(SpawnAction, ETriggerEvent::Completed, this, &ThisClass::SpawnActionPressed);
 		EnhancedInputComponent->BindAction(RotateSpawnAction, ETriggerEvent::Triggered, this, &ThisClass::RotateSpawnActionPressed);
 		EnhancedInputComponent->BindAction(AdjustSpawnHeightAction, ETriggerEvent::Triggered, this, &ThisClass::AdjustSpawnHeightActionPressed);
+
+		//Ability
+		EnhancedInputComponent->BindAction(Ability3HoldAction, ETriggerEvent::Started, this, &ThisClass::Ability3HoldButtonStarted);
+		EnhancedInputComponent->BindAction(Ability3HoldAction, ETriggerEvent::Ongoing, this, TEXT("AbilityHoldButtonElapsed"));
+		EnhancedInputComponent->BindAction(Ability3HoldAction, ETriggerEvent::Canceled, this, &ThisClass::AbilityHoldButtonCanceled);
+		EnhancedInputComponent->BindAction(Ability3HoldAction, ETriggerEvent::Triggered, this, &ThisClass::Ability3HoldButtonTriggered);
 	}
 }
 
@@ -142,26 +148,30 @@ void AWOGDefender::AbilitiesButtonPressed(const FInputActionValue& Value)
 	}
 }
 
-void AWOGDefender::AbilitiesHoldButtonPressed(const FInputActionValue& Value)
+void AWOGDefender::Ability3HoldButtonStarted(const FInputActionValue& Value)
 {
-	FVector2D AbilitiesVector = Value.Get<FVector2D>();
+	AbilityHoldStarted(FName("1"));
+}
 
-	if (AbilitiesVector.Y < 0)
+void AWOGDefender::Ability3HoldButtonTriggered(const FInputActionValue& Value)
+{
+	//Button 3/Down pressed
+
+	//Remove hold bar widget
+	RemoveHoldProgressBarWidget();
+
+	if (!EquipmentManager) return;
+
+	AActor* OutMagic = nullptr;
+	EquipmentManager->GetMagicShortcutReference(FName("1"), OutMagic);
+	TObjectPtr<AWOGBaseMagic> Magic = Cast<AWOGBaseMagic>(OutMagic);
+	if (Magic && Magic->GetMagicData().AbilityInputType != EAbilityInputType::EAI_Hold) return;
+	if (Magic && HasMatchingGameplayTag(Magic->GetMagicData().CooldownTag))
 	{
-		//Button 3/Down pressed
-		if (!EquipmentManager) return;
-
-		AActor* OutMagic = nullptr;
-		EquipmentManager->GetMagicShortcutReference(FName("1"), OutMagic);
-		TObjectPtr<AWOGBaseMagic> Magic = Cast<AWOGBaseMagic>(OutMagic);
-		if (Magic && Magic->GetMagicData().AbilityInputType != EAbilityInputType::EAI_Hold) return;
-		if (Magic && HasMatchingGameplayTag(Magic->GetMagicData().CooldownTag))
-		{
-			UE_LOG(LogTemp, Error, TEXT("Cooldown in effect. Can't equip"));
-			return;
-		}
-
-		//Execute ability
-		SendAbilityLocalInput(EWOGAbilityInputID::Ability3);
+		UE_LOG(LogTemp, Error, TEXT("Cooldown in effect. Can't equip"));
+		return;
 	}
+
+	//Execute ability
+	SendAbilityLocalInput(EWOGAbilityInputID::Ability3);
 }

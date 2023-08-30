@@ -29,6 +29,10 @@ public:
 	**/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Base Match", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UInputAction> PossessAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Base Match", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UInputAction> Ability2HoldAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Base Match", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UInputAction> Ability3HoldAction;
 
 	#pragma endregion
 
@@ -52,7 +56,11 @@ protected:
 	void SpawnActionPressed(const FInputActionValue& Value);
 
 	virtual void AbilitiesButtonPressed(const FInputActionValue& Value) override;
-	virtual void AbilitiesHoldButtonPressed(const FInputActionValue& Value) override;
+
+	virtual void Ability2HoldButtonStarted(const FInputActionValue& Value) override;
+	virtual void Ability2HoldButtonTriggered(const FInputActionValue& Value) override;
+	virtual void Ability3HoldButtonStarted(const FInputActionValue& Value) override;
+	virtual void Ability3HoldButtonTriggered(const FInputActionValue& Value) override;
 
 	#pragma endregion
 

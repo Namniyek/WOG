@@ -18,6 +18,11 @@ UWOGGameplayAbilityBase::UWOGGameplayAbilityBase()
 	// Default tags that block this ability from activating
 	ActivationBlockedTags.AddTag(TAG_State_Dead);
 	ActivationBlockedTags.AddTag(TAG_State_Debuff_Stagger);
+	ActivationBlockedTags.AddTag(TAG_State_Debuff_Freeze);
+	ActivationBlockedTags.AddTag(TAG_State_Debuff_HitReact);
+	ActivationBlockedTags.AddTag(TAG_State_Debuff_Knockback);
+	ActivationBlockedTags.AddTag(TAG_State_Debuff_KO);
+	ActivationBlockedTags.AddTag(TAG_State_Debuff_Stun);
 }
 
 void UWOGGameplayAbilityBase::OnAvatarSet(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec)

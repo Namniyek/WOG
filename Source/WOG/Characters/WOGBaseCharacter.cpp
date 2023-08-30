@@ -18,6 +18,8 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "MotionWarpingComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Blueprint/UserWidget.h"
+#include "UI/WOGHoldProgressBar.h"
 
 
 AWOGBaseCharacter::AWOGBaseCharacter()
@@ -54,6 +56,8 @@ AWOGBaseCharacter::AWOGBaseCharacter()
 	TargetGroundLocation = FVector();
 	PelvisOffset = FVector();
 	SpringState = FVectorSpringState();
+
+	HoldProgressBarWidgetClass = nullptr;
 }
 
 void AWOGBaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -476,6 +480,35 @@ void AWOGBaseCharacter::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	UpdateCapsuleLocation();
+}
+
+void AWOGBaseCharacter::Client_AddHoldProgressBar_Implementation()
+{
+	TObjectPtr<APlayerController> PlayerController = UGameplayStatics::GetPlayerController(this, 0);
+	if (!PlayerController) 
+	{
+		UE_LOG(LogTemp, Error, TEXT("Invalid PLayerController"));
+		return;
+	}
+
+	//TO-DO : Check for a way to verify the widget class
+	HoldProgressBarWidget = Cast<UWOGHoldProgressBar>(CreateWidget<UUserWidget>(PlayerController, HoldProgressBarWidgetClass));
+	if (HoldProgressBarWidget)
+	{
+		HoldProgressBarWidget->AddToPlayerScreen();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Invalid HoldProgressBarWidget"));
+	}
+}
+
+void AWOGBaseCharacter::RemoveHoldProgressBarWidget()
+{
+	if (HoldProgressBarWidget)
+	{
+		HoldProgressBarWidget->RemoveFromParent();
+	}
 }
 
 void AWOGBaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

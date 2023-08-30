@@ -33,6 +33,7 @@
 #include "TargetSystemComponent.h"
 #include "Magic/WOGBaseMagic.h"
 #include "AbilitySystem/AttributeSets/WOGAttributeSetBase.h"
+#include "UI/WOGHoldProgressBar.h"
 
 void ABasePlayerCharacter::OnConstruction(const FTransform& Transform)
 {
@@ -151,11 +152,13 @@ void ABasePlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 		//Target
 		EnhancedInputComponent->BindAction(TargetAction, ETriggerEvent::Completed, this, &ThisClass::TargetActionPressed);
 		EnhancedInputComponent->BindAction(CycleTargetAction, ETriggerEvent::Triggered, this, &ThisClass::CycleTargetActionPressed);
+
 		//Equip
 		EnhancedInputComponent->BindAction(AbilitiesAction, ETriggerEvent::Triggered, this, &ThisClass::AbilitiesButtonPressed);
-		EnhancedInputComponent->BindAction(AbilitiesHoldAction, ETriggerEvent::Triggered, this, &ThisClass::AbilitiesHoldButtonPressed);
+
 		//PrimaryLightAction
 		EnhancedInputComponent->BindAction(PrimaryLightAction, ETriggerEvent::Triggered, this, &ThisClass::PrimaryLightButtonPressed);
+		EnhancedInputComponent->BindAction(PrimaryHeavyAction, ETriggerEvent::Started, this, &ThisClass::PrimaryHeavyAttackStarted);
 		EnhancedInputComponent->BindAction(PrimaryHeavyAction, ETriggerEvent::Ongoing, this, TEXT("PrimaryArmHeavyAttack"));
 		EnhancedInputComponent->BindAction(PrimaryHeavyAction, ETriggerEvent::Canceled, this, &ThisClass::PrimaryHeavyAttackCanceled);
 		EnhancedInputComponent->BindAction(PrimaryHeavyAction, ETriggerEvent::Triggered, this, &ThisClass::PrimaryExecuteHeavyAttack);
@@ -278,22 +281,86 @@ void ABasePlayerCharacter::WeaponRangedActionPressed(const FInputActionValue& Va
 	}
 }
 
-void ABasePlayerCharacter::PrimaryLightButtonPressed(const FInputActionValue& Value)
+void ABasePlayerCharacter::AbilityHoldStarted(const FName& Slot)
 {
-	bool bCanActivateAbility = UWOGBlueprintLibrary::GetEquippedWeapon(this)
-		|| UWOGBlueprintLibrary::GetEquippedMagic(this);
+	if (!EquipmentManager) return;
 
-	if (bCanActivateAbility)
+	AActor* OutMagic = nullptr;
+	EquipmentManager->GetMagicShortcutReference(Slot, OutMagic);
+	TObjectPtr<AWOGBaseMagic> Magic = Cast<AWOGBaseMagic>(OutMagic);
+
+	if (Magic && HasMatchingGameplayTag(Magic->GetMagicData().CooldownTag))
 	{
-		SendAbilityLocalInput(EWOGAbilityInputID::AttackLight);
+		UE_LOG(LogTemp, Error, TEXT("Cooldown in effect. Can't equip"));
+		return;
+	}
+	if (!Magic || Magic->GetMagicData().AbilityInputType != EAbilityInputType::EAI_Hold)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Invalid Magic or not HOLD type"));
+		return;
 	}
 
+	Client_AddHoldProgressBar();
+}
+
+void ABasePlayerCharacter::ConfirmHoldStarted()
+{
+	TObjectPtr<AWOGBaseMagic> EquippedMagic = UWOGBlueprintLibrary::GetEquippedMagic(this);
+	if (EquippedMagic && HasMatchingGameplayTag(EquippedMagic->GetMagicData().CooldownTag))
+	{
+		UE_LOG(LogTemp, Error, TEXT("Cooldown in effect. Can't equip"));
+		return;
+	}
+	if (!EquippedMagic || EquippedMagic->GetMagicData().AbilityType != EAbilityType::EAT_AOE)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Invalid Magic or not AOE type"));
+		return;
+	}
+
+	Client_AddHoldProgressBar();
+}
+
+void ABasePlayerCharacter::AbilityHoldButtonElapsed(FInputActionValue ActionValue, float ElapsedTime, float TriggeredTime)
+{
+	if (HoldProgressBarWidget)
+	{
+		HoldProgressBarWidget->TimeHeld = ElapsedTime;
+	}
+}
+
+void ABasePlayerCharacter::AbilityHoldButtonCanceled(const FInputActionValue& Value)
+{
+	RemoveHoldProgressBarWidget();
+}
+
+void ABasePlayerCharacter::PrimaryLightButtonPressed(const FInputActionValue& Value)
+{
 	TObjectPtr<AWOGBaseMagic> EquippedMagic = UWOGBlueprintLibrary::GetEquippedMagic(this);
 	if (EquippedMagic && EquippedMagic->GetMagicData().AbilityType != EAbilityType::EAT_AOE && AbilitySystemComponent.Get())
 	{
 		AbilitySystemComponent->LocalInputConfirm();
-		UE_LOG(LogTemp, Warning, TEXT("Confirmed Input"))
+		UE_LOG(LogTemp, Warning, TEXT("Confirmed Input"));
+		return;
 	}
+
+	TObjectPtr<AWOGBaseWeapon> EquippedWeapon = UWOGBlueprintLibrary::GetEquippedWeapon(this);
+	if (EquippedWeapon && HasMatchingGameplayTag(TAG_State_Weapon_Ranged_AOE) && AbilitySystemComponent.Get())
+	{
+		AbilitySystemComponent->LocalInputConfirm();
+		UE_LOG(LogTemp, Warning, TEXT("Confirmed Input"));
+		return;
+	}
+
+	bool bCanActivateAbility = UWOGBlueprintLibrary::GetEquippedWeapon(this) || UWOGBlueprintLibrary::GetEquippedMagic(this);
+	if (bCanActivateAbility)
+	{
+		SendAbilityLocalInput(EWOGAbilityInputID::AttackLight);
+	}
+}
+
+void ABasePlayerCharacter::PrimaryHeavyAttackStarted(const FInputActionValue& Value)
+{
+	ConfirmHoldStarted();
 }
 
 void ABasePlayerCharacter::PrimaryArmHeavyAttack(FInputActionValue ActionValue, float ElapsedTime, float TriggeredTime)
@@ -306,6 +373,11 @@ void ABasePlayerCharacter::PrimaryArmHeavyAttack(FInputActionValue ActionValue, 
 			return;
 		}
 	}
+
+	if (HoldProgressBarWidget)
+	{
+		HoldProgressBarWidget->TimeHeld = ElapsedTime;
+	}
 }
 
 void ABasePlayerCharacter::PrimaryHeavyAttackCanceled(const FInputActionValue& Value)
@@ -316,6 +388,8 @@ void ABasePlayerCharacter::PrimaryHeavyAttackCanceled(const FInputActionValue& V
 		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Weapon_HeavyAttackCancel, EventPayload);
 		return;
 	}
+	
+	RemoveHoldProgressBarWidget();
 }
 
 void ABasePlayerCharacter::PrimaryExecuteHeavyAttack(const FInputActionValue& Value)
@@ -330,6 +404,7 @@ void ABasePlayerCharacter::PrimaryExecuteHeavyAttack(const FInputActionValue& Va
 	TObjectPtr<AWOGBaseMagic> EquippedMagic = UWOGBlueprintLibrary::GetEquippedMagic(this);
 	if (EquippedMagic && EquippedMagic->GetMagicData().AbilityType == EAbilityType::EAT_AOE && AbilitySystemComponent.Get())
 	{
+		RemoveHoldProgressBarWidget();
 		AbilitySystemComponent->LocalInputConfirm();
 		UE_LOG(LogTemp, Warning, TEXT("Confirmed Input"))
 	}
@@ -544,14 +619,6 @@ void ABasePlayerCharacter::ResetPreviouslyEquippedMaterial()
 		EquipmentManager->GetWeaponShortcutReference(PreviousWeapon, OutItem);
 		if (OutItem)
 		{
-			/*FGameplayEventData EventPayload;
-			EventPayload.EventTag = TAG_Event_Weapon_Equip;
-			EventPayload.OptionalObject = OutItem;
-			int32 Key = FCString::Atoi(*PreviousWeapon.ToString());
-			EventPayload.EventMagnitude = Key;
-			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Weapon_Equip, EventPayload);
-			UE_LOG(LogTemp, Warning, TEXT("Equipped Previous Weapon: %s"), *GetNameSafe(OutItem));*/
-
 			Server_EquipWeapon(PreviousWeapon, OutItem);
 			UE_LOG(LogTemp, Warning, TEXT("Equipped Previous Weapon: %s"), *GetNameSafe(OutItem));
 		}
