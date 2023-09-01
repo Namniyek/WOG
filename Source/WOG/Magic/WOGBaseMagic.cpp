@@ -338,6 +338,8 @@ void AWOGBaseMagic::InitMagicDefaults()
 
 void AWOGBaseMagic::Server_DropMagic_Implementation()
 {
+	RemoveGrantedAbilities(OwnerCharacter);
+
 	UAGR_EquipmentManager* Equipment = UAGRLibrary::GetEquipment(OwnerCharacter);
 	if (Equipment)
 	{

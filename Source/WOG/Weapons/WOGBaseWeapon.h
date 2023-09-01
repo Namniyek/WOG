@@ -19,6 +19,7 @@ class UAGR_ItemComponent;
 class USphereComponent;
 class AWOGRangedWeaponBase;
 class AActor;
+class UCameraShakeBase;
 
 
 USTRUCT(BlueprintType)
@@ -127,8 +128,13 @@ struct FWeaponDataTable : public FTableRowBase
 	USoundCue* HitSound = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "5 - Cosmetic")
+	USoundCue* AOEImpactSound = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "5 - Cosmetic")
 	USoundCue* BlockSound = nullptr;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "5 - Cosmetic")
+	TSubclassOf<UCameraShakeBase> AOECameraShake = nullptr;
 	//TO-DO SFX particles for weapon trail && hit FX
 
 };

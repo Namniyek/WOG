@@ -1192,6 +1192,11 @@ void ABasePlayerCharacter::BroadcastHit_Implementation(AActor* AgressorActor, co
 			EventPayload.EventMagnitude = AgressorWeapon->GetWeaponData().StunDuration;
 			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, AgressorWeapon->GetWeaponData().RangedTag, EventPayload);
 			UE_LOG(LogTemp, Warning, TEXT("Shield throw hit and applied: %s during %f seconds"), *AgressorWeapon->GetWeaponData().RangedTag.ToString(), AgressorWeapon->GetWeaponData().StunDuration);
+
+			FGameplayCueParameters CueParams;
+			CueParams.Location = Hit.ImpactPoint;
+			CueParams.EffectCauser = AgressorCharacter;
+			AbilitySystemComponent->ExecuteGameplayCueLocal(TAG_Cue_Weapon_BodyHit, CueParams);
 		}
 
 		//Victim hit by dual weapon throw
@@ -1202,6 +1207,11 @@ void ABasePlayerCharacter::BroadcastHit_Implementation(AActor* AgressorActor, co
 			EventPayload.EventMagnitude = AgressorWeapon->GetWeaponData().StunDuration;
 			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, AgressorWeapon->GetWeaponData().RangedTag, EventPayload);
 			UE_LOG(LogTemp, Warning, TEXT("Weapon throw hit and applied: %s during %f seconds"), *AgressorWeapon->GetWeaponData().RangedTag.ToString(), AgressorWeapon->GetWeaponData().StunDuration);
+
+			FGameplayCueParameters CueParams;
+			CueParams.Location = Hit.ImpactPoint;
+			CueParams.EffectCauser = AgressorCharacter;
+			AbilitySystemComponent->ExecuteGameplayCueLocal(TAG_Cue_Weapon_BodyHit, CueParams);
 		}
 
 		//Victim hit by two handed ranged attack

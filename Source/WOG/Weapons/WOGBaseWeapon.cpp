@@ -102,6 +102,8 @@ void AWOGBaseWeapon::InitWeaponDefaults()
 
 void AWOGBaseWeapon::Server_DropWeapon_Implementation()
 {
+	RemoveGrantedAbilities(OwnerCharacter);
+
 	UAGR_EquipmentManager* Equipment = UAGRLibrary::GetEquipment(OwnerCharacter);
 	if (Equipment)
 	{
