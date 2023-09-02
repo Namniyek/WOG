@@ -384,7 +384,7 @@ void AWOGBaseMagic::Multicast_HandleStandbyCosmetics_Implementation(bool NewEnab
 	}
 	else
 	{
-		StandbyEffect->Deactivate();
+		StandbyEffect->DeactivateImmediate();
 	}
 }
 

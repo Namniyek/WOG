@@ -15,6 +15,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_State_Debuff_Shock, "State.Debuff.Shock");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Buff_DamageReduction, "State.Buff.DamageReduction");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Buff_Strength, "State.Buff.Strength");
+UE_DEFINE_GAMEPLAY_TAG(TAG_State_Buff_HealthRegen, "State.Buff.HealthRegen");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Weapon_AttackLight, "State.Weapon.AttackLight");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Weapon_AttackHeavy, "State.Weapon.AttackHeavy");
