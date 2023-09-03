@@ -340,7 +340,6 @@ void ABasePlayerCharacter::PrimaryLightButtonPressed(const FInputActionValue& Va
 	{
 		AbilitySystemComponent->LocalInputConfirm();
 		UE_LOG(LogTemp, Warning, TEXT("Confirmed Input"));
-		return;
 	}
 
 	TObjectPtr<AWOGBaseWeapon> EquippedWeapon = UWOGBlueprintLibrary::GetEquippedWeapon(this);

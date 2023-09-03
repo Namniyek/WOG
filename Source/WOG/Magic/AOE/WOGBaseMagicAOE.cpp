@@ -6,6 +6,8 @@
 #include "NiagaraComponent.h"
 #include "Components/SphereComponent.h"
 #include "Characters/WOGBaseCharacter.h"
+#include "Sound/SoundCue.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 AWOGBaseMagicAOE::AWOGBaseMagicAOE()
@@ -37,18 +39,28 @@ void AWOGBaseMagicAOE::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 void AWOGBaseMagicAOE::BeginPlay()
 {
 	Super::BeginPlay();
-
-	if (HasAuthority())
-	{
-		GetWorldTimerManager().SetTimer(InitDelayTimer, this, &AWOGBaseMagicAOE::Init, InitDelay);
-	}
+	
+	GetWorldTimerManager().SetTimer(InitDelayTimer, this, &AWOGBaseMagicAOE::Init, InitDelay);
 
 	OverlapSphere->OnComponentBeginOverlap.AddDynamic(this, &AWOGBaseMagicAOE::OnOverlap);
 }
 
 void AWOGBaseMagicAOE::Init()
 {
-	OverlapSphere->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	if (HasAuthority())
+	{
+		OverlapSphere->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	}
+
+	if (MagicData.ImpactSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, MagicData.ImpactSound, GetActorLocation());
+	}
+
+	if (IsValid(MagicData.CameraShake))
+	{
+		UGameplayStatics::PlayWorldCameraShake(this, MagicData.CameraShake, GetActorLocation(), 0.f, 1500);
+	}
 }
 
 void AWOGBaseMagicAOE::OnOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)

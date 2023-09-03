@@ -48,14 +48,11 @@ struct FMagicDataTable : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "2 - Animations")
 	UAnimMontage* AttackMontage = nullptr;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "2 - Animations")
-	UAnimMontage* EquipMontage = nullptr;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "2 - Animations")
-	UAnimMontage* HurtMontage = nullptr;
-
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "2 - Animations")
 	float AnimationSpeed = 1.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "2 - Animations")
+	FName CastMontageSection = FName("");
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "3 - GAS")
 	FGameplayTag MagicTag = FGameplayTag();
@@ -94,7 +91,16 @@ struct FMagicDataTable : public FTableRowBase
 	USoundCue* CastSound = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "5 - Cosmetic")
-	USoundCue* HitSound = nullptr;
+	USoundCue* ImpactSound = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "5 - Cosmetic")
+	USoundCue* IdleSound = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "5 - Cosmetic")
+	TSubclassOf<UCameraShakeBase> CameraShake = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "5 - Cosmetic", meta = (EditCondition = "AbilityType == EAbilityType::EAT_Projectile", EditConditionHides))
+	USoundCue* ProjectileSound = nullptr;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Projectile", meta = (EditCondition = "AbilityType == EAbilityType::EAT_Projectile", EditConditionHides))
 	TSubclassOf<AWOGBaseIdleMagic> IdleProjectileClass = nullptr;

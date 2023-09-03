@@ -22,7 +22,7 @@ protected:
 	virtual void Destroyed() override;
 
 	UFUNCTION(NetMulticast, Reliable)
-	void Multicast_AttachToHands(USkeletalMeshComponent* Mesh, const FName& RightHand, const FName& LeftHand);
+	void Multicast_HandleInit(USkeletalMeshComponent* Mesh, const FName& RightHand, const FName& LeftHand, USoundCue* NewSound);
 
 	#pragma region ActorComponents
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
@@ -35,7 +35,7 @@ protected:
 	TObjectPtr<UNiagaraComponent> LeftHandEffect;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<UAudioComponent > IdleSound;
+	TObjectPtr<UAudioComponent> IdleSound;
 	#pragma endregion
 
 public:	

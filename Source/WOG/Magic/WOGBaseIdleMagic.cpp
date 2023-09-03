@@ -27,7 +27,7 @@ AWOGBaseIdleMagic::AWOGBaseIdleMagic()
 	LeftHandEffect->bAutoActivate = false;
 
 	IdleSound = CreateDefaultSubobject<UAudioComponent >(TEXT("Idle Sound"));
-	IdleSound->bAutoActivate = true;
+	IdleSound->bAutoActivate = false;
 	IdleSound->SetupAttachment(GetRootComponent());
 }
 
@@ -41,12 +41,13 @@ void AWOGBaseIdleMagic::BeginPlay()
 	if (Character)
 	{
 		TObjectPtr<AWOGBaseMagic> EquippedMagic = UWOGBlueprintLibrary::GetEquippedMagic(Character);
-		if (EquippedMagic)
+		if (EquippedMagic && EquippedMagic->GetMagicData().IdleSound)
 		{
-			Multicast_AttachToHands(
+			Multicast_HandleInit(
 				Character->GetMesh(), 
 				EquippedMagic->GetMagicData().RighHandSocket, 
-				EquippedMagic->GetMagicData().LeftHandSocket);
+				EquippedMagic->GetMagicData().LeftHandSocket, 
+				EquippedMagic->GetMagicData().IdleSound);
 		}
 	}
 }
@@ -56,11 +57,14 @@ void AWOGBaseIdleMagic::Destroyed()
 	IdleSound->FadeOut(0.5f, 0);
 }
 
-void AWOGBaseIdleMagic::Multicast_AttachToHands_Implementation(USkeletalMeshComponent* Mesh, const FName& RightHand, const FName& LeftHand)
+void AWOGBaseIdleMagic::Multicast_HandleInit_Implementation(USkeletalMeshComponent* Mesh, const FName& RightHand, const FName& LeftHand, USoundCue* NewSound)
 {
 	RightHandEffect->AttachToComponent(Mesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, RightHand);
 	LeftHandEffect->AttachToComponent(Mesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, LeftHand);
 	RightHandEffect->Activate();
 	LeftHandEffect->Activate();
+
+	IdleSound->SetSound(NewSound);
+	IdleSound->Activate(true);
 }
 

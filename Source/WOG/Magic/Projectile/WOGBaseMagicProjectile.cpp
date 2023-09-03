@@ -62,6 +62,8 @@ void AWOGBaseMagicProjectile::BeginPlay()
 	Super::BeginPlay();
 
 	OverlapSphere->OnComponentHit.AddDynamic(this, &AWOGBaseMagicProjectile::OnHit);
+	ProjectileSound->SetSound(MagicData.ProjectileSound);
+	ProjectileSound->Play(0.f);
 }
 
 void AWOGBaseMagicProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
@@ -79,7 +81,7 @@ void AWOGBaseMagicProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* O
 	ProjectileSound->Stop();
 	ProjectileMovement->StopMovementImmediately();
 
-	UGameplayStatics::PlaySoundAtLocation(this, MagicData.HitSound, Hit.ImpactPoint);
+	UGameplayStatics::PlaySoundAtLocation(this, MagicData.ImpactSound, Hit.ImpactPoint);
 	UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, MagicData.HitVFX, Hit.ImpactPoint);
 
 	SetLifeSpan(0.2f);
