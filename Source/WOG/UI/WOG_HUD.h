@@ -9,6 +9,8 @@
 /**
  * 
  */
+class UWOGAbilityContainerWidget;
+
 UCLASS()
 class WOG_API UWOG_HUD : public UUserWidget
 {
@@ -40,5 +42,9 @@ public:
 
 	UFUNCTION(BlueprintPure)
 	float GetStaminaPercent();
+
+	//Can return nullptr
+	UFUNCTION()
+	UWOGAbilityContainerWidget* GetAbilityContainer();
 
 };

@@ -24,6 +24,7 @@ class AWOGBaseIdleMagic;
 class AWOGBaseMagicProjectile;
 class AWOGBaseMagicAOE;
 class AGameplayAbilityTargetActor_GroundTrace;
+class UTexture2D;
 
 USTRUCT(BlueprintType)
 struct FMagicDataTable : public FTableRowBase
@@ -72,6 +73,9 @@ struct FMagicDataTable : public FTableRowBase
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "3 - GAS")
 	TArray<TSubclassOf<UWOGGameplayAbilityBase>> AbilitiesToGrant = { nullptr };
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "3 - GAS")
+	FGameplayTag CooldownTag = FGameplayTag();
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "4 - Stats")
 	float Value = 0.f;
 
@@ -83,9 +87,6 @@ struct FMagicDataTable : public FTableRowBase
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "4 - Stats")
 	float Cooldown = 0.f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "4 - Stats")
-	FGameplayTag CooldownTag = FGameplayTag();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "5 - Cosmetic")
 	USoundCue* CastSound = nullptr;
@@ -101,6 +102,12 @@ struct FMagicDataTable : public FTableRowBase
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "5 - Cosmetic", meta = (EditCondition = "AbilityType == EAbilityType::EAT_Projectile", EditConditionHides))
 	USoundCue* ProjectileSound = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "6 - User Interface")
+	TSubclassOf<UUserWidget> AbilityWidgetClass = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "6 - User Interface")
+	UTexture2D* AbilityIcon = nullptr;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Projectile", meta = (EditCondition = "AbilityType == EAbilityType::EAT_Projectile", EditConditionHides))
 	TSubclassOf<AWOGBaseIdleMagic> IdleProjectileClass = nullptr;
@@ -232,6 +239,10 @@ private:
 
 	void SpawnIdleClass();
 	TObjectPtr<AWOGBaseIdleMagic> IdleActor;
+
+	void AddAbilityWidget(const int32& Key);
+	UPROPERTY(Replicated)
+	int32 AbilityKey = 1;
 
 public:	
 

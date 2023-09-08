@@ -13,8 +13,8 @@ public class WOG : ModuleRules
         PublicIncludePaths.Add("WOG/");
 
         PrivateDependencyModuleNames.AddRange(new string[] {
-            // "Slate",
-            // "SlateCore",
+            "Slate",
+            "SlateCore",
             "GameplayAbilities",
             "GameplayTags",
             "GameplayTasks"

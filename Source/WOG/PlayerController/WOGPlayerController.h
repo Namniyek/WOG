@@ -9,6 +9,8 @@
 /**
  * 
  */
+class UWOGAbilityWidget;
+
 UCLASS()
 class WOG_API AWOGPlayerController : public APlayerController
 {
@@ -23,6 +25,12 @@ public:
 
 	UFUNCTION(Client, Reliable)
 	void Client_CreateEndgameWidget();
+
+	UFUNCTION(Client, Reliable)
+	void Client_CreateAbilityWidget(const int32& AbilityID, TSubclassOf<UUserWidget> Class, UTexture2D* Icon, const float& Cooldown, const FGameplayTag& Tag);
+
+	UFUNCTION(Client, Reliable)
+	void Client_RemoveAbilityWidget(const int& AbilityID);
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
@@ -58,6 +66,11 @@ private:
 	void Client_ResetHUD();
 
 	TObjectPtr<class ABasePlayerCharacter> DefaultPawn = nullptr;
+
+	TObjectPtr<UWOGAbilityWidget> AbilityWidgetOne = nullptr;
+	TObjectPtr<UWOGAbilityWidget> AbilityWidgetTwo = nullptr;
+	TObjectPtr<UWOGAbilityWidget> AbilityWidgetThree = nullptr;
+	TObjectPtr<UWOGAbilityWidget> AbilityWidgetFour = nullptr;
 
 public:
 	UFUNCTION(BlueprintPure)

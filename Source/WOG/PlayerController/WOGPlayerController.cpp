@@ -16,6 +16,10 @@
 #include "Enemies/WOGPossessableEnemy.h"
 #include "Characters/WOGBaseCharacter.h"
 #include "AbilitySystemComponent.h"
+#include "UI/WOGAbilityWidget.h"
+#include "UI/WOGAbilityContainerWidget.h"
+#include "Components/Image.h"
+#include "UI/WOG_HUD.h"
 
 
 void AWOGPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -176,6 +180,35 @@ void AWOGPlayerController::Client_CreateAnnouncementWidget_Implementation(ETimeO
 	SetTODString(TOD, StringMain, StringSec);
 
 	MatchHUD->AddAnnouncementWidget(StringMain, StringSec);
+}
+
+void AWOGPlayerController::Client_CreateAbilityWidget_Implementation(const int32& AbilityID, TSubclassOf<UUserWidget> Class, UTexture2D* Icon, const float& Cooldown, const FGameplayTag& Tag)
+{
+	MatchHUD == nullptr ? Cast<AWOGMatchHUD>(GetHUD()) : MatchHUD;
+	if (!MatchHUD || !MatchHUD->HUDWidget) return;
+
+	TObjectPtr<UWOGAbilityWidget> AbilityWidget = Cast<UWOGAbilityWidget>(CreateWidget<UUserWidget>(this, Class));
+	if (!AbilityWidget) return;
+
+	AbilityWidget->SetIconTexture(Icon);
+	AbilityWidget->SetCooldownTag(Tag);
+	AbilityWidget->SetCooldownTime(Cooldown);
+	AbilityWidget->InitializeWidget();
+
+	TObjectPtr<UWOGAbilityContainerWidget> Container = MatchHUD->HUDWidget->GetAbilityContainer();
+	if (!Container) return;
+
+	Container->AddChildAbility(AbilityID, AbilityWidget);
+}
+
+void AWOGPlayerController::Client_RemoveAbilityWidget_Implementation(const int32& AbilityID)
+{
+	MatchHUD == nullptr ? Cast<AWOGMatchHUD>(GetHUD()) : MatchHUD;
+	if (!MatchHUD || !MatchHUD->HUDWidget) return;
+	TObjectPtr<UWOGAbilityContainerWidget> Container = MatchHUD->HUDWidget->GetAbilityContainer();
+	if (!Container) return;
+
+	Container->RemoveChildAbility(AbilityID);
 }
 
 void AWOGPlayerController::SetTODString(ETimeOfDay CurrentTOD, FString& StringMain, FString& StringSec)

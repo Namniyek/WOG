@@ -22,6 +22,7 @@
 #include "Magic/AOE/WOGBaseMagicAOE.h"
 #include "Libraries/WOGBlueprintLibrary.h"
 #include "NiagaraComponent.h"
+#include "PlayerController/WOGPlayerController.h"
 
 AWOGBaseMagic::AWOGBaseMagic()
 {
@@ -157,6 +158,7 @@ void AWOGBaseMagic::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLif
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AWOGBaseMagic, OwnerCharacter);
+	DOREPLIFETIME(AWOGBaseMagic, AbilityKey);
 }
 
 void AWOGBaseMagic::BeginPlay()
@@ -222,6 +224,8 @@ void AWOGBaseMagic::OnMagicOverlap(UPrimitiveComponent* OverlappedComponent, AAc
 				OwnerCharacter->Server_EquipMagic(MagicRef.Key, this);
 				AttachToActor(OwnerCharacter, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 			}
+
+			AddAbilityWidget(KeyInt);
 			return;
 		}
 	}
@@ -229,6 +233,24 @@ void AWOGBaseMagic::OnMagicOverlap(UPrimitiveComponent* OverlappedComponent, AAc
 	{
 		UE_LOG(LogTemp, Error, TEXT("Too many magics in the inventory"));
 	}
+}
+
+void AWOGBaseMagic::AddAbilityWidget(const int32& Key)
+{
+	if (!OwnerCharacter || !OwnerCharacter->GetOwnerPC()) return;
+
+	switch (Key)
+	{
+	case 1:
+		AbilityKey = OwnerCharacter->GetCharacterData().bIsAttacker ? 2 : 3;
+		break;
+
+	case 2:
+		AbilityKey = OwnerCharacter->GetCharacterData().bIsAttacker ? 3 : -1;
+		break;
+	}
+
+	OwnerCharacter->GetOwnerPC()->Client_CreateAbilityWidget(AbilityKey, MagicData.AbilityWidgetClass, MagicData.AbilityIcon, MagicData.Cooldown, MagicData.CooldownTag);
 }
 
 void AWOGBaseMagic::OnMagicPickedUp(UAGR_InventoryManager* Inventory)
@@ -371,6 +393,8 @@ void AWOGBaseMagic::Server_DropMagic_Implementation()
 	{
 		AnimMaster->SetupBasePose(TAG_Pose_Relax);
 	}
+
+	OwnerCharacter->GetOwnerPC()->Client_RemoveAbilityWidget(AbilityKey);
 
 	OwnerCharacter = nullptr;
 	SetOwner(nullptr);

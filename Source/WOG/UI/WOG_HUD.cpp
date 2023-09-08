@@ -4,6 +4,8 @@
 #include "WOG_HUD.h"
 #include "WOG/PlayerCharacter/BasePlayerCharacter.h"
 #include "WOG/PlayerController/WOGPlayerController.h"
+#include "Blueprint/WidgetBlueprintLibrary.h"
+#include "UI/WOGAbilityContainerWidget.h"
 #include "AbilitySystem/AttributeSets/WOGAttributeSetBase.h"
 
 void UWOG_HUD::NativeOnInitialized()
@@ -89,4 +91,14 @@ float UWOG_HUD::GetStaminaPercent()
         GEngine->AddOnScreenDebugMessage(1, 2.f, FColor::Red, FString("Pawn Error"));
         return 0.f;
     }
+}
+
+UWOGAbilityContainerWidget* UWOG_HUD::GetAbilityContainer()
+{
+    TArray<UUserWidget*> Widgets;
+    UWidgetBlueprintLibrary::GetAllWidgetsOfClass(this, Widgets, UWOGAbilityContainerWidget::StaticClass(), false);
+    
+    TObjectPtr<UWOGAbilityContainerWidget> WidgetToReturn = Cast<UWOGAbilityContainerWidget>(Widgets[0]);
+
+    return WidgetToReturn;
 }

@@ -9,6 +9,8 @@
 /**
  * 
  */
+class UWOG_HUD;
+
 UCLASS()
 class WOG_API AWOGMatchHUD : public AHUD
 {
@@ -45,5 +47,8 @@ public:
 
 	UFUNCTION(BlueprintNativeEvent)
 	void ResetHUDAfterRespawn();
+
+	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
+	TObjectPtr<UWOG_HUD> HUDWidget = nullptr;
 
 };

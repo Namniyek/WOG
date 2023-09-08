@@ -117,3 +117,6 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Cooldown_Input_AbilitySwitch, "Cooldown.Input.Ability
 UE_DEFINE_GAMEPLAY_TAG(TAG_Cooldown_Input_Magic_AOE, "Cooldown.Input.Magic.AOE");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Cooldown_Input_Magic_Instant, "Cooldown.Input.Magic.Instant");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Cooldown_Input_Magic_Buff, "Cooldown.Input.Magic.Buff");
+
+//SetByCallerTag
+UE_DEFINE_GAMEPLAY_TAG(TAG_Data_Cooldown, "Data.Cooldown");
