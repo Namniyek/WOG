@@ -10,6 +10,9 @@
  * 
  */
 class UWOGAbilityContainerWidget;
+class UVerticalBox;
+class UProgressBar;
+class UWOGObjectiveWidget;
 
 UCLASS()
 class WOG_API UWOG_HUD : public UUserWidget
@@ -30,7 +33,13 @@ protected:
 
 private:
 	UPROPERTY(meta = (BindWidget))
-	class UProgressBar* HealthBar;
+	UProgressBar* HealthBar;
+
+	UPROPERTY(meta = (BindWidget))
+	UVerticalBox* WarningBox;
+
+	UPROPERTY(meta = (BindWidget))
+	UWOGObjectiveWidget* ObjectiveWidget;
 
 public:
 	UFUNCTION(BlueprintPure)
@@ -46,5 +55,8 @@ public:
 	//Can return nullptr
 	UFUNCTION()
 	UWOGAbilityContainerWidget* GetAbilityContainer();
+
+	FORCEINLINE UVerticalBox* GetWarningBox() { return WarningBox; }
+	FORCEINLINE UWOGObjectiveWidget* GetObjectiveWidget() { return ObjectiveWidget; }
 
 };

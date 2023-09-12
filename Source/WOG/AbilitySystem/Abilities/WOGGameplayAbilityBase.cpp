@@ -7,8 +7,9 @@
 #include "Characters/WOGBaseCharacter.h"
 #include "PlayerCharacter/BasePlayerCharacter.h"
 #include "AbilitySystemLog.h"
+#include "AbilitySystemGlobals.h"
 #include "Types/WOGGameplayTags.h"
-
+#include "PlayerController/WOGPlayerController.h"
 
 UWOGGameplayAbilityBase::UWOGGameplayAbilityBase()
 {
@@ -23,6 +24,9 @@ UWOGGameplayAbilityBase::UWOGGameplayAbilityBase()
 	ActivationBlockedTags.AddTag(TAG_State_Debuff_Knockback);
 	ActivationBlockedTags.AddTag(TAG_State_Debuff_KO);
 	ActivationBlockedTags.AddTag(TAG_State_Debuff_Stun);
+
+
+	OnCostCheckedDelegate.AddDynamic(this, &ThisClass::OnCostChecked);
 }
 
 void UWOGGameplayAbilityBase::OnAvatarSet(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec)
@@ -92,6 +96,58 @@ void UWOGGameplayAbilityBase::EndAbility(const FGameplayAbilitySpecHandle Handle
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
 
+bool UWOGGameplayAbilityBase::CheckCost(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, OUT FGameplayTagContainer* OptionalRelevantTags) const
+{
+	/*
+	*Same code as the parent version, with the exception of the broadcasting of the OnCastChecked delegate before return.
+	*"Super::" not needed
+	*/
+
+	FGameplayAttribute CostAttribute;
+
+	UGameplayEffect* CostGE = GetCostGameplayEffect();
+	if (CostGE)
+	{
+		/*
+		*Calculations to get the affected attribute
+		*/
+		FGameplayEffectSpec	Spec(CostGE, MakeEffectContext(Handle, ActorInfo), GetAbilityLevel(Handle, ActorInfo));
+		Spec.CalculateModifierMagnitudes();
+		const FGameplayModifierInfo& ModDef = Spec.Def->Modifiers[0];
+		CostAttribute = ModDef.Attribute;
+
+		UAbilitySystemComponent* const AbilitySystemComponent = ActorInfo->AbilitySystemComponent.Get();
+		check(AbilitySystemComponent != nullptr);
+		if (!AbilitySystemComponent->CanApplyAttributeModifiers(CostGE, GetAbilityLevel(Handle, ActorInfo), MakeEffectContext(Handle, ActorInfo)))
+		{
+			const FGameplayTag& CostTag = UAbilitySystemGlobals::Get().ActivateFailCostTag;
+
+			if (OptionalRelevantTags && CostTag.IsValid())
+			{
+				OptionalRelevantTags->AddTag(CostTag);
+			}
+
+			if (CostAttribute.GetName() == FString("Adrenaline") || CostAttribute.GetName() == FString("Mana"))
+			{
+				OnCostCheckedDelegate.Broadcast(false, CostAttribute);
+			}
+			return false;
+		}
+
+		if (CostAttribute.GetName() == FString("Adrenaline") || CostAttribute.GetName() == FString("Mana"))
+		{
+			OnCostCheckedDelegate.Broadcast(true, CostAttribute);
+		}
+		return true;
+	}
+
+	if (CostAttribute.GetName() == FString("Adrenaline") || CostAttribute.GetName() == FString("Mana"))
+	{
+		OnCostCheckedDelegate.Broadcast(true, CostAttribute);
+	}
+	return true;
+}
+
 AWOGBaseCharacter* UWOGGameplayAbilityBase::GetCharacterFromActorInfo() const
 {
 	return Cast<AWOGBaseCharacter>(GetAvatarActorFromActorInfo());
@@ -100,4 +156,19 @@ AWOGBaseCharacter* UWOGGameplayAbilityBase::GetCharacterFromActorInfo() const
 ABasePlayerCharacter* UWOGGameplayAbilityBase::GetPlayerCharacterFromActorInfo() const
 {
 	return Cast<ABasePlayerCharacter>(GetAvatarActorFromActorInfo());
+}
+
+void UWOGGameplayAbilityBase::OnCostChecked(bool bIsEnough, FGameplayAttribute Attribute)
+{
+	if (!GetCharacterFromActorInfo() || !GetCharacterFromActorInfo()->Controller || !GetCharacterFromActorInfo()->IsLocallyControlled())
+	{
+		return;
+	}
+	
+	if (!bIsEnough)
+	{
+		TObjectPtr<AWOGPlayerController> OwnerPC = Cast<AWOGPlayerController>(GetCharacterFromActorInfo()->Controller);
+		if (!OwnerPC) return;
+		OwnerPC->CreateWarningWidget(Attribute.GetName());
+	}
 }

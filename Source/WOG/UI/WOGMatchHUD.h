@@ -39,6 +39,9 @@ public:
 	UPROPERTY()
 	class URestartWidget* Restart;
 
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UUserWidget> WarningClass;
+
 	UFUNCTION()
 	void AddEndgameWidget();
 

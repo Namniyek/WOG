@@ -9,7 +9,7 @@ bool UMainAnnouncementWidget::Initialize()
 	if (!Super::Initialize()) return false;
 	AnnouncementTextMain->SetText(FText::FromString(StartingText));
 	AnnouncementTextSec->SetText(FText::FromString(StartingText));
-	GetWorld()->GetTimerManager().SetTimer(DestroyTimer, this, &ThisClass::RemoveFromParent, DestroyTime);
+	GetWorld()->GetTimerManager().SetTimer(DestroyTimer, this, &ThisClass::RemoveMainAnnouncement, DestroyTime);
 	return true;
 }
 

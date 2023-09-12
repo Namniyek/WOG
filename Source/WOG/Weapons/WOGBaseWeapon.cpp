@@ -20,6 +20,7 @@
 #include "AbilitySystemComponent.h"
 #include "Weapons/WOGRangedWeaponBase.h"
 #include "Libraries/WOGBlueprintLibrary.h"
+#include "PlayerController/WOGPlayerController.h"
 
 // Sets default values
 AWOGBaseWeapon::AWOGBaseWeapon()
@@ -55,6 +56,7 @@ void AWOGBaseWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AWOGBaseWeapon, OwnerCharacter);
+	DOREPLIFETIME(AWOGBaseWeapon, AbilityKey);
 }
 
 void AWOGBaseWeapon::OnConstruction(const FTransform& Transform)
@@ -92,6 +94,15 @@ void AWOGBaseWeapon::InitWeaponData()
 	}
 
 	ComboStreak = 0;
+}
+
+void AWOGBaseWeapon::AddAbilityWidget(const int32& Key)
+{
+	if (!OwnerCharacter || !OwnerCharacter->GetOwnerPC()) return;
+
+	AbilityKey = Key;
+
+	OwnerCharacter->GetOwnerPC()->Client_CreateAbilityWidget(AbilityKey, WeaponData.AbilityWidgetClass, WeaponData.AbilityIcon, WeaponData.Cooldown, WeaponData.CooldownTag);
 }
 
 void AWOGBaseWeapon::InitWeaponDefaults()
@@ -133,6 +144,8 @@ void AWOGBaseWeapon::Server_DropWeapon_Implementation()
 	{
 		AnimMaster->SetupBasePose(TAG_Pose_Relax);
 	}
+
+	OwnerCharacter->GetOwnerPC()->Client_RemoveAbilityWidget(AbilityKey);
 
 	OwnerCharacter = nullptr;
 	SetOwner(nullptr);
@@ -225,6 +238,8 @@ void AWOGBaseWeapon::OnWeaponOverlap(UPrimitiveComponent* OverlappedComponent, A
 			{
 				OwnerCharacter->Server_EquipWeapon(WeaponRef.Key, this);
 			}
+
+			AddAbilityWidget(KeyInt);
 			return;
 		}
 	}

@@ -23,6 +23,9 @@ public:
 	UFUNCTION(Client, Reliable)
 	void Client_CreateAnnouncementWidget(ETimeOfDay NewTOD);
 
+	UFUNCTION()
+	void CreateWarningWidget(const FString& Attribute);
+
 	UFUNCTION(Client, Reliable)
 	void Client_CreateEndgameWidget();
 

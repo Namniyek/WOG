@@ -137,7 +137,7 @@ bool AWOGBaseCharacter::ApplyGameplayEffectToSelf(TSubclassOf<UGameplayEffect> E
 
 void AWOGBaseCharacter::OnHealthAttributeChanged(const FOnAttributeChangeData& Data)
 {
-	if (Data.NewValue <= 0 && Data.OldValue > 0)
+	if (Data.NewValue <= 0 && Data.OldValue > 0 && HasAuthority())
 	{
 		if (Data.GEModData)
 		{

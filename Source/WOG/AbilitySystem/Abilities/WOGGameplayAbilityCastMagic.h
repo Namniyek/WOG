@@ -16,7 +16,6 @@ class WOG_API UWOGGameplayAbilityCastMagic : public UWOGGameplayAbilityBase
 {
 	GENERATED_BODY()
 	
-
 public:
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Cooldown")
 	FScalableFloat CooldownDuration;
@@ -32,5 +31,4 @@ public:
 
 	/** Applies CooldownGameplayEffect to the target */
 	virtual void ApplyCooldown(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) const override;
-
 };

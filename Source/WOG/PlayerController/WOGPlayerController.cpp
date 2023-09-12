@@ -20,7 +20,10 @@
 #include "UI/WOGAbilityContainerWidget.h"
 #include "Components/Image.h"
 #include "UI/WOG_HUD.h"
-
+#include "Blueprint/WidgetBlueprintLibrary.h"
+#include "Components/VerticalBox.h"
+#include "UI/WOGWarningWidget.h"
+#include "UI/WOGObjectiveWidget.h"
 
 void AWOGPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
@@ -213,53 +216,47 @@ void AWOGPlayerController::Client_RemoveAbilityWidget_Implementation(const int32
 
 void AWOGPlayerController::SetTODString(ETimeOfDay CurrentTOD, FString& StringMain, FString& StringSec)
 {
+	MatchHUD == nullptr ? Cast<AWOGMatchHUD>(GetHUD()) : MatchHUD;
+	if (!MatchHUD || !MatchHUD->HUDWidget) return;
+
 	switch (CurrentTOD)
 	{
 	case ETimeOfDay::TOD_Dusk1:
 		StringMain = FString("Dusk of the first day");
-		if (bIsAttacker)
-		{
-			StringSec = FString("Destroy the Village");
-		}
-		else
-		{
-			StringSec = FString("Defend the Village!");
-		}
+		StringSec = bIsAttacker ? FString("Destroy the Village") : FString("Defend the Village!");
+		MatchHUD->HUDWidget->GetObjectiveWidget()->SetObjectiveText(bIsAttacker ? EObjectiveText::EOT_DestroyTheVillage : EObjectiveText::EOT_DefendTheVillage);
 		break;
+
 	case ETimeOfDay::TOD_Dawn2:
 		StringMain = FString("Dawn of the second day");
 		StringSec = FString("Rest and prepare for the night!");
+		MatchHUD->HUDWidget->GetObjectiveWidget()->SetObjectiveText(EObjectiveText::EOT_PrepareForTheNight);
 		break;
+
 	case ETimeOfDay::TOD_Dusk2:
 		StringMain = FString("Dusk of the second day");
-		if (bIsAttacker)
-		{
-			StringSec = FString("Destroy the Village");
-		}
-		else
-		{
-			StringSec = FString("Defend the Village!");
-		}
+		StringSec = bIsAttacker ? FString("Destroy the Village") : FString("Defend the Village!");
+		MatchHUD->HUDWidget->GetObjectiveWidget()->SetObjectiveText(bIsAttacker ? EObjectiveText::EOT_DestroyTheVillage : EObjectiveText::EOT_DefendTheVillage);
 		break;
+
 	case ETimeOfDay::TOD_Dawn3:
 		StringMain = FString("Dawn of the final day");
 		StringSec = FString("Rest and prepare for the night!");
+		MatchHUD->HUDWidget->GetObjectiveWidget()->SetObjectiveText(EObjectiveText::EOT_PrepareForTheNight);
 		break;
+
 	case ETimeOfDay::TOD_Dusk3:
 		StringMain = FString("Dusk of the final day");
-		if (bIsAttacker)
-		{
-			StringSec = FString("Destroy the Village");
-		}
-		else
-		{
-			StringSec = FString("Defend the Village!");
-		}
+		StringSec = bIsAttacker ? FString("Destroy the Village") : FString("Defend the Village!");
+		MatchHUD->HUDWidget->GetObjectiveWidget()->SetObjectiveText(bIsAttacker ? EObjectiveText::EOT_DestroyTheVillage : EObjectiveText::EOT_DefendTheVillage);
 		break;
+
 	case ETimeOfDay::TOD_Dawn4:
 		StringMain = FString("Game Over!");
 		StringSec = FString("");
+		MatchHUD->HUDWidget->GetObjectiveWidget()->RemoveFromParent();
 		break;
+
 	default:
 		return;
 	}
@@ -279,5 +276,23 @@ void AWOGPlayerController::Client_ResetHUD_Implementation()
 	if (MatchHUD)
 	{
 		MatchHUD->ResetHUDAfterRespawn();
+	}
+}
+
+void AWOGPlayerController::CreateWarningWidget(const FString& Attribute)
+{
+	MatchHUD == nullptr ? Cast<AWOGMatchHUD>(GetHUD()) : MatchHUD;
+	if (!MatchHUD || !MatchHUD->HUDWidget || !IsValid(MatchHUD->WarningClass)) return;
+
+	TObjectPtr<UWOGWarningWidget> WarningWidget = Cast<UWOGWarningWidget>(CreateWidget<UUserWidget>(this, MatchHUD->WarningClass));
+	if (WarningWidget)
+	{
+		WarningWidget->SetWarningText(Attribute);
+
+		if (MatchHUD->HUDWidget->GetWarningBox())
+		{
+			MatchHUD->HUDWidget->GetWarningBox()->ClearChildren();
+			MatchHUD->HUDWidget->GetWarningBox()->AddChild(WarningWidget);
+		}
 	}
 }

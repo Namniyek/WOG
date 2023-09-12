@@ -10,6 +10,9 @@
 /**
  * 
  */
+ /** Used to notify ability state tasks that a state is being ended */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnGameplayAbilityCostChecked, bool, bIsEnough, FGameplayAttribute, Attribute);
+
 UCLASS()
 class WOG_API UWOGGameplayAbilityBase : public UGameplayAbility
 {
@@ -39,6 +42,9 @@ public:
 
 	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
 
+	/** Checks cost. returns true if we can pay for the ability. False if not */
+	virtual bool CheckCost(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, OUT FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
+
 protected:
 
 	//Effects that are apllied at start of the ability and removed at the end
@@ -57,5 +63,9 @@ protected:
 	UFUNCTION(BlueprintPure)
 	class ABasePlayerCharacter* GetPlayerCharacterFromActorInfo() const;
 
-	
+	UPROPERTY(BlueprintAssignable)
+	FOnGameplayAbilityCostChecked OnCostCheckedDelegate;
+
+	UFUNCTION()
+	void OnCostChecked(bool bIsEnough, FGameplayAttribute Attribute);
 };

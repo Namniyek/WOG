@@ -100,6 +100,9 @@ struct FWeaponDataTable : public FTableRowBase
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "3 - GAS")
 	TSubclassOf<UGameplayEffect> RangedWeaponEffect = nullptr;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "3 - GAS")
+	FGameplayTag CooldownTag = FGameplayTag();
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "4 - Stats")
 	float BaseDamage = 0.f;
 
@@ -121,6 +124,9 @@ struct FWeaponDataTable : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "4 - Stats")
 	float Cost = 0.f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "4 - Stats")
+	float Cooldown = 0.f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "5 - Cosmetic")
 	USoundCue* SwingSound = nullptr;
 
@@ -136,6 +142,12 @@ struct FWeaponDataTable : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "5 - Cosmetic")
 	TSubclassOf<UCameraShakeBase> AOECameraShake = nullptr;
 	//TO-DO SFX particles for weapon trail && hit FX
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "6 - User Interface")
+	TSubclassOf<UUserWidget> AbilityWidgetClass = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "6 - User Interface")
+	UTexture2D* AbilityIcon = nullptr;
 
 };
 
@@ -201,6 +213,8 @@ protected:
 
 	virtual void InitWeaponData();
 
+
+
 	#pragma region Drop weapon functionality
 
 	virtual void InitWeaponDefaults();
@@ -236,6 +250,10 @@ private:
 
 	/*UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<AActor> SpawnedAOEAttack;*/
+
+	void AddAbilityWidget(const int32& Key);
+	UPROPERTY(Replicated)
+	int32 AbilityKey = 1;
 
 public:	
 	UFUNCTION(BlueprintCallable)
