@@ -25,7 +25,7 @@ FPlayerStats UEndgameWidget::GetPlayerStats()
     return FPlayerStats();
 }
 
-FString UEndgameWidget::GetWinnerTeam()
+bool UEndgameWidget::IsWinnerAttacker()
 {
     UWorld* World = GetWorld();
     if (World)
@@ -33,23 +33,14 @@ FString UEndgameWidget::GetWinnerTeam()
         GameState = World->GetGameState<AWOGGameState>();
         if (GameState)
         {
-            if (GameState->IsWinnerAttacker())
-            {
-                return FString("Attackers won!");
-            }
-            else
-            {
-                return FString("Defenders won!");
-            }
+            return GameState->IsWinnerAttacker();
         }
     }
-    return FString("ERROR");
+    return false;
 }
 
 void UEndgameWidget::SetResults()
 {
-    ResultText->SetText(FText::FromString(GetWinnerTeam()));
-
     PlayerStats = GetPlayerStats();
     FString LocalTimesElimmed = FString::FromInt(PlayerStats.TimesElimmed);
     FString LocalTotalElimms = FString::FromInt(PlayerStats.TotalElimms);

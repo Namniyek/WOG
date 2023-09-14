@@ -300,7 +300,7 @@ void ABasePlayerCharacter::AbilityHoldStarted(const FName& Slot)
 		return;
 	}
 
-	Client_AddHoldProgressBar();
+	AddHoldProgressBar();
 }
 
 void ABasePlayerCharacter::ConfirmHoldStarted()
@@ -317,15 +317,15 @@ void ABasePlayerCharacter::ConfirmHoldStarted()
 		return;
 	}
 
-	Client_AddHoldProgressBar();
+	AddHoldProgressBar();
 }
 
 void ABasePlayerCharacter::AbilityHoldButtonElapsed(FInputActionValue ActionValue, float ElapsedTime, float TriggeredTime)
 {
-	if (HoldProgressBarWidget)
-	{
-		HoldProgressBarWidget->TimeHeld = ElapsedTime;
-	}
+	TObjectPtr<AWOGPlayerController> OwnerController = Cast<AWOGPlayerController>(Controller);
+	if (!OwnerController || !IsLocallyControlled() || !OwnerController->GetHoldProgressBar()) return;
+
+	OwnerController->GetHoldProgressBar()->TimeHeld = ElapsedTime;
 }
 
 void ABasePlayerCharacter::AbilityHoldButtonCanceled(const FInputActionValue& Value)
@@ -373,10 +373,10 @@ void ABasePlayerCharacter::PrimaryArmHeavyAttack(FInputActionValue ActionValue, 
 		}
 	}
 
-	if (HoldProgressBarWidget)
-	{
-		HoldProgressBarWidget->TimeHeld = ElapsedTime;
-	}
+	TObjectPtr<AWOGPlayerController> OwnerController = Cast<AWOGPlayerController>(Controller);
+	if (!OwnerController || !IsLocallyControlled() || !OwnerController->GetHoldProgressBar()) return;
+
+	OwnerController->GetHoldProgressBar()->TimeHeld = ElapsedTime;
 }
 
 void ABasePlayerCharacter::PrimaryHeavyAttackCanceled(const FInputActionValue& Value)

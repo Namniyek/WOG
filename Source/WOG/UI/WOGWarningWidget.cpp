@@ -4,8 +4,8 @@
 #include "UI/WOGWarningWidget.h"
 #include "Components/TextBlock.h"
 
-void UWOGWarningWidget::SetWarningText(const FString& Attribute)
-{
-	FString WarningString = FString("Not enough ") + Attribute;
-	WarningText->SetText(FText::FromString(WarningString));
-}
+//void UWOGWarningWidget::SetWarningText(const FString& Attribute)
+//{
+//	FString WarningString = FString("Not enough ") + Attribute;
+//	WarningText->SetText(FText::FromString(WarningString));
+//}

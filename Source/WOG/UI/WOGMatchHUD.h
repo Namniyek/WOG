@@ -42,6 +42,12 @@ public:
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<UUserWidget> WarningClass;
 
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UUserWidget> StaminaBarClass;
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UUserWidget> HoldProgressBarWidgetClass;
+
 	UFUNCTION()
 	void AddEndgameWidget();
 

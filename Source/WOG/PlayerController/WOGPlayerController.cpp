@@ -22,8 +22,14 @@
 #include "UI/WOG_HUD.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
 #include "Components/VerticalBox.h"
+#include "Components/Overlay.h"
 #include "UI/WOGWarningWidget.h"
 #include "UI/WOGObjectiveWidget.h"
+#include "UI/WOGCharacterWidgetContainer.h"
+#include "UI/WOGRoundProgressBar.h"
+#include "Components/SizeBox.h"
+#include "UI/WOGHoldProgressBar.h"
+
 
 void AWOGPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
@@ -294,5 +300,45 @@ void AWOGPlayerController::CreateWarningWidget(const FString& Attribute)
 			MatchHUD->HUDWidget->GetWarningBox()->ClearChildren();
 			MatchHUD->HUDWidget->GetWarningBox()->AddChild(WarningWidget);
 		}
+	}
+}
+
+void AWOGPlayerController::AddStaminaWidget()
+{
+	MatchHUD == nullptr ? Cast<AWOGMatchHUD>(GetHUD()) : MatchHUD;
+	if (!MatchHUD || !IsValid(MatchHUD->StaminaBarClass)) return;
+
+	TObjectPtr<AWOGBaseCharacter> BaseCharacter = Cast<AWOGBaseCharacter>(GetPawn());
+	if (!BaseCharacter || !BaseCharacter->GetStaminaWidgetContainer() || !BaseCharacter->GetStaminaWidgetContainer()->GetContainer()) return;
+	if (BaseCharacter->GetStaminaWidgetContainer()->GetContainer()->HasAnyChildren()) return;
+
+	TObjectPtr<UWOGRoundProgressBar> StaminaBar = Cast<UWOGRoundProgressBar>(CreateWidget<UUserWidget>(this, MatchHUD->StaminaBarClass));
+	if (StaminaBar)
+	{
+		BaseCharacter->GetStaminaWidgetContainer()->GetContainer()->AddChild(StaminaBar);
+	}
+}
+
+void AWOGPlayerController::AddHoldProgressBar()
+{
+	MatchHUD == nullptr ? Cast<AWOGMatchHUD>(GetHUD()) : MatchHUD;
+	if (!MatchHUD || !MatchHUD->HUDWidget || !IsValid(MatchHUD->HoldProgressBarWidgetClass)) return;
+
+	HoldProgressBarWidget = Cast<UWOGHoldProgressBar>(CreateWidget<UUserWidget>(this, MatchHUD->HoldProgressBarWidgetClass));
+	if (HoldProgressBarWidget && MatchHUD->HUDWidget->GetHoldBarContainer())
+	{
+		MatchHUD->HUDWidget->GetHoldBarContainer()->AddChild(HoldProgressBarWidget);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Invalid HoldProgressBarWidget"));
+	}
+}
+
+void AWOGPlayerController::RemoveHoldProgressBar()
+{
+	if (HoldProgressBarWidget)
+	{
+		HoldProgressBarWidget->RemoveFromParent();
 	}
 }

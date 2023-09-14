@@ -5,6 +5,7 @@
 #include "Net/UnrealNetwork.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "PlayerState/WOGPlayerState.h"
 #include "ActorComponents/WOGAbilitySystemComponent.h"
 #include "GameplayEffectExtension.h"
@@ -19,8 +20,10 @@
 #include "MotionWarpingComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Blueprint/UserWidget.h"
-#include "UI/WOGHoldProgressBar.h"
-
+#include "PlayerController/WOGPlayerController.h"
+#include "Components/WidgetComponent.h"
+#include "Components/SizeBox.h"
+#include "UI/WOGCharacterWidgetContainer.h"
 
 AWOGBaseCharacter::AWOGBaseCharacter()
 {
@@ -31,6 +34,7 @@ AWOGBaseCharacter::AWOGBaseCharacter()
 	AbilitySystemComponent->ReplicationMode = EGameplayEffectReplicationMode::Full;
 
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetHealthAttribute()).AddUObject(this, &ThisClass::OnHealthAttributeChanged);
+	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetStaminaAttribute()).AddUObject(this, &ThisClass::OnStaminaAttributeChanged);
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetMaxMovementSpeedAttribute()).AddUObject(this, &ThisClass::OnMaxMovementSpeedAttributeChanged);
 	AbilitySystemComponent->OnGameplayEffectAppliedDelegateToSelf.AddUObject(this, &ThisClass::OnGameplayEffectAppliedToSelf);
 
@@ -46,6 +50,11 @@ AWOGBaseCharacter::AWOGBaseCharacter()
 
 	MotionWarping = CreateDefaultSubobject<UMotionWarpingComponent>(TEXT("MotionWarping"));
 
+	StaminaWidgetContainer = CreateDefaultSubobject<UWidgetComponent>(TEXT("Stamina Widget Container"));
+	StaminaWidgetContainer->SetWidgetSpace(EWidgetSpace::Screen);
+	StaminaWidgetContainer->SetDrawAtDesiredSize(true);
+	StaminaWidgetContainer->SetupAttachment(GetRootComponent());
+
 	SpeedRequiredForLeap = 750.f;
 
 	LastHitResult = FHitResult();
@@ -56,8 +65,6 @@ AWOGBaseCharacter::AWOGBaseCharacter()
 	TargetGroundLocation = FVector();
 	PelvisOffset = FVector();
 	SpringState = FVectorSpringState();
-
-	HoldProgressBarWidgetClass = nullptr;
 }
 
 void AWOGBaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -166,6 +173,18 @@ void AWOGBaseCharacter::OnHealthAttributeChanged(const FOnAttributeChangeData& D
 				** TO-DO - Add and pass reference to the Owner of the enemy that killed this character
 				*/
 			}
+		}
+	}
+}
+
+void AWOGBaseCharacter::OnStaminaAttributeChanged(const FOnAttributeChangeData& Data)
+{
+	if (Data.NewValue < Data.OldValue && !UKismetMathLibrary::NearlyEqual_FloatFloat(Data.NewValue, AttributeSet->GetMaxStamina(), 1.f))
+	{
+		TObjectPtr<AWOGPlayerController> OwnerPC = Cast<AWOGPlayerController>(Controller);
+		if (OwnerPC && OwnerPC->IsLocalController())
+		{
+			OwnerPC->AddStaminaWidget();
 		}
 	}
 }
@@ -482,33 +501,27 @@ void AWOGBaseCharacter::Tick(float DeltaTime)
 	UpdateCapsuleLocation();
 }
 
-void AWOGBaseCharacter::Client_AddHoldProgressBar_Implementation()
+UWOGCharacterWidgetContainer* AWOGBaseCharacter::GetStaminaWidgetContainer() const
 {
-	TObjectPtr<APlayerController> PlayerController = UGameplayStatics::GetPlayerController(this, 0);
-	if (!PlayerController) 
-	{
-		UE_LOG(LogTemp, Error, TEXT("Invalid PLayerController"));
-		return;
-	}
+	if (!StaminaWidgetContainer) return nullptr;
+	TObjectPtr<UWOGCharacterWidgetContainer> StaminaContainer = Cast<UWOGCharacterWidgetContainer>(StaminaWidgetContainer->GetWidget());
+	return StaminaContainer;
+}
 
-	//TO-DO : Check for a way to verify the widget class
-	HoldProgressBarWidget = Cast<UWOGHoldProgressBar>(CreateWidget<UUserWidget>(PlayerController, HoldProgressBarWidgetClass));
-	if (HoldProgressBarWidget)
-	{
-		HoldProgressBarWidget->AddToPlayerScreen();
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("Invalid HoldProgressBarWidget"));
-	}
+void AWOGBaseCharacter::AddHoldProgressBar()
+{
+	TObjectPtr<AWOGPlayerController> OwnerController = Cast<AWOGPlayerController>(Controller);
+	if (!OwnerController || !IsLocallyControlled()) return;
+
+	OwnerController->AddHoldProgressBar();
 }
 
 void AWOGBaseCharacter::RemoveHoldProgressBarWidget()
 {
-	if (HoldProgressBarWidget)
-	{
-		HoldProgressBarWidget->RemoveFromParent();
-	}
+	TObjectPtr<AWOGPlayerController> OwnerController = Cast<AWOGPlayerController>(Controller);
+	if (!OwnerController || !IsLocallyControlled()) return;
+
+	OwnerController->RemoveHoldProgressBar();
 }
 
 void AWOGBaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

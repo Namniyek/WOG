@@ -13,6 +13,7 @@ class UWOGAbilityContainerWidget;
 class UVerticalBox;
 class UProgressBar;
 class UWOGObjectiveWidget;
+class UOverlay;
 
 UCLASS()
 class WOG_API UWOG_HUD : public UUserWidget
@@ -41,6 +42,9 @@ private:
 	UPROPERTY(meta = (BindWidget))
 	UWOGObjectiveWidget* ObjectiveWidget;
 
+	UPROPERTY(meta = (BindWidget))
+	UOverlay* HoldBarContainer;
+
 public:
 	UFUNCTION(BlueprintPure)
 	float GetHealthPercent();
@@ -56,7 +60,8 @@ public:
 	UFUNCTION()
 	UWOGAbilityContainerWidget* GetAbilityContainer();
 
-	FORCEINLINE UVerticalBox* GetWarningBox() { return WarningBox; }
-	FORCEINLINE UWOGObjectiveWidget* GetObjectiveWidget() { return ObjectiveWidget; }
+	FORCEINLINE UVerticalBox* GetWarningBox() const { return WarningBox; }
+	FORCEINLINE UWOGObjectiveWidget* GetObjectiveWidget() const { return ObjectiveWidget; }
+	FORCEINLINE UOverlay* GetHoldBarContainer() const { return HoldBarContainer; }
 
 };

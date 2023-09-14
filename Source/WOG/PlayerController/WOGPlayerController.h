@@ -10,6 +10,8 @@
  * 
  */
 class UWOGAbilityWidget;
+class UWOGHoldProgressBar;
+class ABasePlayerCharacter;
 
 UCLASS()
 class WOG_API AWOGPlayerController : public APlayerController
@@ -47,6 +49,15 @@ public:
 	UFUNCTION()
 	void Test(APawn* NewPawn);
 
+	UFUNCTION()
+	void AddStaminaWidget();
+
+	UFUNCTION()
+	void AddHoldProgressBar();
+	UFUNCTION()
+	void RemoveHoldProgressBar();
+
+
 protected:
 	virtual void OnPossess(APawn* aPawn) override;
 	virtual void BeginPlay() override;
@@ -68,18 +79,22 @@ private:
 	UFUNCTION(Client, Reliable)
 	void Client_ResetHUD();
 
-	TObjectPtr<class ABasePlayerCharacter> DefaultPawn = nullptr;
+	TObjectPtr<ABasePlayerCharacter> DefaultPawn = nullptr;
 
 	TObjectPtr<UWOGAbilityWidget> AbilityWidgetOne = nullptr;
 	TObjectPtr<UWOGAbilityWidget> AbilityWidgetTwo = nullptr;
 	TObjectPtr<UWOGAbilityWidget> AbilityWidgetThree = nullptr;
 	TObjectPtr<UWOGAbilityWidget> AbilityWidgetFour = nullptr;
 
+	UPROPERTY()
+	TObjectPtr<UWOGHoldProgressBar> HoldProgressBarWidget = nullptr;
+
 public:
 	UFUNCTION(BlueprintPure)
-	FORCEINLINE bool GetIsAttacker() { return bIsAttacker; }
+	FORCEINLINE bool GetIsAttacker() const { return bIsAttacker; }
 	FORCEINLINE void SetDefaultPawn(ABasePlayerCharacter* PawnToSet) { DefaultPawn = PawnToSet; }
-	FORCEINLINE TObjectPtr<ABasePlayerCharacter> GetDefaultPawn() { return DefaultPawn; }
+	FORCEINLINE TObjectPtr<ABasePlayerCharacter> GetDefaultPawn() const { return DefaultPawn; }
+	FORCEINLINE TObjectPtr<UWOGHoldProgressBar> GetHoldProgressBar() const { return HoldProgressBarWidget; }
 
 	
 };

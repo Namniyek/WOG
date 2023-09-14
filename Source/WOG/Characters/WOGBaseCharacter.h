@@ -10,6 +10,7 @@
 #include "AbilitySystemInterface.h"
 #include "Data/AGRLibrary.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Blueprint/UserWidget.h"
 #include "WOGBaseCharacter.generated.h"
 
 class UWOGAbilitySystemComponent;
@@ -21,6 +22,8 @@ class UAGRAnimMasterComponent;
 class UMaterialInterface;
 class UMotionWarpingComponent;
 class UWOGHoldProgressBar;
+class UWidgetComponent;
+class UWOGCharacterWidgetContainer;
 
 UCLASS()
 class WOG_API AWOGBaseCharacter : public ACharacter, public IAttributesInterface, public IAbilitySystemInterface
@@ -49,6 +52,7 @@ protected:
 	virtual void BeginPlay() override;
 	void SendAbilityLocalInput(const EWOGAbilityInputID InInputID);
 	virtual void OnHealthAttributeChanged(const FOnAttributeChangeData& Data);
+	virtual void OnStaminaAttributeChanged(const FOnAttributeChangeData& Data);
 	virtual void OnMaxMovementSpeedAttributeChanged(const FOnAttributeChangeData& Data);
 	virtual void OnGameplayEffectAppliedToSelf(UAbilitySystemComponent* Source, const FGameplayEffectSpec& Spec, FActiveGameplayEffectHandle Handle);
 	UFUNCTION()
@@ -193,16 +197,13 @@ protected:
 	#pragma endregion
 
 	#pragma region UI
-	UPROPERTY(EditDefaultsOnly)
-	TSubclassOf<UUserWidget> HoldProgressBarWidgetClass;
-
-	UPROPERTY()
-	TObjectPtr<UWOGHoldProgressBar> HoldProgressBarWidget;
-
-	UFUNCTION(Client, unreliable)
-	void Client_AddHoldProgressBar();
-
+	UFUNCTION()
+	void AddHoldProgressBar();
+	UFUNCTION()
 	void RemoveHoldProgressBarWidget();
+
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<UWidgetComponent> StaminaWidgetContainer;
 	#pragma endregion
 
 public:	
@@ -223,4 +224,7 @@ public:
 	FORCEINLINE bool GetIsRagdolling() const { return bIsRagdolling; }
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE bool GetIsLayingOnBack() const { return bIsLayingOnBack; }
+	
+	//Can return nullptr
+	UWOGCharacterWidgetContainer* GetStaminaWidgetContainer() const;
 };

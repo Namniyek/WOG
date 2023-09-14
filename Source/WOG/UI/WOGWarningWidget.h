@@ -18,12 +18,12 @@ class WOG_API UWOGWarningWidget : public UUserWidget
 
 
 private:
-	UPROPERTY(meta = (BindWidget))
+	UPROPERTY(meta = (BindWidget), BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	UTextBlock* WarningText;
 
 
 public:
-
+	UFUNCTION(BlueprintImplementableEvent)
 	void SetWarningText(const FString& Attribute);
 
 	
