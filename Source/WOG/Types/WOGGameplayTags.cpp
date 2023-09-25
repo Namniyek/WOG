@@ -111,6 +111,21 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Cue_Movement_Jump, "GameplayCue.Movement.Jump");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Cue_KO, "GameplayCue.KO");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Cue_Elim, "GameplayCue.Elim");
 
+UE_DEFINE_GAMEPLAY_TAG(TAG_Cue_Vocal_Weapon_BlockImpact, "GameplayCue.Vocal.Weapon.BlockImpact");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Cue_Vocal_Weapon_AttackHeavy, "GameplayCue.Vocal.Weapon.AttackHeavy");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Cue_Vocal_Weapon_AttackLight, "GameplayCue.Vocal.Weapon.AttackLight");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Cue_Vocal_Weapon_AttackLong, "GameplayCue.Vocal.Weapon.AttackLong");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Cue_Vocal_Weapon_AttackBuildUp, "GameplayCue.Vocal.Weapon.AttackBuildUp");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Cue_Vocal_Weapon_RangedThrow, "GameplayCue.Vocal.Weapon.RangedThrow");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Cue_Vocal_Magic_CastShort, "GameplayCue.Vocal.Magic.CastShort");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Cue_Vocal_Magic_CastLong, "GameplayCue.Vocal.Magic.CastLong");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Cue_Vocal_Movement_EffortShort, "GameplayCue.Vocal.Movement.EffortShort");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Cue_Vocal_Movement_EffortLong, "GameplayCue.Vocal.Movement.EffortLong");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Cue_Vocal_Movement_Tired, "GameplayCue.Vocal.Movement.Tired");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Cue_Vocal_Hurt_Death, "GameplayCue.Vocal.Hurt.Death");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Cue_Vocal_Hurt_PainShort, "GameplayCue.Vocal.Hurt.PainShort");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Cue_Vocal_Hurt_PainLong, "GameplayCue.Vocal.Hurt.PainLong");
+
 //Cooldown tags
 UE_DEFINE_GAMEPLAY_TAG(TAG_Cooldown_Input, "Cooldown.Input");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Cooldown_Input_AbilitySwitch, "Cooldown.Input.AbilitySwitch");

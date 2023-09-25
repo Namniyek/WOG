@@ -10,6 +10,7 @@
 #include "AbilitySystemGlobals.h"
 #include "Types/WOGGameplayTags.h"
 #include "PlayerController/WOGPlayerController.h"
+#include "ActorComponents/WOGAbilitySystemComponent.h"
 
 UWOGGameplayAbilityBase::UWOGGameplayAbilityBase()
 {
@@ -171,4 +172,20 @@ void UWOGGameplayAbilityBase::OnCostChecked(bool bIsEnough, FGameplayAttribute A
 		if (!OwnerPC) return;
 		OwnerPC->CreateWarningWidget(Attribute.GetName());
 	}
+}
+
+void UWOGGameplayAbilityBase::ExecuteGameplayCueLocal(FGameplayTag CueTag, const FGameplayCueParameters& Parameters)
+{
+	TObjectPtr<UWOGAbilitySystemComponent> ASC = Cast<UWOGAbilitySystemComponent>(GetAbilitySystemComponentFromActorInfo());
+	if (ASC)
+	{
+		ASC->ExecuteGameplayCueLocal(CueTag, Parameters);
+		UE_LOG(LogTemp, Warning, TEXT("Local cue executed %s"), *CueTag.ToString());
+	}
+}
+
+void UWOGGameplayAbilityBase::RemoveGameplayCueLocal(FGameplayTag CueTag, const FGameplayCueParameters& Parameters)
+{
+	TObjectPtr<UWOGAbilitySystemComponent> ASC = CastChecked<UWOGAbilitySystemComponent>(GetAbilitySystemComponentFromActorInfo());
+	ASC->RemoveGameplayCueLocal(CueTag, Parameters);
 }

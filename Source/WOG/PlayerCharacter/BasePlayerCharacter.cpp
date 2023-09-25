@@ -34,6 +34,7 @@
 #include "Magic/WOGBaseMagic.h"
 #include "AbilitySystem/AttributeSets/WOGAttributeSetBase.h"
 #include "UI/WOGHoldProgressBar.h"
+#include "UI/AutoSettingWidget.h"
 
 void ABasePlayerCharacter::OnConstruction(const FTransform& Transform)
 {

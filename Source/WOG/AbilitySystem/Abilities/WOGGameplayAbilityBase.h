@@ -68,4 +68,10 @@ protected:
 
 	UFUNCTION()
 	void OnCostChecked(bool bIsEnough, FGameplayAttribute Attribute);
+
+	UFUNCTION(BlueprintCallable)
+	void ExecuteGameplayCueLocal(FGameplayTag CueTag, const FGameplayCueParameters& Parameters = FGameplayCueParameters());
+
+	UFUNCTION(BlueprintCallable)
+	void RemoveGameplayCueLocal(FGameplayTag CueTag, const FGameplayCueParameters& Parameters = FGameplayCueParameters());
 };

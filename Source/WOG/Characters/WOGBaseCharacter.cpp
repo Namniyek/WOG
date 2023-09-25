@@ -123,7 +123,7 @@ void AWOGBaseCharacter::ApplyDefaultEffects()
 
 	for (auto DefaultEffect : DefaultAbilitiesAndEffects.Effects)
 	{
-		
+
 		ApplyGameplayEffectToSelf(DefaultEffect, EffectContext);
 	}
 }
@@ -179,6 +179,7 @@ void AWOGBaseCharacter::OnHealthAttributeChanged(const FOnAttributeChangeData& D
 
 void AWOGBaseCharacter::OnStaminaAttributeChanged(const FOnAttributeChangeData& Data)
 {
+	//Add the round stamina widget
 	if (Data.NewValue < Data.OldValue && !UKismetMathLibrary::NearlyEqual_FloatFloat(Data.NewValue, AttributeSet->GetMaxStamina(), 1.f))
 	{
 		TObjectPtr<AWOGPlayerController> OwnerPC = Cast<AWOGPlayerController>(Controller);
@@ -187,6 +188,29 @@ void AWOGBaseCharacter::OnStaminaAttributeChanged(const FOnAttributeChangeData& 
 			OwnerPC->AddStaminaWidget();
 		}
 	}
+
+	/*
+	//Add tired vocal cue locally
+	if (Data.NewValue < Data.OldValue && UKismetMathLibrary::NearlyEqual_FloatFloat(Data.NewValue, AttributeSet->GetMaxStamina() * 0.2f, 0.5f))
+	{
+		if (AbilitySystemComponent)
+		{
+			FGameplayCueParameters Params;
+			AbilitySystemComponent->ExecuteGameplayCueLocal(TAG_Cue_Vocal_Movement_Tired, Params);
+		}
+	}
+
+	//Remove the tired vocal cue locally
+	if (Data.NewValue > Data.OldValue && UKismetMathLibrary::NearlyEqual_FloatFloat(Data.NewValue, AttributeSet->GetMaxStamina() * 0.2f, 0.5f))
+	{
+		if (AbilitySystemComponent)
+		{
+			FGameplayCueParameters Params;
+			AbilitySystemComponent->RemoveGameplayCueLocal(TAG_Cue_Vocal_Movement_Tired, Params);
+		}
+	}
+	*/
+
 }
 
 void AWOGBaseCharacter::OnMaxMovementSpeedAttributeChanged(const FOnAttributeChangeData& Data)
