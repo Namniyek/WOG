@@ -35,6 +35,7 @@
 #include "AbilitySystem/AttributeSets/WOGAttributeSetBase.h"
 #include "UI/WOGHoldProgressBar.h"
 #include "UI/AutoSettingWidget.h"
+#include "Resources/WOGCommonInventory.h"
 
 void ABasePlayerCharacter::OnConstruction(const FTransform& Transform)
 {
@@ -114,6 +115,7 @@ void ABasePlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 	DOREPLIFETIME(ABasePlayerCharacter, CurrentMagic);
 	DOREPLIFETIME(ABasePlayerCharacter, PreviousMagic);
 	DOREPLIFETIME(ABasePlayerCharacter, PreviousWeapon);
+	DOREPLIFETIME(ABasePlayerCharacter, CommonInventory);
 }
 
 void ABasePlayerCharacter::PossessedBy(AController* NewController)
@@ -585,6 +587,28 @@ void ABasePlayerCharacter::SetDefaultAbilitiesAndEffects(bool bIsMale, FName Row
 
 	CharacterData = MeshRow->CharacterData;
 	CharacterData.bIsMale = bIsMale;
+
+	FindCommonInventory();
+}
+
+void ABasePlayerCharacter::FindCommonInventory()
+{
+	if (HasAuthority())
+	{
+		FName Tag = GetCharacterData().bIsAttacker ? FName("Attacker") : FName("Defender");
+		TArray<AActor*> OutActors;
+		UGameplayStatics::GetAllActorsOfClassWithTag(this, AWOGCommonInventory::StaticClass(), Tag, OutActors);
+
+		if (OutActors.Num())
+		{
+			CommonInventory = CastChecked<AWOGCommonInventory>(OutActors[0]);
+			UE_LOG(LogTemp, Display, TEXT("CommonInventory found: %s"), *GetNameSafe(CommonInventory));
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("No Common Inventory found"));
+		}
+	}
 }
 
 void ABasePlayerCharacter::ResetPreviouslyEquippedMaterial()
@@ -779,7 +803,8 @@ void ABasePlayerCharacter::Client_SaveShortcutReferences_Implementation(AActor* 
 	else
 	{
 		TArray<AActor*> OutItems;
-		if (InventoryManager->GetAllItemsOfTagSlotType(InItemTag, OutItems))
+		int32 AmountItems = 0;
+		if (InventoryManager->GetAllItemsOfTagSlotType(InItemTag, OutItems, AmountItems))
 		{
 			if (IsValid(OutItems[0]))
 			{

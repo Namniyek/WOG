@@ -68,6 +68,12 @@ public:
         const int32 Quantity,
         FText& OutNote);
 
+    UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "AGR")
+    UPARAM(DisplayName = "Success") bool RemoveItemsWithTagSlotType(
+        const FGameplayTag SlotTypeFilter,
+        const int32 Quantity,
+        FText& OutNote);
+
     UFUNCTION(BlueprintCallable, BlueprintPure, Category="AGR")
     UPARAM(DisplayName = "Items") TArray<AActor*> GetAllItems();
 
@@ -76,6 +82,18 @@ public:
         const TSubclassOf<AActor> Class,
         UPARAM(DisplayName = "FilteredArray") TArray<AActor*>& OutFilteredArray);
 
+    UFUNCTION(BlueprintCallable, Category = "AGR")
+    UPARAM(DisplayName = "Success") bool GetAllItemsOfTagSlotType(
+        const FGameplayTag SlotTypeFilter,
+        TArray<AActor*>& OutItemsWithTag,
+        int32& Amount);
+
+    UFUNCTION(BlueprintCallable, Category = "AGR")
+    UPARAM(DisplayName = "Success") bool GetAllItemsWithAuxTag(
+        const FGameplayTag AuxTagFilter,
+        TArray<AActor*>& OutItemsWithTag,
+        int32& Amount);
+
     //~ TODO "FText& OutNote" should be an enum to signal the actual outcome
     UFUNCTION(BlueprintCallable, Category="AGR")
     UPARAM(DisplayName = "Success") bool HasEnoughItems(
@@ -83,10 +101,12 @@ public:
         const int32 Quantity,
         FText& OutNote);
 
-    UFUNCTION(BlueprintCallable, Category="AGR")
-    UPARAM(DisplayName = "Success") bool GetAllItemsOfTagSlotType(
+    //Checks if inventory has enough items with the specified ItemTag
+    UFUNCTION(BlueprintCallable, Category = "AGR")
+    UPARAM(DisplayName = "Success") bool HasEnoughItemsWithTagSlotType(
         const FGameplayTag SlotTypeFilter,
-        TArray<AActor*>& OutItemsWithTag);
+        const int32 Quantity,
+        FText& OutNote);
 
     UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="AGR")
     void AddItemToInventoryDirectly(AActor* Item);

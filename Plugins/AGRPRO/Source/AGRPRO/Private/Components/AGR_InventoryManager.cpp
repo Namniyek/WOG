@@ -509,6 +509,101 @@ bool UAGR_InventoryManager::RemoveItemsOfClass(
     return true;
 }
 
+bool UAGR_InventoryManager::RemoveItemsWithTagSlotType(
+    const FGameplayTag SlotTypeFilter, 
+    const int32 Quantity, 
+    UPARAM(DisplayName = "Note") FText& OutNote)
+{
+    /* Non-negative stacks */
+
+    /* We don't trust users to do the check themselves before each removal */
+
+    const AActor* InventoryManagerOwner = GetOwner();
+    if (!IsValid(InventoryManagerOwner) || !InventoryManagerOwner->HasAuthority())
+    {
+        return false;
+    }
+
+    FText Note;
+    const bool bHasEnoughItems = HasEnoughItemsWithTagSlotType(
+        SlotTypeFilter,
+        Quantity,
+        Note);
+
+    if (bDebug)
+    {
+        const FString Msg = FString::Printf(
+            TEXT("Has enough items: %s"),
+            bHasEnoughItems ? TEXT("True") : TEXT("False"));
+        GEngine->AddOnScreenDebugMessage(
+            -1,
+            2.0f,
+            FColor::FromHex("00A8FFFF"),
+            Msg);
+        UE_LOG(LogTemp, Warning, TEXT("%s"), *Msg);
+    }
+
+    if (!bHasEnoughItems)
+    {
+        // Failed to remove items
+        OutNote = FText::FromString("Stack to remove negative or 0");
+        return false;
+    }
+
+    int32 StacksToRemove = Quantity;
+
+    /* Has items of class in inventory. Now we just have to see if it's enough */
+
+    TArray<AActor*> FilteredArray;
+    int32 AmountItems = 0;
+    if (!GetAllItemsOfTagSlotType(SlotTypeFilter, FilteredArray, AmountItems))
+    {
+        // Failed to remove items
+        OutNote = FText::FromString("No items of class");
+        return false;
+    }
+
+    /* This item has more stacks than to remove ... */
+    for (int32 i = FilteredArray.Num() - 1; i >= 0; --i)
+    {
+        AActor* ItemActor = FilteredArray[i];
+        if (!IsValid(ItemActor))
+        {
+            continue;
+        }
+
+        UAGR_ItemComponent* ItemComponent = UAGRLibrary::GetItemComponent(ItemActor);
+        if (!IsValid(ItemComponent))
+        {
+            continue;
+        }
+
+        if (!ItemComponent->bStackable)
+        {
+            // Failed to remove items
+            OutNote = FText::FromString("Not a fungible stackable item!");
+            return false;
+        }
+
+        if (ItemComponent->CurrentStack > StacksToRemove)
+        {
+            /* Reduce stacks and break the loop */
+            ItemComponent->CurrentStack -= StacksToRemove;
+            StacksToRemove = 0;
+        }
+        else
+        {
+            /* Deplete all stacks, destroy item, and move along ... */
+            StacksToRemove -= ItemComponent->CurrentStack;
+            ItemActor->Destroy();
+        }
+    }
+
+    // Successfully removed items
+    OutNote = FText::FromString("Successfully removed stacks");
+    return true;
+}
+
 TArray<AActor*> UAGR_InventoryManager::GetAllItems()
 {
     TArray<AActor*> Items;
@@ -558,6 +653,72 @@ bool UAGR_InventoryManager::GetAllItemsOfClass(const TSubclassOf<AActor> Class, 
     if(FilteredArray.Num() > 0)
     {
         OutFilteredArray = FilteredArray;
+        return true;
+    }
+
+    return false;
+}
+
+bool UAGR_InventoryManager::GetAllItemsOfTagSlotType(
+    const FGameplayTag SlotTypeFilter,
+    UPARAM(DisplayName = "ItemsWithTag") TArray<AActor*>& OutItemsWithTag,
+    int32& Amount)
+{
+    TArray<AActor*> ItemsOfSlot;
+    Amount = 0;
+
+    TArray<AActor*> AllItems = GetAllItems();
+    for (AActor* ItemActor : AllItems)
+    {
+        const UAGR_ItemComponent* ItemComponent = UAGRLibrary::GetItemComponent(ItemActor);
+        if (!IsValid(ItemComponent))
+        {
+            continue;
+        }
+
+        if (ItemComponent->ItemTagSlotType.MatchesTag(SlotTypeFilter))
+        {
+            ItemsOfSlot.Add(ItemActor);
+            Amount += ItemComponent->CurrentStack;
+        }
+    }
+
+    if (ItemsOfSlot.Num() > 0)
+    {
+        OutItemsWithTag = ItemsOfSlot;
+        return true;
+    }
+
+    return false;
+}
+
+bool UAGR_InventoryManager::GetAllItemsWithAuxTag(
+    const FGameplayTag AuxTagFilter,
+    UPARAM(DisplayName = "ItemsWithTag") TArray<AActor*>& OutItemsWithTag,
+    int32& Amount)
+{
+    TArray<AActor*> ItemsOfSlot;
+    Amount = 0;
+
+    TArray<AActor*> AllItems = GetAllItems();
+    for (AActor* ItemActor : AllItems)
+    {
+        const UAGR_ItemComponent* ItemComponent = UAGRLibrary::GetItemComponent(ItemActor);
+        if (!IsValid(ItemComponent))
+        {
+            continue;
+        }
+
+        if (ItemComponent->ItemAuxTag.MatchesTag(AuxTagFilter))
+        {
+            ItemsOfSlot.Add(ItemActor);
+            Amount += ItemComponent->CurrentStack;
+        }
+    }
+
+    if (ItemsOfSlot.Num() > 0)
+    {
+        OutItemsWithTag = ItemsOfSlot;
         return true;
     }
 
@@ -616,33 +777,56 @@ bool UAGR_InventoryManager::HasEnoughItems(
     return false;
 }
 
-bool UAGR_InventoryManager::GetAllItemsOfTagSlotType(
+bool UAGR_InventoryManager::HasEnoughItemsWithTagSlotType(
     const FGameplayTag SlotTypeFilter,
-    UPARAM(DisplayName = "ItemsWithTag") TArray<AActor*>& OutItemsWithTag)
+    const int32 Quantity,
+    UPARAM(DisplayName = "Note") FText& OutNote)
 {
-    TArray<AActor*> ItemsOfSlot;
+    /* Do this check before crafting to see if reduce stack will succeed */
 
-    TArray<AActor*> AllItems = GetAllItems();
-    for(AActor* ItemActor : AllItems)
+    if (Quantity <= 0)
     {
+        OutNote = FText::FromString("Not enough Items. Quantity must be greater than zero");
+        return false;
+    }
+
+    int32 QuantityMissing = Quantity;
+
+    TArray<AActor*> FilteredArray;
+    int32 AmountItems = 0;
+    if (!GetAllItemsOfTagSlotType(SlotTypeFilter, FilteredArray, AmountItems))
+    {
+        OutNote = FText::FromString("Has enough check failed: No items of such class found");
+        return false;
+    }
+
+    for (int32 i = 0; i < FilteredArray.Num(); ++i)
+    {
+        const AActor* ItemActor = FilteredArray[i];
+
         const UAGR_ItemComponent* ItemComponent = UAGRLibrary::GetItemComponent(ItemActor);
-        if(!IsValid(ItemComponent))
+        if (!ensure(IsValid(ItemComponent)))
         {
             continue;
         }
 
-        if(ItemComponent->ItemTagSlotType.MatchesTag(SlotTypeFilter))
+        /* Reduce quantity seeking */
+        QuantityMissing -= ItemComponent->CurrentStack;
+
+        if (QuantityMissing <= 0)
         {
-            ItemsOfSlot.Add(ItemActor);
+            /* Got enough */
+            break;
         }
     }
 
-    if(ItemsOfSlot.Num() > 0)
+    if (QuantityMissing <= 0)
     {
-        OutItemsWithTag = ItemsOfSlot;
+        OutNote = FText::FromString("Success! Got enough items");
         return true;
     }
 
+    OutNote = FText::FromString("Failed. Not enough items");
     return false;
 }
 

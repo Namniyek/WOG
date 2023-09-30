@@ -11,7 +11,7 @@
 #include "Types/CharacterTypes.h"
 #include "BasePlayerCharacter.generated.h"
 
-
+class AWOGCommonInventory;
 
 USTRUCT(BlueprintType)
 struct FMeshDataTables 
@@ -376,6 +376,14 @@ public:
 
 	#pragma endregion
 
+	#pragma region Handle Resources 
+
+	UPROPERTY(VisibleAnywhere, Replicated)
+	TObjectPtr<AWOGCommonInventory> CommonInventory;
+
+	void FindCommonInventory();
+	#pragma endregion
+
 
 	UFUNCTION()
 	void TargetLocked(AActor* NewTarget);
@@ -403,6 +411,9 @@ public:
 	FORCEINLINE void SetOwnerPC(AWOGPlayerController* NewPC) { OwnerPC = NewPC; }
 	FORCEINLINE TObjectPtr<AWOGPlayerController> GetOwnerPC() { return OwnerPC; }
 	FORCEINLINE TObjectPtr<AActor>GetCurrentTarget() { return CurrentTarget; }
+
+	UFUNCTION(BlueprintPure)
+	FORCEINLINE AWOGCommonInventory* GetCommonInventory() const { return CommonInventory; }
 
 	UFUNCTION(Server, reliable, BlueprintCallable)
 	void Server_SetPlayerProfile(const FPlayerData& NewPlayerProfile);

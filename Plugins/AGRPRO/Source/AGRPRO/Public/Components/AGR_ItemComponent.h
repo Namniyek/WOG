@@ -73,6 +73,9 @@ public:
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Replicated, Category="AGR|Base Info")
     FGameplayTag ItemTagSlotType;
 
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Replicated, Category = "AGR|Base Info")
+    FGameplayTag ItemAuxTag;
+
     UPROPERTY(BlueprintAssignable, EditAnywhere, Category = "AGR|Events")
     FOnPickup OnPickup;
 

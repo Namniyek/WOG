@@ -42,6 +42,7 @@ void UAGR_ItemComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
     DOREPLIFETIME(ThisClass, ItemName);
     DOREPLIFETIME(ThisClass, bSimulateWhenDropped);
     DOREPLIFETIME(ThisClass, ItemTagSlotType);
+    DOREPLIFETIME(ThisClass, ItemAuxTag);
 }
 
 void UAGR_ItemComponent::BeginPlay()
