@@ -59,6 +59,8 @@ AWOGBaseCharacter::AWOGBaseCharacter()
 
 	LastHitResult = FHitResult();
 
+	DissolveTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("DissolveTimelineComponent"));
+
 	bIsRagdolling = false;
 	bIsLayingOnBack = false;
 	MeshLocation = FVector();
@@ -516,6 +518,79 @@ void AWOGBaseCharacter::UpdateCapsuleLocation()
 void AWOGBaseCharacter::InitPhysics()
 {
 	PelvisOffset = GetMesh()->GetRelativeLocation();
+}
+
+void AWOGBaseCharacter::Multicast_StartDissolve_Implementation(bool bIsReversed)
+{
+	DissolveTrack.BindDynamic(this, &AWOGBaseCharacter::UpdateDissolveMaterial);
+	DissolveTimelineFinished.BindDynamic(this, &AWOGBaseCharacter::OnDissolveTimelineFinished);
+
+	if(!DissolveCurve || !DissolveTimeline) return;
+
+	DissolveTimeline->AddInterpFloat(DissolveCurve, DissolveTrack);
+	DissolveTimeline->SetTimelineFinishedFunc(DissolveTimelineFinished);
+	if(!bIsReversed)
+	{
+		DissolveTimeline->PlayFromStart();
+	}
+	else
+	{
+		DissolveTimeline->ReverseFromEnd();
+	}
+
+	if (IsLocallyControlled() && Controller)
+	{
+		TObjectPtr<APlayerController> PC = CastChecked<APlayerController>(Controller);
+		if (PC)
+		{
+			DisableInput(PC);
+		}
+	}
+
+	if (CharacterMI)
+	{
+		CharacterMI->SetVectorParameterValue(TEXT("Color_Appearance"), DissolveColor);
+	}
+}
+
+void AWOGBaseCharacter::UpdateDissolveMaterial(float DissolveValue)
+{
+	if (CharacterMI)
+	{
+		CharacterMI->SetScalarParameterValue(TEXT("Appearance"), DissolveValue);
+	}
+}
+
+void AWOGBaseCharacter::OnDissolveTimelineFinished()
+{
+	UE_LOG(LogTemp, Warning, TEXT("TimelineFinsihed"));
+	if (IsLocallyControlled() && Controller)
+	{
+		TObjectPtr<APlayerController> PC = CastChecked<APlayerController>(Controller);
+		if (PC)
+		{
+			EnableInput(PC);
+		}
+	}
+}
+
+void AWOGBaseCharacter::Server_StartTeleportCharacter_Implementation(const FTransform& Destination)
+{
+	FTimerHandle TeleportTimerHandle;
+	FTimerDelegate TeleportDelegate;
+	float TeleportTimerDuration = 1.5f;
+
+	TeleportDelegate.BindUFunction(this, FName("FinishTeleportCharacter"), Destination);
+
+	GetWorldTimerManager().SetTimer(TeleportTimerHandle, TeleportDelegate, TeleportTimerDuration, false);
+
+	Multicast_StartDissolve();
+}
+
+void AWOGBaseCharacter::FinishTeleportCharacter(const FTransform& Destination)
+{
+	TeleportTo(Destination.GetLocation(), Destination.GetRotation().Rotator());
+	Multicast_StartDissolve(true);
 }
 
 void AWOGBaseCharacter::Tick(float DeltaTime)

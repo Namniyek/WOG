@@ -99,6 +99,10 @@ ABasePlayerCharacter::ABasePlayerCharacter()
 	PreviousMagic = NAME_None;
 	CurrentMagic = NAME_None;
 
+	if (GetMesh())
+	{
+		GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECR_Ignore);
+	}
 }
 
 void ABasePlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

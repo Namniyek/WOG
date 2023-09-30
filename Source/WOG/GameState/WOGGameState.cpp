@@ -10,6 +10,9 @@
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 #include "WOG/PlayerState/WOGPlayerState.h"
+#include "GameMode/WOGGameMode.h"
+#include "PlayerCharacter//WOGAttacker.h"
+
 
 
 void AWOGGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -57,9 +60,21 @@ void AWOGGameState::TimeOfDayChanged(ETimeOfDay TOD)
 	{
 		HandleTODAnnouncement(TOD);
 	}
-	else
+	
+	if (TOD == ETimeOfDay::TOD_Dawn2 || TOD == ETimeOfDay::TOD_Dawn3)
 	{
-		//Do not create announcement at the last TOD
+		if (!HasAuthority()) return;
+		for (auto Player : PlayerArray)
+		{
+			if (Player && Player->GetPlayerController())
+			{
+				AWOGAttacker* Attacker = Cast<AWOGAttacker>(Player->GetPawn());
+				if (Attacker)
+				{
+					Attacker->Server_StartTeleportCharacter(GetPlayerStartTransform(Player->GetPlayerController()));
+				}
+			}
+		}
 	}
 }
 
@@ -127,6 +142,19 @@ void AWOGGameState::Server_SetEndgamePlayerStats_Implementation()
 void AWOGGameState::Multicast_SetEndgamePlayerStats_Implementation()
 {
 	SetEndgamePlayerStats();
+}
+
+FTransform AWOGGameState::GetPlayerStartTransform(APlayerController* PlayerController)
+{
+	AWOGPlayerController* PC = CastChecked<AWOGPlayerController>(PlayerController);
+	AWOGGameMode* GameMode = CastChecked<AWOGGameMode>(AuthorityGameMode);
+	if (PC && GameMode)
+	{
+		return GameMode->GetPlayerStart(FString::FromInt(PC->UserIndex));
+	}
+
+	UE_LOG(LogTemp, Error, TEXT("No PC or GameMode when teleporting player from GameState at dawn"));
+	return FTransform();
 }
 
 void AWOGGameState::SetEndgamePlayerStats()

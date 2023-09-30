@@ -11,6 +11,7 @@
 #include "Data/AGRLibrary.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Blueprint/UserWidget.h"
+#include "Components/TimelineComponent.h"
 #include "WOGBaseCharacter.generated.h"
 
 class UWOGAbilitySystemComponent;
@@ -206,6 +207,43 @@ protected:
 	TObjectPtr<UWidgetComponent> StaminaWidgetContainer;
 	#pragma endregion
 
+	#pragma region DissolveEffect
+	UPROPERTY(VisibleAnywhere)
+	UTimelineComponent* DissolveTimeline;
+	FOnTimelineFloat DissolveTrack;
+	FOnTimelineEvent DissolveTimelineFinished;
+
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<UCurveFloat> DissolveCurve;
+
+	UPROPERTY(EditDefaultsOnly)
+	FLinearColor DissolveColor;
+
+	UFUNCTION()
+	void UpdateDissolveMaterial(float DissolveValue);
+
+	UFUNCTION()
+	void OnDissolveTimelineFinished();
+
+	UFUNCTION(NetMulticast, reliable)
+	void Multicast_StartDissolve(bool bIsReversed = false);
+
+	UFUNCTION()
+	void FinishTeleportCharacter(const FTransform& Destination);
+
+public:
+	UFUNCTION(BlueprintCallable, Server, reliable)
+	void Server_StartTeleportCharacter(const FTransform& Destination);
+protected:
+	#pragma endregion
+
+	#pragma region Material variables
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	UMaterialInstanceDynamic* CharacterMI;
+
+	#pragma endregion
+
 public:	
 	virtual void Tick(float DeltaTime) override;
 
@@ -214,6 +252,8 @@ public:
 	virtual void Elim(bool bPlayerLeftGame) { /*To be overriden in Children*/ };
 
 	bool HasMatchingGameplayTag(FGameplayTag TagToCheck) const;
+
+
 
 	FORCEINLINE float GetSpeedRequiredForLeap() const { return SpeedRequiredForLeap; }
 	FORCEINLINE UWOGAttributeSetBase* GetAttributeSetBase() const { return AttributeSet; }

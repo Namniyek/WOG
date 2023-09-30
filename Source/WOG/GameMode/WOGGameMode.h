@@ -42,13 +42,13 @@ private:
 
 	class UWOGGameInstance* GameInstance;
 
-	FTransform GetPlayerStart(FString StartIndex);
-
 public:
 
 	void HandleStartingPlayer(APlayerController* NewPlayer);
 	virtual void HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer) override;
 	virtual void Logout(AController* Exiting) override;
+
+	FTransform GetPlayerStart(FString StartIndex);
 
 	UFUNCTION(BlueprintCallable)
 	void RestartMatch();

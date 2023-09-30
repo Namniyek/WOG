@@ -147,13 +147,6 @@ public:
 	void ElimTimerFinished();
 
 	#pragma endregion
-	
-	#pragma region Material variables
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-	UMaterialInstanceDynamic* CharacterMI;
-
-	#pragma endregion
 
 	#pragma region Player Input Variables
 	/*
