@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "WOGBaseActorComponent.h"
 #include "Engine/DataTable.h"
+#include "GameplayTagContainer.h"
 #include "WOGBuildComponent.generated.h"
 
 /**
@@ -43,6 +44,12 @@ public:
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Icon"))
 	TObjectPtr<UTexture2D> Icon = nullptr;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Cost"), Category = "Cost")
+	int32 CostAmount = 0;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Cost"), Category = "Cost")
+	FGameplayTag CostTag = FGameplayTag();
 
 };
 
@@ -119,6 +126,9 @@ protected:
 	void DetectBuildBoxes(bool& OutFound, FTransform& OutTransform);
 	bool CheckForOverlap();
 	bool IsBuildFloating();
+	bool CheckCost();
+
+	void DeductCost();
 
 	UFUNCTION(BlueprintCallable)
 	void ChangeMesh();
