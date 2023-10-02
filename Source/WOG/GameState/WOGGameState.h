@@ -42,6 +42,8 @@ private:
 	UFUNCTION()
 	void DayChanged(int32 DayNumber);
 
+	void HandleWeaponSwitch(bool bStoreWeapons);
+
 	class ATimeOfDay* TODActor;
 
 	UPROPERTY(Replicated)

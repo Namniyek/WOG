@@ -210,8 +210,8 @@ protected:
 	virtual void InitMagicDefaults();
 
 
-	UFUNCTION(BlueprintCallable, Server, Reliable)
-	virtual void Server_DropMagic();
+	UFUNCTION(BlueprintCallable)
+	virtual void DropMagic();
 
 	UFUNCTION(NetMulticast, unreliable)
 	void Multicast_HandleStandbyCosmetics(bool NewEnabled);

@@ -56,11 +56,33 @@ void AWOGGameState::SetupTOD()
 
 void AWOGGameState::TimeOfDayChanged(ETimeOfDay TOD)
 {
+	//Handle endgame
 	if (TOD != FinishMatchTOD)
 	{
 		HandleTODAnnouncement(TOD);
 	}
 	
+	//Handle weapon switching
+	switch (TOD)
+	{
+	case ETimeOfDay::TOD_Dusk1:
+		HandleWeaponSwitch(false);
+		break;
+	case ETimeOfDay::TOD_Dawn2:
+		HandleWeaponSwitch(true);
+		break;
+	case ETimeOfDay::TOD_Dusk2:
+		HandleWeaponSwitch(false);
+		break;
+	case ETimeOfDay::TOD_Dawn3:
+		HandleWeaponSwitch(true);
+		break;
+	case ETimeOfDay::TOD_Dusk3:
+		HandleWeaponSwitch(false);
+		break;
+	}
+
+	//Handle teleporting Attackers to base
 	if (TOD == ETimeOfDay::TOD_Dawn2 || TOD == ETimeOfDay::TOD_Dawn3)
 	{
 		if (!HasAuthority()) return;
@@ -83,6 +105,27 @@ void AWOGGameState::DayChanged(int32 DayNumber)
 	if (DayNumber == FinishMatchDayNumber)
 	{
 		Server_HandleEndGame();
+	}
+}
+
+void AWOGGameState::HandleWeaponSwitch(bool bStoreWeapons)
+{
+	if (!HasAuthority()) return;
+	for (auto Player : PlayerArray)
+	{
+		if (!Player || !Player->GetPlayerController()) continue;
+
+		ABasePlayerCharacter* Character = Cast<ABasePlayerCharacter>(Player->GetPawn());
+		if (!Character) continue;
+
+		if (bStoreWeapons)
+		{
+			Character->Server_StoreWeapons();
+		}
+		else
+		{
+			Character->Server_RestoreWeapons();
+		}
 	}
 }
 

@@ -358,7 +358,7 @@ void AWOGBaseMagic::InitMagicDefaults()
 
 }
 
-void AWOGBaseMagic::Server_DropMagic_Implementation()
+void AWOGBaseMagic::DropMagic()
 {
 	RemoveGrantedAbilities(OwnerCharacter);
 

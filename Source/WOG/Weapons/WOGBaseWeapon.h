@@ -213,7 +213,8 @@ protected:
 
 	virtual void InitWeaponData();
 
-
+	virtual void StoreWeapon(const FName& Key, AActor* InventoryActor);
+	virtual void RestoreWeapon(ABasePlayerCharacter* NewOwner);
 
 	#pragma region Drop weapon functionality
 
@@ -221,8 +222,8 @@ protected:
 	FTransform MeshMainOriginalTransform;
 	FTransform MeshSecOriginalTransform;
 
-	UFUNCTION(BlueprintCallable, Server, Reliable)
-	virtual void Server_DropWeapon();
+	UFUNCTION(BlueprintCallable)
+	virtual void DropWeapon();
 
 	#pragma endregion
 

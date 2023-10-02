@@ -442,6 +442,13 @@ void ABasePlayerCharacter::Server_SetPlayerProfile_Implementation(const FPlayerD
 {
 	PlayerProfile = NewPlayerProfile;
 	UpdatePlayerProfile(PlayerProfile);
+
+	/*
+	* Create default Pickaxe and Woodaxe
+	*/
+	FTimerHandle TimerHandle;
+	float Delay = 2.f;
+	GetWorldTimerManager().SetTimer(TimerHandle, this, &ThisClass::CreateDefaultTools, Delay);
 }
 
 void ABasePlayerCharacter::OnRep_PlayerProfile()
@@ -1547,7 +1554,7 @@ void ABasePlayerCharacter::Server_DropWeapon_Implementation(const FName& Key)
 	TObjectPtr<AWOGBaseWeapon> Weapon = Cast<AWOGBaseWeapon>(OutItem);
 	if(!Weapon)	return;
 
-	Weapon->Server_DropWeapon();
+	Weapon->DropWeapon();
 }
 
 void ABasePlayerCharacter::Server_DropMagic_Implementation(const FName& Key)
@@ -1565,5 +1572,108 @@ void ABasePlayerCharacter::Server_DropMagic_Implementation(const FName& Key)
 	TObjectPtr<AWOGBaseMagic> Magic = Cast<AWOGBaseMagic>(OutItem);
 	if (!Magic)	return;
 
-	Magic->Server_DropMagic();
+	Magic->DropMagic();
+}
+
+void ABasePlayerCharacter::Server_StoreWeapons_Implementation()
+{
+	StoreWeapon(FName("1"));
+	StoreWeapon(FName("2"));
+	RestoreTools();
+}
+
+void ABasePlayerCharacter::Server_RestoreWeapons_Implementation()
+{
+	StoreTool(FName("1"));
+	StoreTool(FName("2"));
+	RestoreWeapons();
+}
+
+void ABasePlayerCharacter::RestoreTools()
+{
+	if (!InventoryManager) return;
+
+	TArray<AActor*> OutItems;
+	int32 Amount = 0;
+	InventoryManager->GetAllItemsOfTagSlotType(TAG_Inventory_Tool, OutItems, Amount);
+
+	if (!OutItems.Num()) return;
+	for (auto OutItem : OutItems)
+	{
+		TObjectPtr<AWOGBaseWeapon> Weapon = Cast<AWOGBaseWeapon>(OutItem);
+		if (!Weapon) return;
+
+		Weapon->RestoreWeapon(this);
+	}
+}
+
+void ABasePlayerCharacter::StoreTool(const FName& Key)
+{
+	if (!EquipmentManager) return;
+	AActor* OutItem = nullptr;
+	EquipmentManager->GetWeaponShortcutReference(Key, OutItem);
+
+	if (!OutItem)
+	{
+		UE_LOG(LogTemp, Error, TEXT("NO VALID ITEM REFERENCE AT KEY : %s"), *Key.ToString());
+		return;
+	}
+
+	TObjectPtr<AWOGBaseWeapon> Weapon = Cast<AWOGBaseWeapon>(OutItem);
+	if (!Weapon) return;
+
+	Weapon->StoreWeapon(Key, this);
+}
+
+void ABasePlayerCharacter::StoreWeapon(const FName& Key)
+{
+	if (!EquipmentManager) return;
+	AActor* OutItem = nullptr;
+	EquipmentManager->GetWeaponShortcutReference(Key, OutItem);
+
+	if (!OutItem)
+	{
+		UE_LOG(LogTemp, Error, TEXT("NO VALID ITEM REFERENCE AT KEY : %s"), *Key.ToString());
+		return;
+	}
+
+	TObjectPtr<AWOGBaseWeapon> Weapon = Cast<AWOGBaseWeapon>(OutItem);
+	if (!Weapon) return;
+
+	Weapon->StoreWeapon(Key, this);
+}
+
+void ABasePlayerCharacter::RestoreWeapons()
+{
+	if (!InventoryManager) return;
+
+	TArray<AActor*> OutItems;
+	int32 Amount = 0;
+	InventoryManager->GetAllItemsOfTagSlotType(TAG_Inventory_Weapon, OutItems, Amount);
+
+	if (!OutItems.Num()) return;
+	for (auto OutItem : OutItems)
+	{
+		TObjectPtr<AWOGBaseWeapon> Weapon = Cast<AWOGBaseWeapon>(OutItem);
+		if (!Weapon) return;
+
+		Weapon->RestoreWeapon(this);
+	}
+}
+
+void ABasePlayerCharacter::CreateDefaultTools()
+{
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.Owner = this;
+
+	if (DefaultPickaxeClass)
+	{
+		TObjectPtr<AWOGBaseWeapon> DefaultPickaxe = GetWorld()->SpawnActor<AWOGBaseWeapon>(DefaultPickaxeClass, GetActorTransform(), SpawnParams);
+	}
+
+	if (DefaultWoodaxeClass)
+	{
+		TObjectPtr<AWOGBaseWeapon> DefaultWoodaxe = GetWorld()->SpawnActor<AWOGBaseWeapon>(DefaultWoodaxeClass, GetActorTransform(), SpawnParams);
+	}
+
 }

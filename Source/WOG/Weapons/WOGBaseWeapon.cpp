@@ -21,6 +21,7 @@
 #include "Weapons/WOGRangedWeaponBase.h"
 #include "Libraries/WOGBlueprintLibrary.h"
 #include "PlayerController/WOGPlayerController.h"
+#include "Resources/WOGCommonInventory.h"
 
 // Sets default values
 AWOGBaseWeapon::AWOGBaseWeapon()
@@ -49,7 +50,7 @@ AWOGBaseWeapon::AWOGBaseWeapon()
 	MeshSecondary->SetIsReplicated(true);
 
 	ItemComponent = CreateDefaultSubobject <UAGR_ItemComponent>(TEXT("ItemComponent"));
-
+	ItemComponent->bStackable = false;
 }
 
 void AWOGBaseWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -111,7 +112,7 @@ void AWOGBaseWeapon::InitWeaponDefaults()
 	MeshSecOriginalTransform = MeshSecondary->GetRelativeTransform();
 }
 
-void AWOGBaseWeapon::Server_DropWeapon_Implementation()
+void AWOGBaseWeapon::DropWeapon()
 {
 	RemoveGrantedAbilities(OwnerCharacter);
 
@@ -149,6 +150,126 @@ void AWOGBaseWeapon::Server_DropWeapon_Implementation()
 
 	OwnerCharacter = nullptr;
 	SetOwner(nullptr);
+}
+
+void AWOGBaseWeapon::StoreWeapon(const FName& Key, AActor* InventoryActor)
+{
+	if (!OwnerCharacter) return;
+
+	RemoveGrantedAbilities(OwnerCharacter);
+
+	//Unequip weapon form individual inventory
+	UAGR_EquipmentManager* Equipment = UAGRLibrary::GetEquipment(OwnerCharacter);
+	if (Equipment)
+	{
+		Equipment->RemoveWeaponShortcutReference(this);
+		FText Note;
+		Equipment->UnEquipByReference(this, Note);
+	}
+
+	MeshMain->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+	MeshSecondary->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+
+	MeshMain->SetRelativeTransform(MeshMainOriginalTransform);
+	MeshSecondary->SetRelativeTransform(MeshSecOriginalTransform);
+
+	SphereComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	SphereComponent->SetCollisionResponseToAllChannels(ECR_Ignore);
+	SphereComponent->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+	SphereComponent->SetGenerateOverlapEvents(false);
+
+	UAGRAnimMasterComponent* AnimMaster = UAGRLibrary::GetAnimationMaster(OwnerCharacter);
+	if (AnimMaster)
+	{
+		AnimMaster->SetupBasePose(TAG_Pose_Relax);
+	}
+
+	OwnerCharacter->GetOwnerPC()->Client_RemoveAbilityWidget(AbilityKey);
+
+	if (Key == FName("1"))
+	{
+		ItemComponent->ItemAuxTag = TAG_Aux_Weapon_Primary;
+	}
+	else if (Key == FName("2"))
+	{
+		ItemComponent->ItemAuxTag = TAG_Aux_Weapon_Secondary;
+	}
+
+	//Check for the common inventory and add the weapon directly there 
+	if (!InventoryActor)
+	{
+		UE_LOG(LogTemp, Error, TEXT("No Common inventory actor"));
+		return;
+	}
+	UAGR_InventoryManager* Inventory = UAGRLibrary::GetInventory(InventoryActor);
+	if (!Inventory)
+	{
+		UE_LOG(LogTemp, Error, TEXT("No Common inventory component"));
+		return;
+	}
+	Inventory->AddItemToInventoryDirectly(this);
+
+
+	// Last thing, clear OwnerCharacter
+	OwnerCharacter = nullptr;
+}
+
+void AWOGBaseWeapon::RestoreWeapon(ABasePlayerCharacter* NewOwner)
+{
+	if (!HasAuthority() || !ItemComponent || !NewOwner) return;
+
+	bool bIsActorAttacker = UWOGBlueprintLibrary::GetCharacterData(NewOwner).bIsAttacker;
+	if (WeaponData.bIsAttacker != bIsActorAttacker) return;
+
+	UAGR_EquipmentManager* Equipment = UAGRLibrary::GetEquipment(NewOwner);
+	UAGR_InventoryManager* Inventory = UAGRLibrary::GetInventory(NewOwner);
+
+	if (!Equipment || !Inventory)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Equipment or Inventory not valid"));
+		return;
+	}
+
+	FShortcutItemReference WeaponRef;
+	int32 KeyInt = -1;
+
+	if (ItemComponent)
+	{
+		if (ItemComponent->ItemAuxTag == TAG_Aux_Weapon_Primary)
+		{
+			KeyInt = 1;
+		} 
+		else if (ItemComponent->ItemAuxTag == TAG_Aux_Weapon_Secondary)
+		{
+			KeyInt = 2;
+		}
+	}
+
+	WeaponRef.Key = *FString::FromInt(KeyInt);
+	WeaponRef.ItemShortcut = this;
+
+	if (Equipment->SaveWeaponShortcutReference(WeaponRef))
+	{
+		SetOwnerCharacter(NewOwner);
+		SphereComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		SphereComponent->SetGenerateOverlapEvents(false);
+		ItemComponent->PickUpItem(Inventory);
+		if (OwnerCharacter)
+		{
+			OwnerCharacter->Server_EquipWeapon(WeaponRef.Key, this);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("Invalid OwnerCharacter"));
+		}
+
+		AddAbilityWidget(KeyInt);
+		return;
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Save weapon reference failed"));
+	}
 }
 
 void AWOGBaseWeapon::PostInitializeComponents()

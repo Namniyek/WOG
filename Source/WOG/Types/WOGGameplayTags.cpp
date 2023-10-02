@@ -67,6 +67,8 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Debuff_StaminaDrain, "Event.Debuff.StaminaDrain
 UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Weapon_Shield, "Inventory.Weapon.Shield");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Weapon_TwoHanded, "Inventory.Weapon.TwoHanded");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Weapon_DualWield, "Inventory.Weapon.DualWield");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Weapon, "Inventory.Weapon");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Tool, "Inventory.Tool");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Weapon_Shield_Hammer, "Inventory.Weapon.Shield.Hammer");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Weapon_Shield_Sword, "Inventory.Weapon.Shield.Sword");
@@ -135,3 +137,8 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Cooldown_Input_Magic_Buff, "Cooldown.Input.Magic.Buff
 
 //SetByCallerTag
 UE_DEFINE_GAMEPLAY_TAG(TAG_Data_Cooldown, "Data.Cooldown");
+
+//Aux tags
+UE_DEFINE_GAMEPLAY_TAG(TAG_Aux_Weapon, "Aux.Weapon");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Aux_Weapon_Primary, "Aux.Weapon.Primary");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Aux_Weapon_Secondary, "Aux.Weapon.Secondary");

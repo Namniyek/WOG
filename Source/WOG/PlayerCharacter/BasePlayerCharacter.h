@@ -328,6 +328,11 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void EquipWeapon(const FName& Slot);
 
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<AWOGBaseWeapon> DefaultPickaxeClass;
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<AWOGBaseWeapon> DefaultWoodaxeClass;
+
 public:
 	UFUNCTION(Server, reliable, BlueprintCallable)
 	void Server_EquipWeapon(const FName& Key, AActor* InWeapon);
@@ -349,6 +354,21 @@ public:
 
 	UFUNCTION(Server, reliable, BlueprintCallable)
 	void Server_DropMagic(const FName& Key);
+
+	UFUNCTION(Server, reliable, BlueprintCallable)
+	void Server_StoreWeapons();
+
+	UFUNCTION(Server, reliable, BlueprintCallable)
+	void Server_RestoreWeapons();
+
+	void StoreTool(const FName& Key);
+	void RestoreTools();
+
+	void StoreWeapon(const FName& Key);
+	void RestoreWeapons();
+
+	UFUNCTION(BlueprintCallable)
+	void CreateDefaultTools();
 
 	#pragma endregion
 
