@@ -14,6 +14,9 @@
 #include "AbilitySystemBlueprintLibrary.h"
 #include "ActorComponents/WOGAbilitySystemComponent.h"
 #include "Magic/WOGBaseMagic.h"
+#include "Kismet/GameplayStatics.h"
+#include "Enemies/WOGRaven.h"
+#include "Net/UnrealNetwork.h"
 
 
 AWOGAttacker::AWOGAttacker()
@@ -22,9 +25,29 @@ AWOGAttacker::AWOGAttacker()
 	SpawnComponent->SetIsReplicated(true);
 }
 
+void AWOGAttacker::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AWOGAttacker, Raven);
+}
+
 void AWOGAttacker::BeginPlay()
 {
 	Super::BeginPlay();
+
+	SetAllocatedRaven();
+}
+
+void AWOGAttacker::SetAllocatedRaven()
+{
+	TArray<AActor*> OutActors;
+	FName Tag = FName(*FString::FromInt(PlayerProfile.UserIndex));
+	UGameplayStatics::GetAllActorsOfClassWithTag(this, AWOGRaven::StaticClass(), Tag, OutActors);
+
+	if (OutActors.IsEmpty()) return;
+
+	Raven = Cast<AWOGRaven>(OutActors[0]);
 }
 
 void AWOGAttacker::PossessMinion()
@@ -231,4 +254,28 @@ void AWOGAttacker::Ability3HoldButtonTriggered(const FInputActionValue& Value)
 
 	//Execute ability
 	SendAbilityLocalInput(EWOGAbilityInputID::Ability3);
+}
+
+void AWOGAttacker::PossessRaven()
+{
+	if (!Raven)
+	{
+		UE_LOG(LogTemp, Error, TEXT("No valid raven reference"));
+		return;
+	}
+
+	OwnerPC = OwnerPC == nullptr ? Cast<AWOGPlayerController>(GetController()) : OwnerPC;
+	if (!OwnerPC)
+	{
+		UE_LOG(LogTemp, Error, TEXT("invalid OwnerPC"));
+		return;
+	}
+
+	Raven->SetActorRotation(FRotator());
+	Raven->bUseControllerRotationPitch = true;
+	Raven->bUseControllerRotationYaw = true;
+	UE_LOG(LogTemp, Warning, TEXT("Raven is player controlled from AttackerCharacter: %s"), *UEnum::GetValueAsString(GetLocalRole()));
+
+	OwnerPC->PossessMinion(Raven);
+	TargetComponent->TargetLockOff();
 }

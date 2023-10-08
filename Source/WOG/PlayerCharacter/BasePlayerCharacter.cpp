@@ -442,13 +442,6 @@ void ABasePlayerCharacter::Server_SetPlayerProfile_Implementation(const FPlayerD
 {
 	PlayerProfile = NewPlayerProfile;
 	UpdatePlayerProfile(PlayerProfile);
-
-	/*
-	* Create default Pickaxe and Woodaxe
-	*/
-	FTimerHandle TimerHandle;
-	float Delay = 2.f;
-	GetWorldTimerManager().SetTimer(TimerHandle, this, &ThisClass::CreateDefaultTools, Delay);
 }
 
 void ABasePlayerCharacter::OnRep_PlayerProfile()
@@ -1504,6 +1497,21 @@ void ABasePlayerCharacter::Server_SetCurrentTarget_Implementation(AActor* NewTar
 	CurrentTarget = NewTarget;
 }
 
+void ABasePlayerCharacter::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+
+	/*
+	* Create default Pickaxe and Woodaxe
+	*/
+	if (HasAuthority())
+	{
+		FTimerHandle TimerHandle;
+		float Delay = 2.f;
+		GetWorldTimerManager().SetTimer(TimerHandle, this, &ThisClass::CreateDefaultTools, Delay);
+	}
+}
+
 void ABasePlayerCharacter::Elim(bool bPlayerLeftGame)
 {
 	Multicast_Elim(bPlayerLeftGame);
@@ -1668,12 +1676,21 @@ void ABasePlayerCharacter::CreateDefaultTools()
 
 	if (DefaultPickaxeClass)
 	{
-		TObjectPtr<AWOGBaseWeapon> DefaultPickaxe = GetWorld()->SpawnActor<AWOGBaseWeapon>(DefaultPickaxeClass, GetActorTransform(), SpawnParams);
+		TObjectPtr<AWOGBaseWeapon> DefaultPickaxe = GetWorld()->SpawnActor<AWOGBaseWeapon>(DefaultPickaxeClass, FTransform(), SpawnParams);
+		if (DefaultPickaxe)
+		{
+			InventoryManager->AddItemToInventoryDirectly(DefaultPickaxe);
+		}
 	}
 
 	if (DefaultWoodaxeClass)
 	{
-		TObjectPtr<AWOGBaseWeapon> DefaultWoodaxe = GetWorld()->SpawnActor<AWOGBaseWeapon>(DefaultWoodaxeClass, GetActorTransform(), SpawnParams);
+		TObjectPtr<AWOGBaseWeapon> DefaultWoodaxe = GetWorld()->SpawnActor<AWOGBaseWeapon>(DefaultWoodaxeClass, FTransform(), SpawnParams);
+		if (DefaultWoodaxe)
+		{
+			InventoryManager->AddItemToInventoryDirectly(DefaultWoodaxe);
+		}
 	}
 
+	RestoreTools();
 }

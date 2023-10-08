@@ -48,25 +48,6 @@ void AWOGPlayerController::AcknowledgePossession(APawn* P)
 	}
 }
 
-void AWOGPlayerController::Test(APawn* NewPawn)
-{
-	if (NewPawn)
-	{
-		if (HasAuthority())
-		{
-			UE_LOG(LogTemp, Error, TEXT("SERVER - Pawn: %s"), *NewPawn->GetName());
-		}
-		if (!HasAuthority())
-		{
-			UE_LOG(LogTemp, Error, TEXT("CLIENT - Pawn: %s"), *NewPawn->GetName());
-		}
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("Pawn invalid"));
-	}
-}
-
 void AWOGPlayerController::OnPossess(APawn* aPawn)
 {
 	Super::OnPossess(aPawn);
@@ -155,22 +136,8 @@ void AWOGPlayerController::UnpossessMinion_Implementation()
 		return;
 	}
 
-	TObjectPtr<AActor> ActorToPossess = Cast<AActor>(DefaultPawn);
-	if (!ActorToPossess)
-	{
-		UE_LOG(LogTemp, Error, TEXT("ActorToPossess invalid"));
-		return;
-	}
-
-	TObjectPtr<APawn> PawnToPossess = Cast<APawn>(DefaultPawn);
-	if (!PawnToPossess)
-	{
-		UE_LOG(LogTemp, Error, TEXT("PawnToPossess invalid"));
-		return;
-	}
-
 	UnPossess();
-	Possess(PawnToPossess);
+	Possess(DefaultPawn);
 }
 
 void AWOGPlayerController::Server_SetPlayerIndex_Implementation(int32 NewIndex)

@@ -47,9 +47,6 @@ public:
 	virtual void AcknowledgePossession(class APawn* P);
 
 	UFUNCTION()
-	void Test(APawn* NewPawn);
-
-	UFUNCTION()
 	void AddStaminaWidget();
 
 	UFUNCTION()

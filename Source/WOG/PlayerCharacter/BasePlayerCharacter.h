@@ -134,6 +134,8 @@ public:
 	UPROPERTY(ReplicatedUsing = OnRep_PlayerProfile, EditDefaultsOnly, BlueprintReadWrite)
 	FPlayerData PlayerProfile;
 
+	virtual void PostInitializeComponents();
+
 	#pragma region Handle Elim
 
 	virtual void Elim(bool bPlayerLeftGame) override;

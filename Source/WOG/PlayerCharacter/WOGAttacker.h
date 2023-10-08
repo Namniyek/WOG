@@ -9,6 +9,9 @@
 /**
  * 
  */
+
+class AWOGRaven;
+
 UCLASS()
 class WOG_API AWOGAttacker : public ABasePlayerCharacter
 {
@@ -18,6 +21,8 @@ class WOG_API AWOGAttacker : public ABasePlayerCharacter
 public:
 	AWOGAttacker();
 	friend class UWOGSpawnComponent;
+
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
 
 	#pragma region Player Input Variables
 	/*
@@ -38,6 +43,9 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+
+	UFUNCTION(BlueprintAuthorityOnly)
+	void SetAllocatedRaven();
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<UWOGSpawnComponent> SpawnComponent;
@@ -64,6 +72,11 @@ protected:
 
 	#pragma endregion
 
+	UPROPERTY(Replicated, VisibleAnywhere)
+	TObjectPtr<AWOGRaven> Raven;
+
+	UFUNCTION(BlueprintCallable)
+	void PossessRaven();
 
 public:
 	UFUNCTION(BlueprintCallable)
