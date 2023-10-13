@@ -23,7 +23,7 @@ AWOGRaven::AWOGRaven()
 	// Note: For faster iteration times these variables, and many more, can be tweaked in the Character Blueprint
 	// instead of recompiling to adjust them
 	GetCharacterMovement()->DefaultLandMovementMode = EMovementMode::MOVE_Flying;
-	GetCharacterMovement()->MaxFlySpeed = 1200.f;
+	GetCharacterMovement()->MaxFlySpeed = 700.f;
 	GetCharacterMovement()->BrakingDecelerationFlying = 1500.f;
 
 	// Create a camera boom (pulls in towards the player if there is a collision)
@@ -112,12 +112,14 @@ void AWOGRaven::PossessedBy(AController* NewController)
 		SetActorRotation(FRotator());
 		bUseControllerRotationPitch = true;
 		bUseControllerRotationYaw = true;
+		GetCharacterMovement()->MaxFlySpeed = 1200.f;
 		UE_LOG(LogTemp, Warning, TEXT("Raven is player controlled: %s"), *UEnum::GetValueAsString(GetLocalRole()));
 	}
 	else
 	{
 		bUseControllerRotationPitch = false;
 		bUseControllerRotationYaw = false;
+		GetCharacterMovement()->MaxFlySpeed = 700.f;
 		UE_LOG(LogTemp, Warning, TEXT("Raven is AI controlled: %s"), *UEnum::GetValueAsString(GetLocalRole()));
 	}
 }
