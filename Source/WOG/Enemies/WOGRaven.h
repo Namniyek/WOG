@@ -13,6 +13,8 @@
 class UInputAction;
 class USpringArmComponent;
 class UCameraComponent;
+class AWOGSpline;
+class AWOGRavenMarker;
 
 
 UCLASS()
@@ -51,6 +53,9 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup")
+	TObjectPtr<AWOGSpline> AssignedSplinePath;
+
 	#pragma region Components variables
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	USpringArmComponent* CameraBoom;
@@ -71,6 +76,9 @@ protected:
 	/** Called for looking input */
 	void LookActionPressed(const FInputActionValue& Value);
 
+	void PrimaryActionTriggered(const FInputActionValue& Value);
+	void SecondaryActionTriggered(const FInputActionValue& Value);
+
 	#pragma endregion
 
 	virtual void PossessedBy(AController* NewController) override;
@@ -78,6 +86,28 @@ protected:
 	UFUNCTION(Server, reliable, BlueprintCallable)
 	virtual void Server_UnpossessMinion();
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TSubclassOf<AWOGRavenMarker> MarkerClass;
+
+
+
+private:
+
+	UFUNCTION(Server, reliable)
+	void Server_SpawnMarker(const FVector_NetQuantize& SpawnLocation);
+
+	UFUNCTION(Server, reliable)
+	void Server_DestroyMarker();
+
 public:
+
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE AWOGSpline* GetAssignedSplinePath() const { return AssignedSplinePath; }
+
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE TArray<AWOGRavenMarker*> GetSpawnedMarkersArray() { return SpawnedMarkers; }
+
+	UPROPERTY(Replicated, BlueprintReadWrite, EditAnywhere)
+	TArray<AWOGRavenMarker*> SpawnedMarkers;
 
 };

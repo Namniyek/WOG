@@ -24,7 +24,8 @@ public class WOG : ModuleRules
             "MotionWarping",
             "AutoSettingsCore",
             "AutoSettings",
-            "AutoSettingsInput"
+            "AutoSettingsInput",
+            "CPathfinding"
         });
 
         PublicIncludePaths.Add("WOG/");

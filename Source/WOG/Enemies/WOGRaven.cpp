@@ -9,6 +9,7 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Net/UnrealNetwork.h"
+#include "Utilities/WOGRavenMarker.h"
 
 AWOGRaven::AWOGRaven()
 {
@@ -47,6 +48,7 @@ void AWOGRaven::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetim
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
+	DOREPLIFETIME(AWOGRaven, SpawnedMarkers);
 }
 
 void AWOGRaven::BeginPlay()
@@ -80,6 +82,11 @@ void AWOGRaven::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ThisClass::MoveActionPressed);
 		//Look:
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ThisClass::LookActionPressed);
+		//Place marker
+		EnhancedInputComponent->BindAction(PrimaryLightAction, ETriggerEvent::Triggered, this, &ThisClass::PrimaryActionTriggered);
+		//Remove marker
+		EnhancedInputComponent->BindAction(SecondaryAction, ETriggerEvent::Triggered, this, &ThisClass::SecondaryActionTriggered);
+
 	}
 }
 
@@ -103,6 +110,32 @@ void AWOGRaven::LookActionPressed(const FInputActionValue& Value)
 	}
 }
 
+void AWOGRaven::PrimaryActionTriggered(const FInputActionValue& Value)
+{
+	if (SpawnedMarkers.Num() > 2)
+	{
+		//TO-DO add warning widget
+		UE_LOG(LogTemp, Error, TEXT("Too many markers placed"));
+		return;
+	}
+
+	FHitResult HitResult;
+	FVector Start = FollowCamera->GetComponentLocation() + (FollowCamera->GetForwardVector() * 750.f);
+	FVector End = FollowCamera->GetComponentLocation() + (FollowCamera->GetForwardVector() * 500000.f);
+
+	GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECollisionChannel::ECC_Visibility);
+
+	if (HitResult.bBlockingHit)
+	{
+		Server_SpawnMarker(HitResult.ImpactPoint);
+	}
+}
+
+void AWOGRaven::SecondaryActionTriggered(const FInputActionValue& Value)
+{
+	Server_DestroyMarker();
+}
+
 void AWOGRaven::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
@@ -122,6 +155,53 @@ void AWOGRaven::PossessedBy(AController* NewController)
 		GetCharacterMovement()->MaxFlySpeed = 700.f;
 		UE_LOG(LogTemp, Warning, TEXT("Raven is AI controlled: %s"), *UEnum::GetValueAsString(GetLocalRole()));
 	}
+}
+
+void AWOGRaven::Server_SpawnMarker_Implementation(const FVector_NetQuantize& SpawnLocation)
+{
+	if (!IsValid(MarkerClass))
+	{
+		UE_LOG(LogTemp, Error, TEXT("No valid MARKER class"));
+		return;
+	}
+
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.Owner = this;
+
+	FTransform Transform;
+	Transform.SetLocation(SpawnLocation);
+	Transform.SetRotation(FRotator(0.f, 0.f, 0.f).Quaternion());
+	Transform.SetScale3D(FVector(4.f));
+
+	TObjectPtr<AWOGRavenMarker> Marker = GetWorld()->SpawnActor<AWOGRavenMarker>(MarkerClass, Transform, SpawnParams);
+	if (Marker)
+	{
+
+		SpawnedMarkers.AddUnique(Marker);
+	}
+}
+
+void AWOGRaven::Server_DestroyMarker_Implementation()
+{
+	if (SpawnedMarkers.IsEmpty())
+	{
+		UE_LOG(LogTemp, Error, TEXT("Marker array Empty"));
+		return;
+	}
+
+	TObjectPtr<AWOGRavenMarker> TempMarker = SpawnedMarkers[SpawnedMarkers.Num() - 1];
+	if (TempMarker)
+	{
+		UE_LOG(LogTemp, Display, TEXT("%s"), *GetNameSafe(TempMarker));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Last Item Marker array invalid"));
+		return;
+	}
+
+	TempMarker->Destroy();
+	SpawnedMarkers.Remove(TempMarker);
 }
 
 void AWOGRaven::Server_UnpossessMinion_Implementation()
