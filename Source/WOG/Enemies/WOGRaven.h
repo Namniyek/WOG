@@ -3,22 +3,22 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Enemies/WOGPossessableEnemy.h"
+#include "Characters/WOGBaseCharacter.h"
+#include "Interfaces/SpawnInterface.h"
+#include "InputActionValue.h"
 #include "WOGRaven.generated.h"
 
 /**
  * 
  */
-
 class UInputAction;
 class USpringArmComponent;
 class UCameraComponent;
 class AWOGSpline;
 class AWOGRavenMarker;
 
-
 UCLASS()
-class WOG_API AWOGRaven : public ACharacter
+class WOG_API AWOGRaven : public AWOGBaseCharacter, public ISpawnInterface
 {
 	GENERATED_BODY()
 	
@@ -83,13 +83,10 @@ protected:
 
 	virtual void PossessedBy(AController* NewController) override;
 
-	UFUNCTION(Server, reliable, BlueprintCallable)
-	virtual void Server_UnpossessMinion();
-
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TSubclassOf<AWOGRavenMarker> MarkerClass;
 
-
+	virtual void UnpossessMinion_Implementation();
 
 private:
 
@@ -99,7 +96,19 @@ private:
 	UFUNCTION(Server, reliable)
 	void Server_DestroyMarker();
 
+	UFUNCTION()
+	void TODChanged(ETimeOfDay TOD);
+
+	UFUNCTION()
+	void KeyTimeHit(int32 CurrentTime);
+
+	UFUNCTION(Client, reliable)
+	void Client_RemoveRavenMarkerWidget();
+
 public:
+
+	UFUNCTION(Server, reliable, BlueprintCallable)
+	virtual void Server_UnpossessMinion();
 
 	UFUNCTION(BlueprintCallable)
 	FORCEINLINE AWOGSpline* GetAssignedSplinePath() const { return AssignedSplinePath; }

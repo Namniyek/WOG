@@ -78,7 +78,18 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void PossessRaven();
 
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly)
+	bool bCanPossessMinion;
+
+	virtual void OnHealthAttributeChanged(const FOnAttributeChangeData& Data) override;
+
+private:
+	UPROPERTY(Replicated, VisibleAnywhere)
+	TObjectPtr<AActor> CurrentExternalMinion;
+
 public:
 	UFUNCTION(BlueprintCallable)
 	UWOGSpawnComponent* GetSpawnComponent() { return SpawnComponent; }
+
+	void SetCurrentExternalMinion(AActor* NewMinion);
 };

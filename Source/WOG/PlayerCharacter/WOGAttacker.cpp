@@ -17,12 +17,19 @@
 #include "Kismet/GameplayStatics.h"
 #include "Enemies/WOGRaven.h"
 #include "Net/UnrealNetwork.h"
+#include "AbilitySystem/AttributeSets/WOGAttributeSetBase.h"
+#include "Kismet/KismetMathLibrary.h"
+#include "Interfaces/SpawnInterface.h"
 
 
 AWOGAttacker::AWOGAttacker()
 {
 	SpawnComponent = CreateDefaultSubobject<UWOGSpawnComponent>(TEXT("SpawnComponent"));
 	SpawnComponent->SetIsReplicated(true);
+
+	CurrentExternalMinion = nullptr;
+	bCanPossessMinion = true;
+
 }
 
 void AWOGAttacker::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -30,6 +37,8 @@ void AWOGAttacker::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AWOGAttacker, Raven);
+	DOREPLIFETIME(AWOGAttacker, CurrentExternalMinion);
+	DOREPLIFETIME(AWOGAttacker, bCanPossessMinion);
 }
 
 void AWOGAttacker::BeginPlay()
@@ -52,6 +61,13 @@ void AWOGAttacker::SetAllocatedRaven()
 
 void AWOGAttacker::PossessMinion()
 {
+	if (!bCanPossessMinion && OwnerPC)
+	{
+		OwnerPC->CreateWarningWidget(FString("Health"));
+		UE_LOG(WOGLogSpawn, Error, TEXT("Health too low, can't possess"));
+		return;
+	}
+
 	OwnerPC = OwnerPC == nullptr ? Cast<AWOGPlayerController>(GetController()) : OwnerPC;
 	if (!OwnerPC)
 	{
@@ -65,8 +81,9 @@ void AWOGAttacker::PossessMinion()
 		return;
 	}
 
-	OwnerPC->PossessMinion(CurrentTarget);
+	OwnerPC->Server_PossessMinion(CurrentTarget);
 	TargetComponent->TargetLockOff();
+
 }
 
 void AWOGAttacker::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -258,6 +275,13 @@ void AWOGAttacker::Ability3HoldButtonTriggered(const FInputActionValue& Value)
 
 void AWOGAttacker::PossessRaven()
 {
+	if (!bCanPossessMinion && OwnerPC)
+	{
+		OwnerPC->CreateWarningWidget(FString("Health"));
+		UE_LOG(WOGLogSpawn, Error, TEXT("Health too low, can't possess"));
+		return;
+	}
+
 	if (!Raven)
 	{
 		UE_LOG(LogTemp, Error, TEXT("No valid raven reference"));
@@ -274,8 +298,94 @@ void AWOGAttacker::PossessRaven()
 	Raven->SetActorRotation(FRotator());
 	Raven->bUseControllerRotationPitch = true;
 	Raven->bUseControllerRotationYaw = true;
-	UE_LOG(LogTemp, Warning, TEXT("Raven is player controlled from AttackerCharacter: %s"), *UEnum::GetValueAsString(GetLocalRole()));
 
-	OwnerPC->PossessMinion(Raven);
+	OwnerPC->Server_PossessMinion(Raven);
 	TargetComponent->TargetLockOff();
+
+	OwnerPC->AddRavenMarkerWidget(Raven->SpawnedMarkers.Num());
+}
+
+void AWOGAttacker::OnHealthAttributeChanged(const FOnAttributeChangeData& Data)
+{
+	if (Data.NewValue <= (AttributeSet->GetMaxHealth() * 0.2f) && Data.OldValue > (AttributeSet->GetMaxHealth() * 0.2f))
+	{
+		UE_LOG(WOGLogSpawn, Warning, TEXT("Health below 20%"));
+
+		if (HasAuthority())
+		{
+			bCanPossessMinion = false;
+		}
+
+		if (CurrentExternalMinion)
+		{
+			TObjectPtr<ISpawnInterface> SpawnInterface = Cast<ISpawnInterface>(CurrentExternalMinion);
+			if (SpawnInterface)
+			{
+				SpawnInterface->Execute_UnpossessMinion(CurrentExternalMinion);
+				UE_LOG(LogTemp, Warning, TEXT("SpawnInterface Unpossess function called from: %s"), *UEnum::GetValueAsString(GetLocalRole()));
+			}
+		}
+		else
+		{
+			UE_LOG(WOGLogSpawn, Error, TEXT("CurrentExternalMinion invalid"));
+		}
+	}
+
+	if (Data.NewValue >= (AttributeSet->GetMaxHealth() * 0.2f) && Data.OldValue < (AttributeSet->GetMaxHealth() * 0.2f) && HasAuthority())
+	{
+		UE_LOG(WOGLogSpawn, Display, TEXT("Health above 20%"));
+
+		bCanPossessMinion = true;
+	}
+
+	//Check if health is at 80%
+	if (Data.NewValue <= (AttributeSet->GetMaxHealth() * 0.8f) && Data.OldValue > (AttributeSet->GetMaxHealth() * 0.8f) && !IsLocallyControlled())
+	{
+		UE_LOG(WOGLogSpawn, Display, TEXT("Health at 80%"));
+		if (OwnerPC)
+		{
+			OwnerPC->AddScreenDamageWidget(0);
+			OwnerPC->CreateGenericWarningWidget(FString("TakingDamage"));
+		}
+	}
+
+	//Check if health is at 60%
+	if (Data.NewValue <= (AttributeSet->GetMaxHealth() * 0.6f) && Data.OldValue > (AttributeSet->GetMaxHealth() * 0.6f) && !IsLocallyControlled())
+	{
+		UE_LOG(WOGLogSpawn, Display, TEXT("Health at 60%"));
+		if (OwnerPC)
+		{
+			OwnerPC->AddScreenDamageWidget(1);
+			OwnerPC->CreateGenericWarningWidget(FString("TakingDamage"));
+		}
+	}
+
+	//Check if health is at 40%
+	if (Data.NewValue <= (AttributeSet->GetMaxHealth() * 0.4f) && Data.OldValue > (AttributeSet->GetMaxHealth() * 0.4f) && !IsLocallyControlled())
+	{
+		UE_LOG(WOGLogSpawn, Display, TEXT("Health at 40%"));
+		if (OwnerPC && CurrentExternalMinion)
+		{
+			OwnerPC->AddScreenDamageWidget(2);
+			OwnerPC->CreateGenericWarningWidget(FString("TakingDamage"));
+		}
+	}
+	
+
+	AWOGBaseCharacter::OnHealthAttributeChanged(Data);
+}
+
+void AWOGAttacker::SetCurrentExternalMinion(AActor* NewMinion)
+{
+	if (NewMinion)
+	{
+		CurrentExternalMinion = NewMinion;
+		UE_LOG(WOGLogSpawn, Display, TEXT("CurrentExternalMinion = %s, -> %s"), *GetNameSafe(NewMinion), *UEnum::GetValueAsString(GetLocalRole()));
+	}
+	else
+	{
+		CurrentExternalMinion = nullptr;
+		UE_LOG(WOGLogSpawn, Display, TEXT("CurrentExternalMinion = nullptr -> %s"), *UEnum::GetValueAsString(GetLocalRole()));
+	}
+
 }

@@ -253,8 +253,6 @@ public:
 
 	bool HasMatchingGameplayTag(FGameplayTag TagToCheck) const;
 
-
-
 	FORCEINLINE float GetSpeedRequiredForLeap() const { return SpeedRequiredForLeap; }
 	FORCEINLINE UWOGAttributeSetBase* GetAttributeSetBase() const { return AttributeSet; }
 	FORCEINLINE void SetDefaultAbilitiesAndEffects(const FCharacterAbilityData& Data) { DefaultAbilitiesAndEffects = Data; }

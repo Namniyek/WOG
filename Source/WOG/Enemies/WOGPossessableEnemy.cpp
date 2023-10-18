@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
+#include "WOG.h"
 #include "WOGPossessableEnemy.h"
 #include "WOG/PlayerController/WOGPlayerController.h"
 #include "Net/UnrealNetwork.h"
@@ -11,6 +12,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "AbilitySystemComponent.h"
 #include "Types/WOGGameplayTags.h"
+#include "Subsystems/WOGWorldSubsystem.h"
 
 AWOGPossessableEnemy::AWOGPossessableEnemy()
 {
@@ -59,6 +61,14 @@ void AWOGPossessableEnemy::BeginPlay()
 			Subsystem->ClearAllMappings();
 			Subsystem->AddMappingContext(MinionMappingContext, 0);
 		}
+	}
+
+	TObjectPtr<UWOGWorldSubsystem> WorldSubsystem = GetWorld()->GetSubsystem<UWOGWorldSubsystem>();
+	if (WorldSubsystem)
+	{
+		WorldSubsystem->TimeOfDayChangedDelegate.AddDynamic(this, &ThisClass::TODChanged);
+		WorldSubsystem->OnKeyTimeHitDelegate.AddDynamic(this, &ThisClass::KeyTimeHit);
+		UE_LOG(WOGLogSpawn, Display, TEXT("Delegates bound -> PossessableCharacter"));
 	}
 }
 
@@ -133,6 +143,35 @@ void AWOGPossessableEnemy::Elim(bool bPlayerLeftGame)
 	Super::Elim(bPlayerLeftGame);
 }
 
+void AWOGPossessableEnemy::UnpossessMinion_Implementation()
+{
+	Server_UnpossessMinion();
+}
+
+void AWOGPossessableEnemy::TODChanged(ETimeOfDay TOD)
+{
+	switch (TOD)
+	{
+	case ETimeOfDay::TOD_Dawn2:
+		Destroy();
+		break;
+	case ETimeOfDay::TOD_Dawn3:
+		Destroy();
+		break;
+	case ETimeOfDay::TOD_Dawn4:
+		Destroy();
+		break;
+	}
+}
+
+void AWOGPossessableEnemy::KeyTimeHit(int32 CurrentTime)
+{
+	if (CurrentTime == 350)
+	{
+		Server_UnpossessMinion();
+	}
+}
+
 void AWOGPossessableEnemy::Server_UnpossessMinion_Implementation()
 {
 	if (IsPlayerControlled())
@@ -140,7 +179,7 @@ void AWOGPossessableEnemy::Server_UnpossessMinion_Implementation()
 		TObjectPtr<AWOGPlayerController> PlayerController = Cast<AWOGPlayerController>(GetController());
 		if (PlayerController)
 		{
-			PlayerController->UnpossessMinion();
+			PlayerController->Server_UnpossessMinion(this);
 		}	
 
 		SpawnDefaultController();

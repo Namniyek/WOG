@@ -8,6 +8,10 @@
 #include "PlayerCharacter/WOGAttacker.h"
 #include "Enemies/WOGRaven.h"
 #include "Kismet/GameplayStatics.h"
+#include "NiagaraSystem.h"
+#include "Interfaces/SpawnInterface.h"
+#include "NiagaraFunctionLibrary.h"
+#include "UI/WOGRavenMarkerWidget.h"
 
 AWOGRavenMarker::AWOGRavenMarker()
 {
@@ -51,6 +55,24 @@ void AWOGRavenMarker::BeginPlay()
 	}
 }
 
+void AWOGRavenMarker::Destroyed()
+{
+	Super::Destroyed();
+
+	TObjectPtr<AWOGPlayerController> PC = Cast<AWOGPlayerController>(UGameplayStatics::GetPlayerController(this, 0));
+	if (PC && PC->GetIsAttacker())
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, DespawnEffect, GetActorLocation(), FRotator::ZeroRotator, FVector(2.f, 2.f, 2.f));
+		
+		if (!PC->IsLocalPlayerController() || !PC->GetRavenMarkerWidget()) return;
+		TObjectPtr<ISpawnInterface> Interface = Cast<ISpawnInterface>(PC->GetRavenMarkerWidget());
+		if (Interface)
+		{
+			Interface->Execute_IncreaseRavenMarkerWidget(PC->GetRavenMarkerWidget());
+		}
+	}
+}
+
 void AWOGRavenMarker::Init()
 {
 	SphereComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
@@ -72,7 +94,6 @@ void AWOGRavenMarker::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, 
 		{
 			int32 AmountRemoved = RavenOwner->SpawnedMarkers.Remove(this);
 
-			UE_LOG(LogTemp, Warning, TEXT("Items removed: %d, %s"), AmountRemoved, *UEnum::GetValueAsString(GetLocalRole()));
 			Destroy();
 		}
 	}

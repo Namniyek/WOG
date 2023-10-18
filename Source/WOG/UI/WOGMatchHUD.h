@@ -10,6 +10,12 @@
  * 
  */
 class UWOG_HUD;
+class UWOGRavenMarkerWidget;
+class UWOGScreenDamage;
+class UWOGWarningWidget;
+class UMainAnnouncementWidget;
+class UEndgameWidget;
+class URestartWidget;
 
 UCLASS()
 class WOG_API AWOGMatchHUD : public AHUD
@@ -21,32 +27,52 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
-	UPROPERTY(EditDefaultsOnly)
+
+	#pragma region Widget Classes
+	UPROPERTY(EditDefaultsOnly, Category = "Setup | WidgetClasses")
 	TSubclassOf<UUserWidget> AnnouncementClass;
 
-	UPROPERTY()
-	class UMainAnnouncementWidget* Announcement;
-
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category = "Setup | WidgetClasses")
 	TSubclassOf<UUserWidget> EndgameClass;
 
-	UPROPERTY()
-	class UEndgameWidget* Endgame;
-
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category = "Setup | WidgetClasses")
 	TSubclassOf<UUserWidget> RestartClass;
 
-	UPROPERTY()
-	class URestartWidget* Restart;
+	UPROPERTY(EditDefaultsOnly, Category = "Setup | WidgetClasses")
+	TSubclassOf<UWOGWarningWidget> AttributeWarningClass;
 
-	UPROPERTY(EditDefaultsOnly)
-	TSubclassOf<UUserWidget> WarningClass;
+	UPROPERTY(EditDefaultsOnly, Category = "Setup | WidgetClasses")
+	TSubclassOf<UWOGWarningWidget> GenericWarningClass;
 
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category = "Setup | WidgetClasses")
 	TSubclassOf<UUserWidget> StaminaBarClass;
 
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category = "Setup | WidgetClasses")
 	TSubclassOf<UUserWidget> HoldProgressBarWidgetClass;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Setup | WidgetClasses")
+	TSubclassOf<UWOGRavenMarkerWidget> RavenMarkerWidgetClass;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Setup | WidgetClasses")
+	TSubclassOf<UWOGScreenDamage> ScreenDamageWidgetClass;
+
+	#pragma endregion
+
+	#pragma region Widget References
+
+	UPROPERTY()
+	TObjectPtr<UMainAnnouncementWidget> Announcement;
+
+	UPROPERTY()
+	TObjectPtr<UEndgameWidget> Endgame;
+
+	UPROPERTY()
+	TObjectPtr<URestartWidget> Restart;
+
+	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
+	TObjectPtr<UWOG_HUD> HUDWidget = nullptr;
+
+	#pragma endregion
 
 	UFUNCTION()
 	void AddEndgameWidget();
@@ -57,7 +83,6 @@ public:
 	UFUNCTION(BlueprintNativeEvent)
 	void ResetHUDAfterRespawn();
 
-	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
-	TObjectPtr<UWOG_HUD> HUDWidget = nullptr;
+
 
 };

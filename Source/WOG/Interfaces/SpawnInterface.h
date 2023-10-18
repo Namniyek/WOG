@@ -22,4 +22,16 @@ class WOG_API ISpawnInterface
 
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void UnpossessMinion();
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void SetAmountRavenMarkersAvailable(const int32& Amount);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void IncreaseRavenMarkerWidget();
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void DecreaseRavenMarkerWidget();
 };

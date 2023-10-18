@@ -77,9 +77,18 @@ protected:
 
 	virtual void PossessedBy(AController* NewController) override;
 
-	UFUNCTION(Server, reliable, BlueprintCallable)
-	virtual void Server_UnpossessMinion();
 	virtual void Elim(bool bPlayerLeftGame) override;
 
+	virtual void UnpossessMinion_Implementation();
+
+private:
+	UFUNCTION()
+	void TODChanged(ETimeOfDay TOD);
+
+	UFUNCTION()
+	void KeyTimeHit(int32 CurrentTime);
+
 public:
+	UFUNCTION(Server, reliable, BlueprintCallable)
+	virtual void Server_UnpossessMinion();
 };

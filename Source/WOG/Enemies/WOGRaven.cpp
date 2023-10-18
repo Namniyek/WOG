@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
+#include "WOG.h"
 #include "Enemies/WOGRaven.h"
 #include "WOG/PlayerController/WOGPlayerController.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -10,6 +11,10 @@
 #include "EnhancedInputSubsystems.h"
 #include "Net/UnrealNetwork.h"
 #include "Utilities/WOGRavenMarker.h"
+#include "Subsystems/WOGWorldSubsystem.h"
+#include "AbilitySystemBlueprintLibrary.h"
+#include "Types/WOGGameplayTags.h"
+
 
 AWOGRaven::AWOGRaven()
 {
@@ -69,6 +74,16 @@ void AWOGRaven::BeginPlay()
 			PlayerController->PlayerCameraManager->ViewPitchMax = 60.f;
 		}	
 	}
+
+	TObjectPtr<UWOGWorldSubsystem> WorldSubsystem = GetWorld()->GetSubsystem<UWOGWorldSubsystem>();
+	if (WorldSubsystem)
+	{
+		WorldSubsystem->TimeOfDayChangedDelegate.AddDynamic(this, &ThisClass::TODChanged);
+		WorldSubsystem->OnKeyTimeHitDelegate.AddDynamic(this, &ThisClass::KeyTimeHit);
+	}
+
+	GiveDefaultAbilities();
+	ApplyDefaultEffects();
 }
 
 void AWOGRaven::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -114,8 +129,13 @@ void AWOGRaven::PrimaryActionTriggered(const FInputActionValue& Value)
 {
 	if (SpawnedMarkers.Num() > 2)
 	{
-		//TO-DO add warning widget
-		UE_LOG(LogTemp, Error, TEXT("Too many markers placed"));
+		TObjectPtr<AWOGPlayerController> OwnerPC = Cast<AWOGPlayerController>(GetController());
+		if (OwnerPC)
+		{
+			OwnerPC->CreateGenericWarningWidget(FString("TooManyMarkers"));
+		}
+
+		UE_LOG(WOGLogSpawn, Error, TEXT("Too many markers placed"));
 		return;
 	}
 
@@ -146,14 +166,62 @@ void AWOGRaven::PossessedBy(AController* NewController)
 		bUseControllerRotationPitch = true;
 		bUseControllerRotationYaw = true;
 		GetCharacterMovement()->MaxFlySpeed = 1200.f;
-		UE_LOG(LogTemp, Warning, TEXT("Raven is player controlled: %s"), *UEnum::GetValueAsString(GetLocalRole()));
 	}
 	else
 	{
 		bUseControllerRotationPitch = false;
 		bUseControllerRotationYaw = false;
 		GetCharacterMovement()->MaxFlySpeed = 700.f;
-		UE_LOG(LogTemp, Warning, TEXT("Raven is AI controlled: %s"), *UEnum::GetValueAsString(GetLocalRole()));
+	}
+}
+
+void AWOGRaven::UnpossessMinion_Implementation()
+{
+	FGameplayEventData EventPayload;
+	EventPayload.EventTag = TAG_Event_Spawn_Unpossess;
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Spawn_Unpossess, EventPayload);
+
+	TObjectPtr<AWOGPlayerController> PlayerController = Cast<AWOGPlayerController>(GetController());
+	if (PlayerController)
+	{
+		PlayerController->RemoveRavenMarkerWidget();
+	}
+}
+
+void AWOGRaven::TODChanged(ETimeOfDay TOD)
+{
+	switch (TOD)
+	{
+	case ETimeOfDay::TOD_Dusk1:
+		Client_RemoveRavenMarkerWidget();
+		Server_UnpossessMinion();
+		break;
+	case ETimeOfDay::TOD_Dusk2:
+		Client_RemoveRavenMarkerWidget();
+		Server_UnpossessMinion();
+		break;
+	case ETimeOfDay::TOD_Dusk3:
+		Client_RemoveRavenMarkerWidget();
+		Server_UnpossessMinion();
+		break;
+	}
+}
+
+void AWOGRaven::KeyTimeHit(int32 CurrentTime)
+{
+	if (CurrentTime == 350 && IsLocallyControlled())
+	{
+		Client_RemoveRavenMarkerWidget();
+		Server_UnpossessMinion();
+	}
+}
+
+void AWOGRaven::Client_RemoveRavenMarkerWidget_Implementation()
+{
+	TObjectPtr<AWOGPlayerController> PlayerController = Cast<AWOGPlayerController>(GetController());
+	if (PlayerController)
+	{
+		PlayerController->RemoveRavenMarkerWidget();
 	}
 }
 
@@ -161,7 +229,7 @@ void AWOGRaven::Server_SpawnMarker_Implementation(const FVector_NetQuantize& Spa
 {
 	if (!IsValid(MarkerClass))
 	{
-		UE_LOG(LogTemp, Error, TEXT("No valid MARKER class"));
+		UE_LOG(WOGLogSpawn, Error, TEXT("No valid RavenMarker class"));
 		return;
 	}
 
@@ -185,20 +253,12 @@ void AWOGRaven::Server_DestroyMarker_Implementation()
 {
 	if (SpawnedMarkers.IsEmpty())
 	{
-		UE_LOG(LogTemp, Error, TEXT("Marker array Empty"));
+		UE_LOG(WOGLogSpawn, Error, TEXT("Marker array Empty"));
 		return;
 	}
 
 	TObjectPtr<AWOGRavenMarker> TempMarker = SpawnedMarkers[SpawnedMarkers.Num() - 1];
-	if (TempMarker)
-	{
-		UE_LOG(LogTemp, Display, TEXT("%s"), *GetNameSafe(TempMarker));
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("Last Item Marker array invalid"));
-		return;
-	}
+	if (!TempMarker) return;
 
 	TempMarker->Destroy();
 	SpawnedMarkers.Remove(TempMarker);
@@ -211,9 +271,7 @@ void AWOGRaven::Server_UnpossessMinion_Implementation()
 		TObjectPtr<AWOGPlayerController> PlayerController = Cast<AWOGPlayerController>(GetController());
 		if (PlayerController)
 		{
-			PlayerController->UnpossessMinion();
+			PlayerController->Server_UnpossessMinion(this);
 		}
-
-		SpawnDefaultController();
 	}
 }

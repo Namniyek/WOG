@@ -12,6 +12,7 @@
 #include "BasePlayerCharacter.generated.h"
 
 class AWOGCommonInventory;
+class AWOGPlayerController;
 
 USTRUCT(BlueprintType)
 struct FMeshDataTables 
@@ -416,8 +417,8 @@ public:
 	UFUNCTION(Server, reliable)
 	void Server_SetCurrentTarget(AActor* NewTarget = nullptr);
 
-	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class AWOGPlayerController> OwnerPC = nullptr;
+	UPROPERTY(BlueprintReadOnly, Replicated, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<AWOGPlayerController> OwnerPC = nullptr;
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Replicated)
 	TObjectPtr<AActor> CurrentTarget = nullptr;

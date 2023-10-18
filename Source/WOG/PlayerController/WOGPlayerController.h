@@ -11,6 +11,7 @@
  */
 class UWOGAbilityWidget;
 class UWOGHoldProgressBar;
+class UWOGRavenMarkerWidget;
 class ABasePlayerCharacter;
 
 UCLASS()
@@ -19,14 +20,14 @@ class WOG_API AWOGPlayerController : public APlayerController
 	GENERATED_BODY()
 
 public:
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	int32 UserIndex;
 
 	UFUNCTION(Client, Reliable)
 	void Client_CreateAnnouncementWidget(ETimeOfDay NewTOD);
-
-	UFUNCTION()
-	void CreateWarningWidget(const FString& Attribute);
 
 	UFUNCTION(Client, Reliable)
 	void Client_CreateEndgameWidget();
@@ -37,12 +38,10 @@ public:
 	UFUNCTION(Client, Reliable)
 	void Client_RemoveAbilityWidget(const int& AbilityID);
 
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
 	UFUNCTION(Server, reliable)
-	void PossessMinion(AActor* ActorToPossess);
+	void Server_PossessMinion(AActor* ActorToPossess);
 	UFUNCTION(Server, reliable)
-	void UnpossessMinion();
+	void Server_UnpossessMinion(APawn* AIPawnLeft);
 
 	virtual void AcknowledgePossession(class APawn* P);
 
@@ -54,6 +53,19 @@ public:
 	UFUNCTION()
 	void RemoveHoldProgressBar();
 
+	UFUNCTION()
+	void AddRavenMarkerWidget(const int32& Amount);
+	UFUNCTION()
+	void RemoveRavenMarkerWidget();
+
+	UFUNCTION()
+	void AddScreenDamageWidget(const int32& DamageThreshold);
+
+	UFUNCTION()
+	void CreateWarningWidget(const FString& Attribute);
+
+	UFUNCTION()
+	void CreateGenericWarningWidget(const FString& Attribute);
 
 protected:
 	virtual void OnPossess(APawn* aPawn) override;
@@ -86,12 +98,17 @@ private:
 	UPROPERTY()
 	TObjectPtr<UWOGHoldProgressBar> HoldProgressBarWidget = nullptr;
 
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UWOGRavenMarkerWidget> RavenMarkerWidget = nullptr;
+
+	UFUNCTION()
+	void FinishUnPossess(APawn* PawnToPossess, APawn* AIPawnLeft);
+
 public:
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE bool GetIsAttacker() const { return bIsAttacker; }
 	FORCEINLINE void SetDefaultPawn(ABasePlayerCharacter* PawnToSet) { DefaultPawn = PawnToSet; }
-	FORCEINLINE TObjectPtr<ABasePlayerCharacter> GetDefaultPawn() const { return DefaultPawn; }
+	FORCEINLINE TObjectPtr<ABasePlayerCharacter> GetDefaultPawn() { return DefaultPawn; }
 	FORCEINLINE TObjectPtr<UWOGHoldProgressBar> GetHoldProgressBar() const { return HoldProgressBarWidget; }
-
-	
+	FORCEINLINE TObjectPtr<UWOGRavenMarkerWidget> GetRavenMarkerWidget() const { return RavenMarkerWidget; }
 };

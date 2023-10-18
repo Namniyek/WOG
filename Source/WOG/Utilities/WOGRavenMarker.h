@@ -8,6 +8,7 @@
 
 class USphereComponent;
 class URotatingMovementComponent;
+class UNiagaraSystem;
 
 UCLASS()
 class WOG_API AWOGRavenMarker : public AActor
@@ -19,6 +20,7 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void Destroyed() override;
 
 	UPROPERTY(EditDefaultsOnly)
 	TObjectPtr<USphereComponent> SphereComponent;
@@ -28,6 +30,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly)
 	double InitDelay;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<UNiagaraSystem> DespawnEffect;
 
 private:
 	void Init();

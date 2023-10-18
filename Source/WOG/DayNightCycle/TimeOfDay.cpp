@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
+#include "WOG.h"
 #include "TimeOfDay.h"
 #include "Net/UnrealNetwork.h"
 #include "GameFramework/GameState.h"
@@ -62,6 +63,11 @@ void ATimeOfDay::UpdateTime()
 	{
 		RepCurrentTime = 0;
 		CurrentTime = 0;
+	}
+
+	if (RepCurrentTime == 350)
+	{
+		OnKeyTimeHit.Broadcast(RepCurrentTime);
 	}
 
 	if (RepCurrentTime == 360)

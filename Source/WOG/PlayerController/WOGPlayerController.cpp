@@ -15,6 +15,7 @@
 #include "Net/UnrealNetwork.h"
 #include "Enemies/WOGPossessableEnemy.h"
 #include "Characters/WOGBaseCharacter.h"
+#include "PlayerCharacter/WOGAttacker.h"
 #include "AbilitySystemComponent.h"
 #include "UI/WOGAbilityWidget.h"
 #include "UI/WOGAbilityContainerWidget.h"
@@ -29,7 +30,8 @@
 #include "UI/WOGRoundProgressBar.h"
 #include "Components/SizeBox.h"
 #include "UI/WOGHoldProgressBar.h"
-
+#include "UI/WOGRavenMarkerWidget.h"
+#include "UI/WOGScreenDamage.h"
 
 void AWOGPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
@@ -95,8 +97,14 @@ void AWOGPlayerController::BeginPlay()
 	MatchHUD = Cast<AWOGMatchHUD>(GetHUD());
 }
 
-void AWOGPlayerController::PossessMinion_Implementation(AActor* ActorToPossess)
+void AWOGPlayerController::Server_PossessMinion_Implementation(AActor* ActorToPossess)
 {
+	TObjectPtr<AWOGAttacker> Attacker = Cast<AWOGAttacker>(GetPawn());
+	if (Attacker)
+	{
+		Attacker->SetCurrentExternalMinion(ActorToPossess);
+	}
+
 	if (!ActorToPossess)
 	{
 		UE_LOG(LogTemp, Error, TEXT("ActorToPossess invalid"));
@@ -122,22 +130,29 @@ void AWOGPlayerController::PossessMinion_Implementation(AActor* ActorToPossess)
 	float BlendTime = 1.f;
 	GetWorldTimerManager().SetTimer(BlendTimer, BlendDelegate, BlendTime, false);
 
-	if (ActorToPossess)
-	{
-		SetViewTargetWithBlend(ActorToPossess, BlendTime);
-	}
+	SetViewTargetWithBlend(ActorToPossess, BlendTime);
 }
 
-void AWOGPlayerController::UnpossessMinion_Implementation()
+void AWOGPlayerController::Server_UnpossessMinion_Implementation(APawn* AIPawnLeft)
 {
 	if (!DefaultPawn)
 	{
 		UE_LOG(LogTemp, Error, TEXT("DefaultPawn invalid"));
 		return;
 	}
+	if (!AIPawnLeft)
+	{
+		UE_LOG(LogTemp, Error, TEXT("AIPawnLeft invalid"));
+		return;
+	}
 
-	UnPossess();
-	Possess(DefaultPawn);
+	FTimerHandle BlendTimer;
+	FTimerDelegate BlendDelegate;
+	BlendDelegate.BindUFunction(this, FName("FinishUnPossess"), DefaultPawn, AIPawnLeft);
+	float BlendTime = 0.5f;
+	GetWorldTimerManager().SetTimer(BlendTimer, BlendDelegate, BlendTime, false);
+
+	SetViewTargetWithBlend(DefaultPawn, BlendTime, VTBlend_Linear, 0.f, true);
 }
 
 void AWOGPlayerController::Server_SetPlayerIndex_Implementation(int32 NewIndex)
@@ -235,6 +250,23 @@ void AWOGPlayerController::SetTODString(ETimeOfDay CurrentTOD, FString& StringMa
 	}
 }
 
+void AWOGPlayerController::FinishUnPossess(APawn* PawnToPossess, APawn* AIPawnLeft)
+{ 
+	UnPossess();
+	Possess(PawnToPossess);
+	AIPawnLeft->SpawnDefaultController();
+
+	TObjectPtr<AWOGAttacker> Attacker = Cast<AWOGAttacker>(PawnToPossess);
+	if (Attacker)
+	{
+		Attacker->SetCurrentExternalMinion(nullptr);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Invalid attacker for resetting CurrentExternalMinion"));
+	}
+}
+
 void AWOGPlayerController::Client_CreateEndgameWidget_Implementation()
 {
 	MatchHUD == nullptr ? Cast<AWOGMatchHUD>(GetHUD()) : MatchHUD;
@@ -255,9 +287,27 @@ void AWOGPlayerController::Client_ResetHUD_Implementation()
 void AWOGPlayerController::CreateWarningWidget(const FString& Attribute)
 {
 	MatchHUD == nullptr ? Cast<AWOGMatchHUD>(GetHUD()) : MatchHUD;
-	if (!MatchHUD || !MatchHUD->HUDWidget || !IsValid(MatchHUD->WarningClass)) return;
+	if (!MatchHUD || !MatchHUD->HUDWidget || !IsValid(MatchHUD->AttributeWarningClass)) return;
 
-	TObjectPtr<UWOGWarningWidget> WarningWidget = Cast<UWOGWarningWidget>(CreateWidget<UUserWidget>(this, MatchHUD->WarningClass));
+	TObjectPtr<UWOGWarningWidget> WarningWidget = Cast<UWOGWarningWidget>(CreateWidget<UUserWidget>(this, MatchHUD->AttributeWarningClass));
+	if (WarningWidget)
+	{
+		WarningWidget->SetWarningText(Attribute);
+
+		if (MatchHUD->HUDWidget->GetWarningBox())
+		{
+			MatchHUD->HUDWidget->GetWarningBox()->ClearChildren();
+			MatchHUD->HUDWidget->GetWarningBox()->AddChild(WarningWidget);
+		}
+	}
+}
+
+void AWOGPlayerController::CreateGenericWarningWidget(const FString& Attribute)
+{
+	MatchHUD == nullptr ? Cast<AWOGMatchHUD>(GetHUD()) : MatchHUD;
+	if (!MatchHUD || !MatchHUD->HUDWidget || !IsValid(MatchHUD->GenericWarningClass)) return;
+
+	TObjectPtr<UWOGWarningWidget> WarningWidget = Cast<UWOGWarningWidget>(CreateWidget<UUserWidget>(this, MatchHUD->GenericWarningClass));
 	if (WarningWidget)
 	{
 		WarningWidget->SetWarningText(Attribute);
@@ -307,5 +357,47 @@ void AWOGPlayerController::RemoveHoldProgressBar()
 	if (HoldProgressBarWidget)
 	{
 		HoldProgressBarWidget->RemoveFromParent();
+	}
+}
+
+void AWOGPlayerController::AddRavenMarkerWidget(const int32& Amount)
+{
+	MatchHUD == nullptr ? Cast<AWOGMatchHUD>(GetHUD()) : MatchHUD;
+	if (!MatchHUD || !MatchHUD->HUDWidget || !IsValid(MatchHUD->RavenMarkerWidgetClass)) return;
+
+	RavenMarkerWidget = Cast<UWOGRavenMarkerWidget>(CreateWidget<UUserWidget>(this, MatchHUD->RavenMarkerWidgetClass));
+	if (RavenMarkerWidget && MatchHUD->HUDWidget->GetHoldBarContainer())
+	{
+		MatchHUD->HUDWidget->GetHoldBarContainer()->AddChild(RavenMarkerWidget);
+		RavenMarkerWidget->SetAmountAvailableMarkers(Amount);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Invalid RavenMarkerWidget"));
+	}
+}
+
+void AWOGPlayerController::RemoveRavenMarkerWidget()
+{
+	if (RavenMarkerWidget)
+	{
+		RavenMarkerWidget->RemoveFromParent();
+	}
+}
+
+void AWOGPlayerController::AddScreenDamageWidget(const int32& DamageThreshold)
+{
+	MatchHUD == nullptr ? Cast<AWOGMatchHUD>(GetHUD()) : MatchHUD;
+	if (!MatchHUD || !MatchHUD->HUDWidget || !IsValid(MatchHUD->ScreenDamageWidgetClass)) return;
+
+	TObjectPtr<UWOGScreenDamage> ScreenDamageWidget = Cast<UWOGScreenDamage>(CreateWidget<UUserWidget>(this, MatchHUD->ScreenDamageWidgetClass));
+	if (ScreenDamageWidget)
+	{
+		ScreenDamageWidget->SetRadiusValue(DamageThreshold);
+		ScreenDamageWidget->AddToViewport();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Invalid ScreenDamageWidget"));
 	}
 }

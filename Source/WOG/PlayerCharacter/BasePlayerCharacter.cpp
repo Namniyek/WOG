@@ -116,12 +116,15 @@ void ABasePlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 	DOREPLIFETIME(ABasePlayerCharacter, PreviousMagic);
 	DOREPLIFETIME(ABasePlayerCharacter, PreviousWeapon);
 	DOREPLIFETIME(ABasePlayerCharacter, CommonInventory);
+	DOREPLIFETIME(ABasePlayerCharacter, OwnerPC);
 }
 
 void ABasePlayerCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
 	SetOwner(NewController);
+
+	OwnerPC = Cast<AWOGPlayerController>(GetController());
 }
 
 void ABasePlayerCharacter::BeginPlay()

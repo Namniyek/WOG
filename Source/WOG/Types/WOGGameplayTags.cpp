@@ -60,6 +60,11 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Debuff_HealthDrain, "Event.Debuff.HealthDrain")
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Debuff_Freeze, "Event.Debuff.Freeze");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Debuff_StaminaDrain, "Event.Debuff.StaminaDrain");
 
+UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Spawn_Unpossess, "Event.Spawn.Unpossess");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Spawn_Raven_PlaceMarker, "Event.Spawn.Raven.PlaceMarker");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Spawn_Raven_RemoveMarker, "Event.Spawn.Raven.RemoveMarker");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Spawn_Raven_MoveLeft, "Event.Spawn.Raven.MoveLeft");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Spawn_Raven_MoveRight, "Event.Spawn.Raven.MoveRight");
 
 
 //Inventory tags
