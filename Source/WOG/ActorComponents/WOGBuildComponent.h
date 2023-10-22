@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "WOGBaseActorComponent.h"
 #include "Engine/DataTable.h"
+#include "GameplayTagContainer.h"
 #include "WOGBuildComponent.generated.h"
 
 /**
@@ -18,31 +19,37 @@ struct FBuildables : public FTableRowBase
 	GENERATED_BODY()
 public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Mesh", MakeStructureDefaultValue = "None"))
-	TObjectPtr<UStaticMesh> Mesh;
+	TObjectPtr<UStaticMesh> Mesh = nullptr;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "ExtensionMesh", MakeStructureDefaultValue = "None"))
-	TObjectPtr<UStaticMesh> ExtensionMesh;
+	TObjectPtr<UStaticMesh> ExtensionMesh = nullptr;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "TraceChannel", MakeStructureDefaultValue = "TraceTypeQuery1"))
-	TEnumAsByte<ETraceTypeQuery> TraceChannel;
+	TEnumAsByte<ETraceTypeQuery> TraceChannel = ETraceTypeQuery::TraceTypeQuery1;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Actor", MakeStructureDefaultValue = "None"))
-	TObjectPtr<UClass> Actor;
+	TObjectPtr<UClass> Actor = nullptr;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Health", MakeStructureDefaultValue = "0.000000"))
-	double Health;
+	double Health = 0.f;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "MaxHeightOffset", MakeStructureDefaultValue = "0.000000"))
-	double MaxHeightOffset;
+	double MaxHeightOffset = 0.f;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "AvoidAddingAsChild", MakeStructureDefaultValue = "False"))
-	bool AvoidAddingAsChild;
+	bool AvoidAddingAsChild = false;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Name"))
-	FText Name;
+	FText Name = FText();
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Icon"))
-	TObjectPtr<UTexture2D> Icon;
+	TObjectPtr<UTexture2D> Icon = nullptr;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Cost"), Category = "Cost")
+	int32 CostAmount = 0;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Cost"), Category = "Cost")
+	FGameplayTag CostTag = FGameplayTag();
 
 };
 
@@ -119,6 +126,9 @@ protected:
 	void DetectBuildBoxes(bool& OutFound, FTransform& OutTransform);
 	bool CheckForOverlap();
 	bool IsBuildFloating();
+	bool CheckCost();
+
+	void DeductCost();
 
 	UFUNCTION(BlueprintCallable)
 	void ChangeMesh();

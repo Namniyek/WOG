@@ -63,8 +63,6 @@ protected:
 
 	bool Trace(const TObjectPtr<UPrimitiveComponent> Component, float& OutDistance);
 
-
-
 public:
 
 	UFUNCTION(BlueprintCallable, Server, reliable)

@@ -2,14 +2,15 @@
 
 
 #include "WOGDefender.h"
-#include "TargetingHelperComponent.h"
-#include "LockOnTargetComponent.h"
+#include "WOG.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "WOG/ActorComponents/WOGBuildComponent.h"
-#include "WOG/ActorComponents/WOGCombatComponent.h"
-#include "WOG/ActorComponents/WOGAbilitiesComponent.h"
-#include "WOG/Abilities/WOGBaseAbility.h"
+#include "AbilitySystemComponent.h"
+#include "Types/WOGGameplayTags.h"
+#include "Components/AGR_EquipmentManager.h"
+#include "AbilitySystemBlueprintLibrary.h"
+#include "Magic/WOGBaseMagic.h"
 
 AWOGDefender::AWOGDefender()
 {
@@ -38,6 +39,12 @@ void AWOGDefender::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 		EnhancedInputComponent->BindAction(SpawnAction, ETriggerEvent::Completed, this, &ThisClass::SpawnActionPressed);
 		EnhancedInputComponent->BindAction(RotateSpawnAction, ETriggerEvent::Triggered, this, &ThisClass::RotateSpawnActionPressed);
 		EnhancedInputComponent->BindAction(AdjustSpawnHeightAction, ETriggerEvent::Triggered, this, &ThisClass::AdjustSpawnHeightActionPressed);
+
+		//Ability
+		EnhancedInputComponent->BindAction(Ability3HoldAction, ETriggerEvent::Started, this, &ThisClass::Ability3HoldButtonStarted);
+		EnhancedInputComponent->BindAction(Ability3HoldAction, ETriggerEvent::Ongoing, this, TEXT("AbilityHoldButtonElapsed"));
+		EnhancedInputComponent->BindAction(Ability3HoldAction, ETriggerEvent::Canceled, this, &ThisClass::AbilityHoldButtonCanceled);
+		EnhancedInputComponent->BindAction(Ability3HoldAction, ETriggerEvent::Triggered, this, &ThisClass::Ability3HoldButtonTriggered);
 	}
 }
 
@@ -49,8 +56,12 @@ void AWOGDefender::InteractActionPressed(const FInputActionValue& Value)
 
 void AWOGDefender::AdjustSpawnHeightActionPressed(const FInputActionValue& Value)
 {
-	if (CharacterState == ECharacterState::ECS_Elimmed) return;
+	if (HasMatchingGameplayTag(TAG_State_Dead)) return;
+	if (HasMatchingGameplayTag(TAG_State_Debuff_Knockback)) return;
+	if (HasMatchingGameplayTag(TAG_State_Debuff_KO)) return;
+	if (HasMatchingGameplayTag(TAG_State_Debuff_Stagger)) return;
 	if (!BuildComponent) return;
+
 	float Direction = Value.Get<float>();
 
 	if (Direction > 0)
@@ -67,7 +78,11 @@ void AWOGDefender::AdjustSpawnHeightActionPressed(const FInputActionValue& Value
 
 void AWOGDefender::RotateSpawnActionPressed(const FInputActionValue& Value)
 {
-	if (CharacterState == ECharacterState::ECS_Elimmed) return;
+	if (HasMatchingGameplayTag(TAG_State_Dead)) return;
+	if (HasMatchingGameplayTag(TAG_State_Debuff_Knockback)) return;
+	if (HasMatchingGameplayTag(TAG_State_Debuff_KO)) return;
+	if (HasMatchingGameplayTag(TAG_State_Debuff_Stagger)) return;
+
 	if (!BuildComponent) return;
 	float Direction = Value.Get<float>();
 
@@ -85,136 +100,78 @@ void AWOGDefender::RotateSpawnActionPressed(const FInputActionValue& Value)
 
 void AWOGDefender::SpawnActionPressed(const FInputActionValue& Value)
 {
-	if (CharacterState == ECharacterState::ECS_Elimmed) return;
+	if (HasMatchingGameplayTag(TAG_State_Dead)) return;
+	if (HasMatchingGameplayTag(TAG_State_Debuff_Knockback)) return;
+	if (HasMatchingGameplayTag(TAG_State_Debuff_KO)) return;
+	if (HasMatchingGameplayTag(TAG_State_Debuff_Stagger)) return;
 	if (!BuildComponent) return;
+
 	BuildComponent->PlaceBuildable();
 }
 
 void AWOGDefender::AbilitiesButtonPressed(const FInputActionValue& Value)
 {
-	if (CharacterState == ECharacterState::ECS_Elimmed) return;
-	if (CharacterState == ECharacterState::ECS_Staggered) return;
-	if (CharacterState == ECharacterState::ECS_Dodging) return;
-
 	FVector2D AbilitiesVector = Value.Get<FVector2D>();
 
 	if (AbilitiesVector.X > 0)
 	{
 		//Button 4/Right pressed
-		if (!Combat)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Combat component invalid"));
-			return;
-		}
-		if (Combat->EquippedWeapon)
-		{
-			Combat->StoreEquippedWeapon();
-			return;
-		}
-
-		if (!Abilities)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Abilities component invalid"));
-			return;
-		}
-
-		Abilities->RequestEquipAbility(1);
-
+		SendAbilityLocalInput(EWOGAbilityInputID::Ability4);
 	}
 	if (AbilitiesVector.X < 0)
 	{
 		//Button 1/Left pressed
-		if (!Abilities)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Abilities component invalid"));
-			return;
-		}
-		if (Abilities->EquippedAbility)
-		{
-			if (IsLocallyControlled())
-			{
-				Abilities->EquippedAbility->CosmeticUnequip();
-				Abilities->Server_UnequipAbility();
-			}
-		}
-
-		if (!Combat)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Combat component invalid"));
-			return;
-		}
-		if (!Combat->EquippedWeapon)
-		{
-			Combat->EquipMainWeapon();
-		}
-		else if (Combat->EquippedWeapon == Combat->SecondaryWeapon)
-		{
-			Combat->SwapWeapons();
-		}
-		else if (Combat->EquippedWeapon == Combat->MainWeapon)
-		{
-			Combat->UnequipMainWeapon();
-		}
+		SendAbilityLocalInput(EWOGAbilityInputID::Ability1);
 	}
 	if (AbilitiesVector.Y > 0)
 	{
 		//Button 2/Up pressed
-		if (!Abilities)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Abilities component invalid"));
-			return;
-		}
-		if (Abilities->EquippedAbility)
-		{
-			if (IsLocallyControlled())
-			{
-				Abilities->EquippedAbility->CosmeticUnequip();
-				Abilities->Server_UnequipAbility();
-			}
-		}
-
-		if (!Combat)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Combat component invalid"));
-			return;
-		}
-		if (!Combat->SecondaryWeapon)
-		{
-			Combat->Server_CreateSecondaryWeapon(Combat->SecondaryWeaponClass);
-		}
-		else if (!Combat->EquippedWeapon)
-		{
-			Combat->EquipSecondaryWeapon();
-		}
-		else if (Combat->EquippedWeapon == Combat->MainWeapon)
-		{
-			Combat->SwapWeapons();
-		}
-		else if (Combat->EquippedWeapon == Combat->SecondaryWeapon)
-		{
-			Combat->UnequipSecondaryWeapon();
-		}
-
+		SendAbilityLocalInput(EWOGAbilityInputID::Ability2);
 	}
 	if (AbilitiesVector.Y < 0)
 	{
 		//Button 3/Down pressed
-		if (!Combat)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Combat component invalid"));
-			return;
-		}
-		if (Combat->EquippedWeapon)
-		{
-			Combat->StoreEquippedWeapon();
-		}
 
-		if (!Abilities)
+		if (!EquipmentManager) return;
+
+		AActor* OutMagic = nullptr;
+		EquipmentManager->GetMagicShortcutReference(FName("1"), OutMagic);
+		TObjectPtr<AWOGBaseMagic> Magic = Cast<AWOGBaseMagic>(OutMagic);
+		if (Magic && Magic->GetMagicData().AbilityInputType != EAbilityInputType::EAI_Instant) return;
+		if (Magic && HasMatchingGameplayTag(Magic->GetMagicData().CooldownTag))
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Abilities component invalid"));
+			UE_LOG(LogTemp, Error, TEXT("Cooldown in effect. Can't equip"));
 			return;
 		}
 
-		Abilities->RequestEquipAbility(0);
+		SendAbilityLocalInput(EWOGAbilityInputID::Ability3);
 	}
+}
+
+void AWOGDefender::Ability3HoldButtonStarted(const FInputActionValue& Value)
+{
+	AbilityHoldStarted(FName("1"));
+}
+
+void AWOGDefender::Ability3HoldButtonTriggered(const FInputActionValue& Value)
+{
+	//Button 3/Down pressed
+
+	//Remove hold bar widget
+	RemoveHoldProgressBarWidget();
+
+	if (!EquipmentManager) return;
+
+	AActor* OutMagic = nullptr;
+	EquipmentManager->GetMagicShortcutReference(FName("1"), OutMagic);
+	TObjectPtr<AWOGBaseMagic> Magic = Cast<AWOGBaseMagic>(OutMagic);
+	if (Magic && Magic->GetMagicData().AbilityInputType != EAbilityInputType::EAI_Hold) return;
+	if (Magic && HasMatchingGameplayTag(Magic->GetMagicData().CooldownTag))
+	{
+		UE_LOG(LogTemp, Error, TEXT("Cooldown in effect. Can't equip"));
+		return;
+	}
+
+	//Execute ability
+	SendAbilityLocalInput(EWOGAbilityInputID::Ability3);
 }

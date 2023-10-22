@@ -1,10 +1,13 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 #include "MeshMergeFunctionLibrary.h"
+
 #include "SkeletalMeshMerge.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "Engine/SkeletalMesh.h"
 #include "Animation/Skeleton.h"
-static void ToMergeParams(const TArray<FSkelMeshMergeSectionMapping_BP>& InSectionMappings, TArray<FSkelMeshMergeSectionMapping>& OutSectionMappings)
+
+
+static void ToMergeParams(const TArray<FSkelMeshMergeSectionMapping>& InSectionMappings, TArray<FSkelMeshMergeSectionMapping>& OutSectionMappings)
 {
     if (InSectionMappings.Num() > 0)
     {
@@ -15,28 +18,8 @@ static void ToMergeParams(const TArray<FSkelMeshMergeSectionMapping_BP>& InSecti
         }
     }
 };
-static void ToMergeParams(const TArray<FSkelMeshMergeUVTransformMappings>& InUVTransformsPerMesh, TArray<FSkelMeshMergeUVTransforms>& OutUVTransformsPerMesh)
-{
-    if (InUVTransformsPerMesh.Num() > 0)
-    {
-        OutUVTransformsPerMesh.Empty();
-        OutUVTransformsPerMesh.AddUninitialized(InUVTransformsPerMesh.Num());
-        for (int32 i = 0; i < InUVTransformsPerMesh.Num(); ++i)
-        {
-            TArray<TArray<FTransform>>& OutUVTransforms = OutUVTransformsPerMesh[i].UVTransformsPerMesh;
-            const TArray<FSkelMeshMergeUVTransform>& InUVTransforms = InUVTransformsPerMesh[i].UVTransformsPerMesh;
-            if (InUVTransforms.Num() > 0)
-            {
-                OutUVTransforms.Empty();
-                OutUVTransforms.AddUninitialized(InUVTransforms.Num());
-                for (int32 j = 0; j < InUVTransforms.Num(); j++)
-                {
-                    OutUVTransforms[i] = InUVTransforms[i].UVTransforms;
-                }
-            }
-        }
-    }
-};
+
+
 USkeletalMesh* UMeshMergeFunctionLibrary::MergeMeshes(const FSkeletalMeshMergeParams& Params)
 {
     TArray<USkeletalMesh*> MeshesToMergeCopy = Params.MeshesToMerge;
@@ -44,18 +27,17 @@ USkeletalMesh* UMeshMergeFunctionLibrary::MergeMeshes(const FSkeletalMeshMergePa
         {
             return InMesh == nullptr;
         });
+
     if (MeshesToMergeCopy.Num() <= 1)
     {
         UE_LOG(LogTemp, Warning, TEXT("Must provide multiple valid Skeletal Meshes in order to perform a merge."));
         return nullptr;
     }
-    EMeshBufferAccess BufferAccess = Params.bNeedsCpuAccess ?
-        EMeshBufferAccess::ForceCPUAndGPU :
-        EMeshBufferAccess::Default;
+
+    EMeshBufferAccess BufferAccess = Params.bNeedsCpuAccess ? EMeshBufferAccess::ForceCPUAndGPU : EMeshBufferAccess::Default;
     TArray<FSkelMeshMergeSectionMapping> SectionMappings;
-    TArray<FSkelMeshMergeUVTransforms> UvTransforms;
     ToMergeParams(Params.MeshSectionMappings, SectionMappings);
-    ToMergeParams(Params.UVTransformsPerMesh, UvTransforms);
+
     bool bRunDuplicateCheck = false;
     USkeletalMesh* BaseMesh = NewObject<USkeletalMesh>();
     if (Params.Skeleton && Params.bSkeletonBefore)
@@ -69,7 +51,8 @@ USkeletalMesh* UMeshMergeFunctionLibrary::MergeMeshes(const FSkeletalMeshMergePa
                 UE_LOG(LogTemp, Warning, TEXT("SkelMeshSocket: %s"), *(Socket->SocketName.ToString()));
             }
         }
-        for (USkeletalMeshSocket* Socket : BaseMesh->Skeleton->Sockets)
+
+        for (USkeletalMeshSocket* Socket : BaseMesh->GetSkeleton()->Sockets)
         {
             if (Socket)
             {
@@ -77,16 +60,19 @@ USkeletalMesh* UMeshMergeFunctionLibrary::MergeMeshes(const FSkeletalMeshMergePa
             }
         }
     }
-    FSkeletalMeshMerge Merger(BaseMesh, MeshesToMergeCopy, SectionMappings, Params.StripTopLODS, BufferAccess, UvTransforms.GetData());
+
+    FSkeletalMeshMerge Merger(BaseMesh, MeshesToMergeCopy, SectionMappings, Params.StripTopLODS, BufferAccess, Params.UVTransformsPerMesh.GetData());
     if (!Merger.DoMerge())
     {
         UE_LOG(LogTemp, Warning, TEXT("Merge failed!"));
         return nullptr;
     }
+
     if (Params.Skeleton && !Params.bSkeletonBefore)
     {
         BaseMesh->SetSkeleton(Params.Skeleton);
     }
+
     if (bRunDuplicateCheck)
     {
         TArray<FName> SkelMeshSockets;
@@ -99,7 +85,8 @@ USkeletalMesh* UMeshMergeFunctionLibrary::MergeMeshes(const FSkeletalMeshMergePa
                 UE_LOG(LogTemp, Warning, TEXT("SkelMeshSocket: %s"), *(Socket->SocketName.ToString()));
             }
         }
-        for (USkeletalMeshSocket* Socket : BaseMesh->Skeleton->Sockets)
+
+        for (USkeletalMeshSocket* Socket : BaseMesh->GetSkeleton()->Sockets)
         {
             if (Socket)
             {
@@ -107,6 +94,7 @@ USkeletalMesh* UMeshMergeFunctionLibrary::MergeMeshes(const FSkeletalMeshMergePa
                 UE_LOG(LogTemp, Warning, TEXT("SkelSocket: %s"), *(Socket->SocketName.ToString()));
             }
         }
+
         TSet<FName> UniqueSkelMeshSockets;
         TSet<FName> UniqueSkelSockets;
         UniqueSkelMeshSockets.Append(SkelMeshSockets);
@@ -117,5 +105,6 @@ USkeletalMesh* UMeshMergeFunctionLibrary::MergeMeshes(const FSkeletalMeshMergePa
         UE_LOG(LogTemp, Warning, TEXT("SkelMeshSocketCount: %d | SkelSocketCount: %d | Combined: %d"), UniqueSkelMeshSockets.Num(), UniqueSkelSockets.Num(), UniqueTotal);
         UE_LOG(LogTemp, Warning, TEXT("Found Duplicates: %s"), *((Total != UniqueTotal) ? FString("True") : FString("False")));
     }
+
     return BaseMesh;
 }

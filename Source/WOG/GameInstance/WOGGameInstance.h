@@ -14,15 +14,15 @@ struct FServerItem
 
 public:
 	UPROPERTY(BlueprintReadOnly)
-		FString HostName;
+		FString HostName = FString("");
 	UPROPERTY(BlueprintReadOnly)
-		FString CurrentPlayers;
+		FString CurrentPlayers = FString("");
 	UPROPERTY()
-		int32 NumCurrentPlayers;
+		int32 NumCurrentPlayers = 0;
 	UPROPERTY()
-		int32 NumMaxPlayers;
+		int32 NumMaxPlayers = 0;
 	UPROPERTY(BlueprintReadOnly)
-		int32 ServerArrayIndex;
+		int32 ServerArrayIndex = 0;
 
 	void SetCurrentPlayers()
 	{
@@ -38,15 +38,15 @@ struct FFriendItem
 
 public:
 	UPROPERTY(BlueprintReadOnly)
-		FString FriendName;
+		FString FriendName = FString("");
 	UPROPERTY(BlueprintReadOnly)
-		int32 bIsOnline;
+		int32 bIsOnline = 0;
 	UPROPERTY(BlueprintReadOnly)
-		int32 bIsPlayingThisGame;
+		int32 bIsPlayingThisGame = 0;
 	UPROPERTY(BlueprintReadOnly)
-		FString UniqueID;
+		FString UniqueID = FString("");;
 	UPROPERTY(BlueprintReadOnly)
-		int32 ServerArrayIndex;
+		int32 ServerArrayIndex = 0;
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FServerFoundDelegate, FServerItem, ServerInfo);

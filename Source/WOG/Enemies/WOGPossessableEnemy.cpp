@@ -2,6 +2,7 @@
 
 
 #include "WOGPossessableEnemy.h"
+#include "WOG.h"
 #include "WOG/PlayerController/WOGPlayerController.h"
 #include "Net/UnrealNetwork.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -9,8 +10,9 @@
 #include "Camera/CameraComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
-#include "TargetingHelperComponent.h"
-#include "LockOnTargetComponent.h"
+#include "AbilitySystemComponent.h"
+#include "Types/WOGGameplayTags.h"
+#include "Subsystems/WOGWorldSubsystem.h"
 
 AWOGPossessableEnemy::AWOGPossessableEnemy()
 {
@@ -41,8 +43,6 @@ AWOGPossessableEnemy::AWOGPossessableEnemy()
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
-
-	CharacterState = ECharacterState::ECS_Unnoccupied;
 }
 
 void AWOGPossessableEnemy::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -62,6 +62,14 @@ void AWOGPossessableEnemy::BeginPlay()
 			Subsystem->AddMappingContext(MinionMappingContext, 0);
 		}
 	}
+
+	TObjectPtr<UWOGWorldSubsystem> WorldSubsystem = GetWorld()->GetSubsystem<UWOGWorldSubsystem>();
+	if (WorldSubsystem)
+	{
+		WorldSubsystem->TimeOfDayChangedDelegate.AddDynamic(this, &ThisClass::TODChanged);
+		WorldSubsystem->OnKeyTimeHitDelegate.AddDynamic(this, &ThisClass::KeyTimeHit);
+		UE_LOG(WOGLogSpawn, Display, TEXT("Delegates bound -> PossessableCharacter"));
+	}
 }
 
 void AWOGPossessableEnemy::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -75,12 +83,14 @@ void AWOGPossessableEnemy::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ThisClass::MoveActionPressed);
 		//Look:
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ThisClass::LookActionPressed);
+		//Jump:
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &ThisClass::JumpActionPressed);
 	}
 }
 
 void AWOGPossessableEnemy::MoveActionPressed(const FInputActionValue& Value)
 {
-	if (CharacterState == ECharacterState::ECS_Elimmed) return;
+	if (HasMatchingGameplayTag(TAG_State_Dead)) return;
 	FVector2D MovementVector = Value.Get<FVector2D>();
 	if (Controller != nullptr)
 	{
@@ -112,6 +122,12 @@ void AWOGPossessableEnemy::LookActionPressed(const FInputActionValue& Value)
 	}
 }
 
+void AWOGPossessableEnemy::JumpActionPressed(const FInputActionValue& Value)
+{
+	SendAbilityLocalInput(EWOGAbilityInputID::Jump);
+	UE_LOG(LogTemp, Warning, TEXT("JUMPY JUMP"));
+}
+
 void AWOGPossessableEnemy::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
@@ -127,6 +143,35 @@ void AWOGPossessableEnemy::Elim(bool bPlayerLeftGame)
 	Super::Elim(bPlayerLeftGame);
 }
 
+void AWOGPossessableEnemy::UnpossessMinion_Implementation()
+{
+	Server_UnpossessMinion();
+}
+
+void AWOGPossessableEnemy::TODChanged(ETimeOfDay TOD)
+{
+	switch (TOD)
+	{
+	case ETimeOfDay::TOD_Dawn2:
+		Destroy();
+		break;
+	case ETimeOfDay::TOD_Dawn3:
+		Destroy();
+		break;
+	case ETimeOfDay::TOD_Dawn4:
+		Destroy();
+		break;
+	}
+}
+
+void AWOGPossessableEnemy::KeyTimeHit(int32 CurrentTime)
+{
+	if (CurrentTime == 350)
+	{
+		Server_UnpossessMinion();
+	}
+}
+
 void AWOGPossessableEnemy::Server_UnpossessMinion_Implementation()
 {
 	if (IsPlayerControlled())
@@ -134,7 +179,7 @@ void AWOGPossessableEnemy::Server_UnpossessMinion_Implementation()
 		TObjectPtr<AWOGPlayerController> PlayerController = Cast<AWOGPlayerController>(GetController());
 		if (PlayerController)
 		{
-			PlayerController->UnpossessMinion();
+			PlayerController->Server_UnpossessMinion(this);
 		}	
 
 		SpawnDefaultController();

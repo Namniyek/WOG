@@ -14,37 +14,37 @@ struct FPlayerData
 
 public:
 	UPROPERTY(BlueprintReadWrite)
-	FString PlayerName;
+	FString PlayerName = FString("");;
 
 	UPROPERTY(BlueprintReadWrite)
-	int32 UserIndex;
+	int32 UserIndex = 0;
 
 	UPROPERTY(BlueprintReadWrite)
-	bool bIsAttacker;
+	bool bIsAttacker = false;
 
 	UPROPERTY(BlueprintReadWrite)
-	bool bIsMale;
+	bool bIsMale = false;
 
 	UPROPERTY(BlueprintReadWrite)
-	FName CharacterIndex;
+	FName CharacterIndex = FName("");
 
 	UPROPERTY(BlueprintReadWrite)
-	FName PrimaryColor;
+	FName PrimaryColor = FName("");
 
 	UPROPERTY(BlueprintReadWrite)
-	FName SecondaryColor;
+	FName SecondaryColor = FName("");
 
 	UPROPERTY(BlueprintReadWrite)
-	FName SkinColor;
+	FName SkinColor = FName("");
 
 	UPROPERTY(BlueprintReadWrite)
-	FName BodyPaintColor;
+	FName BodyPaintColor = FName("");
 
 	UPROPERTY(BlueprintReadWrite)
-	FName HairColor;
+	FName HairColor = FName("");
 
 	UPROPERTY(BlueprintReadWrite)
-	FName Rune;
+	FName Rune = FName("");
 
 };
 /**

@@ -42,6 +42,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* SecondaryAction;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* JumpAction;
+
 	#pragma endregion
 
 protected:
@@ -67,13 +70,25 @@ protected:
 	/** Called for looking input */
 	void LookActionPressed(const FInputActionValue& Value);
 
+	/** Called for jumping input */
+	void JumpActionPressed(const FInputActionValue& Value);
+
 	#pragma endregion
 
 	virtual void PossessedBy(AController* NewController) override;
 
-	UFUNCTION(Server, reliable, BlueprintCallable)
-	virtual void Server_UnpossessMinion();
 	virtual void Elim(bool bPlayerLeftGame) override;
 
+	virtual void UnpossessMinion_Implementation();
+
+private:
+	UFUNCTION()
+	void TODChanged(ETimeOfDay TOD);
+
+	UFUNCTION()
+	void KeyTimeHit(int32 CurrentTime);
+
 public:
+	UFUNCTION(Server, reliable, BlueprintCallable)
+	virtual void Server_UnpossessMinion();
 };

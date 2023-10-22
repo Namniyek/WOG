@@ -8,9 +8,11 @@
 #include "InputActionValue.h"
 #include "Engine/DataTable.h"
 #include "WOG/FunctionLibrary/MeshMergeFunctionLibrary.h"
+#include "Types/CharacterTypes.h"
 #include "BasePlayerCharacter.generated.h"
 
-
+class AWOGCommonInventory;
+class AWOGPlayerController;
 
 USTRUCT(BlueprintType)
 struct FMeshDataTables 
@@ -19,22 +21,22 @@ struct FMeshDataTables
 
 public:
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly)
-	class UDataTable* MaleBody;
+	class UDataTable* MaleBody = nullptr;
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly)
-	UDataTable* FemaleBody;
+	UDataTable* FemaleBody = nullptr;
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly)
-	UDataTable* PrimaryColors;
+	UDataTable* PrimaryColors = nullptr;
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly)
-	UDataTable* BodyPaintColor;
+	UDataTable* BodyPaintColor = nullptr;
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly)
-	UDataTable* SkinColor;
+	UDataTable* SkinColor = nullptr;
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly)
-	UDataTable* HairColor;
+	UDataTable* HairColor = nullptr;
 };
 
 USTRUCT(BlueprintType)
@@ -44,9 +46,9 @@ struct FMaterialColors : public FTableRowBase
 
 public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	FLinearColor ColorVector;
+	FLinearColor ColorVector = FLinearColor::Black;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	FLinearColor ColorVectorSec;
+	FLinearColor ColorVectorSec = FLinearColor::Black;
 };
 
 USTRUCT(BlueprintType)
@@ -55,56 +57,62 @@ struct FCharacterMesh : public FTableRowBase
 	GENERATED_USTRUCT_BODY()
 
 public:
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	USkeletalMesh* BaseMesh;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	USkeletalMesh* Head;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	USkeletalMesh* ArmUpperLeft;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	USkeletalMesh* ArmUpperRight;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	USkeletalMesh* ArmLowerLeft;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	USkeletalMesh* ArmLowerRight;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	USkeletalMesh* HandLeft;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	USkeletalMesh* HandRight;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	USkeletalMesh* Torso;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	USkeletalMesh* Hips;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	USkeletalMesh* LegLeft;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	USkeletalMesh* LegRight;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	USkeletalMesh* Beard;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	USkeletalMesh* Eyebrows;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	USkeletalMesh* Hair;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	USkeletalMesh* Helmet;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	USkeletalMesh* Ears;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	TSubclassOf<UAnimInstance> AnimBP;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	TSubclassOf<UAnimInstance> AnimBPLobby;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	UAnimMontage* RaiseHandMontage;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	UAnimMontage* UnarmedHurtMontage;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	UAnimMontage* DodgeMontage;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	USkeleton* Skeleton;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	UPhysicsAsset* PhysicsAsset;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	TSubclassOf<class AWOGBaseWeapon> DefaultWeapon;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mesh")
+	USkeletalMesh* BaseMesh = nullptr;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mesh")
+	USkeletalMesh* Head = nullptr;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mesh")
+	USkeletalMesh* ArmUpperLeft = nullptr;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mesh")
+	USkeletalMesh* ArmUpperRight = nullptr;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mesh")
+	USkeletalMesh* ArmLowerLeft = nullptr;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mesh")
+	USkeletalMesh* ArmLowerRight = nullptr;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mesh")
+	USkeletalMesh* HandLeft = nullptr;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mesh")
+	USkeletalMesh* HandRight = nullptr;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mesh")
+	USkeletalMesh* Torso = nullptr;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mesh")
+	USkeletalMesh* Hips = nullptr;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mesh")
+	USkeletalMesh* LegLeft = nullptr;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mesh")
+	USkeletalMesh* LegRight = nullptr;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mesh")
+	USkeletalMesh* Beard = nullptr;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mesh")
+	USkeletalMesh* Eyebrows = nullptr;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mesh")
+	USkeletalMesh* Hair = nullptr;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mesh")
+	USkeletalMesh* Helmet = nullptr;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mesh")
+	USkeletalMesh* Ears = nullptr;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Animations")
+	TSubclassOf<UAnimInstance> AnimBP = nullptr;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Animations")
+	TSubclassOf<UAnimInstance> AnimBPLobby = nullptr;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Animations")
+	UAnimMontage* RaiseHandMontage = nullptr;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Animations")
+	UAnimMontage* UnarmedHurtMontage = nullptr;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Animations")
+	UAnimMontage* DodgeMontage = nullptr;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Animations")
+	USkeleton* Skeleton = nullptr;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Animations")
+	UPhysicsAsset* PhysicsAsset = nullptr;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Initial Setup")
+	TSubclassOf<class AWOGBaseWeapon> DefaultWeapon = nullptr;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Initial Setup")
+	FCharacterAbilityData DefaultAbilitiesAndEffects;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Initial Setup")
+	FCharacterData 	CharacterData;
 };
 
 
@@ -113,24 +121,27 @@ class WOG_API ABasePlayerCharacter : public AWOGBaseCharacter
 {
 	GENERATED_BODY()
 
+	friend class AWOGBaseCharacter;
+
 	virtual void OnConstruction(const FTransform& Transform) override;
 
 public:
 	// Sets default values for this character's properties
 	ABasePlayerCharacter();
-	friend class UWOGCombatComponent;
-	friend class UWOGAbilitiesComponent;
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
-	virtual void Tick(float DeltaTime) override;
+	virtual void PossessedBy(AController* NewController) override;
 
 	UPROPERTY(ReplicatedUsing = OnRep_PlayerProfile, EditDefaultsOnly, BlueprintReadWrite)
 	FPlayerData PlayerProfile;
 
-	#pragma region Handle Damage
+	virtual void PostInitializeComponents();
+
+	#pragma region Handle Elim
 
 	virtual void Elim(bool bPlayerLeftGame) override;
+
+	virtual void HandleStateElimmed(AController* InstigatedBy = nullptr) override;
 
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_Elim(bool bPlayerLeftGame);
@@ -139,73 +150,67 @@ public:
 	void ElimTimerFinished();
 
 	#pragma endregion
-	
-	#pragma region Material variables
-	UPROPERTY(EditAnywhere)
-	UMaterialInterface* Material;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-	UMaterialInstanceDynamic* CharacterMI;
-
-	#pragma endregion
 
 	#pragma region Player Input Variables
 	/*
 	** MappingContexts
 	**/
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Mapping Contexts", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Mapping Contexts", meta = (AllowPrivateAccess = "true"))
 	class UInputMappingContext* MatchMappingContext;
 
 	//UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Mapping Contexts", meta = (AllowPrivateAccess = "true"))
 	//UInputMappingContext* RadialMenuMappingContext;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Mapping Contexts", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Mapping Contexts", meta = (AllowPrivateAccess = "true"))
 	UInputMappingContext* SpawnModeMappingContext;
 
 	/*
 	** Input actions
 	**/
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Base Match", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Base Match", meta = (AllowPrivateAccess = "true"))
 	class UInputAction* JumpAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Base Match", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Base Match", meta = (AllowPrivateAccess = "true"))
 	UInputAction* MoveAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Base Match", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Base Match", meta = (AllowPrivateAccess = "true"))
 	UInputAction* LookAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Base Match", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Base Match", meta = (AllowPrivateAccess = "true"))
 	UInputAction* DodgeAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Base Match", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Base Match", meta = (AllowPrivateAccess = "true"))
 	UInputAction* SprintAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Base Match", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Base Match", meta = (AllowPrivateAccess = "true"))
 	UInputAction* TargetAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Base Match", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Base Match", meta = (AllowPrivateAccess = "true"))
 	UInputAction* CycleTargetAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Base Match", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Base Match", meta = (AllowPrivateAccess = "true"))
 	UInputAction* AbilitiesAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Base Match", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Base Match", meta = (AllowPrivateAccess = "true"))
 	UInputAction* PrimaryLightAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Base Match", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Base Match", meta = (AllowPrivateAccess = "true"))
 	UInputAction* PrimaryHeavyAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Base Match", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Base Match", meta = (AllowPrivateAccess = "true"))
 	UInputAction* SecondaryAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Base Match", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Base Match", meta = (AllowPrivateAccess = "true"))
 	UInputAction* RadialMenuAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Spawn Mode", meta = (AllowPrivateAccess = "true"))
 	UInputAction* SpawnAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Spawn Mode", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Spawn Mode", meta = (AllowPrivateAccess = "true"))
 	UInputAction* RotateSpawnAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Base Match", meta = (AllowPrivateAccess = "true"))
+	UInputAction* WeaponRangedAction;
 
 	#pragma endregion
 
@@ -231,6 +236,9 @@ protected:
 	/** Called for movement input */
 	void MoveActionPressed(const FInputActionValue& Value);
 
+	UFUNCTION(BlueprintCallable)
+	void MoveCharacter(const FVector2D& MovementVector);
+
 	/** Called for looking input */
 	void LookActionPressed(const FInputActionValue& Value);
 
@@ -239,10 +247,6 @@ protected:
 
 	/**Called for dodge input*/
 	void DodgeActionPressed(const FInputActionValue& Value);
-	UFUNCTION(BlueprintCallable)
-	void StopDodging();
-
-	void Dodge();
 
 	/**Called for sprint input*/
 	void SprintActionPressed();
@@ -252,11 +256,27 @@ protected:
 	void TargetActionPressed(const FInputActionValue& Value);
 	void CycleTargetActionPressed(const FInputActionValue& Value);
 
+	void WeaponRangedActionPressed(const FInputActionValue& Value);
+
 	/**Called for equip input*/
-	virtual void AbilitiesButtonPressed(const FInputActionValue& Value);
+	virtual void AbilitiesButtonPressed(const FInputActionValue& Value) { /*To be overriden in children*/ };
+	
+	/**Called for hold ability input*/
+	virtual void Ability2HoldButtonStarted(const FInputActionValue& Value) { /*To be overriden in children*/ };
+	virtual void Ability2HoldButtonTriggered(const FInputActionValue& Value) { /*To be overriden in children*/ };
+	virtual void Ability3HoldButtonStarted(const FInputActionValue& Value) { /*To be overriden in children*/ };
+	virtual void Ability3HoldButtonTriggered(const FInputActionValue& Value) { /*To be overriden in children*/ };
+
+	void AbilityHoldStarted(const FName& Slot);
+
+	UFUNCTION()
+	void AbilityHoldButtonElapsed(FInputActionValue ActionValue, float ElapsedTime, float TriggeredTime);
+	void AbilityHoldButtonCanceled(const FInputActionValue& Value);
 
 	UFUNCTION()
 	void PrimaryLightButtonPressed(const FInputActionValue& Value);
+	void PrimaryHeavyAttackStarted(const FInputActionValue& Value);
+	void ConfirmHoldStarted();
 
 	UFUNCTION()
 	void PrimaryArmHeavyAttack(FInputActionValue ActionValue, float ElapsedTime, float TriggeredTime);
@@ -265,6 +285,8 @@ protected:
 	void PrimaryExecuteHeavyAttack(const FInputActionValue& Value);
 	void SecondaryButtonPressed(const FInputActionValue& Value);
 	void SecondaryButtonReleased(const FInputActionValue& Value);
+
+
 	
 	#pragma endregion
 
@@ -272,101 +294,155 @@ protected:
 	UFUNCTION()
 	void OnRep_PlayerProfile();
 
-	UFUNCTION(BlueprintNativeEvent)
-	void UpdatePlayerProfile(const FPlayerData& NewPlayerProfile);
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Mesh")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setup|Character Data")
 	FMeshDataTables CharacterDataTables;
 
 	UPROPERTY()
 	FSkeletalMeshMergeParams MergeParams;
 
 	void SetColors(FName Primary, FName Skin, FName BodyPaint, FName HairColor);
-	void SetMeshes(bool bIsMale, FName RowName);
-
+	void SetMeshesAndAnimations(bool bIsMale, FName RowName);
+	void SetDefaultAbilitiesAndEffects(bool bIsMale, FName RowName);
 
 	#pragma endregion
 
-	#pragma region Character State variables
+	#pragma region Inventory
+protected:
 
-	virtual void HandleStateUnnoccupied() override;
-	virtual void HandleStateDodging() override;
-	virtual void HandleStateSprinting() override;
-	virtual void HandleStateElimmed(AController* InstigatedBy = nullptr) override;
-	virtual void HandleStateAttacking() override;
-	virtual void HandleStateStaggered() override;
+	UFUNCTION(Client, reliable, BlueprintCallable)
+	void Client_SaveShortcutReferences(AActor* InItem, const FGameplayTag& InItemTag, const FName& Key);
+
+	UPROPERTY(Replicated)
+	FName PreviousWeapon;
+	UPROPERTY(Replicated)
+	FName PreviousMagic;
+	UPROPERTY(Replicated)
+	FName CurrentMagic;
+
+	UFUNCTION(BlueprintCallable)
+	void ResetPreviouslyEquippedMaterial();
+
+	UFUNCTION(BlueprintCallable)
+	void UnequipMagic(const bool& bIsAttacker, const FName& Slot);
+	UFUNCTION(BlueprintCallable)
+	void UnequipWeapon(const bool& bIsAttacker, const FName& Slot);
+	UFUNCTION(BlueprintCallable)
+	void EquipMagic(const FName& Slot);
+	UFUNCTION(BlueprintCallable)
+	void EquipWeapon(const FName& Slot);
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<AWOGBaseWeapon> DefaultPickaxeClass;
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<AWOGBaseWeapon> DefaultWoodaxeClass;
+
+public:
+	UFUNCTION(Server, reliable, BlueprintCallable)
+	void Server_EquipWeapon(const FName& Key, AActor* InWeapon);
+
+	UFUNCTION(Server, reliable, BlueprintCallable)
+	void Server_UnequipWeapon(const FName& Key, AActor* InWeapon);
+
+	UFUNCTION(Server, reliable, BlueprintCallable)
+	void Server_EquipMagic(const FName& Key, AActor* InMagic);
+
+	UFUNCTION(Server, reliable, BlueprintCallable)
+	void Server_UnequipMagic(const FName& Key, AActor* InMagic);
+
+	UFUNCTION(Server, reliable, BlueprintCallable)
+	void Server_UnequipWeaponSwap(const FName& Key, AActor* InWeapon);
+
+	UFUNCTION(Server, reliable, BlueprintCallable)
+	void Server_DropWeapon(const FName& Key);
+
+	UFUNCTION(Server, reliable, BlueprintCallable)
+	void Server_DropMagic(const FName& Key);
+
+	UFUNCTION(Server, reliable, BlueprintCallable)
+	void Server_StoreWeapons();
+
+	UFUNCTION(Server, reliable, BlueprintCallable)
+	void Server_RestoreWeapons();
+
+	void StoreTool(const FName& Key);
+	void RestoreTools();
+
+	void StoreWeapon(const FName& Key);
+	void RestoreWeapons();
+
+	UFUNCTION(BlueprintCallable)
+	void CreateDefaultTools();
 
 	#pragma endregion
 
 	#pragma region Actor Components
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	class UTargetSystemComponent* TargetComponent;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	class ULockOnTargetComponent* LockOnTarget;
+	TObjectPtr<class UAGR_EquipmentManager> EquipmentManager;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	class UTargetingHelperComponent* TargetAttractor;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<UWOGCombatComponent> Combat;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<UWOGAbilitiesComponent> Abilities;
-
+	TObjectPtr<class UAGR_InventoryManager> InventoryManager;
 
 	#pragma endregion
 
-	#pragma region Interface functions
+	#pragma region Handle Combat
+
 	virtual void BroadcastHit_Implementation(AActor* AgressorActor, const FHitResult& Hit, const float& DamageToApply, AActor* InstigatorWeapon) override;
 
+	virtual void BroadcastMagicHit_Implementation(AActor* AgressorActor, const FHitResult& Hit, const struct FMagicDataTable& AgressorMagicData);
+
+	virtual void ProcessHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh) override;
+
+	virtual void ProcessMagicHit(const FHitResult& Hit, const struct FMagicDataTable& MagicData) override;
+
 	#pragma endregion
 
-	#pragma region Cosmetic Hits
-	//Handle cosmetic body hit
-	virtual void HandleCosmeticBodyHit(const FHitResult& Hit, const FVector& WeaponLocation, const class AWOGBaseWeapon* InstigatorWeapon) override;
-	virtual void PlayHitReactMontage(FName Section) override;
+	#pragma region Handle Resources 
 
-	//Handle cosmetic block
-	virtual void HandleCosmeticBlock(const AWOGBaseWeapon* InstigatorWeapon) override;
+	UPROPERTY(VisibleAnywhere, Replicated)
+	TObjectPtr<AWOGCommonInventory> CommonInventory;
 
-	//Handle cosmetic weapon clash
-	virtual void HandleCosmeticWeaponClash() override;
+	void FindCommonInventory();
 	#pragma endregion
 
-	UFUNCTION()
-	void TargetLocked(UTargetingHelperComponent* Target, FName Socket);
 
 	UFUNCTION()
-	void TargetUnlocked(UTargetingHelperComponent* UnlockedTarget, FName Socket);
+	void TargetLocked(AActor* NewTarget);
 
 	UFUNCTION()
-	void TargetNotFound();
+	void TargetUnlocked(AActor* OldTarget);
 
-	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class AWOGPlayerController> OwnerPC = nullptr;
+	UFUNCTION(Server, reliable)
+	void Server_SetCurrentTarget(AActor* NewTarget = nullptr);
+
+	UPROPERTY(BlueprintReadOnly, Replicated, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<AWOGPlayerController> OwnerPC = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Replicated)
 	TObjectPtr<AActor> CurrentTarget = nullptr;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setup|Animations")
 	TObjectPtr<class UAnimMontage> DodgeMontage;
-
-private:
-
-
-
 
 public:
 	//public Getters and Setters 
 	FORCEINLINE USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
-	FORCEINLINE UWOGAttributesComponent* GetAttributes() const { return Attributes; }
-	FORCEINLINE ULockOnTargetComponent* GetLockOnTarget() const { return LockOnTarget; }
-	FORCEINLINE UWOGCombatComponent* GetCombatComponent() const { return Combat; }
-	FORCEINLINE bool GetIsTargeting() const { return bIsTargeting; }
+	FORCEINLINE UTargetSystemComponent* GetTargetComponent() const { return TargetComponent; }
 	FORCEINLINE void SetOwnerPC(AWOGPlayerController* NewPC) { OwnerPC = NewPC; }
 	FORCEINLINE TObjectPtr<AWOGPlayerController> GetOwnerPC() { return OwnerPC; }
 	FORCEINLINE TObjectPtr<AActor>GetCurrentTarget() { return CurrentTarget; }
 
+	UFUNCTION(BlueprintPure)
+	FORCEINLINE AWOGCommonInventory* GetCommonInventory() const { return CommonInventory; }
+
 	UFUNCTION(Server, reliable, BlueprintCallable)
 	void Server_SetPlayerProfile(const FPlayerData& NewPlayerProfile);
+
+	UFUNCTION(BlueprintNativeEvent)
+	void UpdatePlayerProfile(const FPlayerData& NewPlayerProfile);
 
 
 

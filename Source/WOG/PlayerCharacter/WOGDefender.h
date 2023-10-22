@@ -31,12 +31,14 @@ public:
 	/*
 	** Input actions
 	**/
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Spawn Mode", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Spawn Mode", meta = (AllowPrivateAccess = "true"))
 	UInputAction* AdjustSpawnHeightAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Base Match", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Base Match", meta = (AllowPrivateAccess = "true"))
 	UInputAction* InteractAction;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Base Match", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UInputAction> Ability3HoldAction;
 	#pragma endregion
 
 protected:
@@ -57,6 +59,9 @@ protected:
 	void SpawnActionPressed(const FInputActionValue& Value);
 
 	virtual void AbilitiesButtonPressed(const FInputActionValue& Value) override;
+
+	virtual void Ability3HoldButtonStarted(const FInputActionValue& Value) override;
+	virtual void Ability3HoldButtonTriggered(const FInputActionValue& Value) override;
 
 	#pragma endregion
 

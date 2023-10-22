@@ -7,12 +7,14 @@
 #include "WOG/Interfaces/BuildingInterface.h"
 #include "Engine/EngineTypes.h"
 #include "Camera/CameraComponent.h"
-#include "WOG/ActorComponents/WOGCombatComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Components/BoxComponent.h"
 #include "TimerManager.h"
 #include "WOG/Weapons/WOGBaseWeapon.h"
 #include "EnhancedInputSubsystems.h"
+#include "Data/AGRLibrary.h"
+#include "Components/AGR_EquipmentManager.h"
+#include "Resources/WOGCommonInventory.h"
 
 UWOGBuildComponent::UWOGBuildComponent()
 {
@@ -145,9 +147,21 @@ void UWOGBuildComponent::BuildCycle()
 	FCollisionQueryParams Params;
 
 	TArray<AActor*> ActorsToIgnore;
-	TObjectPtr<UWOGCombatComponent> Combat =  DefenderCharacter->GetCombatComponent();
-	ActorsToIgnore.AddUnique(Combat->GetMainWeapon());
-	ActorsToIgnore.AddUnique(Combat->GetSecondaryWeapon());
+	AActor* WeaponOne;
+	AActor* WeaponTwo;
+	UAGR_EquipmentManager* Equipment = UAGRLibrary::GetEquipment(DefenderCharacter);
+
+	if (Equipment)
+	{
+		if (Equipment->GetWeaponShortcutReference(FName("1"), WeaponOne) && WeaponOne)
+		{
+			ActorsToIgnore.AddUnique(WeaponOne);
+		}
+		if (Equipment->GetWeaponShortcutReference(FName("2"), WeaponTwo) && WeaponTwo)
+		{
+			ActorsToIgnore.AddUnique(WeaponTwo);
+		}
+	}
 
 	Params.AddIgnoredActors(ActorsToIgnore);
 	Params.bTraceComplex = false;
@@ -178,7 +192,7 @@ void UWOGBuildComponent::BuildCycle()
 				CurrentHitActor = nullptr;
 			}
 
-			bool bIsAllowed = !CheckForOverlap() && IsBuildFloating();
+			bool bIsAllowed = !CheckForOverlap() && IsBuildFloating() && CheckCost();
 			
 			GiveBuildColor(bIsAllowed);
 			BuildDelay();
@@ -286,6 +300,48 @@ bool UWOGBuildComponent::IsBuildFloating()
 	return bHit;
 }
 
+bool UWOGBuildComponent::CheckCost()
+{
+	if (!DefenderCharacter || !DefenderCharacter->GetCommonInventory())
+	{
+		UE_LOG(LogTemp, Error, TEXT("Defender or CommonInventory actor invalid"));
+		return false;
+	}
+
+	TObjectPtr<UAGR_InventoryManager> Inventory = UAGRLibrary::GetInventory(DefenderCharacter->GetCommonInventory());
+	if (!Inventory)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Failed to get Inventory component from CommonInventory actor"));
+		return false;
+	}
+
+	FText Note;
+	bool bCanAfford = Inventory->HasEnoughItemsWithTagSlotType(Buildables[BuildID]->CostTag, Buildables[BuildID]->CostAmount, Note);
+	UE_LOG(LogTemp, Display, TEXT("%s"), *Note.ToString());
+
+	return bCanAfford;
+}
+
+void UWOGBuildComponent::DeductCost()
+{
+	if (!DefenderCharacter || !DefenderCharacter->GetCommonInventory())
+	{
+		UE_LOG(LogTemp, Error, TEXT("Defender or CommonInventory actor invalid"));
+		return;
+	}
+
+	TObjectPtr<UAGR_InventoryManager> Inventory = UAGRLibrary::GetInventory(DefenderCharacter->GetCommonInventory());
+	if (!Inventory)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Failed to get Inventory component from CommonInventory actor"));
+		return;
+	}
+
+	FText Note;
+	Inventory->RemoveItemsWithTagSlotType(Buildables[BuildID]->CostTag, Buildables[BuildID]->CostAmount, Note);
+	UE_LOG(LogTemp, Display, TEXT("%s"), *Note.ToString());
+}
+
 void UWOGBuildComponent::PlaceBuildable()
 {
 	if (bCanBuild && bIsBuildModeOn)
@@ -297,6 +353,7 @@ void UWOGBuildComponent::PlaceBuildable()
 void UWOGBuildComponent::Server_SpawnBuild_Implementation(FTransform Transform, int32 ID, AActor* Hit, UPrimitiveComponent* HitComponent)
 {
 	SpawnBuild(Transform, ID, Hit, HitComponent);
+	DeductCost();
 	HeightOffset = FVector();
 	UE_LOG(LogTemp, Warning, TEXT("SpawnBuild() called"));
 }

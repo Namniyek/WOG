@@ -9,6 +9,9 @@
 /**
  * 
  */
+
+class AWOGRaven;
+
 UCLASS()
 class WOG_API AWOGAttacker : public ABasePlayerCharacter
 {
@@ -19,6 +22,8 @@ public:
 	AWOGAttacker();
 	friend class UWOGSpawnComponent;
 
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
+
 	#pragma region Player Input Variables
 	/*
 	** MappingContexts
@@ -27,13 +32,20 @@ public:
 	/*
 	** Input actions
 	**/
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Base Match", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Base Match", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UInputAction> PossessAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Base Match", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UInputAction> Ability2HoldAction;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Base Match", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UInputAction> Ability3HoldAction;
 
 	#pragma endregion
 
 protected:
 	virtual void BeginPlay() override;
+
+	UFUNCTION(BlueprintAuthorityOnly)
+	void SetAllocatedRaven();
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<UWOGSpawnComponent> SpawnComponent;
@@ -53,10 +65,31 @@ protected:
 
 	virtual void AbilitiesButtonPressed(const FInputActionValue& Value) override;
 
+	virtual void Ability2HoldButtonStarted(const FInputActionValue& Value) override;
+	virtual void Ability2HoldButtonTriggered(const FInputActionValue& Value) override;
+	virtual void Ability3HoldButtonStarted(const FInputActionValue& Value) override;
+	virtual void Ability3HoldButtonTriggered(const FInputActionValue& Value) override;
+
 	#pragma endregion
 
+	UPROPERTY(Replicated, VisibleAnywhere)
+	TObjectPtr<AWOGRaven> Raven;
+
+	UFUNCTION(BlueprintCallable)
+	void PossessRaven();
+
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly)
+	bool bCanPossessMinion;
+
+	virtual void OnHealthAttributeChanged(const FOnAttributeChangeData& Data) override;
+
+private:
+	UPROPERTY(Replicated, VisibleAnywhere)
+	TObjectPtr<AActor> CurrentExternalMinion;
 
 public:
 	UFUNCTION(BlueprintCallable)
 	UWOGSpawnComponent* GetSpawnComponent() { return SpawnComponent; }
+
+	void SetCurrentExternalMinion(AActor* NewMinion);
 };

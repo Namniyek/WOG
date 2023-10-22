@@ -79,13 +79,12 @@ void UWOGBaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	FVector CapsuleAngularVelocity = PlayerCharacter->GetCapsuleComponent()->GetPhysicsAngularVelocityInDegrees();
 	CurrentRotationRate = UKismetMathLibrary::MapRangeClamped(CapsuleAngularVelocity.Z, -360, 360, -1, 1);
 
-	//Get the bool bIsTargeting
-	bIsTargeting = PlayerCharacter->GetIsTargeting();
-
 	UpdateMovementDirection();
 
 	#pragma endregion
 
+	bIsRagdolling = PlayerCharacter->GetIsRagdolling();
+	bIsLayingOnBack = PlayerCharacter->GetIsLayingOnBack();
 }
 
 void UWOGBaseAnimInstance::UpdateMovementDirection()
