@@ -9,20 +9,12 @@
 /**
  * 
  */
-class UWOGAbilityWidget;
-class UWOGHoldProgressBar;
-class UWOGRavenMarkerWidget;
-class ABasePlayerCharacter;
-
 UCLASS()
 class WOG_API AWOGPlayerController : public APlayerController
 {
 	GENERATED_BODY()
 
 public:
-
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	int32 UserIndex;
 
@@ -32,40 +24,15 @@ public:
 	UFUNCTION(Client, Reliable)
 	void Client_CreateEndgameWidget();
 
-	UFUNCTION(Client, Reliable)
-	void Client_CreateAbilityWidget(const int32& AbilityID, TSubclassOf<UUserWidget> Class, UTexture2D* Icon, const float& Cooldown, const FGameplayTag& Tag);
-
-	UFUNCTION(Client, Reliable)
-	void Client_RemoveAbilityWidget(const int& AbilityID);
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	UFUNCTION(Server, reliable)
-	void Server_PossessMinion(AActor* ActorToPossess);
+	void PossessMinion(AActor* ActorToPossess);
 	UFUNCTION(Server, reliable)
-	void Server_UnpossessMinion(APawn* AIPawnLeft);
-
-	virtual void AcknowledgePossession(class APawn* P);
+	void UnpossessMinion();
 
 	UFUNCTION()
-	void AddStaminaWidget();
-
-	UFUNCTION()
-	void AddHoldProgressBar();
-	UFUNCTION()
-	void RemoveHoldProgressBar();
-
-	UFUNCTION()
-	void AddRavenMarkerWidget(const int32& Amount);
-	UFUNCTION()
-	void RemoveRavenMarkerWidget();
-
-	UFUNCTION()
-	void AddScreenDamageWidget(const int32& DamageThreshold);
-
-	UFUNCTION()
-	void CreateWarningWidget(const FString& Attribute);
-
-	UFUNCTION()
-	void CreateGenericWarningWidget(const FString& Attribute);
+	void Test(APawn* NewPawn);
 
 protected:
 	virtual void OnPossess(APawn* aPawn) override;
@@ -88,27 +55,13 @@ private:
 	UFUNCTION(Client, Reliable)
 	void Client_ResetHUD();
 
-	TObjectPtr<ABasePlayerCharacter> DefaultPawn = nullptr;
-
-	TObjectPtr<UWOGAbilityWidget> AbilityWidgetOne = nullptr;
-	TObjectPtr<UWOGAbilityWidget> AbilityWidgetTwo = nullptr;
-	TObjectPtr<UWOGAbilityWidget> AbilityWidgetThree = nullptr;
-	TObjectPtr<UWOGAbilityWidget> AbilityWidgetFour = nullptr;
-
-	UPROPERTY()
-	TObjectPtr<UWOGHoldProgressBar> HoldProgressBarWidget = nullptr;
-
-	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UWOGRavenMarkerWidget> RavenMarkerWidget = nullptr;
-
-	UFUNCTION()
-	void FinishUnPossess(APawn* PawnToPossess, APawn* AIPawnLeft);
+	TObjectPtr<class ABasePlayerCharacter> DefaultPawn = nullptr;
 
 public:
 	UFUNCTION(BlueprintPure)
-	FORCEINLINE bool GetIsAttacker() const { return bIsAttacker; }
+	FORCEINLINE bool GetIsAttacker() { return bIsAttacker; }
 	FORCEINLINE void SetDefaultPawn(ABasePlayerCharacter* PawnToSet) { DefaultPawn = PawnToSet; }
 	FORCEINLINE TObjectPtr<ABasePlayerCharacter> GetDefaultPawn() { return DefaultPawn; }
-	FORCEINLINE TObjectPtr<UWOGHoldProgressBar> GetHoldProgressBar() const { return HoldProgressBarWidget; }
-	FORCEINLINE TObjectPtr<UWOGRavenMarkerWidget> GetRavenMarkerWidget() const { return RavenMarkerWidget; }
+
+	
 };

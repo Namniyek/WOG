@@ -6,7 +6,6 @@
 #include "GameFramework/PlayerState.h"
 #include "WOGPlayerState.generated.h"
 
-
 USTRUCT(BlueprintType)
 struct FPlayerStats
 {
@@ -23,7 +22,7 @@ public:
 	FString MostElimmedPlayer = FString("your mom");
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
-	FString PlayerWithMostElimms = FString("Player0");
+		FString PlayerWithMostElimms = FString("Player0");
 };
 
 /**
@@ -38,21 +37,17 @@ public:
 	AWOGPlayerState();
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-protected:
-
 private:
 
-	UPROPERTY(Replicated, VisibleAnywhere) 
+	UPROPERTY(Replicated, VisibleAnywhere)
 	FPlayerStats PlayerStats;
 
 public:
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE FPlayerStats GetPlayerStats() { return PlayerStats; }
-
 	void IncreaseTimesElimmed();
 	void IncreaseTotalElimms();
 	void SetMostElimmedPlayer(FString Player);
 	void SetPlayerWithMostElimms(FString Player);
-	
 
 };

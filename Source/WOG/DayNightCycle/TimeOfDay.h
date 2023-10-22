@@ -8,7 +8,6 @@
 #include "TimeOfDay.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTimeOfDayChanged, ETimeOfDay, TOD);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnKeyTimeHit, int32, CurrentTime);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDayChanged, int32, DayNumber);
 
 UCLASS()
@@ -33,9 +32,6 @@ public:
 
 	UPROPERTY(BlueprintAssignable)
 	FTimeOfDayChanged TimeOfDayChanged;
-
-	UPROPERTY(BlueprintAssignable)
-	FOnKeyTimeHit OnKeyTimeHit;
 
 	UPROPERTY(BlueprintAssignable)
 	FDayChanged DayChanged;

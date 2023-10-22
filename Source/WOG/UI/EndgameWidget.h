@@ -17,7 +17,7 @@ class WOG_API UEndgameWidget : public UUserWidget
 
 public:
 
-	UPROPERTY(meta = (BindWidget), BlueprintReadOnly)
+	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* ResultText;
 
 	UPROPERTY(meta = (BindWidget))
@@ -46,8 +46,7 @@ private:
 	class AWOGGameState* GameState;
 
 	FPlayerStats GetPlayerStats();
-	UFUNCTION(BlueprintCallable)
-	bool IsWinnerAttacker();
+	FString GetWinnerTeam();
 
 	void SetResults();
 	

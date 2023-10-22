@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "Animation/AnimNotifies/AnimNotifyState_Trail.h"
-#include "GameplayEffectTypes.h"
 #include "WOGAnimNotifyAttackSwing.generated.h"
 
 /**
@@ -21,13 +20,5 @@ class WOG_API UWOGAnimNotifyAttackSwing : public UAnimNotifyState_Trail
 	
 	TObjectPtr<class ABasePlayerCharacter> OwnerCharacter;
 	TObjectPtr<class AWOGBaseWeapon> Weapon;
-
-	void StartTrace(AActor* Owner);
-	void EndTrace(AActor* Owner);
-
-public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameplayEffect")
-	TSubclassOf<class UGameplayEffect> EffectToApply;
-
 
 };

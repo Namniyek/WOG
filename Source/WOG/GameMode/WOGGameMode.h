@@ -19,9 +19,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	bool bDebugMode = false;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	int32 LastDefenderIndex = 2;
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	bool bHandleDropIn = false;
 
@@ -42,13 +39,13 @@ private:
 
 	class UWOGGameInstance* GameInstance;
 
+	FTransform GetPlayerStart(FString StartIndex);
+
 public:
 
 	void HandleStartingPlayer(APlayerController* NewPlayer);
 	virtual void HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer) override;
 	virtual void Logout(AController* Exiting) override;
-
-	FTransform GetPlayerStart(FString StartIndex);
 
 	UFUNCTION(BlueprintCallable)
 	void RestartMatch();

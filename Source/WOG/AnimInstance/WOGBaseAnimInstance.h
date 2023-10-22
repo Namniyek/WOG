@@ -59,6 +59,9 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Character|General", meta = (AllowPrivateAccess = "true"))
 	bool bIsFalling;
 
+	UPROPERTY(BlueprintReadOnly, Category = "Character|General", meta = (AllowPrivateAccess = "true"))
+	bool bIsTargeting;
+
 	UPROPERTY(BlueprintReadWrite, Category = "Character|General", meta = (AllowPrivateAccess = "true"))
 	bool bStopFootLeft;
 
@@ -77,14 +80,7 @@ protected:
 
 	void UpdateMovementDirection();
 
-	UPROPERTY(BlueprintReadOnly, Category = "Character|Ragdoll", meta = (AllowPrivateAccess = "true"))
-	bool bIsRagdolling;
-
-	UPROPERTY(BlueprintReadOnly, Category = "Character|Ragdoll", meta = (AllowPrivateAccess = "true"))
-	bool bIsLayingOnBack;
-
 public:
-	UFUNCTION(BlueprintPure)
 	FORCEINLINE FName GetMovementDirection() const { return MovementDirection; }
 
 	

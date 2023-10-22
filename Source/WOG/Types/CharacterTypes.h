@@ -1,10 +1,36 @@
 #pragma once
 
-#include "CoreMinimal.h"
-#include "GameplayTags.h"
-#include "CharacterTypes.generated.h"
+UENUM(BlueprintType)
+enum class ECharacterState : uint8
+{
+	ECS_Unnoccupied UMETA(DisplayName = "Unnoccupied"),
+	ECS_Dodging UMETA(DisplayName = "Dodging"),
+	ECS_Sprinting UMETA(DisplayName = "Sprinting"),
+	ECS_Attacking UMETA(DisplayName = "Attacking"),
+	ECS_Blocking UMETA(DisplayName = "Blocking"),
+	ECS_Staggered UMETA(DisplayName = "Staggered"),
+	ECS_Elimmed UMETA(DisplayName = "Eliminated"),
 
-class USoundCue;
+	ECS_MAX UMETA(DisplayName = "DefaultMAX")
+};
+
+UENUM(BlueprintType)
+enum class EWeaponType : uint8
+{
+	EWT_Relax UMETA(DisplayName = "Relax"),
+	EWT_SwordAndShield UMETA(DisplayName = "Sword and Shield"),
+	EWT_AxeAndShield UMETA(DisplayName = "Axe and Shield"),
+	EWT_HammerAndShield UMETA(DisplayName = "Hammer and Shield"),
+	EWT_TwoHandedSword UMETA(DisplayName = "Two Handed Sword"),
+	EWT_TwoHandedAxe UMETA(DisplayName = "Two Handed Axe"),
+	EWT_TwoHandedHammer UMETA(DisplayName = "Two Handed Hammer"),
+	EWT_DualWieldSword UMETA(DisplayName = "Dual Wield Sword"),
+	EWT_DualWieldAxe UMETA(DisplayName = "Dual Wield Axe"),
+	EWT_DualWieldHammer UMETA(DisplayName = "Dual Wield Hammer"),
+	EWT_BowAndArrow UMETA(DisplayName = "Bow and Arrow"),
+
+	EWT_MAX UMETA(DisplayName = "DefaultMAX")
+};
 
 UENUM(BlueprintType)
 enum class ECosmeticHit : uint8
@@ -19,159 +45,12 @@ enum class ECosmeticHit : uint8
 UENUM(BlueprintType)
 enum class EAbilityType : uint8
 {
+	EAT_Relax UMETA(DisplayName = "Relax"),
 	EAT_Projectile UMETA(DisplayName = "Projectile"),
 	EAT_AOE UMETA(DisplayName = "Area Of Effect"),
 	EAT_Instant UMETA(DisplayName = "Instant"),
 	EAT_Buff UMETA(DisplayName = "Buff"),
 
 	EAT_MAX UMETA(DisplayName = "DefaultMAX")
-};
-
-UENUM(BlueprintType)
-enum class EAbilityInputType : uint8
-{
-	EAI_Instant UMETA(DisplayName = "Instant"),
-	EAI_Hold UMETA(DisplayName = "Hold"),
-
-	EAI_MAX UMETA(DisplayName = "DefaultMAX")
-};
-
-USTRUCT(BlueprintType)
-struct FCharacterAbilityData
-{
-	GENERATED_USTRUCT_BODY();
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "GAS")
-	TArray<TSubclassOf<class UWOGGameplayAbilityBase>> Abilities = { nullptr };
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "GAS")
-	TArray<TSubclassOf<class UGameplayEffect>> Effects = { nullptr };
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Inventory")
-	TArray<TSubclassOf<class AWOGBaseWeapon>> Weapons = { nullptr };
-};
-
-UENUM(BlueprintType)
-enum class EWOGAbilityInputID : uint8
-{
-	//Base
-	None			UMETA(DisplayName = "None"),
-	Confirm			UMETA(DisplayName = "Confirm"),
-	Cancel			UMETA(DisplayName = "Cancel"),
-
-	//Input abilities
-	Ability1		UMETA(DisplayName = "Ability1"),
-	Ability2		UMETA(DisplayName = "Ability2"),
-	Ability3		UMETA(DisplayName = "Ability3"),
-	Ability4		UMETA(DisplayName = "Ability4"),
-
-	//Weapons
-	WeaponEquip		UMETA(DisplayName = "WeaponEquip"),
-	WeaponUnequip	UMETA(DisplayName = "WeaponUnequip"),
-	AttackLight		UMETA(DisplayName = "AttackLight"),
-	AttackHeavy		UMETA(DisplayName = "AttackHeavy"),
-	Block			UMETA(DisplayName = "Block"),
-	Ranged			UMETA(DisplayName = "Ranged"),
-
-	//Character
-	Sprint			UMETA(DisplayName = "Sprint"),
-	Dodge			UMETA(DisplayName = "Dodge"),
-	Jump			UMETA(DisplayName = "Jump")
-};
-
-USTRUCT(BlueprintType)
-struct FCharacterData
-{
-	GENERATED_USTRUCT_BODY();
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Base Data")
-	bool bIsAttacker = false;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Base Data")
-	bool bIsMale = false;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "GAS")
-	TSubclassOf<UGameplayEffect> SwitchAbilityCooldownEffect = nullptr;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Vocals | Combat")
-	TObjectPtr<USoundCue> AttackLightSound = nullptr;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Vocals | Combat")
-	TObjectPtr<USoundCue> AttackHeavySound = nullptr;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Vocals | Combat")
-	TObjectPtr<USoundCue> AttackLongSound = nullptr;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Vocals | Combat")
-	TObjectPtr<USoundCue> AttackBuildUpSound = nullptr;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Vocals | Combat")
-	TObjectPtr<USoundCue> BlockImpactSound = nullptr;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Vocals | Combat")
-	TObjectPtr<USoundCue> RangedThrowSound = nullptr;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Vocals | Combat")
-	TObjectPtr<USoundCue> MagicCastLongSound = nullptr;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Vocals | Combat")
-	TObjectPtr<USoundCue> MagicCastShortSound = nullptr;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Vocals | Hurt")
-	TObjectPtr<USoundCue> DeathSound = nullptr;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Vocals | Hurt")
-	TObjectPtr<USoundCue> PainShortSound = nullptr;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Vocals | Hurt")
-	TObjectPtr<USoundCue> PainLongSound = nullptr;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Vocals | Hurt")
-	TObjectPtr<USoundCue> MagicBurnSound = nullptr;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Vocals | Hurt")
-	TObjectPtr<USoundCue> MagicShockedSound = nullptr;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Vocals | Hurt")
-	TObjectPtr<USoundCue> MagicFrozenSound = nullptr;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Vocals | Movement")
-	TObjectPtr<USoundCue> TiredSound = nullptr;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Vocals | Movement")
-	TObjectPtr<USoundCue> EffortShortSound = nullptr;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Vocals | Movement")
-	TObjectPtr<USoundCue> EffortLongSound = nullptr;
-};
-
-USTRUCT(BlueprintType)
-struct FCostMap
-{
-	GENERATED_USTRUCT_BODY();
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cost Data")
-	FGameplayTag CostTag = FGameplayTag();
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Cost Data")
-	int32 CostAmount = 0;
-};
-
-USTRUCT(BlueprintType)
-struct FVendorItemData
-{
-	GENERATED_USTRUCT_BODY();
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Vendor Data")
-	FName DisplayName = FName("");
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Vendor Data")
-	UTexture2D* ItemIcon = nullptr;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Vendor Data")
-	TSubclassOf<AActor> ItemClass;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Vendor Data")
-	TArray<FCostMap> CostMap = {};
 };
 

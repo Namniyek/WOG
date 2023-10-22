@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "WOGBaseActorComponent.h"
 #include "Engine/DataTable.h"
-#include "Types/CharacterTypes.h"
 #include "WOGSpawnComponent.generated.h"
 
 /**
@@ -18,29 +17,26 @@ struct FSpawnables : public FTableRowBase
 	GENERATED_BODY()
 public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Name"))
-	FText Name = FText();
+	FText Name;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Icon"))
-	TObjectPtr<UTexture2D> Icon = nullptr;
+	TObjectPtr<UTexture2D> Icon;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Mesh", MakeStructureDefaultValue = "None"))
-	TObjectPtr<UStaticMesh> Mesh = nullptr;
+	TObjectPtr<UStaticMesh> Mesh;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Actor", MakeStructureDefaultValue = "None"))
-	TObjectPtr<UClass> Actor = nullptr;
+	TObjectPtr<UClass> Actor;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Health", MakeStructureDefaultValue = "0.000000"))
-	double MaxHealth = 0.f;
+	double MaxHealth;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Amount Units", MakeStructureDefaultValue = "1"))
-	int32 AmountUnits = 0;
+	int32 AmountUnits;
 
 	/**Capsule half height*/
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "HeightOffset", MakeStructureDefaultValue = "1"))
-	float HeightOffset = 0.f;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Initial Setup")
-	FCharacterAbilityData DefaultAbilitiesAndEffects;
+	float HeightOffset;
 
 };
 

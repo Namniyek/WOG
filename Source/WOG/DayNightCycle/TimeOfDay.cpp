@@ -2,7 +2,6 @@
 
 
 #include "TimeOfDay.h"
-#include "WOG.h"
 #include "Net/UnrealNetwork.h"
 #include "GameFramework/GameState.h"
 #include "Kismet/KismetMathLibrary.h"
@@ -63,11 +62,6 @@ void ATimeOfDay::UpdateTime()
 	{
 		RepCurrentTime = 0;
 		CurrentTime = 0;
-	}
-
-	if (RepCurrentTime == 350)
-	{
-		OnKeyTimeHit.Broadcast(RepCurrentTime);
 	}
 
 	if (RepCurrentTime == 360)

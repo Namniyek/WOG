@@ -3,7 +3,6 @@
 
 #include "WOGPlayerState.h"
 #include "Net/UnrealNetwork.h"
-#include "WOG/ActorComponents/WOGAbilitySystemComponent.h"
 
 AWOGPlayerState::AWOGPlayerState()
 {
@@ -11,7 +10,6 @@ AWOGPlayerState::AWOGPlayerState()
 	PlayerStats.TotalElimms = 0;
 	PlayerStats.MostElimmedPlayer = FString("DEFAULT");
 	PlayerStats.PlayerWithMostElimms = FString("DEFAULT");
-
 }
 
 void AWOGPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

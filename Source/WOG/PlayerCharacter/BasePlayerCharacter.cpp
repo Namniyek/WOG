@@ -2,7 +2,6 @@
 
 
 #include "BasePlayerCharacter.h"
-#include "WOG.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
@@ -12,30 +11,17 @@
 #include "Net/UnrealNetwork.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
-#include "GameMode/WOGGameMode.h"
-#include "PlayerController/WOGPlayerController.h"
-#include "Weapons/WOGBaseWeapon.h"
+#include "LockOnTargetComponent.h"
+#include "TargetingHelperComponent.h"
+#include "WOG/GameMode/WOGGameMode.h"
+#include "WOG/PlayerController/WOGPlayerController.h"
+#include "WOG/Weapons/WOGBaseWeapon.h"
+#include "WOG/ActorComponents/WOGCombatComponent.h"
 #include "Kismet/GameplayStatics.h"
-#include "AnimInstance/WOGBaseAnimInstance.h"
+#include "WOG/AnimInstance/WOGBaseAnimInstance.h"
 #include "Sound/SoundCue.h"
-#include "ActorComponents/WOGAbilitySystemComponent.h"
-#include "GameplayEffectTypes.h"
-#include "AbilitySystemBlueprintLibrary.h"
-#include "GameplayTagContainer.h"
-#include "PlayerState/WOGPlayerState.h"
-#include "Types/WOGGameplayTags.h"
-#include "Components/AGR_EquipmentManager.h"
-#include "Components/AGR_InventoryManager.h"
-#include "Components/AGRAnimMasterComponent.h"
-#include "Libraries/WOGBlueprintLibrary.h"
-#include "WOG/Interfaces/BuildingInterface.h"
-#include "WOG/Interfaces/AttributesInterface.h"
-#include "TargetSystemComponent.h"
-#include "Magic/WOGBaseMagic.h"
-#include "AbilitySystem/AttributeSets/WOGAttributeSetBase.h"
-#include "UI/WOGHoldProgressBar.h"
-#include "UI/AutoSettingWidget.h"
-#include "Resources/WOGCommonInventory.h"
+#include "WOG/ActorComponents/WOGAbilitiesComponent.h"
+
 
 void ABasePlayerCharacter::OnConstruction(const FTransform& Transform)
 {
@@ -43,20 +29,24 @@ void ABasePlayerCharacter::OnConstruction(const FTransform& Transform)
 	CharacterMI = UMaterialInstanceDynamic::Create(Material, this);
 }
 
+// Sets default values
 ABasePlayerCharacter::ABasePlayerCharacter()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 
 	/**
 	*Actor components
 	*/
 
-	EquipmentManager = CreateDefaultSubobject<UAGR_EquipmentManager>(TEXT("EquipmentManager"));
-	EquipmentManager->SetIsReplicated(true);
-	InventoryManager = CreateDefaultSubobject<UAGR_InventoryManager>(TEXT("InventoryManager"));
-	InventoryManager->SetIsReplicated(true);
-	TargetComponent = CreateDefaultSubobject<UTargetSystemComponent>(TEXT("TargetComponent"));
+	LockOnTarget = CreateDefaultSubobject<ULockOnTargetComponent>(TEXT("LockOnTargetComponent"));
+	LockOnTarget->SetIsReplicated(true);
+	TargetAttractor = CreateDefaultSubobject<UTargetingHelperComponent>(TEXT("TargetAttractor"));
+	TargetAttractor->SetIsReplicated(true);
+	Combat = CreateDefaultSubobject<UWOGCombatComponent>(TEXT("CombatComponent"));
+	Combat->SetIsReplicated(true);
+	Abilities = CreateDefaultSubobject<UWOGAbilitiesComponent>(TEXT("AbilitiesComponent"));
+	Abilities->SetIsReplicated(true);
 
 
 	// Set size for collision capsule
@@ -90,19 +80,14 @@ ABasePlayerCharacter::ABasePlayerCharacter()
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
-	if (TargetComponent)
-	{
-		TargetComponent->OnTargetLockedOn.AddDynamic(this, &ThisClass::TargetLocked);
-		TargetComponent->OnTargetLockedOff.AddDynamic(this, &ThisClass::TargetUnlocked);
-	}
+	CharacterState = ECharacterState::ECS_Unnoccupied;
+	bIsTargeting = false;
 
-	PreviousWeapon = NAME_None;
-	PreviousMagic = NAME_None;
-	CurrentMagic = NAME_None;
-
-	if (GetMesh())
+	if (LockOnTarget)
 	{
-		GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECR_Ignore);
+		LockOnTarget->OnTargetLocked.AddDynamic(this, &ThisClass::TargetLocked);
+		LockOnTarget->OnTargetUnlocked.AddDynamic(this, &ThisClass::TargetUnlocked);
+		LockOnTarget->OnTargetNotFound.AddDynamic(this, &ThisClass::TargetNotFound);
 	}
 }
 
@@ -111,20 +96,6 @@ void ABasePlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	
 	DOREPLIFETIME(ABasePlayerCharacter, PlayerProfile);
-	DOREPLIFETIME(ABasePlayerCharacter, CurrentTarget);
-	DOREPLIFETIME(ABasePlayerCharacter, CurrentMagic);
-	DOREPLIFETIME(ABasePlayerCharacter, PreviousMagic);
-	DOREPLIFETIME(ABasePlayerCharacter, PreviousWeapon);
-	DOREPLIFETIME(ABasePlayerCharacter, CommonInventory);
-	DOREPLIFETIME(ABasePlayerCharacter, OwnerPC);
-}
-
-void ABasePlayerCharacter::PossessedBy(AController* NewController)
-{
-	Super::PossessedBy(NewController);
-	SetOwner(NewController);
-
-	OwnerPC = Cast<AWOGPlayerController>(GetController());
 }
 
 void ABasePlayerCharacter::BeginPlay()
@@ -140,6 +111,7 @@ void ABasePlayerCharacter::BeginPlay()
 	}
 }
 
+// Called to bind functionality to input
 void ABasePlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	check(PlayerInputComponent);
@@ -162,44 +134,25 @@ void ABasePlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 		//Target
 		EnhancedInputComponent->BindAction(TargetAction, ETriggerEvent::Completed, this, &ThisClass::TargetActionPressed);
 		EnhancedInputComponent->BindAction(CycleTargetAction, ETriggerEvent::Triggered, this, &ThisClass::CycleTargetActionPressed);
-
 		//Equip
 		EnhancedInputComponent->BindAction(AbilitiesAction, ETriggerEvent::Triggered, this, &ThisClass::AbilitiesButtonPressed);
-
 		//PrimaryLightAction
 		EnhancedInputComponent->BindAction(PrimaryLightAction, ETriggerEvent::Triggered, this, &ThisClass::PrimaryLightButtonPressed);
-		EnhancedInputComponent->BindAction(PrimaryHeavyAction, ETriggerEvent::Started, this, &ThisClass::PrimaryHeavyAttackStarted);
 		EnhancedInputComponent->BindAction(PrimaryHeavyAction, ETriggerEvent::Ongoing, this, TEXT("PrimaryArmHeavyAttack"));
 		EnhancedInputComponent->BindAction(PrimaryHeavyAction, ETriggerEvent::Canceled, this, &ThisClass::PrimaryHeavyAttackCanceled);
 		EnhancedInputComponent->BindAction(PrimaryHeavyAction, ETriggerEvent::Triggered, this, &ThisClass::PrimaryExecuteHeavyAttack);
 		//SecondaryAction
 		EnhancedInputComponent->BindAction(SecondaryAction, ETriggerEvent::Started, this, &ThisClass::SecondaryButtonPressed);
 		EnhancedInputComponent->BindAction(SecondaryAction, ETriggerEvent::Triggered, this, &ThisClass::SecondaryButtonReleased);
-		//Weapon Ranged
-		EnhancedInputComponent->BindAction(WeaponRangedAction, ETriggerEvent::Triggered, this, &ThisClass::WeaponRangedActionPressed);
 	}
 }
 
 void ABasePlayerCharacter::MoveActionPressed(const FInputActionValue& Value)
 {
+	if (CharacterState == ECharacterState::ECS_Elimmed) return;
+	if (CharacterState == ECharacterState::ECS_Staggered) return;
+
 	FVector2D MovementVector = Value.Get<FVector2D>();
-
-	if (MovementVector.X != 0)
-	{
-		FGameplayEventData EventPayload;
-		EventPayload.EventMagnitude = MovementVector.X;
-		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Movement_Right, EventPayload);
-	}
-	if (MovementVector.Y != 0)
-	{
-		FGameplayEventData EventPayload;
-		EventPayload.EventMagnitude = MovementVector.Y;
-		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Movement_Forward, EventPayload);
-	}
-}
-
-void ABasePlayerCharacter::MoveCharacter(const FVector2D& MovementVector)
-{
 	if (Controller != nullptr)
 	{
 		// find out which way is forward
@@ -222,7 +175,7 @@ void ABasePlayerCharacter::LookActionPressed(const FInputActionValue& Value)
 {
 	FVector2D LookAxisVector = Value.Get<FVector2D>();
 
-	if (AnimManager && AnimManager->AimOffsetType == EAGR_AimOffsets::Aim)
+	if (bIsTargeting)
 	{
 		//Disable mouse input if character is targeting
 	}
@@ -239,206 +192,174 @@ void ABasePlayerCharacter::LookActionPressed(const FInputActionValue& Value)
 
 void ABasePlayerCharacter::JumpActionPressed(const FInputActionValue& Value)
 {
-	SendAbilityLocalInput(EWOGAbilityInputID::Jump);
+	if (CharacterState == ECharacterState::ECS_Attacking) return;
+	if (CharacterState == ECharacterState::ECS_Staggered) return;
+
+	ACharacter::Jump();
 }
 
 void ABasePlayerCharacter::DodgeActionPressed(const FInputActionValue& Value)
 {
-	SendAbilityLocalInput(EWOGAbilityInputID::Dodge);
+	if (CharacterState == ECharacterState::ECS_Unnoccupied)
+	{
+		Server_SetCharacterState(ECharacterState::ECS_Dodging);
+	}
+	else
+	{
+		return;
+	}
+
+}
+
+void ABasePlayerCharacter::StopDodging()
+{
+	if (CharacterState == ECharacterState::ECS_Dodging)
+	{
+		Server_SetCharacterState(ECharacterState::ECS_Unnoccupied);
+	}
+}
+
+void ABasePlayerCharacter::Dodge()
+{
+	TObjectPtr<UWOGBaseAnimInstance> CharacterAnimInstance = Cast< UWOGBaseAnimInstance>(GetMesh()->GetAnimInstance());
+	if (!CharacterAnimInstance) return;
+
+	//GetCharacterMovement()->MaxWalkSpeed = 1000.f;	//Sets the maximum run speed
+
+	if (Combat && Combat->EquippedWeapon && Combat->EquippedWeapon->GetDodgeMontage())
+	{
+		CharacterAnimInstance->Montage_Play(Combat->EquippedWeapon->GetDodgeMontage(), 1.f);
+		CharacterAnimInstance->Montage_JumpToSection(CharacterAnimInstance->GetMovementDirection());
+	}
+
+	else if (DodgeMontage)
+	{
+		CharacterAnimInstance->Montage_Play(DodgeMontage, 1.f);
+		CharacterAnimInstance->Montage_JumpToSection(CharacterAnimInstance->GetMovementDirection());
+	}
 }
 
 void ABasePlayerCharacter::SprintActionPressed()
 {
-	SendAbilityLocalInput(EWOGAbilityInputID::Sprint);	
+	if (CharacterState != ECharacterState::ECS_Unnoccupied) return;
+	if (!bIsTargeting)
+	{
+		Server_SetCharacterState(ECharacterState::ECS_Sprinting);
+	}
 }
 
 void ABasePlayerCharacter::StopSprinting()
 {
-	FGameplayEventData EventPayload;
-	EventPayload.EventTag = TAG_Event_Movement_Sprint_Stop;
-	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Movement_Sprint_Stop, EventPayload);
+	Server_SetCharacterState(ECharacterState::ECS_Unnoccupied);
 }
 
 void ABasePlayerCharacter::TargetActionPressed(const FInputActionValue& Value)
 {
-	if (HasMatchingGameplayTag(TAG_State_Dead)) return;
-	if (HasMatchingGameplayTag(TAG_State_Dodging)) return;
+	if (CharacterState == ECharacterState::ECS_Elimmed) return;
+	if (CharacterState == ECharacterState::ECS_Staggered) return;
 
-	if (!TargetComponent || HasMatchingGameplayTag(TAG_State_Weapon_Ranged_AOE)) return;
-	TargetComponent->TargetActor();
+	if (!LockOnTarget) return;
+	LockOnTarget->EnableTargeting();
 }
 
 void ABasePlayerCharacter::CycleTargetActionPressed(const FInputActionValue& Value)
 {
-	if (HasMatchingGameplayTag(TAG_State_Dead)) return;
+	if (CharacterState == ECharacterState::ECS_Elimmed) return;
 
-	if (!TargetComponent) return;
+	if (!LockOnTarget) return;
 	float CycleFloat = Value.Get<float>();
+	FVector2D CycleVector = FVector2D(CycleFloat, 0.f);
 
-	TargetComponent->TargetActorWithAxisInput(CycleFloat);
+	LockOnTarget->SwitchTargetManual(CycleVector);
 }
 
-void ABasePlayerCharacter::WeaponRangedActionPressed(const FInputActionValue& Value)
+void ABasePlayerCharacter::AbilitiesButtonPressed(const FInputActionValue& Value)
 {
-	if (HasMatchingGameplayTag(TAG_State_Weapon_Ranged_AOE) && AbilitySystemComponent.Get())
-	{
-		AbilitySystemComponent->LocalInputCancel();
-		UE_LOG(LogTemp, Warning, TEXT("Cancelled Input"))
-	}
-	else
-	{
-		SendAbilityLocalInput(EWOGAbilityInputID::Ranged);
-	}
-}
-
-void ABasePlayerCharacter::AbilityHoldStarted(const FName& Slot)
-{
-	if (!EquipmentManager) return;
-
-	AActor* OutMagic = nullptr;
-	EquipmentManager->GetMagicShortcutReference(Slot, OutMagic);
-	TObjectPtr<AWOGBaseMagic> Magic = Cast<AWOGBaseMagic>(OutMagic);
-
-	if (Magic && HasMatchingGameplayTag(Magic->GetMagicData().CooldownTag))
-	{
-		UE_LOG(LogTemp, Error, TEXT("Cooldown in effect. Can't equip"));
-		return;
-	}
-	if (!Magic || Magic->GetMagicData().AbilityInputType != EAbilityInputType::EAI_Hold)
-	{
-		UE_LOG(LogTemp, Error, TEXT("Invalid Magic or not HOLD type"));
-		return;
-	}
-
-	AddHoldProgressBar();
-}
-
-void ABasePlayerCharacter::ConfirmHoldStarted()
-{
-	TObjectPtr<AWOGBaseMagic> EquippedMagic = UWOGBlueprintLibrary::GetEquippedMagic(this);
-	if (EquippedMagic && HasMatchingGameplayTag(EquippedMagic->GetMagicData().CooldownTag))
-	{
-		UE_LOG(LogTemp, Error, TEXT("Cooldown in effect. Can't equip"));
-		return;
-	}
-	if (!EquippedMagic || EquippedMagic->GetMagicData().AbilityType != EAbilityType::EAT_AOE)
-	{
-		UE_LOG(LogTemp, Error, TEXT("Invalid Magic or not AOE type"));
-		return;
-	}
-
-	AddHoldProgressBar();
-}
-
-void ABasePlayerCharacter::AbilityHoldButtonElapsed(FInputActionValue ActionValue, float ElapsedTime, float TriggeredTime)
-{
-	TObjectPtr<AWOGPlayerController> OwnerController = Cast<AWOGPlayerController>(Controller);
-	if (!OwnerController || !IsLocallyControlled() || !OwnerController->GetHoldProgressBar()) return;
-
-	OwnerController->GetHoldProgressBar()->TimeHeld = ElapsedTime;
-}
-
-void ABasePlayerCharacter::AbilityHoldButtonCanceled(const FInputActionValue& Value)
-{
-	RemoveHoldProgressBarWidget();
+	//TO BE OVERRIDEN IN CHILDREN
 }
 
 void ABasePlayerCharacter::PrimaryLightButtonPressed(const FInputActionValue& Value)
 {
-	TObjectPtr<AWOGBaseMagic> EquippedMagic = UWOGBlueprintLibrary::GetEquippedMagic(this);
-	if (EquippedMagic && EquippedMagic->GetMagicData().AbilityType != EAbilityType::EAT_AOE && AbilitySystemComponent.Get())
-	{
-		AbilitySystemComponent->LocalInputConfirm();
-		UE_LOG(LogTemp, Warning, TEXT("Confirmed Input"));
-	}
+	if (CharacterState == ECharacterState::ECS_Elimmed) return;
+	if (CharacterState == ECharacterState::ECS_Staggered) return;
+	if (CharacterState == ECharacterState::ECS_Dodging) return;
 
-	TObjectPtr<AWOGBaseWeapon> EquippedWeapon = UWOGBlueprintLibrary::GetEquippedWeapon(this);
-	if (EquippedWeapon && HasMatchingGameplayTag(TAG_State_Weapon_Ranged_AOE) && AbilitySystemComponent.Get())
+	if (!Combat || !Abilities) return;
+	if (Combat->EquippedWeapon)
 	{
-		AbilitySystemComponent->LocalInputConfirm();
-		UE_LOG(LogTemp, Warning, TEXT("Confirmed Input"));
-		return;
+		Combat->AttackLight();
 	}
-
-	bool bCanActivateAbility = UWOGBlueprintLibrary::GetEquippedWeapon(this) || UWOGBlueprintLibrary::GetEquippedMagic(this);
-	if (bCanActivateAbility)
+	if (Abilities->EquippedAbility)
 	{
-		SendAbilityLocalInput(EWOGAbilityInputID::AttackLight);
+		Abilities->UseAbilityActionPressed();
 	}
-}
-
-void ABasePlayerCharacter::PrimaryHeavyAttackStarted(const FInputActionValue& Value)
-{
-	ConfirmHoldStarted();
 }
 
 void ABasePlayerCharacter::PrimaryArmHeavyAttack(FInputActionValue ActionValue, float ElapsedTime, float TriggeredTime)
 {
-	if (UWOGBlueprintLibrary::GetEquippedWeapon(this))
+	if (CharacterState == ECharacterState::ECS_Elimmed) return;
+	if (CharacterState == ECharacterState::ECS_Staggered) return;
+	if (CharacterState == ECharacterState::ECS_Dodging) return;
+
+	if (!Combat || !Combat->GetEquippedWeapon()) return;
+	
+	if (ElapsedTime > 0.2f && !Combat->GetEquippedWeapon()->GetIsArmingHeavy())
 	{
-		if (ElapsedTime > 0.21f)
-		{
-			SendAbilityLocalInput(EWOGAbilityInputID::AttackHeavy);
-			return;
-		}
+		Combat->AttackHeavyArm();
+		UE_LOG(LogTemp, Warning, TEXT("ArmingHeavyAttack"));
 	}
-
-	TObjectPtr<AWOGPlayerController> OwnerController = Cast<AWOGPlayerController>(Controller);
-	if (!OwnerController || !IsLocallyControlled() || !OwnerController->GetHoldProgressBar()) return;
-
-	OwnerController->GetHoldProgressBar()->TimeHeld = ElapsedTime;
 }
 
 void ABasePlayerCharacter::PrimaryHeavyAttackCanceled(const FInputActionValue& Value)
 {
-	if (UWOGBlueprintLibrary::GetEquippedWeapon(this))
+	if (CharacterState == ECharacterState::ECS_Elimmed) return;
+	if (CharacterState == ECharacterState::ECS_Staggered) return;
+	if (CharacterState == ECharacterState::ECS_Dodging) return;
+
+	if (!Combat) return;
+	if (Combat->EquippedWeapon)
 	{
-		FGameplayEventData EventPayload;
-		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Weapon_HeavyAttackCancel, EventPayload);
-		return;
+		Combat->AttackHeavyCanceled();
 	}
-	
-	RemoveHoldProgressBarWidget();
 }
 
 void ABasePlayerCharacter::PrimaryExecuteHeavyAttack(const FInputActionValue& Value)
 {
-	if (UWOGBlueprintLibrary::GetEquippedWeapon(this))
-	{
-		FGameplayEventData EventPayload;
-		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Weapon_HeavyAttackExecute, EventPayload);
-		return;
-	}
+	if (CharacterState == ECharacterState::ECS_Elimmed) return;
+	if (CharacterState == ECharacterState::ECS_Staggered) return;
+	if (CharacterState == ECharacterState::ECS_Dodging) return;
 
-	TObjectPtr<AWOGBaseMagic> EquippedMagic = UWOGBlueprintLibrary::GetEquippedMagic(this);
-	if (EquippedMagic && EquippedMagic->GetMagicData().AbilityType == EAbilityType::EAT_AOE && AbilitySystemComponent.Get())
-	{
-		RemoveHoldProgressBarWidget();
-		AbilitySystemComponent->LocalInputConfirm();
-		UE_LOG(LogTemp, Warning, TEXT("Confirmed Input"))
-	}
+	if (!Combat || !Combat->GetEquippedWeapon()) return;
+
+	Combat->AttackHeavy();
 }
 
 void ABasePlayerCharacter::SecondaryButtonPressed(const FInputActionValue& Value)
 {
-	if (UWOGBlueprintLibrary::GetEquippedWeapon(this))
-	{
-		SendAbilityLocalInput(EWOGAbilityInputID::Block);
-	}
+	if (CharacterState == ECharacterState::ECS_Elimmed) return;
+	if (CharacterState == ECharacterState::ECS_Staggered) return;
+	if (CharacterState == ECharacterState::ECS_Dodging) return;
 
-	bSecondaryButtonPressed = true;
+	if (!Combat) return;
+	Combat->Block();
+	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Purple, FString("StartBlocking"));
 }
 
 void ABasePlayerCharacter::SecondaryButtonReleased(const FInputActionValue& Value)
 {
-	AActor* OutItem;
-	if (!EquipmentManager->GetItemInSlot(NAME_WeaponSlot_Primary, OutItem) || !OutItem) return;
+	if (CharacterState == ECharacterState::ECS_Elimmed) return;
+	if (CharacterState == ECharacterState::ECS_Staggered) return;
+	if (CharacterState == ECharacterState::ECS_Dodging) return;
 
-	FGameplayEventData EventPayload;
-	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Weapon_Block_Stop, EventPayload);
+	if (!Combat) return;
+	Combat->StopBlocking();
 	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Purple, FString("StopBlocking"));
+}
 
-	bSecondaryButtonPressed = false;
+void ABasePlayerCharacter::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
 }
 
 void ABasePlayerCharacter::Server_SetPlayerProfile_Implementation(const FPlayerData& NewPlayerProfile)
@@ -455,13 +376,10 @@ void ABasePlayerCharacter::OnRep_PlayerProfile()
 void ABasePlayerCharacter::UpdatePlayerProfile_Implementation(const FPlayerData& NewPlayerProfile)
 {
 	//Set the character meshes
-	SetMeshesAndAnimations(NewPlayerProfile.bIsMale, NewPlayerProfile.CharacterIndex);
+	SetMeshes(NewPlayerProfile.bIsMale, NewPlayerProfile.CharacterIndex);
 
 	//Set the character colors
 	SetColors(NewPlayerProfile.PrimaryColor, NewPlayerProfile.SkinColor, NewPlayerProfile.BodyPaintColor, NewPlayerProfile.HairColor);	
-
-	//Set the character default abilities and effects
-	SetDefaultAbilitiesAndEffects(NewPlayerProfile.bIsMale, NewPlayerProfile.CharacterIndex);
 }
 
 void ABasePlayerCharacter::SetColors(FName Primary, FName Skin, FName BodyPaint, FName HairColor)
@@ -506,7 +424,7 @@ void ABasePlayerCharacter::SetColors(FName Primary, FName Skin, FName BodyPaint,
 	CharacterMI->SetVectorParameterValue(FName("Color_Hair"), HairRow->ColorVector);
 }
 
-void ABasePlayerCharacter::SetMeshesAndAnimations(bool bIsMale, FName RowName)
+void ABasePlayerCharacter::SetMeshes(bool bIsMale, FName RowName)
 {
 	UDataTable* MeshTable = bIsMale ? CharacterDataTables.MaleBody : CharacterDataTables.FemaleBody;
 
@@ -523,8 +441,6 @@ void ABasePlayerCharacter::SetMeshesAndAnimations(bool bIsMale, FName RowName)
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, "Error with data table rows");
 		return;
 	}
-
-	MergeParams.bNeedsCpuAccess = true;
 
 	MergeParams.MeshesToMerge.Add(MeshRow->Head);
 	MergeParams.MeshesToMerge.Add(MeshRow->Torso);
@@ -548,9 +464,6 @@ void ABasePlayerCharacter::SetMeshesAndAnimations(bool bIsMale, FName RowName)
 	USkeletalMesh* NewMesh = UMeshMergeFunctionLibrary::MergeMeshes(MergeParams);
 	if (NewMesh)
 	{
-		//UE_LOG(LogTemp, Warning, TEXT("%d Amount of LODs"), NewMesh->GetLODNum());
-		//NewMesh->GetLODInfo(NewMesh->GetLODNum())->bAllowCPUAccess = true;
-
 		GetMesh()->SetSkinnedAssetAndUpdate(NewMesh, true);
 		GetMesh()->SetMaterial(0, CharacterMI);
 		GetMesh()->SetMaterial(1, CharacterMI);
@@ -559,502 +472,43 @@ void ABasePlayerCharacter::SetMeshesAndAnimations(bool bIsMale, FName RowName)
 		GetMesh()->SetPhysicsAsset(MeshRow->PhysicsAsset);
 	}
 
+	Combat->SetDefaultWeaponClass(MeshRow->DefaultWeapon);
 	UnarmedHurtMontage = MeshRow->UnarmedHurtMontage;
 	DodgeMontage = MeshRow->DodgeMontage;
 }
 
-void ABasePlayerCharacter::SetDefaultAbilitiesAndEffects(bool bIsMale, FName RowName)
+void ABasePlayerCharacter::HandleStateUnnoccupied()
 {
-	UDataTable* MeshTable = bIsMale ? CharacterDataTables.MaleBody : CharacterDataTables.FemaleBody;
+	if (!GetCharacterMovement()) return;
 
-	if (!MeshTable)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, "Error with data tables");
-		return;
-	}
-
-	FCharacterMesh* MeshRow = MeshTable->FindRow<FCharacterMesh>(RowName, FString());
-
-	if (!MeshRow)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, "Error with data table rows");
-		return;
-	}
-
-	DefaultAbilitiesAndEffects.Abilities.Append(MeshRow->DefaultAbilitiesAndEffects.Abilities);
-	DefaultAbilitiesAndEffects.Effects.Append(MeshRow->DefaultAbilitiesAndEffects.Effects);
-	DefaultAbilitiesAndEffects.Weapons.Append(MeshRow->DefaultAbilitiesAndEffects.Weapons);
-
-	GiveDefaultAbilities();
-	ApplyDefaultEffects();
-
-	CharacterData = MeshRow->CharacterData;
-	CharacterData.bIsMale = bIsMale;
-
-	FindCommonInventory();
+	GetCharacterMovement()->MaxWalkSpeed = 500.f;	//Sets the maximum run speed
+	GetCharacterMovement()->bOrientRotationToMovement = true; // Character doesn't move in the direction of input...
 }
 
-void ABasePlayerCharacter::FindCommonInventory()
+void ABasePlayerCharacter::HandleStateDodging()
 {
-	if (HasAuthority())
-	{
-		FName Tag = GetCharacterData().bIsAttacker ? FName("Attacker") : FName("Defender");
-		TArray<AActor*> OutActors;
-		UGameplayStatics::GetAllActorsOfClassWithTag(this, AWOGCommonInventory::StaticClass(), Tag, OutActors);
-
-		if (OutActors.Num())
-		{
-			CommonInventory = CastChecked<AWOGCommonInventory>(OutActors[0]);
-			UE_LOG(LogTemp, Display, TEXT("CommonInventory found: %s"), *GetNameSafe(CommonInventory));
-		}
-		else
-		{
-			UE_LOG(LogTemp, Error, TEXT("No Common Inventory found"));
-		}
-	}
+	Dodge();
 }
 
-void ABasePlayerCharacter::ResetPreviouslyEquippedMaterial()
+void ABasePlayerCharacter::HandleStateSprinting()
 {
-	if (!EquipmentManager)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Equipment component invalid"));
-		return;
-	}
+	if (!GetCharacterMovement()) return;
 
-	//Unequip current magic
-	if (CurrentMagic != NAME_None)
-	{
-		AActor* PrimaryMagic = nullptr;
-		EquipmentManager->GetItemInSlot(NAME_MagicSlot_MagicPrimary, PrimaryMagic);
-		if (PrimaryMagic)
-		{
-			Server_UnequipMagic(CurrentMagic, PrimaryMagic);
-			UE_LOG(LogTemp, Warning, TEXT("Unequipped Magic: %s"), *GetNameSafe(PrimaryMagic));
-		}
-		else
-		{
-			UE_LOG(LogTemp, Error, TEXT("Equipped magic invalid"));
-		}
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("CurrentMagic FName == NAME_None"));
-	}
-
-	//Reequip previous weapon
-	if (PreviousWeapon != NAME_None)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("PreviousWeapon key == %s"), *PreviousWeapon.ToString());
-		AActor* OutItem = nullptr;
-		EquipmentManager->GetWeaponShortcutReference(PreviousWeapon, OutItem);
-		if (OutItem)
-		{
-			Server_EquipWeapon(PreviousWeapon, OutItem);
-			UE_LOG(LogTemp, Warning, TEXT("Equipped Previous Weapon: %s"), *GetNameSafe(OutItem));
-		}
-		else
-		{
-			UE_LOG(LogTemp, Error, TEXT("Previous weapon invalid"));
-		}
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("PreviousWeapon FName == NAME_None"));
-	}
-
-	//Reequip previous magic
-	if (PreviousMagic != NAME_None)
-	{
-		AActor* OutMagic = nullptr;
-		EquipmentManager->GetMagicShortcutReference(PreviousMagic, OutMagic);
-		if (OutMagic)
-		{
-			Server_EquipMagic(PreviousMagic, OutMagic);
-			UE_LOG(LogTemp, Warning, TEXT("Equipped Previous Magic: %s"), *GetNameSafe(OutMagic));
-		}
-		else
-		{
-			UE_LOG(LogTemp, Error, TEXT("Previous magic invalid"));
-		}
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("PreviousMagic FName == NAME_None"));
-	}
-}
-
-void ABasePlayerCharacter::UnequipMagic(const bool& bIsAttacker, const FName& Slot)
-{
-	if (!EquipmentManager)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Equipment component invalid"));
-		return;
-	}
-
-	FName OtherSlot = Slot == FName("1") ? FName("2") : FName("1");
-
-	AActor* OutMagic = nullptr;
-	AActor* PrimaryMagic = nullptr;
-	EquipmentManager->GetMagicShortcutReference(Slot, OutMagic);
-	EquipmentManager->GetItemInSlot(NAME_MagicSlot_MagicPrimary, PrimaryMagic);
-	if (PrimaryMagic && OutMagic && PrimaryMagic == OutMagic)
-	{
-		Server_UnequipMagic(Slot, PrimaryMagic);
-	}
-	else if (bIsAttacker)
-	{
-		EquipmentManager->GetMagicShortcutReference(OtherSlot, OutMagic);
-		EquipmentManager->GetItemInSlot(NAME_MagicSlot_MagicPrimary, PrimaryMagic);
-		if (PrimaryMagic && OutMagic && PrimaryMagic == OutMagic)
-		{
-			Server_UnequipMagic(OtherSlot, PrimaryMagic);
-		}
-	}
-}
-
-void ABasePlayerCharacter::UnequipWeapon(const bool& bIsAttacker, const FName& Slot)
-{
-	if (!EquipmentManager)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Equipment component invalid"));
-		return;
-	}
-
-	FName OtherSlot = Slot == FName("1") ? FName("2") : FName("1");
-
-	AActor* OutItem = nullptr;
-	AActor* PrimaryItem = nullptr;
-	EquipmentManager->GetWeaponShortcutReference(Slot, OutItem);
-	EquipmentManager->GetItemInSlot(NAME_WeaponSlot_Primary, PrimaryItem);
-
-	if (PrimaryItem && OutItem && PrimaryItem == OutItem) //Weapon #1 equipped
-	{
-		Server_UnequipWeaponSwap(NAME_WeaponSlot_BackMain, PrimaryItem);
-	}
-	else if(!bIsAttacker) //Weapon #2 equipped && is Defender
-	{
-		EquipmentManager->GetWeaponShortcutReference(OtherSlot, OutItem);
-		EquipmentManager->GetItemInSlot(NAME_WeaponSlot_Primary, PrimaryItem);
-		if (PrimaryItem && OutItem && PrimaryItem == OutItem)
-		{
-			Server_UnequipWeaponSwap(NAME_WeaponSlot_BackSecondary, PrimaryItem);
-		}
-	}
-}
-
-void ABasePlayerCharacter::EquipMagic(const FName& Slot)
-{
-	if (!EquipmentManager)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Equipment component invalid"));
-		return;
-	}
-
-	AActor* PrimaryMagic = nullptr;
-	AActor* OutMagic = nullptr;
-	EquipmentManager->GetMagicShortcutReference(Slot, OutMagic);
-	EquipmentManager->GetItemInSlot(NAME_MagicSlot_MagicPrimary, PrimaryMagic);
-	if (PrimaryMagic && OutMagic && PrimaryMagic == OutMagic)
-	{
-		Server_UnequipMagic(Slot, PrimaryMagic);
-	}
-	else if (OutMagic)
-	{
-		Server_EquipMagic(Slot, OutMagic);
-	}
-}
-
-void ABasePlayerCharacter::EquipWeapon(const FName& Slot)
-{
-	AActor* OutItem = nullptr;
-	AActor* PrimaryItem = nullptr;
-	EquipmentManager->GetWeaponShortcutReference(Slot, OutItem);
-	EquipmentManager->GetItemInSlot(NAME_WeaponSlot_Primary, PrimaryItem);
-	if (PrimaryItem && OutItem && PrimaryItem == OutItem)
-	{
-		FGameplayEventData EventPayload;
-		EventPayload.EventTag = TAG_Event_Weapon_Unequip;
-		EventPayload.OptionalObject = PrimaryItem;
-		int32 Key = FCString::Atoi(*Slot.ToString());
-		EventPayload.EventMagnitude = Key;
-		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Weapon_Unequip, EventPayload);
-	}
-	else if (OutItem)
-	{
-		FGameplayEventData EventPayload;
-		EventPayload.EventTag = TAG_Event_Weapon_Equip;
-		EventPayload.OptionalObject = OutItem;
-		int32 Key = FCString::Atoi(*Slot.ToString());
-		EventPayload.EventMagnitude = Key;
-		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Weapon_Equip, EventPayload);
-	}
-}
-
-void ABasePlayerCharacter::Client_SaveShortcutReferences_Implementation(AActor* InItem, const FGameplayTag& InItemTag, const FName& Key)
-{
-	if (!InventoryManager || !EquipmentManager) return;
-
-	//Prefer the Actor pointer
-	if (IsValid(InItem))
-	{
-		EquipmentManager->SaveShortcutReference(Key, InItem);
-		UE_LOG(LogTemp, Warning, TEXT("Added Item : %s to shortcut key : %s"), *GetNameSafe(InItem), *Key.ToString());
-		return;
-	}
-	//If actor pointer invalid, use tag
-	else
-	{
-		TArray<AActor*> OutItems;
-		int32 AmountItems = 0;
-		if (InventoryManager->GetAllItemsOfTagSlotType(InItemTag, OutItems, AmountItems))
-		{
-			if (IsValid(OutItems[0]))
-			{
-				EquipmentManager->SaveShortcutReference(Key, OutItems[0]);
-				UE_LOG(LogTemp, Warning, TEXT("Added Item : %s to shortcut key : %s"), *GetNameSafe(OutItems[0]), *Key.ToString());
-				return;
-			}
-		}
-	}
-	UE_LOG(LogTemp, Error, TEXT("Item not added to shortcut"));
-}
-
-void ABasePlayerCharacter::Server_EquipWeapon_Implementation(const FName& Key, AActor* InWeapon)
-{
-	if (!InWeapon) return;
-
-	//Determine the back slots names
-	FName RelevantBackSlot;
-	FName OtherBackSlot;
-	if (Key == FName("1"))
-	{
-		RelevantBackSlot = NAME_WeaponSlot_BackMain;
-		OtherBackSlot = NAME_WeaponSlot_BackSecondary;
-	}
-	else if (Key == FName("2"))
-	{
-		RelevantBackSlot = NAME_WeaponSlot_BackSecondary;
-		OtherBackSlot = NAME_WeaponSlot_BackMain;
-	}
-
-	PreviousWeapon = NAME_None;
-
-	//Determine where to equip weapons
-	AActor* PrimarySlotActor;
-	EquipmentManager->GetItemInSlot(NAME_WeaponSlot_Primary, PrimarySlotActor);
-	if (PrimarySlotActor == InWeapon)
-	{
-		//InWeapon already equipped. Put it on the back
-		FText Note;
-		EquipmentManager->UnEquipByReference(InWeapon, Note);
-		AActor* PreviousItem;
-		AActor* NewItem;
-		EquipmentManager->EquipItemInSlot(RelevantBackSlot, InWeapon, PreviousItem, NewItem);
-		UE_LOG(LogTemp, Display, TEXT("Same as Primary - Equipping to BackMain"));
-		return;
-	}
-	else
-	{
-		//InWeapon NOT equipped as primary
-		//Determine where to equip weapons
-		AActor* BackSlotActor;
-		EquipmentManager->GetItemInSlot(RelevantBackSlot, BackSlotActor);
-		if (BackSlotActor == InWeapon)
-		{
-			//InWeapon equipped on the back releavant slot
-			if (EquipmentManager->GetItemInSlot(NAME_WeaponSlot_Primary, PrimarySlotActor))
-			{
-				//Primary slot taken. Send Previous weapon to back.
-				FText Note;
-				EquipmentManager->UnEquipByReference(PrimarySlotActor, Note);
-				AActor* PreviousItem;
-				AActor* NewItem;
-				EquipmentManager->EquipItemInSlot(OtherBackSlot, PrimarySlotActor, PreviousItem, NewItem);
-
-
-				if (OtherBackSlot == NAME_WeaponSlot_BackMain)
-				{
-					PreviousWeapon = FName("2");
-				}
-				else if (OtherBackSlot == NAME_WeaponSlot_BackSecondary)
-				{
-					PreviousWeapon = FName("1");
-				}
-			}
-
-			//Equip InWeapon to primary
-			FText Note;
-			EquipmentManager->UnEquipByReference(InWeapon, Note);
-			AActor* PreviousItem;
-			AActor* NewItem;
-			EquipmentManager->EquipItemInSlot(NAME_WeaponSlot_Primary, InWeapon, PreviousItem, NewItem);
-			PreviousWeapon = Key;
-			UE_LOG(LogTemp, Display, TEXT("Same as BackMain - Equipping to Primary"));
-			return;
-		}
-		else
-		{
-			//InWeapon was never equipped before
-			AActor* PreviousItem;
-			AActor* NewItem;
-			EquipmentManager->EquipItemInSlot(RelevantBackSlot, InWeapon, PreviousItem, NewItem);
-			UE_LOG(LogTemp, Display, TEXT("Never equipped before - Equipping to Relevant BackSlot"));
-			return;
-		}
-	}
-	UE_LOG(LogTemp, Error, TEXT("ERROR WHILE EQUIPPING"));
-}
-
-void ABasePlayerCharacter::Server_UnequipWeapon_Implementation(const FName& Key, AActor* InWeapon)
-{
-	if (!InWeapon) return;
-
-	//Determine the back slots names
-	FName BackSlot;
-	if (Key == FName("1"))
-	{
-		BackSlot = NAME_WeaponSlot_BackMain;
-	}
-	else if (Key == FName("2"))
-	{
-		BackSlot = NAME_WeaponSlot_BackSecondary;
-	}
-
-	PreviousWeapon = NAME_None;
-
-	//Unequip from primary and equip to back
-	FText Note;
-	EquipmentManager->UnEquipByReference(InWeapon, Note);
-	AActor* PreviousItem;
-	AActor* NewItem;
-	EquipmentManager->EquipItemInSlot(BackSlot, InWeapon, PreviousItem, NewItem);
-	UE_LOG(LogTemp, Display, TEXT("WeaponUnequipped"));
-	return;
-}
-
-void ABasePlayerCharacter::Server_UnequipWeaponSwap_Implementation(const FName& Key, AActor* InWeapon)
-{
-	FText Note;
-	EquipmentManager->UnEquipByReference(InWeapon, Note);
-	AActor* PreviousItem;
-	AActor* NewItem;
-	EquipmentManager->EquipItemInSlot(Key, InWeapon, PreviousItem, NewItem);
-}
-
-void ABasePlayerCharacter::Server_EquipMagic_Implementation(const FName& Key, AActor* InMagic)
-{
-	if (!InMagic) return;
-
-	//Determine the back slots names
-	FName RelevantBackSlot;
-	FName OtherBackSlot;
-	if (Key == FName("1"))
-	{
-		RelevantBackSlot = NAME_MagicSlot_MagicBackMain;
-		OtherBackSlot = NAME_MagicSlot_MagicBackSecondary;
-	}
-	else if (Key == FName("2"))
-	{
-		RelevantBackSlot = NAME_MagicSlot_MagicBackSecondary;
-		OtherBackSlot = NAME_MagicSlot_MagicBackMain;
-	}
-
-	PreviousMagic = NAME_None;
-
-	//Determine where to equip magic
-	AActor* PrimarySlotActor;
-	EquipmentManager->GetItemInSlot(NAME_MagicSlot_MagicPrimary, PrimarySlotActor);
-	if (PrimarySlotActor == InMagic)
-	{
-		//InMagic already equipped. Put it on the back
-		FText Note;
-		EquipmentManager->UnEquipByReference(InMagic, Note);
-		AActor* PreviousItem;
-		AActor* NewItem;
-		EquipmentManager->EquipItemInSlot(RelevantBackSlot, InMagic, PreviousItem, NewItem);
-		CurrentMagic = NAME_None;
-		UE_LOG(LogTemp, Display, TEXT("Same magic as MagicPrimary - Equipping to MagicBackMain"));
-		return;
-	}
-	else
-	{
-		//InMagic NOT equipped as primary
-		//Determine where to equip weapons
-		AActor* BackSlotActor;
-		EquipmentManager->GetItemInSlot(RelevantBackSlot, BackSlotActor);
-		if (BackSlotActor == InMagic)
-		{
-			//InWeapon equipped on the back releavant slot
-			if (EquipmentManager->GetItemInSlot(NAME_MagicSlot_MagicPrimary, PrimarySlotActor))
-			{
-				//Primary slot taken. Send Previous weapon to back.
-				FText Note;
-				EquipmentManager->UnEquipByReference(PrimarySlotActor, Note);
-				AActor* PreviousItem;
-				AActor* NewItem;
-				EquipmentManager->EquipItemInSlot(OtherBackSlot, PrimarySlotActor, PreviousItem, NewItem);
-
-				if (OtherBackSlot == NAME_MagicSlot_MagicBackMain)
-				{
-					PreviousMagic = FName("1");
-				}
-				else if (OtherBackSlot == NAME_MagicSlot_MagicBackSecondary)
-				{
-					PreviousMagic = FName("2");
-				}
-			}
-
-			//Equip InWeapon to primary
-			FText Note;
-			EquipmentManager->UnEquipByReference(InMagic, Note);
-			AActor* PreviousItem;
-			AActor* NewItem;
-			EquipmentManager->EquipItemInSlot(NAME_MagicSlot_MagicPrimary, InMagic, PreviousItem, NewItem);
-			CurrentMagic = Key;
-			UE_LOG(LogTemp, Display, TEXT("Same as MagicBackMain - Equipping to MagicPrimary"));
-			return;
-		}
-		else
-		{
-			//InWeapon was never equipped before
-			AActor* PreviousItem;
-			AActor* NewItem;
-			EquipmentManager->EquipItemInSlot(RelevantBackSlot, InMagic, PreviousItem, NewItem);
-			UE_LOG(LogTemp, Display, TEXT("Magic Never equipped before - Equipping to MagicRelevantBack Slot"));
-			return;
-		}
-	}
-	UE_LOG(LogTemp, Error, TEXT("ERROR WHILE EQUIPPING"));
-}
-
-void ABasePlayerCharacter::Server_UnequipMagic_Implementation(const FName& Key, AActor* InWeapon)
-{
-	if (!InWeapon) return;
-
-	//Determine the back slots names
-	FName BackSlot;
-	if (Key == FName("1"))
-	{
-		BackSlot = NAME_MagicSlot_MagicBackMain;
-	}
-	else if (Key == FName("2"))
-	{
-		BackSlot = NAME_MagicSlot_MagicBackSecondary;
-	}
-
-	//Unequip from primary and equip to back
-	FText Note;
-	EquipmentManager->UnEquipByReference(InWeapon, Note);
-	AActor* PreviousItem;
-	AActor* NewItem;
-	EquipmentManager->EquipItemInSlot(BackSlot, InWeapon, PreviousItem, NewItem);
-	CurrentMagic == NAME_None;
-	return;
+	//Sets the maximum run speed
+	GetCharacterMovement()->MaxWalkSpeed = 800.f;
 }
 
 void ABasePlayerCharacter::HandleStateElimmed(AController* InstigatedBy)
 {
+	if (Combat->MainWeapon)
+	{
+		Combat->MainWeapon->Destroy();
+	}
+	if (Combat->SecondaryWeapon)
+	{
+		Combat->SecondaryWeapon->Destroy();
+	}
+
 	if (!HasAuthority()) return;
 
 	WOGGameMode = WOGGameMode == nullptr ?	GetWorld()->GetAuthGameMode<AWOGGameMode>() : WOGGameMode;
@@ -1082,437 +536,177 @@ void ABasePlayerCharacter::HandleStateElimmed(AController* InstigatedBy)
 	WOGGameMode->PlayerEliminated(this, Victim, Attacker);
 }
 
-void ABasePlayerCharacter::ProcessHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh)
+void ABasePlayerCharacter::HandleStateAttacking()
 {
-	if (!WeaponMesh) return;
-
-	AWOGBaseWeapon* AttackerWeapon = WeaponMesh->GetOwner() ? Cast<AWOGBaseWeapon>(WeaponMesh->GetOwner()) : nullptr;
-	if (!AttackerWeapon)
-	{
-		UE_LOG(LogTemp, Error, TEXT("No Attacker Weapon"));
-	}
-
-	AWOGBaseCharacter* AttackerCharacter = AttackerWeapon ? Cast<AWOGBaseCharacter>(AttackerWeapon->GetOwner()) : nullptr;
-	if (!AttackerCharacter)
-	{
-		UE_LOG(LogTemp, Error, TEXT("No Attacker Character"));
-		return;
-	}
-
-	//Get the Damage to apply values:
-	float DamageToApply = 0.f;
-	if (HasAuthority())
-	{
-		if (AttackerCharacter->HasMatchingGameplayTag(TAG_State_Weapon_AttackLight) && AttackerWeapon)
-		{
-			DamageToApply = AttackerWeapon->GetWeaponData().BaseDamage +
-				(AttackerWeapon->GetWeaponData().BaseDamage * AttackerWeapon->GetWeaponData().DamageMultiplier) +
-				(AttackerWeapon->GetWeaponData().BaseDamage * (AttackerWeapon->GetComboStreak() * AttackerWeapon->GetWeaponData().ComboDamageMultiplier));
-		}
-		if (AttackerCharacter->HasMatchingGameplayTag(TAG_State_Weapon_AttackHeavy) && AttackerWeapon)
-		{
-			DamageToApply = AttackerWeapon->GetWeaponData().BaseDamage +
-				(AttackerWeapon->GetWeaponData().BaseDamage * AttackerWeapon->GetWeaponData().DamageMultiplier) +
-				(AttackerWeapon->GetWeaponData().BaseDamage * AttackerWeapon->GetWeaponData().HeavyDamageMultiplier);
-		}
-
-		UE_LOG(LogTemp, Warning, TEXT("Base DamageToApply : %f"), DamageToApply);
-
-		float StrenghtMultiplier = AttributeSet->GetStrengthMultiplier();
-		DamageToApply *= StrenghtMultiplier;
-		UE_LOG(LogTemp, Warning, TEXT("DamageToApply after StrengthMultiplier : %f"), DamageToApply);
-	}
-
-	//Check if we hit build and apply build damage
-	TObjectPtr<IBuildingInterface> BuildInterface = Cast<IBuildingInterface>(Hit.GetActor());
-	if (BuildInterface && HasAuthority())
-	{
-		BuildInterface->Execute_DealDamage(Hit.GetActor(), DamageToApply);
-		UE_LOG(LogTemp, Warning, TEXT("Build damaged with %f"), DamageToApply);
-		return;
-	}
-
-	//Check if we hit other character
-	TObjectPtr<IAttributesInterface> AttributesInterface = Cast<IAttributesInterface>(Hit.GetActor());
-	if (AttributesInterface)
-	{
-		bool FoundAttribute;
-		float DamageReduction = UAbilitySystemBlueprintLibrary::GetFloatAttribute(Hit.GetActor(), AttributeSet->GetDamageReductionAttribute(), FoundAttribute);
-		DamageToApply *= (1 - DamageReduction);
-		UE_LOG(LogTemp, Warning, TEXT("DamageToApply after DamageReduction of %f : %f"), DamageReduction, DamageToApply);
-
-		AttributesInterface->Execute_BroadcastHit(Hit.GetActor(), AttackerCharacter, Hit, DamageToApply, AttackerWeapon);
-	}
+	//TO-DO What happens when character attacks. 
 }
 
-void ABasePlayerCharacter::ProcessMagicHit(const FHitResult& Hit, const FMagicDataTable& MagicData)
+void ABasePlayerCharacter::HandleStateStaggered()
 {
-	if (!Hit.GetActor())
-	{
-		UE_LOG(LogTemp, Error, TEXT("No Victim actor"));
-		return;
-	}
+	UAnimInstance* CharacterAnimInstance = GetMesh()->GetAnimInstance();
+	if (!CharacterAnimInstance) return;
 
-	//Get the Damage to apply values:
-	float DamageToApply = 0.f;;
-	if (HasAuthority())
+	if (Combat && Combat->EquippedWeapon && Combat->EquippedWeapon->GetBlockMontage())
 	{
-		DamageToApply = MagicData.Value * MagicData.ValueMultiplier;
-		UE_LOG(LogTemp, Warning, TEXT("Base DamageToApply : %f"), DamageToApply);
-
-		float StrenghtMultiplier = AttributeSet->GetStrengthMultiplier();
-		DamageToApply *= StrenghtMultiplier;
-		UE_LOG(LogTemp, Warning, TEXT("DamageToApply after StrengthMultiplier : %f"), DamageToApply);
-	}
-
-	//Check if we hit build and apply build damage
-	TObjectPtr<IBuildingInterface> BuildInterface = Cast<IBuildingInterface>(Hit.GetActor());
-	if (BuildInterface && HasAuthority())
-	{
-		BuildInterface->Execute_DealDamage(Hit.GetActor(), DamageToApply);
-		UE_LOG(LogTemp, Warning, TEXT("Build damaged with %f"), DamageToApply);
-		return;
-	}
-
-	//Check if we hit other character
-	TObjectPtr<IAttributesInterface> AttributesInterface = Cast<IAttributesInterface>(Hit.GetActor());
-	if (AttributesInterface)
-	{
-		AttributesInterface->Execute_BroadcastMagicHit(Hit.GetActor(), this, Hit, MagicData);
+		CharacterAnimInstance->Montage_Play(Combat->GetEquippedWeapon()->GetBlockMontage(), 1.f);
+		CharacterAnimInstance->Montage_JumpToSection(FName("Knockback"));
 	}
 }
 
 void ABasePlayerCharacter::BroadcastHit_Implementation(AActor* AgressorActor, const FHitResult& Hit, const float& DamageToApply, AActor* InstigatorWeapon)
 {
-	//Handle early returns
-	if (HasMatchingGameplayTag(TAG_State_Dead)) return;
-	if (HasMatchingGameplayTag(TAG_State_Dodging)) return;
-	
-	if (!AgressorActor || !InstigatorWeapon) return;
-	AWOGBaseWeapon* EquippedWeapon = UWOGBlueprintLibrary::GetEquippedWeapon(this);
-	AWOGBaseCharacter* AgressorCharacter = Cast<AWOGBaseCharacter>(AgressorActor);
-	AWOGBaseWeapon* AgressorWeapon = Cast<AWOGBaseWeapon>(InstigatorWeapon);
+	if (CharacterState == ECharacterState::ECS_Elimmed) return;
+	if (CharacterState == ECharacterState::ECS_Dodging) return;
 
-	//Handle more early returns
-	if (!EquippedWeapon)
+	if (Combat->GetEquippedWeapon() && Combat->GetEquippedWeapon()->GetWeaponState() == EWeaponState::EWS_Blocking)
 	{
-		UE_LOG(LogTemp, Error, TEXT("No Valid Equipped weapon"));
-	}
-	if (!AgressorCharacter)
-	{
-		UE_LOG(LogTemp, Error, TEXT("No valid Agressor Character"));
-		return;
-	}
-	if (!AgressorWeapon)
-	{
-		UE_LOG(LogTemp, Error, TEXT("No valid Agressor Weapon"));
-		return;
-	}
-
-	//Store the last hit result
-	LastHitResult = Hit;
-	float LocalDamageToApply = DamageToApply;
-
-	//Handle Ranged Weapon Throw Hit
-	if (AgressorCharacter->HasMatchingGameplayTag(TAG_State_Weapon_Ranged_Throw) || AgressorCharacter->HasMatchingGameplayTag(TAG_State_Weapon_Ranged_AOE))
-	{
-		//Victim hit by shield throw
-		if (AgressorWeapon->GetWeaponData().WeaponTag.MatchesTag(TAG_Inventory_Weapon_Shield))
+		if (IsHitFrontal(60.f, this, AgressorActor))
 		{
-			FGameplayEventData EventPayload;
-			EventPayload.EventTag = AgressorWeapon->GetWeaponData().RangedTag;
-			EventPayload.EventMagnitude = AgressorWeapon->GetWeaponData().StunDuration;
-			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, AgressorWeapon->GetWeaponData().RangedTag, EventPayload);
-			UE_LOG(LogTemp, Warning, TEXT("Shield throw hit and applied: %s during %f seconds"), *AgressorWeapon->GetWeaponData().RangedTag.ToString(), AgressorWeapon->GetWeaponData().StunDuration);
+			if (Combat && Combat->EquippedWeapon && Combat->EquippedWeapon->GetCanParry())
+			{
+				TObjectPtr<AWOGBaseCharacter> AgressorCharacter = Cast<AWOGBaseCharacter>(AgressorActor);
+				if (AgressorCharacter)
+				{
+					AgressorCharacter->Server_SetCharacterState(ECharacterState::ECS_Staggered);
+				}
+			}
 
-			FGameplayCueParameters CueParams;
-			CueParams.Location = Hit.ImpactPoint;
-			CueParams.EffectCauser = AgressorCharacter;
-			AbilitySystemComponent->ExecuteGameplayCueLocal(TAG_Cue_Weapon_BodyHit, CueParams);
+			TObjectPtr<AWOGBaseWeapon> Weapon = Cast<AWOGBaseWeapon>(InstigatorWeapon);
+			Multicast_HandleCosmeticHit(ECosmeticHit::ECH_BlockingWeapon, Hit, InstigatorWeapon->GetActorLocation(), Weapon);
+			return;
 		}
-
-		//Victim hit by dual weapon throw
-		if (AgressorWeapon->GetWeaponData().WeaponTag.MatchesTag(TAG_Inventory_Weapon_DualWield))
+	}
+	if (Combat->GetEquippedWeapon() && (Combat->GetEquippedWeapon()->GetWeaponState() == EWeaponState::EWS_AttackLight))
+	{
+		if (IsHitFrontal(60.f, this, AgressorActor))
 		{
-			FGameplayEventData EventPayload;
-			EventPayload.EventTag = AgressorWeapon->GetWeaponData().RangedTag;
-			EventPayload.EventMagnitude = AgressorWeapon->GetWeaponData().StunDuration;
-			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, AgressorWeapon->GetWeaponData().RangedTag, EventPayload);
-			UE_LOG(LogTemp, Warning, TEXT("Weapon throw hit and applied: %s during %f seconds"), *AgressorWeapon->GetWeaponData().RangedTag.ToString(), AgressorWeapon->GetWeaponData().StunDuration);
+			TObjectPtr<AWOGBaseWeapon> Weapon = Cast<AWOGBaseWeapon>(InstigatorWeapon);
+			TObjectPtr<ABasePlayerCharacter> Agressor = Cast<ABasePlayerCharacter>(AgressorActor);
 
-			FGameplayCueParameters CueParams;
-			CueParams.Location = Hit.ImpactPoint;
-			CueParams.EffectCauser = AgressorCharacter;
-			AbilitySystemComponent->ExecuteGameplayCueLocal(TAG_Cue_Weapon_BodyHit, CueParams);
-		}
-
-		//Victim hit by two handed ranged attack
-		if (AgressorWeapon->GetWeaponData().WeaponTag.MatchesTag(TAG_Inventory_Weapon_TwoHanded))
-		{
-			FGameplayEventData EventPayload;
-			EventPayload.EventTag = AgressorWeapon->GetWeaponData().RangedTag;
-			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, AgressorWeapon->GetWeaponData().RangedTag, EventPayload);
-			UE_LOG(LogTemp, Warning, TEXT("Weapon AOE hit and applied: %s"), *AgressorWeapon->GetWeaponData().RangedTag.ToString());
+			if (Agressor)
+			{
+				Agressor->Server_SetCharacterState(ECharacterState::ECS_Staggered);
+			}
+			Server_SetCharacterState(ECharacterState::ECS_Staggered);
+			Multicast_HandleCosmeticHit(ECosmeticHit::ECH_AttackingWeapon, Hit, InstigatorWeapon->GetActorLocation(), Weapon);
+			return;
 		}
 	}
 
-	//Handle parrying for agressor
-	if (HasMatchingGameplayTag(TAG_State_Weapon_Parry) && AgressorCharacter->HasMatchingGameplayTag(TAG_State_Weapon_AttackLight) && IsHitFrontal(60.f, this, FVector::Zero(), AgressorActor))
+	TObjectPtr<AWOGBaseWeapon> Weapon = Cast<AWOGBaseWeapon>(InstigatorWeapon);
+	if (Weapon)
 	{
-		//Handle parry on the agressor character
-
-		FGameplayEventData EventPayload;
-		EventPayload.EventTag = EquippedWeapon->GetWeaponData().ParryTag;
-		EventPayload.EventMagnitude = EquippedWeapon->GetWeaponData().StunDuration;
-		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(AgressorActor, EquippedWeapon->GetWeaponData().ParryTag, EventPayload);
-		UE_LOG(LogTemp, Warning, TEXT("Agressor was parried"));
-
-		//Apply the block impact cue
-		FGameplayCueParameters CueParams;
-		CueParams.Location = Hit.ImpactPoint;
-		CueParams.EffectCauser = AgressorCharacter;
-		AbilitySystemComponent->ExecuteGameplayCueLocal(TAG_Cue_Weapon_Block_Impact, CueParams);
-		return;
+		Multicast_HandleCosmeticHit(ECosmeticHit::ECH_BodyHit, Hit, InstigatorWeapon->GetActorLocation(), Weapon);
 	}
 
-	//Handle blocked hits for victim and agressor
-	if (HasMatchingGameplayTag(TAG_State_Weapon_Block) && IsHitFrontal(60.f, this, FVector::Zero(), AgressorActor))
+	TObjectPtr<AWOGBaseCharacter> AgressorCharacter = Cast<AWOGBaseCharacter>(AgressorActor);
+	if (AgressorCharacter)
 	{
-		if (AgressorCharacter->HasMatchingGameplayTag(TAG_State_Weapon_AttackHeavy))
-		{
-			//Attacker used heavy attack on victim while guarding:
-			//Handle knockback on victim
+		UGameplayStatics::ApplyDamage(this, -DamageToApply, AgressorCharacter->GetController(), AgressorActor, UDamageType::StaticClass());
+	}
+}
 
-			FGameplayEventData EventKnockbackPayload;
-			EventKnockbackPayload.EventTag = EquippedWeapon->GetWeaponData().BlockImpactHeavyTag;
-			EventKnockbackPayload.EventMagnitude = EquippedWeapon->GetWeaponData().StunDuration;
-			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, EquippedWeapon->GetWeaponData().BlockImpactHeavyTag, EventKnockbackPayload);
-			UE_LOG(LogTemp, Warning, TEXT("Impact HEAVY applied: %s"), *EquippedWeapon->GetWeaponData().BlockImpactHeavyTag.ToString());
+void ABasePlayerCharacter::HandleCosmeticBodyHit(const FHitResult& Hit, const FVector& WeaponLocation, const AWOGBaseWeapon* InstigatorWeapon)
+{
+	FName HitDirection = CalculateHitDirection(Hit, InstigatorWeapon->OwnerCharacter->GetActorLocation());
+
+	if (IsHitFrontal(60.f, this, InstigatorWeapon) && InstigatorWeapon->GetWeaponState() == EWeaponState::EWS_AttackHeavy)
+	{
+		PlayHitReactMontage(FName("KO"));
+	}
+	else
+	{
+		PlayHitReactMontage(HitDirection);
+	}
+
+	if (Combat && Combat->EquippedWeapon && Combat->EquippedWeapon->GetHitSound())
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, Combat->GetEquippedWeapon()->GetHitSound(), GetActorLocation());
+	}
+}
+
+void ABasePlayerCharacter::PlayHitReactMontage(FName Section)
+{
+	UAnimInstance* CharacterAnimInstance = GetMesh()->GetAnimInstance();
+	if (!CharacterAnimInstance) return;
+
+	if (Combat && Combat->GetEquippedWeapon() && Combat->GetEquippedWeapon()->GetHurtMontage())
+	{
+		CharacterAnimInstance->Montage_Play(Combat->GetEquippedWeapon()->GetHurtMontage(), 1.f);
+		CharacterAnimInstance->Montage_JumpToSection(Section);
+	}
+	else if (UnarmedHurtMontage)
+	{
+		CharacterAnimInstance->Montage_Play(UnarmedHurtMontage, 1.f);
+		CharacterAnimInstance->Montage_JumpToSection(Section);
+	}
+}
+
+void ABasePlayerCharacter::HandleCosmeticBlock(const AWOGBaseWeapon* InstigatorWeapon)
+{
+	if (!Combat->GetEquippedWeapon()) return;
+
+	if (Combat->GetEquippedWeapon()->GetBlockSound())
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, Combat->GetEquippedWeapon()->GetBlockSound(), GetActorLocation());
+	}
+
+	if (Combat->GetEquippedWeapon()->GetBlockMontage())
+	{
+		UAnimInstance* CharacterAnimInstance = GetMesh()->GetAnimInstance();
+		if (!CharacterAnimInstance) return;
+
+		if(InstigatorWeapon && InstigatorWeapon->GetWeaponState()==EWeaponState::EWS_AttackLight)
+		{
+			CharacterAnimInstance->Montage_Play(Combat->GetEquippedWeapon()->GetBlockMontage(), 1.f);
+			CharacterAnimInstance->Montage_JumpToSection(FName("Impact"));
+		}
+		else if (InstigatorWeapon && InstigatorWeapon->GetWeaponState() == EWeaponState::EWS_AttackHeavy)
+		{
+			Server_SetCharacterState(ECharacterState::ECS_Staggered);
+		}
+	}
+}
+
+void ABasePlayerCharacter::HandleCosmeticWeaponClash()
+{
+
+	GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Blue, FString("Weapons Clashed!"));
+}
+
+void ABasePlayerCharacter::TargetLocked(UTargetingHelperComponent* Target, FName Socket)
+{
+	if (Target)
+	{
+		AActor* TargetOwner = Target->GetOwner();
+		if (!TargetOwner)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 4.f, FColor::Red, FString::Printf(TEXT("Target invalid")));
 			return;
 		}
 
-		if (AgressorCharacter->HasMatchingGameplayTag(TAG_State_Weapon_AttackLight))
-		{
-			//Attacker used light attack on victim while guarding:
-			//Regular impact on the victim 
+		CurrentTarget = TargetOwner;
+		bIsTargeting = true;
+		if (!GetCharacterMovement()) return;
 
-			FGameplayEventData EventPayload;
-			EventPayload.EventMagnitude = DamageToApply;
-			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Weapon_Block_Impact_Light, EventPayload);
-			UE_LOG(LogTemp, Warning, TEXT("Impact LIGHT"));
-			
-			if (EquippedWeapon->GetWeaponData().WeaponTag.MatchesTag(TAG_Inventory_Weapon_DualWield))
-			{
-				LocalDamageToApply = DamageToApply * 0.2;
-				UE_LOG(LogTemp, Warning, TEXT("Blocked with DualWield. Will receive damage"));
-			}
-			else
-			{
-				LocalDamageToApply = 0.f;
-				UE_LOG(LogTemp, Warning, TEXT("Blocked with other weapon. No damage incoming"));
-			}
-		}
-
-		//Apply the block impact cue
-		FGameplayCueParameters CueParams;
-		CueParams.Location = Hit.ImpactPoint;
-		CueParams.EffectCauser = AgressorCharacter;
-		AbilitySystemComponent->ExecuteGameplayCueLocal(TAG_Cue_Weapon_Block_Impact, CueParams);
-	}
-
-	// Handle weapon clashes when victim and agressor attack at the same time
-	if (AgressorCharacter->HasMatchingGameplayTag(TAG_State_Weapon_AttackLight) && HasMatchingGameplayTag(TAG_State_Weapon_AttackLight) && IsHitFrontal(60.f, this, FVector::Zero(), AgressorActor))
-	{
-		//Apply knockback to agressor 
-		FGameplayEventData EventPayload;
-		EventPayload.EventTag = TAG_Event_Debuff_Stagger;
-		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(AgressorActor, TAG_Event_Debuff_Knockback, EventPayload);
-		UE_LOG(LogTemp, Warning, TEXT("Agressor knockback"));
-
-		//Apply knockback to victim
-		FGameplayEventData EventVictimPayload;
-		EventVictimPayload.EventTag = TAG_Event_Debuff_Stagger;
-		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Debuff_Knockback, EventVictimPayload);
-		UE_LOG(LogTemp, Warning, TEXT("Victim knockback"));
-		return;
-	}
-
-	//Handle unguarded hit to victim
-	if (!HasMatchingGameplayTag(TAG_State_Weapon_Block) && !HasMatchingGameplayTag(TAG_State_Weapon_Parry))
-	{
-		if (IsHitFrontal(60.f, this, FVector::Zero(), InstigatorWeapon) && AgressorCharacter->HasMatchingGameplayTag(TAG_State_Weapon_AttackHeavy))
-		{
-			//Send event KO to victim
-			FGameplayEventData EventKOPayload;
-			EventKOPayload.EventTag = TAG_Event_Debuff_KO;
-			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Debuff_KO, EventKOPayload);
-		}
-
-		if (AgressorCharacter->HasMatchingGameplayTag(TAG_State_Weapon_AttackLight))
-		{
-			//Send Event light HitReact to victim
-			FGameplayEventData EventHitReactPayload;
-			EventHitReactPayload.EventTag = TAG_Event_Debuff_HitReact;
-			EventHitReactPayload.Instigator = InstigatorWeapon;
-			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Debuff_HitReact, EventHitReactPayload);
-
-			FGameplayCueParameters CueParams;
-			CueParams.Location = Hit.ImpactPoint;
-			CueParams.EffectCauser = AgressorCharacter;
-			AbilitySystemComponent->ExecuteGameplayCueLocal(TAG_Cue_Weapon_BodyHit, CueParams);
-		}
-	}
-
-	//Apply damage to victim if authority
-	if (HasAuthority() && AgressorCharacter && AbilitySystemComponent.Get() && AgressorWeapon->GetWeaponData().WeaponDamageEffect)
-	{
-		FGameplayEffectContextHandle DamageContext = AbilitySystemComponent.Get()->MakeEffectContext();
-		DamageContext.AddInstigator(AgressorCharacter, AgressorWeapon);
-		DamageContext.AddHitResult(Hit);
-
-		FGameplayEffectSpecHandle OutSpec = AbilitySystemComponent->MakeOutgoingSpec(AgressorWeapon->GetWeaponData().WeaponDamageEffect, 1, DamageContext);
-		UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(OutSpec, FGameplayTag::RequestGameplayTag(TEXT("Damage.Attribute.Health")), -LocalDamageToApply);
-		AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*OutSpec.Data);
-		UE_LOG(LogTemp, Error, TEXT("Damage applied to %s : %f"), *GetNameSafe(this), LocalDamageToApply);
+		GetCharacterMovement()->bOrientRotationToMovement = false; // Character doesn't move in the direction of input...
+		GetCharacterMovement()->MaxWalkSpeed = 500;	//Sets the maximum run speed
 	}
 }
 
-void ABasePlayerCharacter::BroadcastMagicHit_Implementation(AActor* AgressorActor, const FHitResult& Hit, const FMagicDataTable& AgressorMagicData)
+void ABasePlayerCharacter::TargetUnlocked(UTargetingHelperComponent* UnlockedTarget, FName Socket)
 {
-	//Handle early returnswg
-	if (HasMatchingGameplayTag(TAG_State_Dead)) return;
-	if (HasMatchingGameplayTag(TAG_State_Dodging)) return;
+	CurrentTarget = nullptr;
+	bIsTargeting = false;
+	if (!GetCharacterMovement()) return;
 
-	if (!AgressorActor) return;
-	TObjectPtr<AWOGBaseWeapon> EquippedWeapon = UWOGBlueprintLibrary::GetEquippedWeapon(this);
-	TObjectPtr<AWOGBaseCharacter> AgressorCharacter = Cast<AWOGBaseCharacter>(AgressorActor);
-
-	//Handle more early returns and warnings
-	if (!AgressorCharacter)
-	{
-		UE_LOG(LogTemp, Error, TEXT("No valid Agressor Character"));
-		return;
-	}
-
-	//Store the last hit result and calculate damage
-	LastHitResult = Hit;
-	float LocalDamageToApply = AgressorMagicData.Value * AgressorMagicData.ValueMultiplier;
-
-	bool FoundAttribute;
-	float DamageReduction = UAbilitySystemBlueprintLibrary::GetFloatAttribute(Hit.GetActor(), AttributeSet->GetDamageReductionAttribute(), FoundAttribute);
-	LocalDamageToApply *= (1 - DamageReduction);
-	UE_LOG(LogTemp, Warning, TEXT("DamageToApply after DamageReduction of %f : %f"), DamageReduction, LocalDamageToApply);
-
-	//Apply secondary effect
-	if (UKismetSystemLibrary::IsValidClass(AgressorMagicData.SecondaryEffect))
-	{
-		FGameplayEffectContextHandle SecondaryContext = AbilitySystemComponent.Get()->MakeEffectContext();
-		SecondaryContext.AddInstigator(AgressorCharacter, AgressorCharacter);
-		ApplyGameplayEffectToSelf(AgressorMagicData.SecondaryEffect, SecondaryContext, AgressorMagicData.SecondaryEffectDuration);
-	}
-
-	//Handle AOE KO
-	if (AgressorMagicData.AbilityType == EAbilityType::EAT_AOE)
-	{
-		//Send event KO to victim
-		FGameplayEventData EventKOPayload;
-		EventKOPayload.EventTag = TAG_Event_Debuff_KO;
-		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Debuff_KO, EventKOPayload);
-	}
-
-	//Handle blocked hits for victim and agressor
-	if (HasMatchingGameplayTag(TAG_State_Weapon_Block) && IsHitFrontal(60.f, this, Hit.ImpactPoint, nullptr))
-	{
-		//Condition to sort out different types of magic
-		if (AgressorMagicData.AbilityType == EAbilityType::EAT_Projectile)
-		{
-			//Attacker used light attack on victim while guarding:
-			//Regular impact on the victim 
-			FGameplayEventData EventPayload;
-			EventPayload.EventMagnitude = AgressorMagicData.Value;
-			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Weapon_Block_Impact_Light, EventPayload);
-
-			LocalDamageToApply = 0.f;
-
-			//Apply the block impact cue
-			FGameplayCueParameters CueParams;
-			CueParams.Location = Hit.ImpactPoint;
-			CueParams.EffectCauser = AgressorCharacter;
-			AbilitySystemComponent->ExecuteGameplayCueLocal(TAG_Cue_Weapon_Block_Impact, CueParams);
-		}
-	}
-
-	//Handle unguarded hit to victim
-	if (!HasMatchingGameplayTag(TAG_State_Weapon_Block) && !HasMatchingGameplayTag(TAG_State_Weapon_Parry))
-	{
-		//Condition to sort out different types of magic
-		if (AgressorMagicData.AbilityType == EAbilityType::EAT_Projectile)
-		{
-			//Send Event light HitReact to victim
-			FGameplayEventData EventHitReactPayload;
-			EventHitReactPayload.EventTag = TAG_Event_Debuff_HitReact;
-			EventHitReactPayload.Instigator = AgressorCharacter;
-			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Debuff_HitReact, EventHitReactPayload);
-
-			FGameplayCueParameters CueParams;
-			CueParams.Location = Hit.ImpactPoint;
-			CueParams.EffectCauser = AgressorCharacter;
-			AbilitySystemComponent->ExecuteGameplayCueLocal(TAG_Cue_Weapon_BodyHit, CueParams);
-		}
-	}
-
-	//Apply damage to victim if authority
-	if (HasAuthority() && AgressorCharacter && AbilitySystemComponent.Get() && AgressorMagicData.DamageEffect)
-	{
-		FGameplayEffectContextHandle DamageContext = AbilitySystemComponent.Get()->MakeEffectContext();
-		DamageContext.AddInstigator(AgressorCharacter, AgressorCharacter);
-		DamageContext.AddHitResult(Hit);
-
-		FGameplayEffectSpecHandle OutSpec = AbilitySystemComponent->MakeOutgoingSpec(AgressorMagicData.DamageEffect, 1, DamageContext);
-		UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(OutSpec, FGameplayTag::RequestGameplayTag(TEXT("Damage.Attribute.Health")), -LocalDamageToApply);
-		AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*OutSpec.Data);
-		UE_LOG(LogTemp, Error, TEXT("Damage applied to %s : %f"), *GetNameSafe(this), LocalDamageToApply);
-	}
+	GetCharacterMovement()->MaxWalkSpeed = 500.f;	//Sets the maximum run speed
+	GetCharacterMovement()->bOrientRotationToMovement = true; // Character doesn't move in the direction of input...
 }
 
-void ABasePlayerCharacter::TargetLocked(AActor* NewTarget)
+void ABasePlayerCharacter::TargetNotFound()
 {
-	if (!NewTarget)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 4.f, FColor::Red, FString::Printf(TEXT("Target invalid")));
-		return;
-	}
 
-	Server_SetCurrentTarget(NewTarget);
-
-	ToggleStrafeMovement(true);
-}
-
-void ABasePlayerCharacter::TargetUnlocked(AActor* OldTarget)
-{
-	Server_SetCurrentTarget();
-
-	ToggleStrafeMovement(false);
-}
-
-void ABasePlayerCharacter::Server_SetCurrentTarget_Implementation(AActor* NewTarget)
-{
-	CurrentTarget = NewTarget;
-}
-
-void ABasePlayerCharacter::PostInitializeComponents()
-{
-	Super::PostInitializeComponents();
-
-	/*
-	* Create default Pickaxe and Woodaxe
-	*/
-	if (HasAuthority())
-	{
-		FTimerHandle TimerHandle;
-		float Delay = 2.f;
-		GetWorldTimerManager().SetTimer(TimerHandle, this, &ThisClass::CreateDefaultTools, Delay);
-	}
 }
 
 void ABasePlayerCharacter::Elim(bool bPlayerLeftGame)
@@ -1525,12 +719,12 @@ void ABasePlayerCharacter::Multicast_Elim_Implementation(bool bPlayerLeftGame)
 
 	GetMesh()->SetCollisionProfileName(FName("Ragdoll"));
 	GetMesh()->SetAllBodiesSimulatePhysics(true);
-	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	GetCharacterMovement()->DisableMovement();
 	GetCharacterMovement()->StopMovementImmediately();
-	FVector ImpulseDirection = LastHitDirection.GetSafeNormal() * -45000.f;
+	FVector ImpulseDirection = LastHitDirection.GetSafeNormal() * 30000.f;
 	GetMesh()->AddImpulse(ImpulseDirection);
-	TargetComponent->TargetLockOff();
+	LockOnTarget->ClearTargetManual();
+	TargetAttractor->bCanBeCaptured = false;
 	if(OwnerPC)	OwnerPC->SetDefaultPawn(nullptr);
 	
 
@@ -1548,152 +742,4 @@ void ABasePlayerCharacter::ElimTimerFinished()
 	{
 		WOGGameMode->RequestRespawn(this, PlayerController);
 	}
-}
-
-void ABasePlayerCharacter::Server_DropWeapon_Implementation(const FName& Key)
-{
-	if (!EquipmentManager) return;
-	AActor* OutItem = nullptr;
-	EquipmentManager->GetWeaponShortcutReference(Key, OutItem);
-
-	if (!OutItem)
-	{
-		UE_LOG(LogTemp, Error, TEXT("NO VALID ITEM REFERENCE AT KEY : %s"), *Key.ToString());
-		return;
-	}
-
-	TObjectPtr<AWOGBaseWeapon> Weapon = Cast<AWOGBaseWeapon>(OutItem);
-	if(!Weapon)	return;
-
-	Weapon->DropWeapon();
-}
-
-void ABasePlayerCharacter::Server_DropMagic_Implementation(const FName& Key)
-{
-	if (!EquipmentManager) return;
-	AActor* OutItem = nullptr;
-	EquipmentManager->GetMagicShortcutReference(Key, OutItem);
-
-	if (!OutItem)
-	{
-		UE_LOG(LogTemp, Error, TEXT("NO VALID ITEM REFERENCE AT KEY : %s"), *Key.ToString());
-		return;
-	}
-
-	TObjectPtr<AWOGBaseMagic> Magic = Cast<AWOGBaseMagic>(OutItem);
-	if (!Magic)	return;
-
-	Magic->DropMagic();
-}
-
-void ABasePlayerCharacter::Server_StoreWeapons_Implementation()
-{
-	StoreWeapon(FName("1"));
-	StoreWeapon(FName("2"));
-	RestoreTools();
-}
-
-void ABasePlayerCharacter::Server_RestoreWeapons_Implementation()
-{
-	StoreTool(FName("1"));
-	StoreTool(FName("2"));
-	RestoreWeapons();
-}
-
-void ABasePlayerCharacter::RestoreTools()
-{
-	if (!InventoryManager) return;
-
-	TArray<AActor*> OutItems;
-	int32 Amount = 0;
-	InventoryManager->GetAllItemsOfTagSlotType(TAG_Inventory_Tool, OutItems, Amount);
-
-	if (!OutItems.Num()) return;
-	for (auto OutItem : OutItems)
-	{
-		TObjectPtr<AWOGBaseWeapon> Weapon = Cast<AWOGBaseWeapon>(OutItem);
-		if (!Weapon) return;
-
-		Weapon->RestoreWeapon(this);
-	}
-}
-
-void ABasePlayerCharacter::StoreTool(const FName& Key)
-{
-	if (!EquipmentManager) return;
-	AActor* OutItem = nullptr;
-	EquipmentManager->GetWeaponShortcutReference(Key, OutItem);
-
-	if (!OutItem)
-	{
-		UE_LOG(LogTemp, Error, TEXT("NO VALID ITEM REFERENCE AT KEY : %s"), *Key.ToString());
-		return;
-	}
-
-	TObjectPtr<AWOGBaseWeapon> Weapon = Cast<AWOGBaseWeapon>(OutItem);
-	if (!Weapon) return;
-
-	Weapon->StoreWeapon(Key, this);
-}
-
-void ABasePlayerCharacter::StoreWeapon(const FName& Key)
-{
-	if (!EquipmentManager) return;
-	AActor* OutItem = nullptr;
-	EquipmentManager->GetWeaponShortcutReference(Key, OutItem);
-
-	if (!OutItem)
-	{
-		UE_LOG(LogTemp, Error, TEXT("NO VALID ITEM REFERENCE AT KEY : %s"), *Key.ToString());
-		return;
-	}
-
-	TObjectPtr<AWOGBaseWeapon> Weapon = Cast<AWOGBaseWeapon>(OutItem);
-	if (!Weapon) return;
-
-	Weapon->StoreWeapon(Key, this);
-}
-
-void ABasePlayerCharacter::RestoreWeapons()
-{
-	if (!InventoryManager) return;
-
-	TArray<AActor*> OutItems;
-	int32 Amount = 0;
-	InventoryManager->GetAllItemsOfTagSlotType(TAG_Inventory_Weapon, OutItems, Amount);
-
-	if (!OutItems.Num()) return;
-	for (auto OutItem : OutItems)
-	{
-		TObjectPtr<AWOGBaseWeapon> Weapon = Cast<AWOGBaseWeapon>(OutItem);
-		if (!Weapon) return;
-
-		Weapon->RestoreWeapon(this);
-	}
-}
-
-void ABasePlayerCharacter::CreateDefaultTools()
-{
-	FActorSpawnParameters SpawnParams;
-	SpawnParams.Owner = this;
-
-	if (DefaultPickaxeClass)
-	{
-		TObjectPtr<AWOGBaseWeapon> DefaultPickaxe = GetWorld()->SpawnActor<AWOGBaseWeapon>(DefaultPickaxeClass, FTransform(), SpawnParams);
-		if (DefaultPickaxe)
-		{
-			InventoryManager->AddItemToInventoryDirectly(DefaultPickaxe);
-		}
-	}
-
-	if (DefaultWoodaxeClass)
-	{
-		TObjectPtr<AWOGBaseWeapon> DefaultWoodaxe = GetWorld()->SpawnActor<AWOGBaseWeapon>(DefaultWoodaxeClass, FTransform(), SpawnParams);
-		if (DefaultWoodaxe)
-		{
-			InventoryManager->AddItemToInventoryDirectly(DefaultWoodaxe);
-		}
-	}
-
-	RestoreTools();
 }

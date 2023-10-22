@@ -7,19 +7,13 @@
 #include "Engine/DataTable.h"
 #include "WOG/Types/CharacterTypes.h"
 #include "Components/StaticMeshComponent.h"
-#include "GameplayTagContainer.h"
-#include "GameplayAbilitySpec.h"
 #include "WOGBaseWeapon.generated.h"
 
 
 class UAnimMontage;
 class USoundCue;
-class UGameplayEffect;
-class UAGR_ItemComponent;
-class USphereComponent;
-class AWOGRangedWeaponBase;
-class AActor;
-class UCameraShakeBase;
+class ABasePlayerCharacter;
+class UDidItHitActorComponent;
 
 
 USTRUCT(BlueprintType)
@@ -27,130 +21,92 @@ struct FWeaponDataTable : public FTableRowBase
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "1 - Base")
-	bool bIsAttacker = false;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FName WeaponName;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "1 - Base")
-	UStaticMesh* MeshMain = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bIsAttacker;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "1 - Base")
-	UStaticMesh* MeshSecondary = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	EWeaponType WeaponType;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "2 - Animations")
-	FName MeshMainSocket = FName("");
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UStaticMesh* MeshMain;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "2 - Animations")
-	FName MeshSecondarySocket = FName("");
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UStaticMesh* MeshSecondary;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "2 - Animations")
-	FName BackMainSocket = FName("");
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FName MeshMainSocket;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "2 - Animations")
-	FName BackSecondarySocket = FName("");
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FName MeshSecondarySocket;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "2 - Animations")
-	UAnimMontage* AttackMontage = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FName BackMainSocket;
 
-	//Used for dual wield weapons. Set as the one handed montage for the same weapon type
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "2 - Animations")
-	UAnimMontage* AlternativeAttackMontage = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FName BackSecondarySocket;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "2 - Animations")
-	UAnimMontage* DodgeMontage = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UAnimMontage* AttackMontage;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "2 - Animations")
-	UAnimMontage* BlockMontage = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UAnimMontage* DodgeMontage;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "2 - Animations")
-	UAnimMontage* EquipMontage = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UAnimMontage* BlockMontage;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "2 - Animations")
-	UAnimMontage* HurtMontage = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UAnimMontage* EquipMontage;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "2 - Animations")
-	float AnimationSpeed = 1.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UAnimMontage* HurtMontage;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "3 - GAS")
-	FGameplayTag WeaponTag = FGameplayTag();
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float BaseDamage;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "3 - GAS")
-	FGameplayTag WeaponPoseTag = FGameplayTag();
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float HeavyDamageMultiplier;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "3 - GAS")
-	TArray<TSubclassOf<class UWOGGameplayAbilityBase>> Abilities = { nullptr };
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float DamageMultiplier;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "3 - GAS")
-	FGameplayTagContainer BlockImpactLightTags = FGameplayTagContainer();
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float ComboDamageMultiplier;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "3 - GAS")
-	FGameplayTag BlockImpactHeavyTag = FGameplayTag();
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 MaxComboStreak;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "3 - GAS")
-	FGameplayTag ParryTag = FGameplayTag();
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float MaxParryThreshold;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "3 - GAS")
-	FGameplayTag RangedTag = FGameplayTag();
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	USoundCue* SwingSound;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "3 - GAS")
-	TSubclassOf<AActor> RangedClass = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	USoundCue* HitSound;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "3 - GAS")
-	TSubclassOf<UGameplayEffect> WeaponDamageEffect = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	USoundCue* BlockSound;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "3 - GAS")
-	TSubclassOf<UGameplayEffect> RangedWeaponEffect = nullptr;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "3 - GAS")
-	FGameplayTag CooldownTag = FGameplayTag();
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "4 - Stats")
-	float BaseDamage = 0.f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "4 - Stats")
-	float HeavyDamageMultiplier = 0.f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "4 - Stats")
-	float DamageMultiplier = 0.f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "4 - Stats")
-	float ComboDamageMultiplier = 0.f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "4 - Stats")
-	int32 MaxComboStreak = 0;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "4 - Stats")
-	float StunDuration = 0.f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "4 - Stats")
-	float Cost = 0.f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "4 - Stats")
-	float Cooldown = 0.f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "5 - Cosmetic")
-	USoundCue* SwingSound = nullptr;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "5 - Cosmetic")
-	USoundCue* HitSound = nullptr;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "5 - Cosmetic")
-	USoundCue* AOEImpactSound = nullptr;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "5 - Cosmetic")
-	USoundCue* BlockSound = nullptr;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "5 - Cosmetic")
-	TSubclassOf<UCameraShakeBase> AOECameraShake = nullptr;
 	//TO-DO SFX particles for weapon trail && hit FX
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "6 - User Interface")
-	TSubclassOf<UUserWidget> AbilityWidgetClass = nullptr;
+};
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "6 - User Interface")
-	UTexture2D* AbilityIcon = nullptr;
+UENUM(BlueprintType)
+enum class EWeaponState : uint8
+{
+	EWS_Equipped UMETA(DisplayName = "Equipped"),
+	EWS_Stored UMETA(DisplayName = "Stored"),
+	EWS_BeingEquipped UMETA(DisplayName = "Being Equipped"),
+	EWS_BeingStored UMETA(DisplayName = "Being Stored"),
+	EWS_Dropped UMETA(DisplayName = "Dropped"),
+	EWS_AttackLight UMETA(DisplayName = "AttackLight"),
+	EWS_AttackHeavy UMETA(DisplayName = "AttackHeavy"),
+	EWS_Blocking UMETA(DisplayName = "Blocking"),
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "6 - User Interface")
-	FVendorItemData VendorItemData = FVendorItemData();
+	EWS_MAX UMETA(DisplayName = "DefaultMAX")
 };
 
 UCLASS()
@@ -159,12 +115,9 @@ class WOG_API AWOGBaseWeapon : public AActor
 	GENERATED_BODY()
 	
 public:	
-
-	friend class ABasePlayerCharacter;
-
 	AWOGBaseWeapon();
 	virtual void OnConstruction(const FTransform& Transform) override;
-	virtual void PostInitializeComponents();
+	virtual void Tick(float DeltaSeconds);
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 protected:
@@ -173,10 +126,7 @@ protected:
 	#pragma region ActorComponents
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	UAGR_ItemComponent* ItemComponent;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	USphereComponent* SphereComponent;
+	UDidItHitActorComponent* TraceComponent;
 	#pragma endregion
 
 	#pragma region WeaponVariables
@@ -188,81 +138,161 @@ protected:
 	UStaticMeshComponent* MeshSecondary;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	FName MeshMainSocket;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	FName MeshSecondarySocket;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	FName BackMainSocket;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	FName BackSecondarySocket;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	FName WeaponName;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	FWeaponDataTable WeaponData;
+	bool bIsAttacker;
 
-	#pragma endregion
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	EWeaponType WeaponType;
 
-	UFUNCTION()
-	void OnWeaponOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-	UFUNCTION()
-	void OnWeaponPickedUp(UAGR_InventoryManager* Inventory);
+	UPROPERTY()
+	UAnimMontage* AttackMontage;
 
-	UFUNCTION()
-	void OnWeaponEquip(AActor* User, FName SlotName);
-	UFUNCTION(NetMulticast, reliable)
-	void Multicast_OnWeaponEquip(AActor* User, FName SlotName);
+	UPROPERTY()
+	UAnimMontage* DodgeMontage;
 
-	UFUNCTION()
-	void OnWeaponUnequip(AActor* User, FName SlotName);
+	UPROPERTY()
+	UAnimMontage* BlockMontage;
 
-	bool GrantWeaponAbilities(AActor* User);
-	bool RemoveGrantedAbilities(AActor* User);
+	UPROPERTY()
+	UAnimMontage* EquipMontage;
 
-	TArray<FGameplayAbilitySpecHandle> GrantedAbilities;
+	UPROPERTY()
+	UAnimMontage* HurtMontage;
 
-	virtual void InitWeaponData();
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	float BaseDamage;
 
-	virtual void StoreWeapon(const FName& Key, AActor* InventoryActor);
-	virtual void RestoreWeapon(ABasePlayerCharacter* NewOwner);
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	float HeavyDamageMultiplier;
 
-	#pragma region Drop weapon functionality
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	float DamageMultiplier;
 
-	virtual void InitWeaponDefaults();
-	FTransform MeshMainOriginalTransform;
-	FTransform MeshSecOriginalTransform;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	float ComboDamageMultiplier;
 
-	UFUNCTION(BlueprintCallable)
-	virtual void DropWeapon();
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	int32 MaxComboStreak;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	float MaxParryThreshold;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	USoundCue* SwingSound;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	USoundCue* HitSound;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	USoundCue* BlockSound;
 
 	#pragma endregion
 
 private:
-	float TimeSinceBlockStarted;
+	void InitWeapon();
 
-	UFUNCTION(BlueprintCallable)
+	float TimeSinceBlockStarted;
+	void Equip();
+	void Unequip();
+	void AttachToHands();
+	void Drop();
 	void AttackLight();
-	UFUNCTION(BlueprintCallable)
 	void AttackHeavy();
-	UFUNCTION(BlueprintCallable)
+	void AttackHeavyArm();
 	void Block();
-	UFUNCTION(BlueprintCallable)
 	void StopBlocking();
 
-	void SetTraceMeshes(const FName& Slot, AActor* OwnerActor);
-
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(Replicated, VisibleAnywhere)
 	int32 ComboStreak;
+	UPROPERTY(Replicated, VisibleAnywhere)
+	bool bAttackWindowOpen;
+	UPROPERTY(Replicated, VisibleAnywhere)
+	bool bIsBlocking;
+	UPROPERTY(Replicated, VisibleAnywhere)
+	bool bCanParry;
+	FTimerHandle ParryTimer;
+
+	void SetCanNotParry();
+
+	UPROPERTY(Replicated, VisibleAnywhere)
+	bool bIsArmingHeavy;
+
+	UPROPERTY(ReplicatedUsing = OnRep_WeaponStateChanged, VisibleAnywhere)
+	EWeaponState WeaponState;
+
+	UFUNCTION()
+	void OnRep_WeaponStateChanged();
+
+	FORCEINLINE void SetWeaponState(EWeaponState NewWeaponState) { WeaponState = NewWeaponState; }
 
 	TArray<AActor*> HitActorsToIgnore;
 
-	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<AWOGRangedWeaponBase> SpawnedRangedWeapon;
-
-	/*UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<AActor> SpawnedAOEAttack;*/
-
-	void AddAbilityWidget(const int32& Key);
-	UPROPERTY(Replicated)
-	int32 AbilityKey = 1;
-
 public:	
-	UFUNCTION(BlueprintCallable)
+	void InitTraceComponent();
+
 	void AttachToBack();
+
 	UFUNCTION(BlueprintCallable)
-	void AttachToHands();
+	void FinishAttacking();
+
+	UFUNCTION(Server, reliable, BlueprintCallable)
+	void Server_Equip();
+
+	UFUNCTION(Server, reliable, BlueprintCallable)
+	void Server_Unequip();
+
+	UFUNCTION(Server, reliable)
+	void Server_Swap();
+
+	UFUNCTION(Server, reliable, BlueprintCallable)
+	void Server_SetWeaponState(EWeaponState NewWeaponState);
+
+	UFUNCTION(Server, reliable)
+	void Server_AttackLight();
+
+	UFUNCTION(NetMulticast, reliable)
+	void Multicast_AttackLight();
+
+	UFUNCTION(Server, reliable)
+	void Server_AttackHeavy();
+
+	UFUNCTION(Server, reliable)
+	void Server_AttackHeavyArm();
+
+	UFUNCTION(Server, reliable)
+	void Server_AttackHeavyCanceled();
+
+	UFUNCTION(NetMulticast, reliable)
+	void Multicast_AttackHeavyArm();
+
+	UFUNCTION(Server, reliable, BlueprintCallable)
+	void Server_Block();
+
+	UFUNCTION(NetMulticast, reliable)
+	void Multicast_Block();
+
+	UFUNCTION(Server, reliable)
+	void Server_StopBlocking();
+
+	UFUNCTION(NetMulticast, reliable)
+	void Multicast_StopBlocking();
+
+	UFUNCTION()
+	void HitDetected(FHitResult Hit);
 
 	UFUNCTION(BlueprintCallable)
 	void IncreaseCombo();
@@ -270,29 +300,25 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void ResetCombo();
 
-	UFUNCTION(Server, reliable, BlueprintCallable)
-	void Server_ThrowWeapon(bool IsTargetValid, const FVector_NetQuantize& TargetLocation);
-
-	UFUNCTION(Server, reliable, BlueprintCallable)
-	void Server_SpawnWeaponAOE(const FVector_NetQuantize& TargetLocation);
-
-	UFUNCTION(BlueprintCallable)
-	void RecallWeapon();
-
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
-	void CatchWeapon();
-
-	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite)
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<ABasePlayerCharacter> OwnerCharacter;
 
-	UFUNCTION(BlueprintPure)
-	FORCEINLINE FWeaponDataTable GetWeaponData() const { return WeaponData; }
-
-	UFUNCTION(BlueprintPure)
-	FORCEINLINE int32 GetComboStreak() const { return ComboStreak; }
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE EWeaponState GetWeaponState() const { return WeaponState; }
 
 	UFUNCTION(BlueprintCallable)
-	void SetOwnerCharacter(ABasePlayerCharacter* NewOwner);
-	UFUNCTION(BlueprintPure)
-	FORCEINLINE ABasePlayerCharacter* GetOwnerCharacter() const { return OwnerCharacter; }
+	FORCEINLINE bool GetIsBlocking() const { return bIsBlocking; }
+
+	FORCEINLINE EWeaponType GetWeaponType() const { return WeaponType; }
+	FORCEINLINE int32 GetComboStreak() const { return ComboStreak; }
+	FORCEINLINE bool GetIsInCombo() const { return bAttackWindowOpen; }
+	FORCEINLINE bool GetCanParry() const { return bCanParry; }
+	FORCEINLINE bool GetIsArmingHeavy() const { return bIsArmingHeavy; }
+	FORCEINLINE UDidItHitActorComponent* GetTraceComponent() const { return TraceComponent; }
+	FORCEINLINE USoundCue* GetHitSound() const { return HitSound; }
+	FORCEINLINE USoundCue* GetBlockSound() const { return BlockSound; }
+	FORCEINLINE USoundCue* GetSwingSound() const { return SwingSound; }
+	FORCEINLINE UAnimMontage* GetHurtMontage() const { return HurtMontage; }
+	FORCEINLINE UAnimMontage* GetBlockMontage() const { return BlockMontage; }
+	FORCEINLINE UAnimMontage* GetDodgeMontage() const { return DodgeMontage; }
 };

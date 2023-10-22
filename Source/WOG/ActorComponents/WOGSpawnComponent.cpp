@@ -7,14 +7,13 @@
 #include "Engine/EngineTypes.h"
 #include "Camera/CameraComponent.h"
 #include "WOG/Weapons/WOGBaseWeapon.h"
+#include "WOG/ActorComponents/WOGCombatComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Components/BoxComponent.h"
 #include "TimerManager.h"
 #include "WOG/Enemies/WOGBaseEnemy.h"
 #include "WOG/Interfaces/AttributesInterface.h"
 #include "EnhancedInputSubsystems.h"
-#include "Data/AGRLibrary.h"
-#include "Components/AGR_EquipmentManager.h"
 
 UWOGSpawnComponent::UWOGSpawnComponent()
 {
@@ -118,21 +117,9 @@ void UWOGSpawnComponent::SpawnCycle()
 	FCollisionQueryParams Params;
 	
 	TArray<AActor*> ActorsToIgnore;
-	AActor* WeaponOne;
-	AActor* WeaponTwo;
-	UAGR_EquipmentManager* Equipment = UAGRLibrary::GetEquipment(AttackerCharacter);
-
-	if (Equipment)
-	{
-		if (Equipment->GetWeaponShortcutReference(FName("1"), WeaponOne) && WeaponOne)
-		{
-			ActorsToIgnore.AddUnique(WeaponOne);
-		}
-		if (Equipment->GetWeaponShortcutReference(FName("2"), WeaponTwo) && WeaponTwo)
-		{
-			ActorsToIgnore.AddUnique(WeaponTwo);
-		}
-	}
+	TObjectPtr<UWOGCombatComponent> Combat = AttackerCharacter->GetCombatComponent();
+	ActorsToIgnore.AddUnique(Combat->GetMainWeapon());
+	ActorsToIgnore.AddUnique(Combat->GetSecondaryWeapon());
 
 	Params.AddIgnoredActors(ActorsToIgnore);
 	Params.bTraceComplex = false;
@@ -249,18 +236,10 @@ void UWOGSpawnComponent::Spawn(FTransform Transform, int32 ID)
 		Transform.SetLocation(Spawn + FVector(0.f, 0.f, Spawnables[ID]->HeightOffset));
 
 		FActorSpawnParameters Params;
-		Params.Owner = AttackerCharacter ? AttackerCharacter : nullptr;
 		Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
 		TObjectPtr<AActor> SpawnedActor = GetWorld()->SpawnActor<AActor>(Spawnables[ID]->Actor, Transform, Params);
 		UE_LOG(LogTemp, Warning, TEXT("Spawned at: %s"), *Spawn.ToString());
-
-		if (TObjectPtr<AWOGBaseEnemy> SpawnedEnemy = Cast<AWOGBaseEnemy>(SpawnedActor))
-		{
-			SpawnedEnemy->SetDefaultAbilitiesAndEffects(Spawnables[ID]->DefaultAbilitiesAndEffects);
-			SpawnedEnemy->GiveDefaultAbilities();
-			SpawnedEnemy->ApplyDefaultEffects();
-		}
 	}
 }
 

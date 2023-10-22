@@ -57,7 +57,6 @@ void AWOGBaseBuildable::DealDamage_Implementation(const float& Damage)
 	if (bIsDead || !HasAuthority()) return;
 
 	BuildHealth -= Damage;
-	UE_LOG(LogTemp, Display, TEXT("Damage taken: %f, Health Remaining: %f, LocalRole: %s"), Damage, BuildHealth, *UEnum::GetValueAsString(GetLocalRole()));
 
 	if (BuildHealth <= 0)
 	{
@@ -101,7 +100,7 @@ void AWOGBaseBuildable::Multicast_DestroyBuild_Implementation()
 
 	for (auto Component : ComponentsToDestroy)
 	{
-		if (Component && Component != GetRootComponent())
+		if (Component)
 		{
 			Component->DestroyComponent();
 		}

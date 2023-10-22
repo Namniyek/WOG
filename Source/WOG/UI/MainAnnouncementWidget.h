@@ -26,13 +26,10 @@ public:
 
 	void SetAnnouncementText(FString TextMain, FString TextSec);
 
-	UFUNCTION(BlueprintImplementableEvent)
-	void RemoveMainAnnouncement();
-
 private:
 	FString StartingText = FString("TEST STRING");
 
 	FTimerHandle DestroyTimer;
-	float DestroyTime = 3.f;
+	float DestroyTime = 5.f;
 	
 };

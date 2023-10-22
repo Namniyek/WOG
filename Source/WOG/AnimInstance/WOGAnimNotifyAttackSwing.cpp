@@ -3,16 +3,11 @@
 
 #include "WOGAnimNotifyAttackSwing.h"
 #include "WOG/PlayerCharacter/BasePlayerCharacter.h"
+#include "WOG/ActorComponents/WOGCombatComponent.h"
 #include "WOG/Weapons/WOGBaseWeapon.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundCue.h"
-#include "Libraries/WOGBlueprintLibrary.h"
-#include "Data/AGRLibrary.h"
-#include "AbilitySystemComponent.h"
-#include "WOG/Types/WOGGameplayTags.h"
-#include "GameplayEffect.h"
-
-
+#include "DidItHitActorComponent.h"
 
 void UWOGAnimNotifyAttackSwing::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration, const FAnimNotifyEventReference& EventReference)
 {
@@ -26,16 +21,15 @@ void UWOGAnimNotifyAttackSwing::NotifyBegin(USkeletalMeshComponent* MeshComp, UA
 		UE_LOG(LogTemp, Error, TEXT("Invalid OwnerCharacter"));
 		return;
 	}
-
-	Weapon = UWOGBlueprintLibrary::GetEquippedWeapon(OwnerCharacter);
+	Weapon = OwnerCharacter->GetCombatComponent()->GetEquippedWeapon();
 	if (!Weapon)
 	{
 		UE_LOG(LogTemp, Error, TEXT("Invalid Weapon"));
 		return;
 	}
-	if (Weapon->GetWeaponData().SwingSound)
+	if (Weapon->GetSwingSound())
 	{
-		UGameplayStatics::PlaySoundAtLocation(Weapon, Weapon->GetWeaponData().SwingSound, Weapon->GetActorLocation());
+		UGameplayStatics::PlaySoundAtLocation(Weapon, Weapon->GetSwingSound(), Weapon->GetActorLocation());
 	}
 	else
 	{
@@ -43,52 +37,28 @@ void UWOGAnimNotifyAttackSwing::NotifyBegin(USkeletalMeshComponent* MeshComp, UA
 		return;
 	}
 
-	if (OwnerCharacter->GetAbilitySystemComponent() && EffectToApply && OwnerCharacter->HasAuthority())
+	if(Weapon->GetTraceComponent())
 	{
-		FGameplayEffectContextHandle EffectContext = OwnerCharacter->GetAbilitySystemComponent()->MakeEffectContext();
-
-		FGameplayEffectSpecHandle OutSpec = OwnerCharacter->GetAbilitySystemComponent()->MakeOutgoingSpec(EffectToApply, 1, EffectContext);
-		OwnerCharacter->GetAbilitySystemComponent()->ApplyGameplayEffectSpecToSelf(*OutSpec.Data);
-	}
-
-	StartTrace(OwnerCharacter);
-}
-
-void UWOGAnimNotifyAttackSwing::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
-{
-	if (MeshComp->GetOwner()) 
-	{
-		EndTrace(MeshComp->GetOwner());
-	}
-
-	Super::NotifyEnd(MeshComp, Animation, EventReference);
-}
-
-void UWOGAnimNotifyAttackSwing::StartTrace(AActor* Owner)
-{
-	if (!Owner) return;
-	if (!OwnerCharacter) return;
-
-	UAGR_CombatManager* CombatManager = UAGRLibrary::GetCombatManager(Owner);
-	if (CombatManager)
-	{
-		CombatManager->StartTrace();
-	}
-}
-
-void UWOGAnimNotifyAttackSwing::EndTrace(AActor* Owner)
-{
-	if (!Owner) return;
-	if (!OwnerCharacter) return;
-
-	UAGR_CombatManager* CombatManager = UAGRLibrary::GetCombatManager(Owner);
-	if (CombatManager)
-	{
-		CombatManager->EndTrace();
+		Weapon->GetTraceComponent()->ToggleTraceCheck(true);
 	}
 }
 
 void UWOGAnimNotifyAttackSwing::NotifyTick(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float FrameDeltaTime, const FAnimNotifyEventReference& EventReference)
 {
 	Super::NotifyTick(MeshComp, Animation, FrameDeltaTime, EventReference);
+}
+
+void UWOGAnimNotifyAttackSwing::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
+{
+	Super::NotifyEnd(MeshComp, Animation, EventReference);
+
+	OwnerCharacter = OwnerCharacter == nullptr ? Cast<ABasePlayerCharacter>(MeshComp->GetOwner()) : OwnerCharacter;
+	if (!OwnerCharacter) return;
+	Weapon = Weapon == nullptr ? OwnerCharacter->GetCombatComponent()->GetEquippedWeapon() : Weapon;
+	if (!Weapon) return;
+
+	if (Weapon->GetTraceComponent())
+	{
+		Weapon->GetTraceComponent()->ToggleTraceCheck(false);
+	}
 }

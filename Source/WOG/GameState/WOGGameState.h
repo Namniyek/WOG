@@ -32,17 +32,15 @@ public:
 protected:
 	virtual void HandleMatchHasStarted() override;
 
-	UFUNCTION()
-	void TimeOfDayChanged(ETimeOfDay TOD);
-
 private:
 	void SetupTOD();
 	int32 FinishMatchDayNumber = 4;
 
 	UFUNCTION()
-	void DayChanged(int32 DayNumber);
+	void TimeOfDayChanged(ETimeOfDay TOD);
 
-	void HandleWeaponSwitch(bool bStoreWeapons);
+	UFUNCTION()
+	void DayChanged(int32 DayNumber);
 
 	class ATimeOfDay* TODActor;
 
@@ -55,8 +53,6 @@ private:
 	FString PlayerWithMostElimms = FString();
 	int32 MostElimms = 0;
 	int32 MostElimmed = 0;
-
-	FTransform GetPlayerStartTransform(APlayerController* PlayerController);
 
 public:
 	UFUNCTION(BlueprintPure)

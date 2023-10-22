@@ -3,8 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Characters/WOGBaseCharacter.h"
-#include "Interfaces/SpawnInterface.h"
+#include "WOG/Characters/WOGBaseCharacter.h"
+#include "WOG/Interfaces/SpawnInterface.h"
 #include "WOGBaseEnemy.generated.h"
 
 UCLASS()
@@ -20,12 +20,15 @@ protected:
 
 	#pragma region Actor Components
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<class ULockOnTargetComponent> LockOnTarget;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<class UTargetingHelperComponent> TargetAttractor;
 
 	#pragma endregion
 
 	#pragma region Interface Functions
-	virtual void ProcessHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh) override;
-
 	virtual void BroadcastHit_Implementation(AActor* AgressorActor, const FHitResult& Hit, const float& DamageToApply, AActor* InstigatorWeapon) override;
 
 	#pragma endregion
@@ -44,9 +47,22 @@ protected:
 
 	#pragma endregion
 
+	#pragma region Cosmetic Hits
+	//Handle cosmetic body hit
+	virtual void HandleCosmeticBodyHit(const FHitResult& Hit, const FVector& WeaponLocation, const class AWOGBaseWeapon* InstigatorWeapon) override;
+	virtual void PlayHitReactMontage(FName Section) override;
+
+	//Handle cosmetic block
+	virtual void HandleCosmeticBlock(const AWOGBaseWeapon* InstigatorWeapon) override;
+
+	//Handle cosmetic weapon clash
+	virtual void HandleCosmeticWeaponClash() override;
+	#pragma endregion
+
 private:
 
 
 public:	
+	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 };
