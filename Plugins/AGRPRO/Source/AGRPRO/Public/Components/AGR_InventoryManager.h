@@ -114,6 +114,9 @@ public:
     UFUNCTION(BlueprintCallable, BlueprintPure, Category="AGR")
     UPARAM(DisplayName = "Success") bool HasExactItem(AActor* Item);
 
+    UFUNCTION(NetMulticast, reliable)
+    void Multicast_OnItemUpdated(AActor* Item);
+
 protected:
     virtual void BeginPlay() override;
 

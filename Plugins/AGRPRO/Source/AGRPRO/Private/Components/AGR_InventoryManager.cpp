@@ -9,6 +9,7 @@
 #include "Kismet/KismetGuidLibrary.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Net/UnrealNetwork.h"
+#include "AGRLog.h"
 
 UAGR_InventoryManager::UAGR_InventoryManager()
 {
@@ -165,6 +166,7 @@ bool UAGR_InventoryManager::AddItemsOfClass(
                 /* All stacks added */
                 StacksToAdd = 0;
                 OnItemUpdated.Broadcast(ItemActor);
+                Multicast_OnItemUpdated(ItemActor);
                 break;
             }
 
@@ -252,6 +254,7 @@ bool UAGR_InventoryManager::AddItemsOfClass(
             StacksToAdd -= NewItemActorItemComponent->MaxStack;
         }
         OnItemUpdated.Broadcast(NewItemActor);
+        Multicast_OnItemUpdated(NewItemActor);
     }
 
     // Successfully added item to inventory
@@ -320,6 +323,7 @@ bool UAGR_InventoryManager::AddItemsOfClassWithOutItem(
                 /* All stacks added */
                 StacksToAdd = 0;
                 OnItemUpdated.Broadcast(ItemActor);
+                Multicast_OnItemUpdated(ItemActor);
                 break;
             }
 
@@ -408,6 +412,7 @@ bool UAGR_InventoryManager::AddItemsOfClassWithOutItem(
         }
         OutItem = NewItemActor;
         OnItemUpdated.Broadcast(NewItemActor);
+        Multicast_OnItemUpdated(NewItemActor);
     }
 
     // Successfully added item to inventory
@@ -887,9 +892,19 @@ void UAGR_InventoryManager::AddItemToInventoryDirectly(AActor* Item)
 
     ItemComponent->OnPickup.Broadcast(this);
     OnItemUpdated.Broadcast(Item);
+    Multicast_OnItemUpdated(Item);
 }
 
 bool UAGR_InventoryManager::HasExactItem(AActor* Item)
 {
     return GetAllItems().Contains(Item);
+}
+
+void UAGR_InventoryManager::Multicast_OnItemUpdated_Implementation(AActor* Item)
+{
+   /* if (!GetOwner()->HasAuthority())
+    {
+        OnItemUpdated.Broadcast(Item);
+        UE_LOG(LogAGR, Display, TEXT("Multicast  OnItemUpdated.Broadcast(%s), %s"), *GetNameSafe(Item), *UEnum::GetValueAsString(GetOwner()->GetLocalRole()));
+    }*/
 }

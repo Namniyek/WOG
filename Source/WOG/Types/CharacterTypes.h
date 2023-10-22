@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTags.h"
 #include "CharacterTypes.generated.h"
 
 class USoundCue;
@@ -142,7 +143,35 @@ struct FCharacterData
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Vocals | Movement")
 	TObjectPtr<USoundCue> EffortLongSound = nullptr;
+};
 
+USTRUCT(BlueprintType)
+struct FCostMap
+{
+	GENERATED_USTRUCT_BODY();
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cost Data")
+	FGameplayTag CostTag = FGameplayTag();
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Cost Data")
+	int32 CostAmount = 0;
+};
+
+USTRUCT(BlueprintType)
+struct FVendorItemData
+{
+	GENERATED_USTRUCT_BODY();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Vendor Data")
+	FName DisplayName = FName("");
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Vendor Data")
+	UTexture2D* ItemIcon = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Vendor Data")
+	TSubclassOf<AActor> ItemClass;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Vendor Data")
+	TArray<FCostMap> CostMap = {};
 };
 

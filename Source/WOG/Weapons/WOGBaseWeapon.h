@@ -149,6 +149,8 @@ struct FWeaponDataTable : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "6 - User Interface")
 	UTexture2D* AbilityIcon = nullptr;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "6 - User Interface")
+	FVendorItemData VendorItemData = FVendorItemData();
 };
 
 UCLASS()

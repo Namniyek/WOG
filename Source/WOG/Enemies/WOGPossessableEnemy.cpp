@@ -1,8 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "WOG.h"
 #include "WOGPossessableEnemy.h"
+#include "WOG.h"
 #include "WOG/PlayerController/WOGPlayerController.h"
 #include "Net/UnrealNetwork.h"
 #include "GameFramework/CharacterMovementComponent.h"

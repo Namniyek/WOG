@@ -1,8 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
-#include "WOG.h"
 #include "Enemies/WOGRaven.h"
+#include "WOG.h"
 #include "WOG/PlayerController/WOGPlayerController.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
