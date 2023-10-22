@@ -163,7 +163,7 @@ struct FVendorItemData
 	GENERATED_USTRUCT_BODY();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Vendor Data")
-	FName DisplayName = FName("");
+	FName DisplayName = FName("Empty");
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Vendor Data")
 	UTexture2D* ItemIcon = nullptr;
