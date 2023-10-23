@@ -35,4 +35,7 @@ public:
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void BuyItem(const TArray<FCostMap>& CostMap, AActor* VendorActor, TSubclassOf<AActor> ItemClass);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void BackFromVendorWidget(AActor* Actor);
 };

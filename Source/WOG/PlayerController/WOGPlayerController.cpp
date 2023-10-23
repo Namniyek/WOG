@@ -2,6 +2,7 @@
 
 
 #include "WOGPlayerController.h"
+#include "WOG.h"
 #include "GameInstance/WOGGameInstance.h"
 #include "GameFramework/PlayerState.h"
 #include "Kismet/GameplayStatics.h"

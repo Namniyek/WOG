@@ -61,10 +61,10 @@ public:
 	UFUNCTION()
 	void AddScreenDamageWidget(const int32& DamageThreshold);
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	void CreateWarningWidget(const FString& Attribute);
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	void CreateGenericWarningWidget(const FString& Attribute);
 
 protected:
