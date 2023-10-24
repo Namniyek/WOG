@@ -12,6 +12,7 @@
  */
 class AWOGBaseWeapon;
 class AWOGBaseMagic;
+class UWOGUIManagerComponent;
 
 UCLASS()
 class WOG_API UWOGBlueprintLibrary : public UBlueprintFunctionLibrary
@@ -24,6 +25,8 @@ public:
 	static AWOGBaseMagic* GetEquippedMagic(const AActor* Owner);
 
 	static FCharacterData GetCharacterData(AActor* Owner);
+
+	static UWOGUIManagerComponent* GetUIManagerComponent(AController* Owner);
 
 private:
 	//Can return nullptr 
@@ -45,6 +48,13 @@ private:
 	static FCharacterData K2_GetCharacterData(AActor* Owner)
 	{
 		return GetCharacterData(Owner);
+	};
+
+	//Can return nullptr
+	UFUNCTION(BlueprintCallable, BlueprintPure, DisplayName = "Get UI Manager Component", Category = "WOG Library")
+	static UWOGUIManagerComponent* K2_UIManagerComponent(AController* Owner)
+	{
+		return GetUIManagerComponent(Owner);
 	};
 
 };

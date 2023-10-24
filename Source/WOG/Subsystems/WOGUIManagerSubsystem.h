@@ -7,6 +7,8 @@
 #include "WOGUIManagerSubsystem.generated.h"
 
 class UWOGVendorBaseWidget;
+class AWOGMatchHUD;
+class AWOGPlayerController;
 
 /**
  * 
@@ -18,11 +20,18 @@ class WOG_API UWOGUIManagerSubsystem : public ULocalPlayerSubsystem
 
 public:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+	UFUNCTION(BlueprintCallable)
+	void InitVariables();
 	virtual void Deinitialize() override;
 	
 
 private:
+	TObjectPtr<AWOGMatchHUD> MatchHUD;
+	TObjectPtr<AWOGPlayerController> OwnerPC;
+	
 	TObjectPtr<UWOGVendorBaseWidget> VendorWidget;
+
+
 
 
 public:
@@ -38,4 +47,7 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void UpdateVendorWidgetAfterTransaction();
+
+	UFUNCTION(BlueprintCallable)
+	void CreateWarningWidget(const FString& Attribute);
 };

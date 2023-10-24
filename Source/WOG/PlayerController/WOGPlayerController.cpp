@@ -33,6 +33,14 @@
 #include "UI/WOGHoldProgressBar.h"
 #include "UI/WOGRavenMarkerWidget.h"
 #include "UI/WOGScreenDamage.h"
+#include "ActorComponents/WOGUIManagerComponent.h"
+#include "Subsystems/WOGUIManagerSubsystem.h"
+
+AWOGPlayerController::AWOGPlayerController()
+{
+	UIManagerComponent = CreateDefaultSubobject<UWOGUIManagerComponent>(TEXT("UI Manager Component"));
+	UIManagerComponent->SetIsReplicated(true);
+}
 
 void AWOGPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
@@ -96,6 +104,18 @@ void AWOGPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 	MatchHUD = Cast<AWOGMatchHUD>(GetHUD());
+
+	//Init UIManagerSubsystem and variables
+	TObjectPtr<UWOGUIManagerSubsystem> UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(GetLocalPlayer());
+	if (UIManager)
+	{
+		UIManager->InitVariables();
+		UE_LOG(WOGLogUI, Display, TEXT("InitVariables called from WOGPlayerController class"));
+	}
+	else
+	{
+		UE_LOG(WOGLogUI, Error, TEXT("Invalid UI Manager subsystem from WOGPlayerController class"));
+	}
 }
 
 void AWOGPlayerController::Server_PossessMinion_Implementation(AActor* ActorToPossess)
@@ -265,6 +285,17 @@ void AWOGPlayerController::FinishUnPossess(APawn* PawnToPossess, APawn* AIPawnLe
 	else
 	{
 		UE_LOG(LogTemp, Error, TEXT("Invalid attacker for resetting CurrentExternalMinion"));
+	}
+}
+
+void AWOGPlayerController::Test_CreateWarningWidget(const FString& Attribute)
+{
+	//Init UIManagerSubsystem and variables
+	TObjectPtr<UWOGUIManagerSubsystem> UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(GetLocalPlayer());
+	if (UIManager)
+	{
+		UIManager->CreateWarningWidget(Attribute);
+		UE_LOG(WOGLogUI, Display, TEXT("CreateWarningWidget() called from WOGPlayerController class"));
 	}
 }
 

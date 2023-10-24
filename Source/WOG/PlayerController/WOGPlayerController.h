@@ -13,6 +13,7 @@ class UWOGAbilityWidget;
 class UWOGHoldProgressBar;
 class UWOGRavenMarkerWidget;
 class ABasePlayerCharacter;
+class UWOGUIManagerComponent;
 
 UCLASS()
 class WOG_API AWOGPlayerController : public APlayerController
@@ -20,6 +21,7 @@ class WOG_API AWOGPlayerController : public APlayerController
 	GENERATED_BODY()
 
 public:
+	AWOGPlayerController();
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
@@ -36,7 +38,7 @@ public:
 	void Client_CreateAbilityWidget(const int32& AbilityID, TSubclassOf<UUserWidget> Class, UTexture2D* Icon, const float& Cooldown, const FGameplayTag& Tag);
 
 	UFUNCTION(Client, Reliable)
-	void Client_RemoveAbilityWidget(const int& AbilityID);
+	void Client_RemoveAbilityWidget(const int32& AbilityID);
 
 	UFUNCTION(Server, reliable)
 	void Server_PossessMinion(AActor* ActorToPossess);
@@ -70,6 +72,9 @@ public:
 protected:
 	virtual void OnPossess(APawn* aPawn) override;
 	virtual void BeginPlay() override;
+
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+	TObjectPtr<UWOGUIManagerComponent> UIManagerComponent;
 
 private:
 	UFUNCTION(Server, reliable)
@@ -111,4 +116,10 @@ public:
 	FORCEINLINE TObjectPtr<ABasePlayerCharacter> GetDefaultPawn() { return DefaultPawn; }
 	FORCEINLINE TObjectPtr<UWOGHoldProgressBar> GetHoldProgressBar() const { return HoldProgressBarWidget; }
 	FORCEINLINE TObjectPtr<UWOGRavenMarkerWidget> GetRavenMarkerWidget() const { return RavenMarkerWidget; }
+
+	UFUNCTION(BlueprintPure)
+	FORCEINLINE UWOGUIManagerComponent* GetUIManagerComponent() const { return UIManagerComponent; }
+
+	UFUNCTION(BlueprintCallable)
+	void Test_CreateWarningWidget(const FString& Attribute);
 };
