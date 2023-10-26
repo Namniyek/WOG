@@ -5,7 +5,6 @@
 #include "PlayerController/WOGPlayerController.h"
 #include "Subsystems/WOGUIManagerSubsystem.h"
 
-// Sets default values for this component's properties
 UWOGUIManagerComponent::UWOGUIManagerComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
@@ -13,8 +12,6 @@ UWOGUIManagerComponent::UWOGUIManagerComponent()
 	SetIsReplicated(true);
 }
 
-
-// Called when the game starts
 void UWOGUIManagerComponent::BeginPlay()
 {
 	Super::BeginPlay();
@@ -34,12 +31,43 @@ void UWOGUIManagerComponent::BeginPlay()
 	}
 }
 
-void UWOGUIManagerComponent::Client_CreateWarningWidget_Implementation(const FString& Attribute)
+void UWOGUIManagerComponent::Client_ResetHUD_Implementation()
 {
 	if (UIManager)
 	{
-		UIManager->CreateWarningWidget(Attribute);
-		UE_LOG(WOGLogUI, Display, TEXT("CreateWarningWidget() called from WOGUIManagerComponent class"));
+		UIManager->ResetHUD();
+	}
+}
+
+void UWOGUIManagerComponent::Client_AddEndgameWidget_Implementation()
+{
+	if (UIManager)
+	{
+		UIManager->AddEndgameWidget();
+	}
+}
+
+void UWOGUIManagerComponent::Client_AddAnnouncementWidget_Implementation(ETimeOfDay NewTOD)
+{
+	if (UIManager)
+	{
+		UIManager->AddAnnouncementWidget(NewTOD);
+	}
+}
+
+void UWOGUIManagerComponent::Client_AddAbilityWidget_Implementation(const int32& AbilityID, TSubclassOf<UUserWidget> Class, UTexture2D* Icon, const float& Cooldown, const FGameplayTag& Tag)
+{
+	if (UIManager)
+	{
+		UIManager->AddAbilityWidget(AbilityID, Class, Icon, Cooldown, Tag);
+	}
+}
+
+void UWOGUIManagerComponent::Client_RemoveAbilityWidget_Implementation(const int32& AbilityID)
+{
+	if (UIManager)
+	{
+		UIManager->RemoveAbilityWidget(AbilityID);
 	}
 }
 

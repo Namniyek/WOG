@@ -11,9 +11,8 @@
  */
 class UWOGAbilityContainerWidget;
 class UVerticalBox;
-class UProgressBar;
 class UWOGObjectiveWidget;
-class UOverlay;
+class USizeBox;
 
 UCLASS()
 class WOG_API UWOG_HUD : public UUserWidget
@@ -33,17 +32,30 @@ protected:
 	void ResetHUDAfterRespawn();
 
 private:
-	UPROPERTY(meta = (BindWidget))
-	UProgressBar* HealthBar;
 
 	UPROPERTY(meta = (BindWidget))
-	UVerticalBox* WarningBox;
+	UVerticalBox* WarningContainer;
 
 	UPROPERTY(meta = (BindWidget))
 	UWOGObjectiveWidget* ObjectiveWidget;
 
 	UPROPERTY(meta = (BindWidget))
-	UOverlay* HoldBarContainer;
+	USizeBox* HoldBarContainer;
+
+	UPROPERTY(meta = (BindWidget))
+	USizeBox* TODContainer;
+
+	UPROPERTY(meta = (BindWidget))
+	USizeBox* MinimapContainer;
+
+	UPROPERTY(meta = (BindWidget))
+	USizeBox* AvailableResourceContainer;
+
+	UPROPERTY(meta = (BindWidget))
+	USizeBox* AbilitiesContainer;
+
+	UPROPERTY(meta = (BindWidget))
+	USizeBox* BarsContainer;
 
 public:
 	UFUNCTION(BlueprintPure)
@@ -60,8 +72,13 @@ public:
 	UFUNCTION()
 	UWOGAbilityContainerWidget* GetAbilityContainer();
 
-	FORCEINLINE UVerticalBox* GetWarningBox() const { return WarningBox; }
+	FORCEINLINE UVerticalBox* GetWarningContainer() const { return WarningContainer; }
 	FORCEINLINE UWOGObjectiveWidget* GetObjectiveWidget() const { return ObjectiveWidget; }
-	FORCEINLINE UOverlay* GetHoldBarContainer() const { return HoldBarContainer; }
+	FORCEINLINE USizeBox* GetHoldBarContainer() const { return HoldBarContainer; }
+	FORCEINLINE USizeBox* GetBarsContainer() const { return BarsContainer; }
+	FORCEINLINE USizeBox* GetAbilitiesContainer() const { return AbilitiesContainer; }
+	FORCEINLINE USizeBox* GetAvailableResourceContainer() const { return AvailableResourceContainer; }
+	FORCEINLINE USizeBox* GetMinimapContainer() const { return MinimapContainer; }
+	FORCEINLINE USizeBox* GetTODContainer() const { return TODContainer; }
 
 };

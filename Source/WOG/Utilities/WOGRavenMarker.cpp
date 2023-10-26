@@ -12,6 +12,7 @@
 #include "Interfaces/SpawnInterface.h"
 #include "NiagaraFunctionLibrary.h"
 #include "UI/WOGRavenMarkerWidget.h"
+#include "Subsystems/WOGUIManagerSubsystem.h"
 
 AWOGRavenMarker::AWOGRavenMarker()
 {
@@ -64,11 +65,15 @@ void AWOGRavenMarker::Destroyed()
 	{
 		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, DespawnEffect, GetActorLocation(), FRotator::ZeroRotator, FVector(2.f, 2.f, 2.f));
 		
-		if (!PC->IsLocalPlayerController() || !PC->GetRavenMarkerWidget()) return;
-		TObjectPtr<ISpawnInterface> Interface = Cast<ISpawnInterface>(PC->GetRavenMarkerWidget());
+		if (!PC->IsLocalPlayerController()) return;
+
+		TObjectPtr<UWOGUIManagerSubsystem> UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(PC->GetLocalPlayer());
+		if (!UIManager || !UIManager->GetRavenMarkerWidget()) return;
+
+		TObjectPtr<ISpawnInterface> Interface = Cast<ISpawnInterface>(UIManager->GetRavenMarkerWidget());
 		if (Interface)
 		{
-			Interface->Execute_IncreaseRavenMarkerWidget(PC->GetRavenMarkerWidget());
+			Interface->Execute_IncreaseRavenMarkerWidget(UIManager->GetRavenMarkerWidget());
 		}
 	}
 }

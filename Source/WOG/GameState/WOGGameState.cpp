@@ -12,6 +12,8 @@
 #include "WOG/PlayerState/WOGPlayerState.h"
 #include "GameMode/WOGGameMode.h"
 #include "PlayerCharacter//WOGAttacker.h"
+#include "Libraries/WOGBlueprintLibrary.h"
+#include "ActorComponents/WOGUIManagerComponent.h"
 
 
 
@@ -133,14 +135,14 @@ void AWOGGameState::HandleTODAnnouncement(ETimeOfDay TOD)
 {
 	for (auto PlayerState : PlayerArray)
 	{
-		if (PlayerState)
-		{
-			AWOGPlayerController* PC = Cast<AWOGPlayerController>(PlayerState->GetPlayerController());
-			if (PC)
-			{
-				PC->Client_CreateAnnouncementWidget(TOD);
-			}
-		}
+		if (!PlayerState) continue;
+
+		APlayerController* PC = Cast<AWOGPlayerController>(PlayerState->GetPlayerController());
+		if (!PC) continue;
+
+		TObjectPtr<UWOGUIManagerComponent> UIManager = UWOGBlueprintLibrary::GetUIManagerComponent(PC);
+		if (!UIManager) continue;
+		UIManager->Client_AddAnnouncementWidget(TOD);
 	}
 }
 
@@ -160,19 +162,18 @@ void AWOGGameState::Server_HandleEndGame_Implementation()
 
 	for (auto PlayerState : PlayerArray)
 	{
-		if (!PlayerState) break;
+		if (!PlayerState) continue;
 
-		AWOGPlayerState* WOGPlayerState = Cast<AWOGPlayerState>(PlayerState);
-		if (!WOGPlayerState) break;
+		APlayerController* PC = Cast<AWOGPlayerController>(PlayerState->GetPlayerController());
+		if (!PC) continue;
 
-		AWOGPlayerController* PC = Cast<AWOGPlayerController>(WOGPlayerState->GetPlayerController());
-		if (PC)
+		TObjectPtr<UWOGUIManagerComponent> UIManager = UWOGBlueprintLibrary::GetUIManagerComponent(PC);
+		if (!UIManager) continue;
+		UIManager->Client_AddEndgameWidget();
+
+		if(PC->GetPawn())
 		{
-			PC->Client_CreateEndgameWidget();
-			if (PC->GetPawn())
-			{
-				PC->GetPawn()->Destroy();
-			}
+			PC->GetPawn()->Destroy();
 		}
 	}
 }

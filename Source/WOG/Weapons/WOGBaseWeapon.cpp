@@ -22,6 +22,8 @@
 #include "Libraries/WOGBlueprintLibrary.h"
 #include "PlayerController/WOGPlayerController.h"
 #include "Resources/WOGCommonInventory.h"
+#include "ActorComponents/WOGUIManagerComponent.h"
+
 
 // Sets default values
 AWOGBaseWeapon::AWOGBaseWeapon()
@@ -99,11 +101,10 @@ void AWOGBaseWeapon::InitWeaponData()
 
 void AWOGBaseWeapon::AddAbilityWidget(const int32& Key)
 {
-	if (!OwnerCharacter || !OwnerCharacter->GetOwnerPC()) return;
-
+	if (!OwnerCharacter || !OwnerCharacter->GetOwnerPC() || !OwnerCharacter->GetOwnerPC()->GetUIManagerComponent()) return;
 	AbilityKey = Key;
 
-	OwnerCharacter->GetOwnerPC()->Client_CreateAbilityWidget(AbilityKey, WeaponData.AbilityWidgetClass, WeaponData.AbilityIcon, WeaponData.Cooldown, WeaponData.CooldownTag);
+	OwnerCharacter->GetOwnerPC()->GetUIManagerComponent()->Client_AddAbilityWidget(AbilityKey, WeaponData.AbilityWidgetClass, WeaponData.AbilityIcon, WeaponData.Cooldown, WeaponData.CooldownTag);
 }
 
 void AWOGBaseWeapon::InitWeaponDefaults()
@@ -114,6 +115,7 @@ void AWOGBaseWeapon::InitWeaponDefaults()
 
 void AWOGBaseWeapon::DropWeapon()
 {
+	if (!OwnerCharacter) return;
 	RemoveGrantedAbilities(OwnerCharacter);
 
 	UAGR_EquipmentManager* Equipment = UAGRLibrary::GetEquipment(OwnerCharacter);
@@ -146,7 +148,10 @@ void AWOGBaseWeapon::DropWeapon()
 		AnimMaster->SetupBasePose(TAG_Pose_Relax);
 	}
 
-	OwnerCharacter->GetOwnerPC()->Client_RemoveAbilityWidget(AbilityKey);
+	if (OwnerCharacter->GetOwnerPC() && OwnerCharacter->GetOwnerPC()->GetUIManagerComponent())
+	{
+		OwnerCharacter->GetOwnerPC()->GetUIManagerComponent()->Client_RemoveAbilityWidget(AbilityKey);
+	}
 
 	OwnerCharacter = nullptr;
 	SetOwner(nullptr);
@@ -184,7 +189,10 @@ void AWOGBaseWeapon::StoreWeapon(const FName& Key, AActor* InventoryActor)
 		AnimMaster->SetupBasePose(TAG_Pose_Relax);
 	}
 
-	OwnerCharacter->GetOwnerPC()->Client_RemoveAbilityWidget(AbilityKey);
+	if (OwnerCharacter->GetOwnerPC() && OwnerCharacter->GetOwnerPC()->GetUIManagerComponent())
+	{
+		OwnerCharacter->GetOwnerPC()->GetUIManagerComponent()->Client_RemoveAbilityWidget(AbilityKey);
+	}
 
 	if (Key == FName("1"))
 	{

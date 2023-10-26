@@ -24,6 +24,7 @@
 #include "Components/WidgetComponent.h"
 #include "Components/SizeBox.h"
 #include "UI/WOGCharacterWidgetContainer.h"
+#include "Subsystems/WOGUIManagerSubsystem.h"
 
 AWOGBaseCharacter::AWOGBaseCharacter()
 {
@@ -185,12 +186,17 @@ void AWOGBaseCharacter::OnStaminaAttributeChanged(const FOnAttributeChangeData& 
 	if (Data.NewValue < Data.OldValue && !UKismetMathLibrary::NearlyEqual_FloatFloat(Data.NewValue, AttributeSet->GetMaxStamina(), 1.f))
 	{
 		TObjectPtr<AWOGPlayerController> OwnerPC = Cast<AWOGPlayerController>(Controller);
-		if (OwnerPC && OwnerPC->IsLocalController())
+		if (!OwnerPC || !OwnerPC->IsLocalController())
 		{
-			OwnerPC->AddStaminaWidget();
+			return;
+		}
+
+		TObjectPtr<UWOGUIManagerSubsystem> UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(OwnerPC->GetLocalPlayer());
+		if (UIManager)
+		{
+			UIManager->AddStaminaWidget();
 		}
 	}
-
 	/*
 	//Add tired vocal cue locally
 	if (Data.NewValue < Data.OldValue && UKismetMathLibrary::NearlyEqual_FloatFloat(Data.NewValue, AttributeSet->GetMaxStamina() * 0.2f, 0.5f))
@@ -212,7 +218,6 @@ void AWOGBaseCharacter::OnStaminaAttributeChanged(const FOnAttributeChangeData& 
 		}
 	}
 	*/
-
 }
 
 void AWOGBaseCharacter::OnMaxMovementSpeedAttributeChanged(const FOnAttributeChangeData& Data)
@@ -612,7 +617,11 @@ void AWOGBaseCharacter::AddHoldProgressBar()
 	TObjectPtr<AWOGPlayerController> OwnerController = Cast<AWOGPlayerController>(Controller);
 	if (!OwnerController || !IsLocallyControlled()) return;
 
-	OwnerController->AddHoldProgressBar();
+	TObjectPtr<UWOGUIManagerSubsystem> UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(OwnerController->GetLocalPlayer());
+	if (UIManager)
+	{
+		UIManager->AddHoldProgressBar();
+	}
 }
 
 void AWOGBaseCharacter::RemoveHoldProgressBarWidget()
@@ -620,7 +629,11 @@ void AWOGBaseCharacter::RemoveHoldProgressBarWidget()
 	TObjectPtr<AWOGPlayerController> OwnerController = Cast<AWOGPlayerController>(Controller);
 	if (!OwnerController || !IsLocallyControlled()) return;
 
-	OwnerController->RemoveHoldProgressBar();
+	TObjectPtr<UWOGUIManagerSubsystem> UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(OwnerController->GetLocalPlayer());
+	if (UIManager)
+	{
+		UIManager->RemoveHoldProgressBar();
+	}
 }
 
 void AWOGBaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

@@ -36,6 +36,7 @@
 #include "UI/WOGHoldProgressBar.h"
 #include "UI/AutoSettingWidget.h"
 #include "Resources/WOGCommonInventory.h"
+#include "Subsystems/WOGUIManagerSubsystem.h"
 
 void ABasePlayerCharacter::OnConstruction(const FTransform& Transform)
 {
@@ -333,9 +334,15 @@ void ABasePlayerCharacter::ConfirmHoldStarted()
 void ABasePlayerCharacter::AbilityHoldButtonElapsed(FInputActionValue ActionValue, float ElapsedTime, float TriggeredTime)
 {
 	TObjectPtr<AWOGPlayerController> OwnerController = Cast<AWOGPlayerController>(Controller);
-	if (!OwnerController || !IsLocallyControlled() || !OwnerController->GetHoldProgressBar()) return;
+	if (!OwnerController || !IsLocallyControlled()) return;
 
-	OwnerController->GetHoldProgressBar()->TimeHeld = ElapsedTime;
+	TObjectPtr<UWOGUIManagerSubsystem> UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(OwnerController->GetLocalPlayer());
+	if (!UIManager || !UIManager->GetHoldProgressBar())
+	{
+		return;
+	}
+
+	UIManager->GetHoldProgressBar()->TimeHeld = ElapsedTime;
 }
 
 void ABasePlayerCharacter::AbilityHoldButtonCanceled(const FInputActionValue& Value)
@@ -384,9 +391,12 @@ void ABasePlayerCharacter::PrimaryArmHeavyAttack(FInputActionValue ActionValue, 
 	}
 
 	TObjectPtr<AWOGPlayerController> OwnerController = Cast<AWOGPlayerController>(Controller);
-	if (!OwnerController || !IsLocallyControlled() || !OwnerController->GetHoldProgressBar()) return;
+	if (!OwnerController || !IsLocallyControlled()) return;
 
-	OwnerController->GetHoldProgressBar()->TimeHeld = ElapsedTime;
+	TObjectPtr<UWOGUIManagerSubsystem> UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(OwnerController->GetLocalPlayer());
+	if (!UIManager || !UIManager->GetHoldProgressBar()) return;
+
+	UIManager->GetHoldProgressBar()->TimeHeld = ElapsedTime;
 }
 
 void ABasePlayerCharacter::PrimaryHeavyAttackCanceled(const FInputActionValue& Value)

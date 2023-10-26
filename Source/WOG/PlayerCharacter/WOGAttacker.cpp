@@ -20,6 +20,7 @@
 #include "AbilitySystem/AttributeSets/WOGAttributeSetBase.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Interfaces/SpawnInterface.h"
+#include "Subsystems/WOGUIManagerSubsystem.h"
 
 
 AWOGAttacker::AWOGAttacker()
@@ -63,8 +64,12 @@ void AWOGAttacker::PossessMinion()
 {
 	if (!bCanPossessMinion && OwnerPC)
 	{
-		OwnerPC->CreateWarningWidget(FString("Health"));
-		UE_LOG(WOGLogSpawn, Error, TEXT("Health too low, can't possess"));
+		TObjectPtr<UWOGUIManagerSubsystem> UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(OwnerPC->GetLocalPlayer());
+		if (UIManager)
+		{
+			UIManager->CreateResourceWarningWidget(FString("Health"));
+			UE_LOG(WOGLogSpawn, Error, TEXT("Health too low, can't possess"));
+		}
 		return;
 	}
 
@@ -277,8 +282,12 @@ void AWOGAttacker::PossessRaven()
 {
 	if (!bCanPossessMinion && OwnerPC)
 	{
-		OwnerPC->CreateWarningWidget(FString("Health"));
-		UE_LOG(WOGLogSpawn, Error, TEXT("Health too low, can't possess"));
+		TObjectPtr<UWOGUIManagerSubsystem> UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(OwnerPC->GetLocalPlayer());
+		if (UIManager)
+		{
+			UIManager->CreateResourceWarningWidget(FString("Health"));
+			UE_LOG(WOGLogSpawn, Error, TEXT("Health too low, can't possess"));
+		}
 		return;
 	}
 
@@ -302,7 +311,11 @@ void AWOGAttacker::PossessRaven()
 	OwnerPC->Server_PossessMinion(Raven);
 	TargetComponent->TargetLockOff();
 
-	OwnerPC->AddRavenMarkerWidget(Raven->SpawnedMarkers.Num());
+	TObjectPtr<UWOGUIManagerSubsystem> UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(OwnerPC->GetLocalPlayer());
+	if (UIManager)
+	{
+		UIManager->AddRavenMarkerWidget(Raven->SpawnedMarkers.Num());
+	}
 }
 
 void AWOGAttacker::OnHealthAttributeChanged(const FOnAttributeChangeData& Data)
@@ -342,10 +355,16 @@ void AWOGAttacker::OnHealthAttributeChanged(const FOnAttributeChangeData& Data)
 	if (Data.NewValue <= (AttributeSet->GetMaxHealth() * 0.8f) && Data.OldValue > (AttributeSet->GetMaxHealth() * 0.8f) && !IsLocallyControlled())
 	{
 		UE_LOG(WOGLogSpawn, Display, TEXT("Health at 80%"));
-		if (OwnerPC)
+		if (!OwnerPC || !CurrentExternalMinion)
 		{
-			OwnerPC->AddScreenDamageWidget(0);
-			OwnerPC->CreateGenericWarningWidget(FString("TakingDamage"));
+			return;
+		}
+
+		TObjectPtr<UWOGUIManagerSubsystem> UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(OwnerPC->GetLocalPlayer());
+		if (UIManager)
+		{
+			UIManager->CreateGenericWarningWidget(FString("TakingDamage"));
+			UIManager->AddScreenDamageWidget(0);
 		}
 	}
 
@@ -353,10 +372,16 @@ void AWOGAttacker::OnHealthAttributeChanged(const FOnAttributeChangeData& Data)
 	if (Data.NewValue <= (AttributeSet->GetMaxHealth() * 0.6f) && Data.OldValue > (AttributeSet->GetMaxHealth() * 0.6f) && !IsLocallyControlled())
 	{
 		UE_LOG(WOGLogSpawn, Display, TEXT("Health at 60%"));
-		if (OwnerPC)
+		if (!OwnerPC || !CurrentExternalMinion)
 		{
-			OwnerPC->AddScreenDamageWidget(1);
-			OwnerPC->CreateGenericWarningWidget(FString("TakingDamage"));
+			return;
+		}
+
+		TObjectPtr<UWOGUIManagerSubsystem> UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(OwnerPC->GetLocalPlayer());
+		if (UIManager)
+		{
+			UIManager->CreateGenericWarningWidget(FString("TakingDamage"));
+			UIManager->AddScreenDamageWidget(1);
 		}
 	}
 
@@ -364,14 +389,19 @@ void AWOGAttacker::OnHealthAttributeChanged(const FOnAttributeChangeData& Data)
 	if (Data.NewValue <= (AttributeSet->GetMaxHealth() * 0.4f) && Data.OldValue > (AttributeSet->GetMaxHealth() * 0.4f) && !IsLocallyControlled())
 	{
 		UE_LOG(WOGLogSpawn, Display, TEXT("Health at 40%"));
-		if (OwnerPC && CurrentExternalMinion)
+		if (!OwnerPC || !CurrentExternalMinion)
 		{
-			OwnerPC->AddScreenDamageWidget(2);
-			OwnerPC->CreateGenericWarningWidget(FString("TakingDamage"));
+			return;
+		}
+
+		TObjectPtr<UWOGUIManagerSubsystem> UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(OwnerPC->GetLocalPlayer());
+		if (UIManager)
+		{
+			UIManager->CreateGenericWarningWidget(FString("TakingDamage"));
+			UIManager->AddScreenDamageWidget(2);
 		}
 	}
 	
-
 	AWOGBaseCharacter::OnHealthAttributeChanged(Data);
 }
 

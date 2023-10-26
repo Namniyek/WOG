@@ -9,6 +9,9 @@
 class UWOGVendorBaseWidget;
 class AWOGMatchHUD;
 class AWOGPlayerController;
+class UWOGHoldProgressBar;
+class UWOGRavenMarkerWidget;
+class UWOGAbilityWidget;
 
 /**
  * 
@@ -26,13 +29,22 @@ public:
 	
 
 private:
+
+	UPROPERTY()
+	ETimeOfDay TOD;
+
 	TObjectPtr<AWOGMatchHUD> MatchHUD;
 	TObjectPtr<AWOGPlayerController> OwnerPC;
 	
 	TObjectPtr<UWOGVendorBaseWidget> VendorWidget;
 
+	UPROPERTY()
+	TObjectPtr<UWOGHoldProgressBar> HoldProgressBarWidget = nullptr;
 
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UWOGRavenMarkerWidget> RavenMarkerWidget = nullptr;
 
+	void SetTODString(ETimeOfDay CurrentTOD, FString& StringMain, FString& StringSec);
 
 public:
 
@@ -41,6 +53,8 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	FORCEINLINE UWOGVendorBaseWidget* GetVendorWidget() const { return VendorWidget; }
+	FORCEINLINE TObjectPtr<UWOGHoldProgressBar> GetHoldProgressBar() const { return HoldProgressBarWidget; }
+	FORCEINLINE TObjectPtr<UWOGRavenMarkerWidget> GetRavenMarkerWidget() const { return RavenMarkerWidget; }
 
 	UFUNCTION(BlueprintCallable)
 	void UpdateAvailableResourceWidget();
@@ -49,5 +63,38 @@ public:
 	void UpdateVendorWidgetAfterTransaction();
 
 	UFUNCTION(BlueprintCallable)
-	void CreateWarningWidget(const FString& Attribute);
+	void CreateResourceWarningWidget(const FString& Attribute);
+
+	UFUNCTION(BlueprintCallable)
+	void CreateGenericWarningWidget(const FString& WarningString);
+
+	UFUNCTION()
+	void AddStaminaWidget();
+
+	UFUNCTION()
+	void AddScreenDamageWidget(const int32& DamageThreshold);
+
+	UFUNCTION()
+	void AddHoldProgressBar();
+	UFUNCTION()
+	void RemoveHoldProgressBar();
+
+	UFUNCTION()
+	void AddRavenMarkerWidget(const int32& Amount);
+	UFUNCTION()
+	void RemoveRavenMarkerWidget();
+
+	UFUNCTION()
+	void AddAbilityWidget(const int32& AbilityID, TSubclassOf<UUserWidget> Class, UTexture2D* Icon, const float& Cooldown, const FGameplayTag& Tag);
+	UFUNCTION()
+	void RemoveAbilityWidget(const int32& AbilityID);
+
+	UFUNCTION()
+	void AddAnnouncementWidget(ETimeOfDay NewTOD);
+
+	UFUNCTION()
+	void AddEndgameWidget();
+
+	UFUNCTION()
+	void ResetHUD();
 };

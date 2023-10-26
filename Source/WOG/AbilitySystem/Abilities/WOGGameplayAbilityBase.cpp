@@ -11,6 +11,7 @@
 #include "Types/WOGGameplayTags.h"
 #include "PlayerController/WOGPlayerController.h"
 #include "ActorComponents/WOGAbilitySystemComponent.h"
+#include "Subsystems/WOGUIManagerSubsystem.h"
 
 UWOGGameplayAbilityBase::UWOGGameplayAbilityBase()
 {
@@ -170,7 +171,11 @@ void UWOGGameplayAbilityBase::OnCostChecked(bool bIsEnough, FGameplayAttribute A
 	{
 		TObjectPtr<AWOGPlayerController> OwnerPC = Cast<AWOGPlayerController>(GetCharacterFromActorInfo()->Controller);
 		if (!OwnerPC) return;
-		OwnerPC->CreateWarningWidget(Attribute.GetName());
+		TObjectPtr<UWOGUIManagerSubsystem> UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(OwnerPC->GetLocalPlayer());
+		if (UIManager)
+		{
+			UIManager->CreateResourceWarningWidget(Attribute.GetName());
+		}
 	}
 }
 

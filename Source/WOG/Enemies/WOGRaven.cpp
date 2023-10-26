@@ -13,6 +13,7 @@
 #include "Subsystems/WOGWorldSubsystem.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "Types/WOGGameplayTags.h"
+#include "Subsystems/WOGUIManagerSubsystem.h"
 
 
 AWOGRaven::AWOGRaven()
@@ -131,7 +132,11 @@ void AWOGRaven::PrimaryActionTriggered(const FInputActionValue& Value)
 		TObjectPtr<AWOGPlayerController> OwnerPC = Cast<AWOGPlayerController>(GetController());
 		if (OwnerPC)
 		{
-			OwnerPC->CreateGenericWarningWidget(FString("TooManyMarkers"));
+			TObjectPtr<UWOGUIManagerSubsystem> UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(OwnerPC->GetLocalPlayer());
+			if (UIManager)
+			{
+				UIManager->CreateGenericWarningWidget(FString("TooManyMarkers"));
+			}
 		}
 
 		UE_LOG(WOGLogSpawn, Error, TEXT("Too many markers placed"));
@@ -181,9 +186,12 @@ void AWOGRaven::UnpossessMinion_Implementation()
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Spawn_Unpossess, EventPayload);
 
 	TObjectPtr<AWOGPlayerController> PlayerController = Cast<AWOGPlayerController>(GetController());
-	if (PlayerController)
+	if (!PlayerController) return;
+
+	TObjectPtr<UWOGUIManagerSubsystem> UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(PlayerController->GetLocalPlayer());
+	if (UIManager)
 	{
-		PlayerController->RemoveRavenMarkerWidget();
+		UIManager->RemoveRavenMarkerWidget();
 	}
 }
 
@@ -218,9 +226,12 @@ void AWOGRaven::KeyTimeHit(int32 CurrentTime)
 void AWOGRaven::Client_RemoveRavenMarkerWidget_Implementation()
 {
 	TObjectPtr<AWOGPlayerController> PlayerController = Cast<AWOGPlayerController>(GetController());
-	if (PlayerController)
+	if (!PlayerController) return;
+
+	TObjectPtr<UWOGUIManagerSubsystem> UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(PlayerController->GetLocalPlayer());
+	if (UIManager)
 	{
-		PlayerController->RemoveRavenMarkerWidget();
+		UIManager->RemoveRavenMarkerWidget();
 	}
 }
 

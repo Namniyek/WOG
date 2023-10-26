@@ -29,7 +29,18 @@ protected:
 
 public:	
 
-	UFUNCTION(BlueprintCallable, Client, unreliable)
-	void Client_CreateWarningWidget(const FString& Attribute);
+	UFUNCTION(Client, Reliable)
+	void Client_AddAbilityWidget(const int32& AbilityID, TSubclassOf<UUserWidget> Class, UTexture2D* Icon, const float& Cooldown, const FGameplayTag& Tag);
+
+	UFUNCTION(Client, Reliable)
+	void Client_RemoveAbilityWidget(const int32& AbilityID);
 		
+	UFUNCTION(Client, Reliable)
+	void Client_AddAnnouncementWidget(ETimeOfDay NewTOD);
+
+	UFUNCTION(Client, Reliable)
+	void Client_AddEndgameWidget();
+
+	UFUNCTION(Client, Reliable)
+	void Client_ResetHUD();
 };

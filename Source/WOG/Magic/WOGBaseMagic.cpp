@@ -23,6 +23,7 @@
 #include "Libraries/WOGBlueprintLibrary.h"
 #include "NiagaraComponent.h"
 #include "PlayerController/WOGPlayerController.h"
+#include "ActorComponents/WOGUIManagerComponent.h"
 
 AWOGBaseMagic::AWOGBaseMagic()
 {
@@ -237,7 +238,7 @@ void AWOGBaseMagic::OnMagicOverlap(UPrimitiveComponent* OverlappedComponent, AAc
 
 void AWOGBaseMagic::AddAbilityWidget(const int32& Key)
 {
-	if (!OwnerCharacter || !OwnerCharacter->GetOwnerPC()) return;
+	if (!OwnerCharacter || !OwnerCharacter->GetOwnerPC() || !OwnerCharacter->GetOwnerPC()->GetUIManagerComponent()) return;
 
 	switch (Key)
 	{
@@ -250,7 +251,7 @@ void AWOGBaseMagic::AddAbilityWidget(const int32& Key)
 		break;
 	}
 
-	OwnerCharacter->GetOwnerPC()->Client_CreateAbilityWidget(AbilityKey, MagicData.AbilityWidgetClass, MagicData.AbilityIcon, MagicData.Cooldown, MagicData.CooldownTag);
+	OwnerCharacter->GetOwnerPC()->GetUIManagerComponent()->Client_AddAbilityWidget(AbilityKey, MagicData.AbilityWidgetClass, MagicData.AbilityIcon, MagicData.Cooldown, MagicData.CooldownTag);
 }
 
 void AWOGBaseMagic::OnMagicPickedUp(UAGR_InventoryManager* Inventory)
@@ -360,6 +361,7 @@ void AWOGBaseMagic::InitMagicDefaults()
 
 void AWOGBaseMagic::DropMagic()
 {
+	if (!OwnerCharacter) return;
 	RemoveGrantedAbilities(OwnerCharacter);
 
 	UAGR_EquipmentManager* Equipment = UAGRLibrary::GetEquipment(OwnerCharacter);
@@ -394,7 +396,10 @@ void AWOGBaseMagic::DropMagic()
 		AnimMaster->SetupBasePose(TAG_Pose_Relax);
 	}
 
-	OwnerCharacter->GetOwnerPC()->Client_RemoveAbilityWidget(AbilityKey);
+	if (OwnerCharacter->GetOwnerPC() && OwnerCharacter->GetOwnerPC()->GetUIManagerComponent())
+	{
+		OwnerCharacter->GetOwnerPC()->GetUIManagerComponent()->Client_RemoveAbilityWidget(AbilityKey);
+	}
 
 	OwnerCharacter = nullptr;
 	SetOwner(nullptr);
