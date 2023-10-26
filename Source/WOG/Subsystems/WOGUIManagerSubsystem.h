@@ -6,6 +6,7 @@
 #include "Subsystems/LocalPlayerSubsystem.h"
 #include "WOGUIManagerSubsystem.generated.h"
 
+class UUserWidget;
 class UWOGVendorBaseWidget;
 class AWOGMatchHUD;
 class AWOGPlayerController;
@@ -23,11 +24,9 @@ class WOG_API UWOGUIManagerSubsystem : public ULocalPlayerSubsystem
 
 public:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
-	UFUNCTION(BlueprintCallable)
 	void InitVariables();
 	virtual void Deinitialize() override;
 	
-
 private:
 
 	UPROPERTY()
@@ -37,6 +36,11 @@ private:
 	TObjectPtr<AWOGPlayerController> OwnerPC;
 	
 	TObjectPtr<UWOGVendorBaseWidget> VendorWidget;
+	TObjectPtr<UUserWidget> BarsWidget;
+	TObjectPtr<UUserWidget> TODWidget;
+	TObjectPtr<UUserWidget> MinimapWidget;
+	TObjectPtr<UUserWidget> AbilityContainerWidget;
+	TObjectPtr<UUserWidget> AvailableResourcesWidget;
 
 	UPROPERTY()
 	TObjectPtr<UWOGHoldProgressBar> HoldProgressBarWidget = nullptr;
@@ -95,6 +99,36 @@ public:
 	UFUNCTION()
 	void AddEndgameWidget();
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	void ResetHUD();
+
+	UFUNCTION(BlueprintCallable)
+	void AddBarsWidget();
+	UFUNCTION(BlueprintCallable)
+	void RemoveBarsWidget();
+
+	UFUNCTION(BlueprintCallable)
+	void AddMinimapWidget();
+	UFUNCTION(BlueprintCallable)
+	void RemoveMinimapWidget();
+
+	UFUNCTION(BlueprintCallable)
+	void CollapseAbilitiesWidget();
+	UFUNCTION(BlueprintCallable)
+	void RestoreAbilitiesWidget();
+
+	UFUNCTION(BlueprintCallable)
+	void CollapseTODWidget();
+	UFUNCTION(BlueprintCallable)
+	void RestoreTODWidget();
+
+	UFUNCTION(BlueprintCallable)
+	void CollapseObjectiveWidget();
+	UFUNCTION(BlueprintCallable)
+	void RestoreObjectiveWidget();
+
+	UFUNCTION(BlueprintCallable)
+	void AddAvailableResourcesWidget();
+	UFUNCTION(BlueprintCallable)
+	void RemoveAvailableResourcesWidget();
 };

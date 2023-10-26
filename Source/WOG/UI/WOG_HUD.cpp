@@ -7,6 +7,18 @@
 #include "Blueprint/WidgetBlueprintLibrary.h"
 #include "UI/WOGAbilityContainerWidget.h"
 #include "AbilitySystem/AttributeSets/WOGAttributeSetBase.h"
+#include "Subsystems/WOGUIManagerSubsystem.h"
+
+void UWOG_HUD::NativeConstruct()
+{
+    Super::NativeConstruct();
+
+    TObjectPtr<UWOGUIManagerSubsystem> UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(GetOwningLocalPlayer());
+    if (UIManager)
+    {
+        UIManager->ResetHUD();
+    }
+}
 
 void UWOG_HUD::NativeOnInitialized()
 {

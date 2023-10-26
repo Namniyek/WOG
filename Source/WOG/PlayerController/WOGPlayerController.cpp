@@ -131,6 +131,10 @@ void AWOGPlayerController::Server_PossessMinion_Implementation(AActor* ActorToPo
 	GetWorldTimerManager().SetTimer(BlendTimer, BlendDelegate, BlendTime, false);
 
 	SetViewTargetWithBlend(ActorToPossess, BlendTime);
+
+	UIManagerComponent->Client_RemoveBarsWidget();
+	UIManagerComponent->Client_CollapseAbilitiesWidget();
+	UIManagerComponent->Client_RemoveAvailableResourceWidget();
 }
 
 void AWOGPlayerController::Server_UnpossessMinion_Implementation(APawn* AIPawnLeft)
@@ -175,4 +179,6 @@ void AWOGPlayerController::FinishUnPossess(APawn* PawnToPossess, APawn* AIPawnLe
 	{
 		UE_LOG(LogTemp, Error, TEXT("Invalid attacker for resetting CurrentExternalMinion"));
 	}
+
+	UIManagerComponent->Client_ResetHUD();
 }

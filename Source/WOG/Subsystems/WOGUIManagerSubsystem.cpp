@@ -1,6 +1,5 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "Subsystems/WOGUIManagerSubsystem.h"
 #include "WOG.h"
 #include "Data/TODEnum.h"
@@ -25,6 +24,7 @@
 #include "UI/WOGObjectiveWidget.h"
 #include "UI/MainAnnouncementWidget.h"
 #include "UI/EndgameWidget.h"
+#include "UI/WOGAvailableResourceWidget.h"
 
 void UWOGUIManagerSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -208,6 +208,7 @@ void UWOGUIManagerSubsystem::AddHoldProgressBar()
 	HoldProgressBarWidget = Cast<UWOGHoldProgressBar>(CreateWidget<UUserWidget>(OwnerPC, MatchHUD->HoldProgressBarWidgetClass));
 	if (HoldProgressBarWidget && MatchHUD->HUDWidget->GetHoldBarContainer())
 	{
+		MatchHUD->HUDWidget->GetHoldBarContainer()->ClearChildren();
 		MatchHUD->HUDWidget->GetHoldBarContainer()->AddChild(HoldProgressBarWidget);
 	}
 	else
@@ -232,6 +233,7 @@ void UWOGUIManagerSubsystem::AddRavenMarkerWidget(const int32& Amount)
 	RavenMarkerWidget = Cast<UWOGRavenMarkerWidget>(CreateWidget<UUserWidget>(OwnerPC, MatchHUD->RavenMarkerWidgetClass));
 	if (RavenMarkerWidget && MatchHUD->HUDWidget->GetHoldBarContainer())
 	{
+		MatchHUD->HUDWidget->GetHoldBarContainer()->ClearChildren();
 		MatchHUD->HUDWidget->GetHoldBarContainer()->AddChild(RavenMarkerWidget);
 		RavenMarkerWidget->SetAmountAvailableMarkers(Amount);
 	}
@@ -305,5 +307,150 @@ void UWOGUIManagerSubsystem::ResetHUD()
 	if (MatchHUD)
 	{
 		MatchHUD->ResetHUDAfterRespawn();
+	}
+
+	AddBarsWidget();
+	AddMinimapWidget();
+	RestoreAbilitiesWidget();
+	AddAvailableResourcesWidget();
+	RestoreObjectiveWidget();
+	RestoreTODWidget();
+}
+
+void UWOGUIManagerSubsystem::AddBarsWidget()
+{
+	MatchHUD == nullptr ? Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
+	if (!MatchHUD || !MatchHUD->HUDWidget || !IsValid(MatchHUD->BarsWidgetClass)) return;
+
+	BarsWidget = CreateWidget<UUserWidget>(OwnerPC, MatchHUD->BarsWidgetClass);
+	if (BarsWidget && MatchHUD->HUDWidget->GetBarsContainer())
+	{
+		MatchHUD->HUDWidget->GetBarsContainer()->ClearChildren();
+		MatchHUD->HUDWidget->GetBarsContainer()->AddChild(BarsWidget);
+	}
+}
+
+void UWOGUIManagerSubsystem::RemoveBarsWidget()
+{
+	if (BarsWidget)
+	{
+		BarsWidget->RemoveFromParent();
+		UE_LOG(WOGLogUI, Warning, TEXT("BarsWidget Removed"));
+	}
+	else
+	{
+		UE_LOG(WOGLogUI, Error, TEXT("BarsWidget invalid"));
+	}
+}
+
+void UWOGUIManagerSubsystem::AddMinimapWidget()
+{
+	MatchHUD == nullptr ? Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
+	if (!MatchHUD || !MatchHUD->HUDWidget || !IsValid(MatchHUD->MinimapWidgetClass)) return;
+
+	MinimapWidget = CreateWidget<UUserWidget>(OwnerPC, MatchHUD->MinimapWidgetClass);
+	if (MinimapWidget && MatchHUD->HUDWidget->GetMinimapContainer())
+	{
+		MatchHUD->HUDWidget->GetMinimapContainer()->ClearChildren();
+		MatchHUD->HUDWidget->GetMinimapContainer()->AddChild(MinimapWidget);
+	}
+}
+
+void UWOGUIManagerSubsystem::RemoveMinimapWidget()
+{
+	if (MinimapWidget)
+	{
+		MinimapWidget->RemoveFromParent();
+	}
+}
+
+void UWOGUIManagerSubsystem::CollapseAbilitiesWidget()
+{
+	MatchHUD == nullptr ? Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
+	if (!MatchHUD || !MatchHUD->HUDWidget || !MatchHUD->HUDWidget->GetAbilitiesContainer()) return;
+
+	AbilityContainerWidget = AbilityContainerWidget == nullptr ? Cast<UUserWidget>(MatchHUD->HUDWidget->GetAbilitiesContainer()->GetChildAt(0)) : AbilityContainerWidget;
+	if (AbilityContainerWidget && AbilityContainerWidget->GetVisibility() == ESlateVisibility::Visible)
+	{
+		AbilityContainerWidget->SetVisibility(ESlateVisibility::Collapsed);
+	}
+}
+
+void UWOGUIManagerSubsystem::RestoreAbilitiesWidget()
+{
+	MatchHUD == nullptr ? Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
+	if (!MatchHUD || !MatchHUD->HUDWidget || !MatchHUD->HUDWidget->GetAbilitiesContainer()) return;
+
+	AbilityContainerWidget = AbilityContainerWidget == nullptr ? Cast<UUserWidget>(MatchHUD->HUDWidget->GetAbilitiesContainer()->GetChildAt(0)) : AbilityContainerWidget;
+	if (AbilityContainerWidget && AbilityContainerWidget->GetVisibility() == ESlateVisibility::Collapsed)
+	{
+		AbilityContainerWidget->SetVisibility(ESlateVisibility::Visible);
+	}
+}
+
+void UWOGUIManagerSubsystem::CollapseTODWidget()
+{
+	MatchHUD == nullptr ? Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
+	if (!MatchHUD || !MatchHUD->HUDWidget || !MatchHUD->HUDWidget->GetTODContainer()) return;
+
+	TODWidget = TODWidget == nullptr ? Cast<UUserWidget>(MatchHUD->HUDWidget->GetTODContainer()->GetChildAt(0)) : TODWidget;
+	if (TODWidget && TODWidget->GetVisibility() == ESlateVisibility::Visible)
+	{
+		TODWidget->SetVisibility(ESlateVisibility::Collapsed);
+	}
+}
+
+void UWOGUIManagerSubsystem::RestoreTODWidget()
+{
+	MatchHUD == nullptr ? Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
+	if (!MatchHUD || !MatchHUD->HUDWidget || !MatchHUD->HUDWidget->GetTODContainer()) return;
+
+	TODWidget = TODWidget == nullptr ? Cast<UUserWidget>(MatchHUD->HUDWidget->GetTODContainer()->GetChildAt(0)) : TODWidget;
+	if (TODWidget && TODWidget->GetVisibility() == ESlateVisibility::Collapsed)
+	{
+		TODWidget->SetVisibility(ESlateVisibility::Visible);
+	}
+}
+
+void UWOGUIManagerSubsystem::CollapseObjectiveWidget()
+{
+	MatchHUD == nullptr ? Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
+	if (!MatchHUD || !MatchHUD->HUDWidget || !MatchHUD->HUDWidget->GetObjectiveWidget()) return;
+
+	if (MatchHUD->HUDWidget->GetObjectiveWidget()->GetVisibility() == ESlateVisibility::Visible)
+	{
+		MatchHUD->HUDWidget->GetObjectiveWidget()->SetVisibility(ESlateVisibility::Collapsed);
+	}
+}
+
+void UWOGUIManagerSubsystem::RestoreObjectiveWidget()
+{
+	MatchHUD == nullptr ? Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
+	if (!MatchHUD || !MatchHUD->HUDWidget || !MatchHUD->HUDWidget->GetObjectiveWidget()) return;
+
+	if (MatchHUD->HUDWidget->GetObjectiveWidget()->GetVisibility() == ESlateVisibility::Collapsed)
+	{
+		MatchHUD->HUDWidget->GetObjectiveWidget()->SetVisibility(ESlateVisibility::Visible);
+	}
+}
+
+void UWOGUIManagerSubsystem::AddAvailableResourcesWidget()
+{
+	MatchHUD == nullptr ? Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
+	if (!MatchHUD || !MatchHUD->HUDWidget || !IsValid(MatchHUD->AvailableResourceWidgetClass)) return;
+
+	AvailableResourcesWidget = CreateWidget<UUserWidget>(OwnerPC, MatchHUD->AvailableResourceWidgetClass);
+	if (AvailableResourcesWidget && MatchHUD->HUDWidget->GetAvailableResourceContainer())
+	{
+		MatchHUD->HUDWidget->GetAvailableResourceContainer()->ClearChildren();
+		MatchHUD->HUDWidget->GetAvailableResourceContainer()->AddChild(AvailableResourcesWidget);
+	}
+}
+
+void UWOGUIManagerSubsystem::RemoveAvailableResourcesWidget()
+{
+	if (AvailableResourcesWidget)
+	{
+		AvailableResourcesWidget->RemoveFromParent();
 	}
 }

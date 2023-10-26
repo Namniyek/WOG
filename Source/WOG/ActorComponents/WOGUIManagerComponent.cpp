@@ -71,3 +71,98 @@ void UWOGUIManagerComponent::Client_RemoveAbilityWidget_Implementation(const int
 	}
 }
 
+void UWOGUIManagerComponent::Client_AddBarsWidget_Implementation()
+{
+	if (UIManager)
+	{
+		UIManager->AddBarsWidget();
+	}
+}
+
+void UWOGUIManagerComponent::Client_RemoveBarsWidget_Implementation()
+{
+	if (UIManager)
+	{
+		UIManager->RemoveBarsWidget();
+	}
+}
+
+void UWOGUIManagerComponent::Client_AddMinimapWidget_Implementation()
+{
+	if (UIManager)
+	{
+		UIManager->AddMinimapWidget();
+	}
+}
+
+void UWOGUIManagerComponent::Client_RemoveMinimapWidget_Implementation()
+{
+	if (UIManager)
+	{
+		UIManager->RemoveMinimapWidget();
+	}
+}
+
+void UWOGUIManagerComponent::Client_CollapseAbilitiesWidget_Implementation()
+{
+	if (UIManager)
+	{
+		UIManager->CollapseAbilitiesWidget();
+	}
+}
+
+void UWOGUIManagerComponent::Client_RestoreAbilitiesWidget_Implementation()
+{
+	if (UIManager)
+	{
+		UIManager->RestoreAbilitiesWidget();
+	}
+}
+
+void UWOGUIManagerComponent::Client_CollapseTODWidget_Implementation()
+{
+	if (UIManager)
+	{
+		UIManager->CollapseTODWidget();
+	}
+}
+
+void UWOGUIManagerComponent::Client_RestoreTODWidget_Implementation()
+{
+	if (UIManager)
+	{
+		UIManager->RestoreTODWidget();
+	}
+}
+
+void UWOGUIManagerComponent::Client_CollapseObjectiveWidget_Implementation()
+{
+	if (UIManager)
+	{
+		UIManager->CollapseObjectiveWidget();
+	}
+}
+
+void UWOGUIManagerComponent::Client_RestoreObjectiveWidget_Implementation()
+{
+	if (UIManager)
+	{
+		UIManager->RestoreObjectiveWidget();
+	}
+}
+
+void UWOGUIManagerComponent::Client_AddAvailableResourceWidget_Implementation()
+{
+	if (UIManager)
+	{
+		UIManager->AddAvailableResourcesWidget();
+	}
+}
+
+void UWOGUIManagerComponent::Client_RemoveAvailableResourceWidget_Implementation()
+{
+	if (UIManager)
+	{
+		UIManager->RemoveAvailableResourcesWidget();
+	}
+}

@@ -16,6 +16,7 @@ class UWOGWarningWidget;
 class UMainAnnouncementWidget;
 class UEndgameWidget;
 class URestartWidget;
+class UWOGAvailableResourceWidget;
 
 UCLASS()
 class WOG_API AWOGMatchHUD : public AHUD
@@ -55,6 +56,21 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Setup | WidgetClasses")
 	TSubclassOf<UWOGScreenDamage> ScreenDamageWidgetClass;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Setup | WidgetClasses")
+	TSubclassOf<UUserWidget> BarsWidgetClass;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Setup | WidgetClasses")
+	TSubclassOf<UUserWidget> MinimapWidgetClass;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Setup | WidgetClasses")
+	TSubclassOf<UUserWidget> TODWidgetClass;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Setup | WidgetClasses")
+	TSubclassOf<UUserWidget> AbilitiesContainerWidgetClass;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Setup | WidgetClasses")
+	TSubclassOf<UWOGAvailableResourceWidget> AvailableResourceWidgetClass;
 
 	#pragma endregion
 

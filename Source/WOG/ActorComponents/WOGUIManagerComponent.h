@@ -43,4 +43,34 @@ public:
 
 	UFUNCTION(Client, Reliable)
 	void Client_ResetHUD();
+
+	UFUNCTION(Client, Reliable, BlueprintCallable)
+	void Client_AddBarsWidget();
+	UFUNCTION(Client, Reliable, BlueprintCallable)
+	void Client_RemoveBarsWidget();
+
+	UFUNCTION(Client, Reliable, BlueprintCallable)
+	void Client_AddMinimapWidget();
+	UFUNCTION(Client, Reliable, BlueprintCallable)
+	void Client_RemoveMinimapWidget();
+
+	UFUNCTION(Client, Reliable, BlueprintCallable)
+	void Client_CollapseAbilitiesWidget();
+	UFUNCTION(Client, Reliable, BlueprintCallable)
+	void Client_RestoreAbilitiesWidget();
+
+	UFUNCTION(Client, Reliable, BlueprintCallable)
+	void Client_CollapseTODWidget();
+	UFUNCTION(Client, Reliable, BlueprintCallable)
+	void Client_RestoreTODWidget();
+
+	UFUNCTION(Client, Reliable, BlueprintCallable)
+	void Client_CollapseObjectiveWidget();
+	UFUNCTION(Client, Reliable, BlueprintCallable)
+	void Client_RestoreObjectiveWidget();
+
+	UFUNCTION(Client, Reliable, BlueprintCallable)
+	void Client_AddAvailableResourceWidget();
+	UFUNCTION(Client, Reliable, BlueprintCallable)
+	void Client_RemoveAvailableResourceWidget();
 };

@@ -26,6 +26,8 @@ public:
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	class AWOGPlayerController* OwnerPlayerController;
 
+	virtual void NativeConstruct() override;
+
 protected:
 	virtual void NativeOnInitialized() override;
 	UFUNCTION(BlueprintCallable)
