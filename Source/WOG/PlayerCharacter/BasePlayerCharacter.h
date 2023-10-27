@@ -9,6 +9,7 @@
 #include "Engine/DataTable.h"
 #include "WOG/FunctionLibrary/MeshMergeFunctionLibrary.h"
 #include "Types/CharacterTypes.h"
+#include "Interfaces/VendorInterface.h"
 #include "BasePlayerCharacter.generated.h"
 
 class AWOGCommonInventory;
@@ -117,7 +118,7 @@ public:
 
 
 UCLASS()
-class WOG_API ABasePlayerCharacter : public AWOGBaseCharacter
+class WOG_API ABasePlayerCharacter : public AWOGBaseCharacter, public IVendorInterface
 {
 	GENERATED_BODY()
 

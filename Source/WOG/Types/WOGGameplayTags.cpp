@@ -68,6 +68,14 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Spawn_Raven_MoveRight, "Event.Spawn.Raven.MoveR
 
 
 //Inventory tags
+
+//Resources
+UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Resource_Gold, "Inventory.Resource.Gold");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Resource_Iron, "Inventory.Resource.Iron");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Resource_ChaosEssence, "Inventory.Resource.ChaosEssence");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Resource_Souls, "Inventory.Resource.Souls");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Resource_Wood, "Inventory.Resource.Wood");
+
 //Weapons
 UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Weapon_Shield, "Inventory.Weapon.Shield");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Weapon_TwoHanded, "Inventory.Weapon.TwoHanded");

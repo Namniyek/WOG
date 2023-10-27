@@ -25,7 +25,8 @@ public class WOG : ModuleRules
             "AutoSettingsCore",
             "AutoSettings",
             "AutoSettingsInput",
-            "CPathfinding"
+            "CPathfinding",
+            "CommonUI"
         });
 
         PublicIncludePaths.Add("WOG/");
