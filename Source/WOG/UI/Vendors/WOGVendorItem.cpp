@@ -29,7 +29,7 @@ void UWOGVendorItem::NativeConstruct()
 	SetCost(ItemData.CostMap);
 
 	TObjectPtr<UScrollBox> ParentWidget = Cast<UScrollBox>(GetParent());
-	if (ParentWidget && Border)
+	if(ParentWidget && Border)
 	{
 		int32 Index = ParentWidget->GetChildIndex(this);
 		FLinearColor AltColor = FLinearColor(0.5f, 0.5f, 0.5f);
@@ -49,7 +49,6 @@ void UWOGVendorItem::AttemptPurchase()
 		if (Interface)
 		{
 			Interface->Execute_BuyItem(BuyerActor, ItemData.CostMap, VendorActor, ItemData.ItemClass);
-			UE_LOG(WOGLogUI, Warning, TEXT("Execute_BuyItem() called"));
 		}
 		else
 		{

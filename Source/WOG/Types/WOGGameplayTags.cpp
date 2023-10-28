@@ -94,6 +94,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Weapon_DualWield_Hammer, "Inventory.Weapon.
 UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Weapon_DualWield_Sword, "Inventory.Weapon.DualWield.Sword");
 
 //Magic
+UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Magic, "Inventory.Magic");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Magic_AOE, "Inventory.Magic.AOE");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Magic_Projectile, "Inventory.Magic.Projectile");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Magic_Instant, "Inventory.Magic.Instant");
@@ -155,3 +156,6 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Data_Cooldown, "Data.Cooldown");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Aux_Weapon, "Aux.Weapon");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Aux_Weapon_Primary, "Aux.Weapon.Primary");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Aux_Weapon_Secondary, "Aux.Weapon.Secondary");
+
+//Vendor tags
+UE_DEFINE_GAMEPLAY_TAG(TAG_Vendor_Blacksmith_Defender, "Vendor.Blacksmith.Defender");
