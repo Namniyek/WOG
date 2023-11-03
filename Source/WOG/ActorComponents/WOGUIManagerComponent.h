@@ -73,4 +73,7 @@ public:
 	void Client_AddAvailableResourceWidget();
 	UFUNCTION(Client, Reliable, BlueprintCallable)
 	void Client_RemoveAvailableResourceWidget();
+
+	UFUNCTION(Client, Reliable, BlueprintCallable)
+	void Client_UpdateVendorWidget();
 };

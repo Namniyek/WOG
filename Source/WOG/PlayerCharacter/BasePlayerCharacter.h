@@ -13,6 +13,7 @@
 #include "BasePlayerCharacter.generated.h"
 
 class AWOGCommonInventory;
+class AWOGVendor;
 class AWOGPlayerController;
 
 USTRUCT(BlueprintType)
@@ -116,6 +117,7 @@ public:
 	FCharacterData 	CharacterData;
 };
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInteractComplete, ABasePlayerCharacter*, Interactor);
 
 UCLASS()
 class WOG_API ABasePlayerCharacter : public AWOGBaseCharacter, public IVendorInterface
@@ -214,6 +216,9 @@ public:
 	UInputAction* WeaponRangedAction;
 
 	#pragma endregion
+
+	UPROPERTY(BlueprintAssignable, BlueprintCallable)
+	FOnInteractComplete OnInteractComplete;
 
 protected:
 
@@ -406,6 +411,18 @@ public:
 	TObjectPtr<AWOGCommonInventory> CommonInventory;
 
 	void FindCommonInventory();
+	#pragma endregion
+
+	#pragma region Vendors
+	void BuyItem_Implementation(const TArray<FCostMap>& CostMap, AWOGVendor* VendorActor, TSubclassOf<AActor> ItemClass);
+
+	void TransactionComplete_Implementation();
+
+	UFUNCTION(Server, reliable)
+	void Server_BuyItem(const TArray<FCostMap>& CostMap, AWOGVendor* VendorActor, TSubclassOf<AActor> ItemClass);
+
+	UFUNCTION(Server, reliable)
+	void Server_SetVendorBusy(bool bNewBusy, ABasePlayerCharacter* UserPlayer, AWOGVendor* Vendor);
 	#pragma endregion
 
 

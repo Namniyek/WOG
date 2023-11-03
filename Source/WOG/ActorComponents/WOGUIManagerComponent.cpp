@@ -166,3 +166,11 @@ void UWOGUIManagerComponent::Client_RemoveAvailableResourceWidget_Implementation
 		UIManager->RemoveAvailableResourcesWidget();
 	}
 }
+
+void UWOGUIManagerComponent::Client_UpdateVendorWidget_Implementation()
+{
+	if (UIManager)
+	{
+		UIManager->UpdateVendorWidgetAfterTransaction();
+	}
+}

@@ -25,6 +25,7 @@
 #include "UI/MainAnnouncementWidget.h"
 #include "UI/EndgameWidget.h"
 #include "UI/WOGAvailableResourceWidget.h"
+#include "PlayerCharacter/BasePlayerCharacter.h"
 
 void UWOGUIManagerSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -452,5 +453,32 @@ void UWOGUIManagerSubsystem::RemoveAvailableResourcesWidget()
 	if (AvailableResourcesWidget)
 	{
 		AvailableResourcesWidget->RemoveFromParent();
+	}
+}
+
+void UWOGUIManagerSubsystem::AddVendorWidget(ABasePlayerCharacter* Buyer, AWOGVendor* Vendor)
+{
+	MatchHUD == nullptr ? Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
+	if (!MatchHUD || !IsValid(MatchHUD->VendorWidgetClass)) return;
+
+	VendorWidget = Cast<UWOGVendorBaseWidget>(CreateWidget<UUserWidget>(OwnerPC, MatchHUD->VendorWidgetClass));
+	if (VendorWidget)
+	{
+		VendorWidget->SetPlayerActor(Buyer);
+		VendorWidget->SetVendorActor(Vendor);
+		VendorWidget->AddToViewport();
+	}
+}
+
+void UWOGUIManagerSubsystem::RemoveVendorWidget()
+{
+	if (VendorWidget)
+	{
+		VendorWidget->RemoveFromParent();
+		UE_LOG(WOGLogUI, Display, TEXT("VendorWidget removed from subsystem"));
+	}
+	else
+	{
+		UE_LOG(WOGLogUI, Error, TEXT("VendorWidget NOT removed from subsystem"));
 	}
 }

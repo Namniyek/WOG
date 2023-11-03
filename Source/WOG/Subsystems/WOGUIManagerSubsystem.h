@@ -13,6 +13,7 @@ class AWOGPlayerController;
 class UWOGHoldProgressBar;
 class UWOGRavenMarkerWidget;
 class UWOGAbilityWidget;
+class AWOGVendor;
 
 /**
  * 
@@ -131,4 +132,9 @@ public:
 	void AddAvailableResourcesWidget();
 	UFUNCTION(BlueprintCallable)
 	void RemoveAvailableResourcesWidget();
+
+	UFUNCTION(BlueprintCallable)
+	void AddVendorWidget(ABasePlayerCharacter* Buyer, AWOGVendor* Vendor);
+	UFUNCTION(BlueprintCallable)
+	void RemoveVendorWidget();
 };

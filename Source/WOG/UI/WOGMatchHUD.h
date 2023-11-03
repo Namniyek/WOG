@@ -17,6 +17,7 @@ class UMainAnnouncementWidget;
 class UEndgameWidget;
 class URestartWidget;
 class UWOGAvailableResourceWidget;
+class UWOGVendorBaseWidget;
 
 UCLASS()
 class WOG_API AWOGMatchHUD : public AHUD
@@ -71,6 +72,9 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Setup | WidgetClasses")
 	TSubclassOf<UWOGAvailableResourceWidget> AvailableResourceWidgetClass;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Setup | WidgetClasses")
+	TSubclassOf<UWOGVendorBaseWidget> VendorWidgetClass;
 
 	#pragma endregion
 

@@ -7,6 +7,8 @@
 #include "Types/CharacterTypes.h"
 #include "VendorInterface.generated.h"
 
+class AWOGVendor;
+
 // This class does not need to be modified.
 UINTERFACE(MinimalAPI)
 class UVendorInterface : public UInterface
@@ -34,7 +36,7 @@ public:
 	void TransactionComplete();
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-	void BuyItem(const TArray<FCostMap>& CostMap, AActor* VendorActor, TSubclassOf<AActor> ItemClass);
+	void BuyItem(const TArray<FCostMap>& CostMap, AWOGVendor* VendorActor, TSubclassOf<AActor> ItemClass);
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void BackFromVendorWidget(AActor* Actor);

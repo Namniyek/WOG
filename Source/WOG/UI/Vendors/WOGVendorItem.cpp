@@ -14,6 +14,7 @@
 #include "Interfaces/VendorInterface.h"
 #include "Subsystems/WOGUIManagerSubsystem.h"
 #include "PlayerCharacter/BasePlayerCharacter.h"
+#include "Resources/WOGVendor.h"
 
 void UWOGVendorItem::NativeConstruct()
 {
@@ -41,6 +42,8 @@ void UWOGVendorItem::NativeConstruct()
 void UWOGVendorItem::AttemptPurchase()
 {
 	if (!BuyerActor || !VendorActor) return;
+	TObjectPtr<AWOGVendor> Vendor = Cast<AWOGVendor>(VendorActor);
+	if (!Vendor) return;
 
 	if (CheckCost(ItemData.CostMap))
 	{
@@ -48,7 +51,7 @@ void UWOGVendorItem::AttemptPurchase()
 		TObjectPtr<IVendorInterface> Interface = Cast<IVendorInterface>(BuyerActor);
 		if (Interface)
 		{
-			Interface->Execute_BuyItem(BuyerActor, ItemData.CostMap, VendorActor, ItemData.ItemClass);
+			Interface->Execute_BuyItem(BuyerActor, ItemData.CostMap, Vendor, ItemData.ItemClass);
 		}
 		else
 		{

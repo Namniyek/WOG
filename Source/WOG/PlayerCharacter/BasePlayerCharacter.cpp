@@ -19,6 +19,7 @@
 #include "AnimInstance/WOGBaseAnimInstance.h"
 #include "Sound/SoundCue.h"
 #include "ActorComponents/WOGAbilitySystemComponent.h"
+#include "ActorComponents/WOGUIManagerComponent.h"
 #include "GameplayEffectTypes.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "GameplayTagContainer.h"
@@ -36,7 +37,9 @@
 #include "UI/WOGHoldProgressBar.h"
 #include "UI/AutoSettingWidget.h"
 #include "Resources/WOGCommonInventory.h"
+#include "Resources/WOGVendor.h"
 #include "Subsystems/WOGUIManagerSubsystem.h"
+
 
 void ABasePlayerCharacter::OnConstruction(const FTransform& Transform)
 {
@@ -621,6 +624,26 @@ void ABasePlayerCharacter::FindCommonInventory()
 		{
 			UE_LOG(LogTemp, Error, TEXT("No Common Inventory found"));
 		}
+	}
+}
+
+void ABasePlayerCharacter::BuyItem_Implementation(const TArray<FCostMap>& CostMap, AWOGVendor* VendorActor, TSubclassOf<AActor> ItemClass)
+{
+	Server_BuyItem(CostMap, VendorActor, ItemClass);
+}
+
+void ABasePlayerCharacter::Server_BuyItem_Implementation(const TArray<FCostMap>& CostMap, AWOGVendor* VendorActor, TSubclassOf<AActor> ItemClass)
+{
+	if (!VendorActor) return;
+	VendorActor->Sell(CostMap, ItemClass);
+}
+
+void ABasePlayerCharacter::TransactionComplete_Implementation()
+{
+	TObjectPtr<UWOGUIManagerComponent> UIManager = UWOGBlueprintLibrary::GetUIManagerComponent(GetController());
+	if (UIManager)
+	{
+		UIManager->Client_UpdateVendorWidget();
 	}
 }
 
@@ -1483,6 +1506,12 @@ void ABasePlayerCharacter::BroadcastMagicHit_Implementation(AActor* AgressorActo
 		AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*OutSpec.Data);
 		UE_LOG(LogTemp, Error, TEXT("Damage applied to %s : %f"), *GetNameSafe(this), LocalDamageToApply);
 	}
+}
+
+void ABasePlayerCharacter::Server_SetVendorBusy_Implementation(bool bNewBusy, ABasePlayerCharacter* UserPlayer, AWOGVendor* Vendor)
+{
+	if (!Vendor) return;
+	Vendor->SetIsBusy(bNewBusy, UserPlayer);
 }
 
 void ABasePlayerCharacter::TargetLocked(AActor* NewTarget)
