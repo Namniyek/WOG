@@ -644,6 +644,11 @@ void ABasePlayerCharacter::TransactionComplete_Implementation()
 	if (UIManager)
 	{
 		UIManager->Client_UpdateVendorWidget();
+		UE_LOG(WOGLogUI, Display, TEXT("Transaction complete: UpdateVendorWidget()"));
+	}
+	else
+	{
+		UE_LOG(WOGLogUI, Error, TEXT("Transaction complete: No valid UIManagerComponent"));
 	}
 }
 

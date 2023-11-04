@@ -20,11 +20,6 @@ void UWOGVendorBaseWidget::NativeConstruct()
 	SetVendorName();
 }
 
-void UWOGVendorBaseWidget::UpdateVendorInventoryWidget_Implementation()
-{
-	RefreshVendorItems();
-}
-
 void UWOGVendorBaseWidget::RefreshVendorItems()
 {
 	if (!VendorActor)
@@ -94,7 +89,11 @@ void UWOGVendorBaseWidget::RefreshVendorItems()
 			TObjectPtr<AWOGBaseMagic> Magic = Cast<AWOGBaseMagic>(Item);
 			if (Magic)
 			{
-				//TO-DO set Item Data for magic
+				VendorItem->SetItemData(Magic->GetMagicData().VendorItemData);
+			}
+			else
+			{
+				UE_LOG(WOGLogUI, Error, TEXT("Magic for ItemData invalid"));
 			}
 		}
 

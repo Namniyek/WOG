@@ -109,6 +109,9 @@ struct FMagicDataTable : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "6 - User Interface")
 	UTexture2D* AbilityIcon = nullptr;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "6 - User Interface")
+	FVendorItemData VendorItemData = FVendorItemData();
+
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Projectile", meta = (EditCondition = "AbilityType == EAbilityType::EAT_Projectile", EditConditionHides))
 	TSubclassOf<AWOGBaseIdleMagic> IdleProjectileClass = nullptr;
 

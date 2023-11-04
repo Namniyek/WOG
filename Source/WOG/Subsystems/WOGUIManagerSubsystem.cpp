@@ -124,12 +124,7 @@ void UWOGUIManagerSubsystem::UpdateAvailableResourceWidget()
 void UWOGUIManagerSubsystem::UpdateVendorWidgetAfterTransaction()
 {
 	if (!VendorWidget) return;
-
-	TObjectPtr<IVendorInterface> VendorInterface = Cast<IVendorInterface>(VendorWidget);
-	if (VendorInterface)
-	{
-		VendorInterface->Execute_UpdateVendorInventoryWidget(VendorWidget);
-	}
+	VendorWidget->RefreshVendorItems();
 }
 
 void UWOGUIManagerSubsystem::CreateResourceWarningWidget(const FString& Attribute)

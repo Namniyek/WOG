@@ -117,6 +117,12 @@ void AWOGVendor::Sell(const TArray<FCostMap>& CostMap, TSubclassOf<AActor> ItemC
 		}
 	}
 
+	FTimerHandle DelayTimer;
+	GetWorldTimerManager().SetTimer(DelayTimer, this, &ThisClass::RefreshVendorItems, 0.05f, false);
+}
+
+void AWOGVendor::RefreshVendorItems()
+{
 	TObjectPtr<IVendorInterface> Interface = Cast<IVendorInterface>(PlayerUsingVendor);
 	if (Interface)
 	{
@@ -210,6 +216,13 @@ void AWOGVendor::OnInteractWithVendorComplete(ABasePlayerCharacter* Interactor)
 			GetWorldTimerManager().SetTimer(ViewBlendTimerHandle, this, &ThisClass::OnCameraBlendInFinished, 0.5f);
 
 			Player->GetMesh()->SetHiddenInGame(true);
+
+			TArray<AActor*> OutActors = {};
+			Player->GetAttachedActors(OutActors, true, true);
+			for (auto Actor : OutActors)
+			{
+				Actor->SetActorHiddenInGame(true);
+			}
 		}
 	}
 }
@@ -268,6 +281,13 @@ void AWOGVendor::OnCameraBlendOutFinished()
 	if (PlayerUsingVendor && PlayerUsingVendor->GetMesh())
 	{
 		PlayerUsingVendor->GetMesh()->SetHiddenInGame(false);
+		TArray<AActor*> OutActors = {};
+		PlayerUsingVendor->GetAttachedActors(OutActors, true, true);
+		for (auto Actor : OutActors)
+		{
+			Actor->SetActorHiddenInGame(false);
+		}
+
 		PlayerUsingVendor->Server_SetVendorBusy(false, PlayerUsingVendor, this);
 	}
 }

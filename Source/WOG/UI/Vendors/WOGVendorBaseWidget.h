@@ -12,7 +12,7 @@ class UScrollBox;
 class AWOGVendor;
 
 UCLASS()
-class WOG_API UWOGVendorBaseWidget : public UUserWidget, public IVendorInterface
+class WOG_API UWOGVendorBaseWidget : public UUserWidget
 {
 	GENERATED_BODY()
 
@@ -25,10 +25,10 @@ public:
 	UPROPERTY(meta = (BindWidget), BlueprintReadOnly)
 	TObjectPtr<UCommonTextBlock> VendorName;
 
-	void UpdateVendorInventoryWidget_Implementation();
+	void RefreshVendorItems();
 
 private:
-	void RefreshVendorItems();
+
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UScrollBox> VendorItemsBox;

@@ -96,6 +96,9 @@ private:
 
 	void ShowCorrectWidget(bool bIsVendorBusy, ABasePlayerCharacter* OverlappingActor);
 
+	UFUNCTION()
+	void RefreshVendorItems();
+
 public:	
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Setup)
