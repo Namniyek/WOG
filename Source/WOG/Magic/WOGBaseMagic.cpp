@@ -300,15 +300,6 @@ void AWOGBaseMagic::OnMagicUnequip(AActor* User, FName SlotName)
 
 void AWOGBaseMagic::Multicast_OnMagicEquip_Implementation(AActor* User, FName SlotName)
 {
-	/*if (SlotName == NAME_MagicSlot_MagicPrimary)
-	{
-		AttachToHands();
-	}
-	else
-	{
-		AttachToBack();
-	}*/
-
 	AttachToActor(User, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 }
 

@@ -12,6 +12,7 @@
  */
 class AWOGBaseWeapon;
 class AWOGBaseMagic;
+class AWOGBaseConsumable;
 class UWOGUIManagerComponent;
 
 UCLASS()
@@ -23,6 +24,8 @@ public:
 	static AWOGBaseWeapon* GetEquippedWeapon(const AActor* Owner);
 
 	static AWOGBaseMagic* GetEquippedMagic(const AActor* Owner);
+
+	static AWOGBaseConsumable* GetEquippedConsumable(const AActor* Owner);
 
 	static FCharacterData GetCharacterData(AActor* Owner);
 
@@ -41,6 +44,13 @@ private:
 	static AWOGBaseMagic* K2_GetEquippedMagic(AActor* Owner)
 	{
 		return GetEquippedMagic(Owner);
+	};
+
+	//Can return nullptr 
+	UFUNCTION(BlueprintCallable, BlueprintPure, DisplayName = "Get Equipped Consumable", Category = "WOG Library")
+	static AWOGBaseConsumable* K2_GetEquippedConsumable(AActor* Owner)
+	{
+		return GetEquippedConsumable(Owner);
 	};
 
 	//Can return nullptr

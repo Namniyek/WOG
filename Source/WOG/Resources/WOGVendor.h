@@ -90,8 +90,6 @@ private:
 	UFUNCTION()
 	void OnCameraBlendOutFinished();
 
-	//Rename
-	void CheckOverlappingReferences(AActor* Actor);
 	void FreeVendor();
 
 	void ShowCorrectWidget(bool bIsVendorBusy, ABasePlayerCharacter* OverlappingActor);

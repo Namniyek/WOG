@@ -7,6 +7,8 @@
 #include "Magic/WOGBaseMagic.h"
 #include "Data/AGRLibrary.h"
 #include "Characters/WOGBaseCharacter.h"
+#include "Types/WOGGameplayTags.h"
+#include "Consumables/WOGBaseConsumable.h"
 #include "PlayerController/WOGPlayerController.h"
 
 AWOGBaseWeapon* UWOGBlueprintLibrary::GetEquippedWeapon(const AActor* Owner)
@@ -41,6 +43,23 @@ AWOGBaseMagic* UWOGBlueprintLibrary::GetEquippedMagic(const AActor* Owner)
 	}
 
 	return nullptr;
+}
+
+AWOGBaseConsumable* UWOGBlueprintLibrary::GetEquippedConsumable(const AActor* Owner)
+{
+	if (!Owner) return nullptr;
+	UAGR_InventoryManager* Inventory = UAGRLibrary::GetInventory(Owner);
+	if (!Inventory) return nullptr;
+
+
+	TArray<AActor*> EquippedConsumables;
+	int32 Amount = 0;
+	Inventory->GetAllItemsOfTagSlotType(TAG_Inventory_Consumable, EquippedConsumables, Amount);
+	if (EquippedConsumables.IsEmpty()) return nullptr;
+
+	TObjectPtr<AWOGBaseConsumable> EquippedConsumable = Cast<AWOGBaseConsumable>(EquippedConsumables[0]);
+
+	return EquippedConsumable;
 }
 
 FCharacterData UWOGBlueprintLibrary::GetCharacterData(AActor* Owner)
