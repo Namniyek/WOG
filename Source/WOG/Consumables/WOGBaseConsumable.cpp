@@ -13,6 +13,8 @@
 #include "PlayerController/WOGPlayerController.h"
 #include "ActorComponents/WOGUIManagerComponent.h"
 #include "Libraries/WOGBlueprintLibrary.h"
+#include "Types/WOGGameplayTags.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 
 AWOGBaseConsumable::AWOGBaseConsumable()
@@ -132,9 +134,10 @@ void AWOGBaseConsumable::OnConsumableOverlap(UPrimitiveComponent* OverlappedComp
 		return;
 	}
 
-	AActor* PreviousConsumable = nullptr;
-	AActor* CurrentConsumable = nullptr;
-	if (Equipment->GetItemInSlot(NAME_ConsumableSlot_Consumable, CurrentConsumable))
+	TArray<AActor*> OutItems = {};
+	int32 Amount = 0;
+	Inventory->GetAllItemsOfTagSlotType(TAG_Inventory_Consumable, OutItems, Amount);
+	if (!OutItems.IsEmpty())
 	{
 		UE_LOG(WOGLogInventory, Error, TEXT("Consumable slot already filled"));
 		return;
@@ -154,8 +157,9 @@ void AWOGBaseConsumable::OnConsumablePickedUp(UAGR_InventoryManager* Inventory)
 {
 	if (OwnerCharacter)
 	{
-		GrantAbilities();
 		AddAbilityWidget(4);
+
+		GrantAbilities();
 	}
 }
 
@@ -174,8 +178,6 @@ void AWOGBaseConsumable::OnConsumableUsed(AActor* User, FGameplayTag GameplayTag
 	Inventory->RemoveItemsOfClass(this->StaticClass(), 1, OutNote);
 
 	UE_LOG(WOGLogInventory, Display, TEXT("%s, Current stack: %d"), *OutNote.ToString(), ItemComponent->CurrentStack);
-
-
 }
 
 void AWOGBaseConsumable::OnConsumableDestroyed()
@@ -197,14 +199,25 @@ bool AWOGBaseConsumable::GrantAbilities()
 		FGameplayAbilitySpec AbilitySpec = FGameplayAbilitySpec(Ability, 1, static_cast<int32>(Ability.GetDefaultObject()->AbilityInputID), OwnerCharacter);
 		FGameplayAbilitySpecHandle GrantedAbility = ASC->GiveAbility(AbilitySpec);
 		GrantedAbilities.AddUnique(GrantedAbility);
-		UE_LOG(LogTemp, Display, TEXT("Ability granted: %s"), *Ability.GetDefaultObject()->GetName());
+		UE_LOG(LogTemp, Display, TEXT("Ability granted: %s on %s"), *Ability.GetDefaultObject()->GetName(), *UEnum::GetValueAsString(OwnerCharacter->GetLocalRole()));
 	}
 	return true;
 }
 
 bool AWOGBaseConsumable::RemoveGrantedAbilities(AActor* User)
 {
-	if (!HasAuthority() || GrantedAbilities.IsEmpty()) return false;
+	if (!HasAuthority())
+	{
+		UE_LOG(WOGLogInventory, Error, TEXT("No authority on %s"), *UEnum::GetValueAsString(GetOwner()->GetLocalRole()));
+		return false;
+	}	
+
+	if (GrantedAbilities.IsEmpty())
+	{
+		UE_LOG(WOGLogInventory, Error, TEXT("Empty ability array  on %s"), *UEnum::GetValueAsString(GetOwner()->GetLocalRole()));
+		return false;
+	}
+
 	UAbilitySystemComponent* ASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(User);
 	if (!ASC) return false;
 	for (auto GrantedAbility : GrantedAbilities)

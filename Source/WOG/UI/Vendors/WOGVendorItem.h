@@ -89,6 +89,8 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	FORCEINLINE void SetItemData(const FVendorItemData& NewData) { ItemData = NewData; }
+	UFUNCTION(BlueprintPure)
+	FORCEINLINE FVendorItemData GetItemData() const { return ItemData; }
 	UFUNCTION(BlueprintCallable)
 	FORCEINLINE void SetBuyerActor(AActor* NewBuyer) { BuyerActor = NewBuyer; }
 	UFUNCTION(BlueprintCallable)

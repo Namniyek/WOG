@@ -140,6 +140,7 @@ protected:
 	bool GrantAbilities();
 	bool RemoveGrantedAbilities(AActor* User);
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	TArray<FGameplayAbilitySpecHandle> GrantedAbilities;
 	#pragma endregion
 

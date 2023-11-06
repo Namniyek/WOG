@@ -356,10 +356,6 @@ void AWOGBaseWeapon::OnWeaponOverlap(UPrimitiveComponent* OverlappedComponent, A
 			{
 				SetOwnerCharacter(NewOwnerCharacter);
 			}
-			else
-			{
-				UE_LOG(LogTemp, Error, TEXT("OWNER CHARACTER NOT VALID"));
-			}
 			SphereComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 			SphereComponent->SetGenerateOverlapEvents(false);
 			ItemComponent->PickUpItem(Inventory);
@@ -388,7 +384,6 @@ void AWOGBaseWeapon::OnWeaponPickedUp(UAGR_InventoryManager* Inventory)
 void AWOGBaseWeapon::OnWeaponEquip(AActor* User, FName SlotName)
 {
 	Multicast_OnWeaponEquip(User, SlotName);
-	UE_LOG(LogTemp, Display, TEXT("WeaponEquipped"));
 
 	if (!User) return;
 	UAGRAnimMasterComponent* AnimMaster = UAGRLibrary::GetAnimationMaster(User);
@@ -406,7 +401,6 @@ void AWOGBaseWeapon::OnWeaponEquip(AActor* User, FName SlotName)
 		AnimMaster->SetupBasePose(TAG_Pose_Relax);
 
 		bool Success = RemoveGrantedAbilities(User);
-		UE_LOG(LogTemp, Display, TEXT("WeaponAbilities removed: %d"), Success);
 	}
 }
 
