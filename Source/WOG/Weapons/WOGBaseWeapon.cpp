@@ -430,6 +430,9 @@ bool AWOGBaseWeapon::GrantWeaponAbilities(AActor* User)
 	if (!HasAuthority() || WeaponData.Abilities.IsEmpty()) return false;
 	UAbilitySystemComponent* ASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(User);
 	if (!ASC) return false;
+
+	GrantedAbilities.Empty();
+
 	for (auto Ability : WeaponData.Abilities)
 	{
 		if (!Ability) continue;
@@ -451,6 +454,7 @@ bool AWOGBaseWeapon::RemoveGrantedAbilities(AActor* User)
 		ASC->ClearAbility(GrantedAbility);
 		UE_LOG(LogTemp, Display, TEXT("Ability cleared: %s"), *GrantedAbility.ToString())
 	}
+
 	return true;
 }
 

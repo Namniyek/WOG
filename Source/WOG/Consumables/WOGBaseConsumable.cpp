@@ -19,7 +19,6 @@
 
 AWOGBaseConsumable::AWOGBaseConsumable()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 	bReplicates = true;
 	SetReplicateMovement(true);
@@ -151,6 +150,7 @@ void AWOGBaseConsumable::OnConsumableOverlap(UPrimitiveComponent* OverlappedComp
 	SphereComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	SphereComponent->SetGenerateOverlapEvents(false);
 	ItemComponent->PickUpItem(Inventory);
+
 }
 
 void AWOGBaseConsumable::OnConsumablePickedUp(UAGR_InventoryManager* Inventory)
@@ -198,7 +198,6 @@ bool AWOGBaseConsumable::GrantAbilities()
 		if (!Ability) continue;
 		FGameplayAbilitySpec AbilitySpec = FGameplayAbilitySpec(Ability, 1, static_cast<int32>(Ability.GetDefaultObject()->AbilityInputID), OwnerCharacter);
 		FGameplayAbilitySpecHandle GrantedAbility = ASC->GiveAbility(AbilitySpec);
-		GrantedAbilities.AddUnique(GrantedAbility);
 		UE_LOG(LogTemp, Display, TEXT("Ability granted: %s on %s"), *Ability.GetDefaultObject()->GetName(), *UEnum::GetValueAsString(OwnerCharacter->GetLocalRole()));
 	}
 	return true;
@@ -212,19 +211,16 @@ bool AWOGBaseConsumable::RemoveGrantedAbilities(AActor* User)
 		return false;
 	}	
 
-	if (GrantedAbilities.IsEmpty())
-	{
-		UE_LOG(WOGLogInventory, Error, TEXT("Empty ability array  on %s"), *UEnum::GetValueAsString(GetOwner()->GetLocalRole()));
-		return false;
-	}
-
 	UAbilitySystemComponent* ASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(User);
 	if (!ASC) return false;
-	for (auto GrantedAbility : GrantedAbilities)
+	for (auto Class : ConsumableData.AbilitiesToGrant)
 	{
-		ASC->ClearAbility(GrantedAbility);
-		UE_LOG(LogTemp, Display, TEXT("Ability cleared: %s"), *GrantedAbility.ToString())
+		FGameplayAbilitySpec* AbilitySpec = ASC->FindAbilitySpecFromClass(Class);
+		FGameplayAbilitySpecHandle Handle = AbilitySpec->Handle;
+		ASC->ClearAbility(Handle);
+		UE_LOG(LogTemp, Display, TEXT("Ability cleared: %s"), *Handle.ToString())
 	}
+
 	return true;
 }
 

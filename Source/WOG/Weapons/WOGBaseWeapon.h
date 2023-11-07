@@ -211,6 +211,7 @@ protected:
 	bool GrantWeaponAbilities(AActor* User);
 	bool RemoveGrantedAbilities(AActor* User);
 
+	UPROPERTY(VisibleAnywhere)
 	TArray<FGameplayAbilitySpecHandle> GrantedAbilities;
 
 	virtual void InitWeaponData();
