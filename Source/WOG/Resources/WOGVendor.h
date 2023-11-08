@@ -24,7 +24,7 @@ class WOG_API AWOGVendor : public AActor, public IVendorInterface
 public:	
 	AWOGVendor();
 
-	void Sell(const TArray<FCostMap>& CostMap, TSubclassOf<AActor> ItemClass);
+	void Sell(const TArray<FCostMap>& CostMap, TSubclassOf<AActor> ItemClass, const int32& Amount);
 
 	void SetIsBusy(const bool& NewBusy, ABasePlayerCharacter* UserPlayer);
 

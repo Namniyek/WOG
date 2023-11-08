@@ -23,6 +23,7 @@
 #include "PlayerController/WOGPlayerController.h"
 #include "Resources/WOGCommonInventory.h"
 #include "ActorComponents/WOGUIManagerComponent.h"
+#include "GameplayTagContainer.h"
 
 
 // Sets default values
@@ -53,6 +54,10 @@ AWOGBaseWeapon::AWOGBaseWeapon()
 
 	ItemComponent = CreateDefaultSubobject <UAGR_ItemComponent>(TEXT("ItemComponent"));
 	ItemComponent->bStackable = false;
+
+	ComboStreak = 0;
+
+	
 }
 
 void AWOGBaseWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -92,11 +97,33 @@ void AWOGBaseWeapon::InitWeaponData()
 	{
 		MeshMain->SetStaticMesh(WeaponDataRow->MeshMain);
 		MeshSecondary->SetStaticMesh(WeaponDataRow->MeshSecondary);
+		
+		WeaponDataRow->VendorItemData.ItemIcon = WeaponDataRow->AbilityIcon;
+		WeaponDataRow->VendorItemData.ItemTag = WeaponDataRow->WeaponTag;
+		WeaponDataRow->VendorItemData.BaseWeaponDamage = WeaponDataRow->BaseDamage;
+		WeaponDataRow->VendorItemData.ComboMultiplier = WeaponDataRow->ComboDamageMultiplier;
+		WeaponDataRow->VendorItemData.HeavyDamageMultiplier = WeaponDataRow->HeavyDamageMultiplier;
+		WeaponDataRow->VendorItemData.WeaponStaminaCost = WeaponDataRow->Cost;
+		WeaponDataRow->VendorItemData.bIsAttacker = WeaponDataRow->bIsAttacker;
 
 		WeaponData = *WeaponDataRow;
-	}
 
-	ComboStreak = 0;
+		UpdateVendorData(WeaponDataRow);
+	}
+}
+
+void AWOGBaseWeapon::UpdateVendorData(FWeaponDataTable* Row)
+{
+	if (Row)
+	{
+		WeaponData.VendorItemData.ItemIcon = Row->VendorItemData.ItemIcon;
+		WeaponData.VendorItemData.ItemTag = Row->VendorItemData.ItemTag;
+		WeaponData.VendorItemData.bIsAttacker = Row->VendorItemData.bIsAttacker;
+		WeaponData.VendorItemData.BaseWeaponDamage = Row->VendorItemData.BaseWeaponDamage;
+		WeaponData.VendorItemData.ComboMultiplier = Row->VendorItemData.ComboMultiplier;
+		WeaponData.VendorItemData.HeavyDamageMultiplier = Row->VendorItemData.HeavyDamageMultiplier;
+		WeaponData.VendorItemData.WeaponStaminaCost = Row->VendorItemData.WeaponStaminaCost;
+	}
 }
 
 void AWOGBaseWeapon::AddAbilityWidget(const int32& Key)

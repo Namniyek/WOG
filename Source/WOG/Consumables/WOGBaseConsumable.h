@@ -149,6 +149,7 @@ protected:
 
 private:
 	virtual void InitConsumableData();
+	void UpdateVendorData(FConsumableDataTable* Row);
 
 	void AddAbilityWidget(const int32& Key);
 	UPROPERTY(Replicated)

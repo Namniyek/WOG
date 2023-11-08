@@ -36,7 +36,7 @@ public:
 	void TransactionComplete();
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-	void BuyItem(const TArray<FCostMap>& CostMap, AWOGVendor* VendorActor, TSubclassOf<AActor> ItemClass);
+	void BuyItem(const TArray<FCostMap>& CostMap, AWOGVendor* VendorActor, TSubclassOf<AActor> ItemClass, const int32& Amount);
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void BackFromVendorWidget(AActor* Actor);

@@ -92,7 +92,7 @@ void AWOGVendor::PopulateInventory()
 	}
 }
 
-void AWOGVendor::Sell(const TArray<FCostMap>& CostMap, TSubclassOf<AActor> ItemClass)
+void AWOGVendor::Sell(const TArray<FCostMap>& CostMap, TSubclassOf<AActor> ItemClass, const int32& Amount)
 {
 	if (!CommonInventory || !VendorInventory) return;
 
@@ -103,19 +103,37 @@ void AWOGVendor::Sell(const TArray<FCostMap>& CostMap, TSubclassOf<AActor> ItemC
 	}
 
 	FText OutNote;
-	CommonInventory->AddItemsOfClass(ItemClass, 1, OutNote);
-
 	TArray<AActor*> OutItems;
+	int32 AmountToAdd = Amount;
 	VendorInventory->GetAllItemsOfClass(ItemClass, OutItems);
 
-	if (OutItems[0])
+	if (OutItems.Num() && OutItems[0])
 	{
 		TObjectPtr<UAGR_ItemComponent> Item = UAGRLibrary::GetItemComponent(OutItems[0]);
 		if (Item)
 		{
-			Item->DestroyItem();
+			if (!Item->bStackable)
+			{
+				Item->DestroyItem();
+			}
+			else
+			{
+				if (Item->CurrentStack > Amount)
+				{
+					VendorInventory->RemoveItemsOfClass(ItemClass, Amount, OutNote);
+					UE_LOG(WOGLogInventory, Display, TEXT("Vendor inventory: %s"), *OutNote.ToString());
+				}
+				else if (Item->CurrentStack <= Amount)
+				{
+					AmountToAdd = Item->CurrentStack;
+					Item->DestroyItem();
+				}
+			}
 		}
 	}
+
+	CommonInventory->AddItemsOfClass(ItemClass, AmountToAdd, OutNote);
+	UE_LOG(WOGLogInventory, Display, TEXT("Common inventory: %s"), *OutNote.ToString());
 
 	FTimerHandle DelayTimer;
 	GetWorldTimerManager().SetTimer(DelayTimer, this, &ThisClass::RefreshVendorItems, 0.05f, false);

@@ -239,6 +239,7 @@ protected:
 
 private:
 	virtual void InitMagicData();
+	void UpdateVendorData(FMagicDataTable* Row);
 
 	void SpawnIdleClass();
 	TObjectPtr<AWOGBaseIdleMagic> IdleActor;

@@ -2,6 +2,8 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTags.h"
+#include "GameplayTagContainer.h"
+#include "Types/WOGGameplayTags.h"
 #include "CharacterTypes.generated.h"
 
 class USoundCue;
@@ -25,6 +27,16 @@ enum class EAbilityType : uint8
 	EAT_Buff UMETA(DisplayName = "Buff"),
 
 	EAT_MAX UMETA(DisplayName = "DefaultMAX")
+};
+
+UENUM(BlueprintType)
+enum class EItemType : uint8
+{
+	EIT_Weapon UMETA(DisplayName = "Weapon"),
+	EIT_Magic UMETA(DisplayName = "Magic"),
+	EIT_Consumable UMETA(DisplayName = "Consumable"),
+
+	EIT_MAX UMETA(DisplayName = "DefaultMAX")
 };
 
 UENUM(BlueprintType)
@@ -162,16 +174,79 @@ struct FVendorItemData
 {
 	GENERATED_USTRUCT_BODY();
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Vendor Data")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BaseData")
+	EItemType ItemType = EItemType::EIT_MAX;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BaseData")
 	FName DisplayName = FName("Empty");
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Vendor Data")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BaseData")
+	FName ItemDescription = FName("Empty");
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "BaseData")
+	FGameplayTag ItemTag = FGameplayTag();
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "BaseData")
 	UTexture2D* ItemIcon = nullptr;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Vendor Data")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BaseData")
 	TSubclassOf<AActor> ItemClass;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Vendor Data")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BaseData")
+	int32 ItemAmount = 1;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseData")
 	TArray<FCostMap> CostMap = {};
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "BaseData")
+	TSubclassOf<class UWOGInspectItemBaseWidget> InspectWidgetClass = nullptr;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "BaseData")
+	bool bIsAttacker = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon", meta = (EditCondition = "ItemType == EItemType::EIT_Weapon", EditConditionHides))
+	float BaseWeaponDamage = 0.f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon", meta = (EditCondition = "ItemType == EItemType::EIT_Weapon", EditConditionHides))
+	float ComboMultiplier = 0.f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon", meta = (EditCondition = "ItemType == EItemType::EIT_Weapon", EditConditionHides))
+	float HeavyDamageMultiplier = 0.f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon", meta = (EditCondition = "ItemType == EItemType::EIT_Weapon", EditConditionHides))
+	float WeaponStaminaCost = 0.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon", meta = (EditCondition = "ItemType == EItemType::EIT_Weapon", EditConditionHides))
+	FName WeaponRangedAttackName = FName("Empty");
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Magic", meta = (EditCondition = "ItemType == EItemType::EIT_Magic", EditConditionHides))
+	FName TypeOfMagic = FName("Empty");
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Magic", meta = (EditCondition = "ItemType == EItemType::EIT_Magic", EditConditionHides))
+	float BaseMagicValue = 0.f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Magic", meta = (EditCondition = "ItemType == EItemType::EIT_Magic", EditConditionHides))
+	float MagicCooldown = 0.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Magic", meta = (EditCondition = "ItemType == EItemType::EIT_Magic", EditConditionHides))
+	FName EffectApplied = FName("Empty");
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Magic", meta = (EditCondition = "ItemType == EItemType::EIT_Magic", EditConditionHides))
+	float MagicDuration = 0.f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Magic", meta = (EditCondition = "ItemType == EItemType::EIT_Magic", EditConditionHides))
+	float CastCost = 0.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Consumable", meta = (EditCondition = "ItemType == EItemType::EIT_Consumable", EditConditionHides))
+	FName TypeOfConsumable = FName("Empty");
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Consumable", meta = (EditCondition = "ItemType == EItemType::EIT_Consumable", EditConditionHides))
+	FName AffectedAttribute = FName("Empty");
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Consumable", meta = (EditCondition = "ItemType == EItemType::EIT_Consumable", EditConditionHides))
+	float BaseConsumableValue = 0.f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Consumable", meta = (EditCondition = "ItemType == EItemType::EIT_Consumable", EditConditionHides))
+	float ConsumableDuration = 0.f;
 };
 

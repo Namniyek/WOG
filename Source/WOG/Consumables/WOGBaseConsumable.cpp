@@ -35,6 +35,7 @@ AWOGBaseConsumable::AWOGBaseConsumable()
 
 	ItemComponent = CreateDefaultSubobject <UAGR_ItemComponent>(TEXT("ItemComponent"));
 	ItemComponent->bStackable = true;
+	ItemComponent->MaxStack = 100;
 
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
 	Mesh->SetupAttachment(GetRootComponent());
@@ -75,7 +76,27 @@ void AWOGBaseConsumable::InitConsumableData()
 	if (ConsumableDataRow)
 	{
 		Mesh->SetStaticMesh(ConsumableDataRow->MeshMain);
+		ItemComponent->CurrentStack = ConsumableDataRow->VendorItemData.ItemAmount;
+
+		ConsumableDataRow->VendorItemData.ItemIcon = ConsumableDataRow->AbilityIcon;
+		ConsumableDataRow->VendorItemData.ItemTag = ConsumableDataRow->ConsumableTag;
+		ConsumableDataRow->VendorItemData.bIsAttacker = ConsumableDataRow->bIsAttacker;
+		ConsumableDataRow->VendorItemData.BaseConsumableValue = ConsumableDataRow->Value;
+		ConsumableDataRow->VendorItemData.ConsumableDuration = ConsumableDataRow->Duration;
+
 		ConsumableData = *ConsumableDataRow;
+	}
+}
+
+void AWOGBaseConsumable::UpdateVendorData(FConsumableDataTable* Row)
+{
+	if (Row)
+	{
+		ConsumableData.VendorItemData.ItemIcon = Row->VendorItemData.ItemIcon;
+		ConsumableData.VendorItemData.ItemTag = Row->VendorItemData.ItemTag;
+		ConsumableData.VendorItemData.BaseConsumableValue = Row->VendorItemData.BaseConsumableValue;
+		ConsumableData.VendorItemData.ConsumableDuration = Row->VendorItemData.ConsumableDuration;
+		ConsumableData.VendorItemData.bIsAttacker = Row->VendorItemData.bIsAttacker;
 	}
 }
 

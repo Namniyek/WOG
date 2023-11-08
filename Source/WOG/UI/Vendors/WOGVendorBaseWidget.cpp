@@ -11,6 +11,7 @@
 #include "UI/Vendors/WOGVendorItem.h"
 #include "Weapons/WOGBaseWeapon.h"
 #include "Magic/WOGBaseMagic.h"
+#include "Consumables/WOGBaseConsumable.h"
 
 void UWOGVendorBaseWidget::NativeConstruct()
 {
@@ -98,7 +99,18 @@ void UWOGVendorBaseWidget::RefreshVendorItems()
 		}
 
 		//The item is an item. Set item data accordingly
-		// TO-DO Set items
+		if (VendorActor->ItemTypeFilter == TAG_Inventory_Consumable)
+		{
+			TObjectPtr<AWOGBaseConsumable> Consumable = Cast<AWOGBaseConsumable>(Item);
+			if (Consumable)
+			{
+				VendorItem->SetItemData(Consumable->GetConsumableData().VendorItemData);
+			}
+			else
+			{
+				UE_LOG(WOGLogUI, Error, TEXT("Consumable for ItemData invalid"));
+			}
+		}
 
 		VendorItemsBox->AddChild(VendorItem);
 	}

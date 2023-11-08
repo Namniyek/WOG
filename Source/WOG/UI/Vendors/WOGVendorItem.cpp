@@ -51,7 +51,7 @@ void UWOGVendorItem::AttemptPurchase()
 		TObjectPtr<IVendorInterface> Interface = Cast<IVendorInterface>(BuyerActor);
 		if (Interface)
 		{
-			Interface->Execute_BuyItem(BuyerActor, ItemData.CostMap, Vendor, ItemData.ItemClass);
+			Interface->Execute_BuyItem(BuyerActor, ItemData.CostMap, Vendor, ItemData.ItemClass, ItemData.ItemAmount);
 		}
 		else
 		{

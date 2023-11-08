@@ -627,15 +627,15 @@ void ABasePlayerCharacter::FindCommonInventory()
 	}
 }
 
-void ABasePlayerCharacter::BuyItem_Implementation(const TArray<FCostMap>& CostMap, AWOGVendor* VendorActor, TSubclassOf<AActor> ItemClass)
+void ABasePlayerCharacter::BuyItem_Implementation(const TArray<FCostMap>& CostMap, AWOGVendor* VendorActor, TSubclassOf<AActor> ItemClass, const int32& Amount)
 {
-	Server_BuyItem(CostMap, VendorActor, ItemClass);
+	Server_BuyItem(CostMap, VendorActor, ItemClass, Amount);
 }
 
-void ABasePlayerCharacter::Server_BuyItem_Implementation(const TArray<FCostMap>& CostMap, AWOGVendor* VendorActor, TSubclassOf<AActor> ItemClass)
+void ABasePlayerCharacter::Server_BuyItem_Implementation(const TArray<FCostMap>& CostMap, AWOGVendor* VendorActor, TSubclassOf<AActor> ItemClass, const int32& Amount)
 {
 	if (!VendorActor) return;
-	VendorActor->Sell(CostMap, ItemClass);
+	VendorActor->Sell(CostMap, ItemClass, Amount);
 }
 
 void ABasePlayerCharacter::TransactionComplete_Implementation()

@@ -82,7 +82,29 @@ void AWOGBaseMagic::InitMagicData()
 	}
 	if (MagicDataRow)
 	{
+		MagicDataRow->VendorItemData.ItemIcon = MagicDataRow->AbilityIcon;
+		MagicDataRow->VendorItemData.ItemTag = MagicDataRow->MagicTag;
+		MagicDataRow->VendorItemData.BaseMagicValue = MagicDataRow->Value;
+		MagicDataRow->VendorItemData.MagicCooldown = MagicDataRow->Cooldown;
+		MagicDataRow->VendorItemData.MagicDuration = MagicDataRow->Duration;
+		MagicDataRow->VendorItemData.CastCost = MagicDataRow->Cost;
+		MagicDataRow->VendorItemData.bIsAttacker = MagicDataRow->bIsAttacker;
+
 		MagicData = *MagicDataRow;
+	}
+}
+
+void AWOGBaseMagic::UpdateVendorData(FMagicDataTable* Row)
+{
+	if (Row)
+	{
+		MagicData.VendorItemData.ItemIcon = Row->VendorItemData.ItemIcon;
+		MagicData.VendorItemData.ItemTag = Row->VendorItemData.ItemTag;
+		MagicData.VendorItemData.bIsAttacker = Row->VendorItemData.bIsAttacker;
+		MagicData.VendorItemData.BaseMagicValue = Row->VendorItemData.BaseMagicValue;
+		MagicData.VendorItemData.MagicCooldown = Row->VendorItemData.MagicCooldown;
+		MagicData.VendorItemData.MagicDuration = Row->VendorItemData.MagicDuration;
+		MagicData.VendorItemData.CastCost = Row->VendorItemData.CastCost;
 	}
 }
 

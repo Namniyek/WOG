@@ -215,6 +215,7 @@ protected:
 	TArray<FGameplayAbilitySpecHandle> GrantedAbilities;
 
 	virtual void InitWeaponData();
+	void UpdateVendorData(FWeaponDataTable* Row);
 
 	virtual void StoreWeapon(const FName& Key, AActor* InventoryActor);
 	virtual void RestoreWeapon(ABasePlayerCharacter* NewOwner);
