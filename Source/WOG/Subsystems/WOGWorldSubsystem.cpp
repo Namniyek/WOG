@@ -42,5 +42,4 @@ void UWOGWorldSubsystem::TimeOfDayChanged(ETimeOfDay TOD)
 void UWOGWorldSubsystem::OnKeyTimeHit(int32 CurrentTime)
 {
 	OnKeyTimeHitDelegate.Broadcast(CurrentTime);
-	UE_LOG(WOGLogWorld, Display, TEXT("10 minutes to dawn"));
 }

@@ -11,6 +11,7 @@
  */
 class ABasePlayerCharacter;
 class UWOGUIManagerComponent;
+class UWOGSoundtrackData;
 
 UCLASS()
 class WOG_API AWOGPlayerController : public APlayerController
@@ -38,6 +39,11 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	TObjectPtr<UWOGUIManagerComponent> UIManagerComponent;
+
+	#pragma region Soundtrack DataAssets
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Soundtrack")
+	TObjectPtr<UWOGSoundtrackData> SoundtrackDataAsset;
+	#pragma endregion
 
 private:
 	UFUNCTION(Server, reliable)
