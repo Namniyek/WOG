@@ -26,6 +26,7 @@
 #include "UI/EndgameWidget.h"
 #include "UI/WOGAvailableResourceWidget.h"
 #include "PlayerCharacter/BasePlayerCharacter.h"
+#include "UI/Stash/WOGStashWidget.h"
 
 void UWOGUIManagerSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -475,5 +476,30 @@ void UWOGUIManagerSubsystem::RemoveVendorWidget()
 	else
 	{
 		UE_LOG(WOGLogUI, Error, TEXT("VendorWidget NOT removed from subsystem"));
+	}
+}
+
+void UWOGUIManagerSubsystem::AddStashWidget(ABasePlayerCharacter* User, AWOGStashBase* Stash)
+{
+	MatchHUD == nullptr ? Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
+	if (!MatchHUD || !IsValid(MatchHUD->StashWidgetClass)) return;
+
+	StashWidget = Cast<UWOGStashWidget>(CreateWidget<UUserWidget>(OwnerPC, MatchHUD->StashWidgetClass));
+	if (StashWidget)
+	{
+		StashWidget->AddToViewport();
+	}
+}
+
+void UWOGUIManagerSubsystem::RemoveStashWidget()
+{
+	if (StashWidget)
+	{
+		StashWidget->RemoveFromParent();
+		UE_LOG(WOGLogUI, Display, TEXT("StashWidget removed from subsystem"));
+	}
+	else
+	{
+		UE_LOG(WOGLogUI, Error, TEXT("StashWidget NOT removed from subsystem"));
 	}
 }

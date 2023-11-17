@@ -14,6 +14,7 @@
 
 class AWOGCommonInventory;
 class AWOGVendor;
+class AWOGStashBase;
 class AWOGPlayerController;
 
 USTRUCT(BlueprintType)
@@ -423,6 +424,11 @@ public:
 
 	UFUNCTION(Server, reliable)
 	void Server_SetVendorBusy(bool bNewBusy, ABasePlayerCharacter* UserPlayer, AWOGVendor* Vendor);
+	#pragma endregion
+
+	#pragma region Stash
+	UFUNCTION(Server, reliable)
+	void Server_SetStashBusy(bool bNewBusy, ABasePlayerCharacter* UserPlayer, AWOGStashBase* Stash);
 	#pragma endregion
 
 

@@ -18,6 +18,7 @@ class UEndgameWidget;
 class URestartWidget;
 class UWOGAvailableResourceWidget;
 class UWOGVendorBaseWidget;
+class UWOGStashWidget;
 
 UCLASS()
 class WOG_API AWOGMatchHUD : public AHUD
@@ -75,6 +76,9 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Setup | WidgetClasses")
 	TSubclassOf<UWOGVendorBaseWidget> VendorWidgetClass;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Setup | WidgetClasses")
+	TSubclassOf<UWOGStashWidget> StashWidgetClass;
 
 	#pragma endregion
 

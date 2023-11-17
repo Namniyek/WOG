@@ -8,12 +8,14 @@
 
 class UUserWidget;
 class UWOGVendorBaseWidget;
+class UWOGStashWidget;
 class AWOGMatchHUD;
 class AWOGPlayerController;
 class UWOGHoldProgressBar;
 class UWOGRavenMarkerWidget;
 class UWOGAbilityWidget;
 class AWOGVendor;
+class AWOGStashBase;
 
 /**
  * 
@@ -37,6 +39,7 @@ private:
 	TObjectPtr<AWOGPlayerController> OwnerPC;
 	
 	TObjectPtr<UWOGVendorBaseWidget> VendorWidget;
+	TObjectPtr<UWOGStashWidget> StashWidget;
 	TObjectPtr<UUserWidget> BarsWidget;
 	TObjectPtr<UUserWidget> TODWidget;
 	TObjectPtr<UUserWidget> MinimapWidget;
@@ -137,4 +140,9 @@ public:
 	void AddVendorWidget(ABasePlayerCharacter* Buyer, AWOGVendor* Vendor);
 	UFUNCTION(BlueprintCallable)
 	void RemoveVendorWidget();
+
+	UFUNCTION(BlueprintCallable)
+	void AddStashWidget(ABasePlayerCharacter* User, AWOGStashBase* Stash);
+	UFUNCTION(BlueprintCallable)
+	void RemoveStashWidget();
 };

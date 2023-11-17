@@ -38,6 +38,7 @@
 #include "UI/AutoSettingWidget.h"
 #include "Resources/WOGCommonInventory.h"
 #include "Resources/WOGVendor.h"
+#include "Resources/WOGStashBase.h"
 #include "Subsystems/WOGUIManagerSubsystem.h"
 
 
@@ -1517,6 +1518,12 @@ void ABasePlayerCharacter::Server_SetVendorBusy_Implementation(bool bNewBusy, AB
 {
 	if (!Vendor) return;
 	Vendor->SetIsBusy(bNewBusy, UserPlayer);
+}
+
+void ABasePlayerCharacter::Server_SetStashBusy_Implementation(bool bNewBusy, ABasePlayerCharacter* UserPlayer, AWOGStashBase* Stash)
+{
+	if (!Stash) return;
+	Stash->SetIsBusy(bNewBusy, UserPlayer);
 }
 
 void ABasePlayerCharacter::TargetLocked(AActor* NewTarget)
