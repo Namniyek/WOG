@@ -159,6 +159,9 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Data_Cooldown, "Data.Cooldown");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Aux_Weapon, "Aux.Weapon");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Aux_Weapon_Primary, "Aux.Weapon.Primary");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Aux_Weapon_Secondary, "Aux.Weapon.Secondary");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Aux_Magic, "Aux.Magic");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Aux_Magic_Primary, "Aux.Magic.Primary");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Aux_Magic_Secondary, "Aux.Magic.Secondary");
 
 //Vendor tags
 UE_DEFINE_GAMEPLAY_TAG(TAG_Vendor_Blacksmith_Defender, "Vendor.Blacksmith.Defender");

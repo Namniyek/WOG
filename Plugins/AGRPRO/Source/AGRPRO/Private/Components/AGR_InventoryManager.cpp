@@ -505,7 +505,8 @@ bool UAGR_InventoryManager::RemoveItemsOfClass(
         {
             /* Deplete all stacks, destroy item, and move along ... */
             StacksToRemove -= ItemComponent->CurrentStack;
-            ItemActor->Destroy();
+            //ItemActor->Destroy();
+            ItemComponent->DestroyItem();
         }
     }
 
@@ -600,7 +601,7 @@ bool UAGR_InventoryManager::RemoveItemsWithTagSlotType(
         {
             /* Deplete all stacks, destroy item, and move along ... */
             StacksToRemove -= ItemComponent->CurrentStack;
-            ItemActor->Destroy();
+            ItemComponent->DestroyItem();
         }
     }
 

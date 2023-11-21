@@ -61,6 +61,9 @@ struct FCharacterAbilityData
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Inventory")
 	TArray<TSubclassOf<class AWOGBaseWeapon>> Weapons = { nullptr };
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Inventory")
+	TArray<TSubclassOf<class AWOGBaseMagic>> Magics = { nullptr };
 };
 
 UENUM(BlueprintType)

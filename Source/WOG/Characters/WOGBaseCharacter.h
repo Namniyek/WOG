@@ -53,6 +53,7 @@ protected:
 	virtual void BeginPlay() override;
 	void SendAbilityLocalInput(const EWOGAbilityInputID InInputID);
 	virtual void OnHealthAttributeChanged(const FOnAttributeChangeData& Data);
+	void GiveDeathResources(AActor* InActor);
 	virtual void OnStaminaAttributeChanged(const FOnAttributeChangeData& Data);
 	virtual void OnMaxMovementSpeedAttributeChanged(const FOnAttributeChangeData& Data);
 	virtual void OnGameplayEffectAppliedToSelf(UAbilitySystemComponent* Source, const FGameplayEffectSpec& Spec, FActiveGameplayEffectHandle Handle);
@@ -81,6 +82,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, Category = "Setup|Character Data")
 	FCharacterData CharacterData;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Setup|Character Data")
+	TMap<TSubclassOf<AActor>, int32> DeathResourceMap;
 
 	#pragma region Actor Components
 	UPROPERTY()

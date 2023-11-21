@@ -5,21 +5,21 @@
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
 #include "Types/CharacterTypes.h"
-#include "VendorInterface.generated.h"
+#include "InventoryInterface.generated.h"
 
 class AWOGVendor;
 
 // This class does not need to be modified.
 UINTERFACE(MinimalAPI)
-class UVendorInterface : public UInterface
+class UInventoryInterface : public UInterface
 {
 	GENERATED_BODY()
 };
 
-/**
+/**	
  * 
  */
-class WOG_API IVendorInterface
+class WOG_API IInventoryInterface
 {
 	GENERATED_BODY()
 
@@ -39,5 +39,11 @@ public:
 	void BuyItem(const TArray<FCostMap>& CostMap, AWOGVendor* VendorActor, TSubclassOf<AActor> ItemClass, const int32& Amount);
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-	void BackFromVendorWidget(AActor* Actor);
+	void BackFromWidget(AActor* Actor);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void SwitchItem(bool bToCommon, AActor* ItemToSwitch, AActor* PreviousItem, FGameplayTagContainer AuxTagsContainer, TSubclassOf<AActor> ItemClass, const int32& Amount);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void HandleHighlight(bool bIsAllowed);
 };

@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "Interfaces/VendorInterface.h"
 #include "WOGVendorBaseWidget.generated.h"
 
 class UCommonTextBlock;
@@ -28,8 +27,6 @@ public:
 	void RefreshVendorItems();
 
 private:
-
-
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UScrollBox> VendorItemsBox;
 

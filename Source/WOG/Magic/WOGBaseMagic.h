@@ -195,9 +195,6 @@ protected:
 
 	UFUNCTION(NetMulticast, reliable)
 	void Multicast_OnMagicEquip(AActor* User, FName SlotName);
-
-	void AttachToHands();
-	void AttachToBack();
 	#pragma endregion
 
 	#pragma region GAS
@@ -208,11 +205,10 @@ protected:
 	TArray<FGameplayAbilitySpecHandle> GrantedAbilities;
 	#pragma endregion
 
+	virtual void StoreMagic(const FName& Key);
+	virtual void RestoreMagic(ABasePlayerCharacter* NewOwner);
+
 	#pragma region Drop magic functionality
-
-	virtual void InitMagicDefaults();
-
-
 	UFUNCTION(BlueprintCallable)
 	virtual void DropMagic();
 

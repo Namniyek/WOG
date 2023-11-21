@@ -9,7 +9,7 @@
 #include "Engine/DataTable.h"
 #include "WOG/FunctionLibrary/MeshMergeFunctionLibrary.h"
 #include "Types/CharacterTypes.h"
-#include "Interfaces/VendorInterface.h"
+#include "Interfaces/InventoryInterface.h"
 #include "BasePlayerCharacter.generated.h"
 
 class AWOGCommonInventory;
@@ -121,7 +121,7 @@ public:
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInteractComplete, ABasePlayerCharacter*, Interactor);
 
 UCLASS()
-class WOG_API ABasePlayerCharacter : public AWOGBaseCharacter, public IVendorInterface
+class WOG_API ABasePlayerCharacter : public AWOGBaseCharacter, public IInventoryInterface
 {
 	GENERATED_BODY()
 
@@ -338,10 +338,8 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void EquipWeapon(const FName& Slot);
 
-	UPROPERTY(EditDefaultsOnly)
-	TSubclassOf<AWOGBaseWeapon> DefaultPickaxeClass;
-	UPROPERTY(EditDefaultsOnly)
-	TSubclassOf<AWOGBaseWeapon> DefaultWoodaxeClass;
+	UFUNCTION()
+	void OnConsumablePickedUp(AActor* Item);
 
 public:
 	UFUNCTION(Server, reliable, BlueprintCallable)
@@ -377,8 +375,17 @@ public:
 	void StoreWeapon(const FName& Key);
 	void RestoreWeapons();
 
+	void StoreMagic(const FName& Key);
+	void RestoreMagic ();
+
+	UFUNCTION()
+	void CreateDefaults();
+
 	UFUNCTION(BlueprintCallable)
 	void CreateDefaultTools();
+
+	UFUNCTION()
+	void GrantDefaultMagics();
 
 	#pragma endregion
 
@@ -424,11 +431,20 @@ public:
 
 	UFUNCTION(Server, reliable)
 	void Server_SetVendorBusy(bool bNewBusy, ABasePlayerCharacter* UserPlayer, AWOGVendor* Vendor);
+
+	UFUNCTION(Client, reliable)
+	void Client_KickPlayerFromVendor(AWOGVendor* Vendor);
 	#pragma endregion
 
 	#pragma region Stash
 	UFUNCTION(Server, reliable)
 	void Server_SetStashBusy(bool bNewBusy, ABasePlayerCharacter* UserPlayer, AWOGStashBase* Stash);
+
+	UFUNCTION(Server, reliable)
+	void Server_SwitchItem(AWOGStashBase* Stash, bool bToCommon, AActor* ItemToSwitch, AActor* PreviousItem, FGameplayTagContainer AuxTagsContainer, TSubclassOf<AActor> ItemClass, const int32& Amount);
+	
+	UFUNCTION(Client, reliable)
+	void Client_KickPlayerFromStash(AWOGStashBase* Stash);
 	#pragma endregion
 
 

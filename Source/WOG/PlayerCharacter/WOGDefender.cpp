@@ -11,6 +11,9 @@
 #include "Components/AGR_EquipmentManager.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "Magic/WOGBaseMagic.h"
+#include "AbilitySystem/AttributeSets/WOGAttributeSetBase.h"
+#include "Subsystems/WOGUIManagerSubsystem.h"
+#include "WOG/PlayerController/WOGPlayerController.h"
 
 AWOGDefender::AWOGDefender()
 {
@@ -51,7 +54,6 @@ void AWOGDefender::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 void AWOGDefender::InteractActionPressed(const FInputActionValue& Value)
 {
 	//TO-DO interact functionality
-	UE_LOG(LogTemp, Warning, TEXT("Interact button pressed from C++"));
 }
 
 void AWOGDefender::AdjustSpawnHeightActionPressed(const FInputActionValue& Value)
@@ -138,9 +140,24 @@ void AWOGDefender::AbilitiesButtonPressed(const FInputActionValue& Value)
 		EquipmentManager->GetMagicShortcutReference(FName("1"), OutMagic);
 		TObjectPtr<AWOGBaseMagic> Magic = Cast<AWOGBaseMagic>(OutMagic);
 		if (Magic && Magic->GetMagicData().AbilityInputType != EAbilityInputType::EAI_Instant) return;
+
+		//Check for Cooldown
 		if (Magic && HasMatchingGameplayTag(Magic->GetMagicData().CooldownTag))
 		{
-			UE_LOG(LogTemp, Error, TEXT("Cooldown in effect. Can't equip"));
+			UE_LOG(WOGLogCombat, Error, TEXT("Cooldown in effect. Can't equip"));
+			return;
+		}
+
+		//Check for resource
+		bool bSucessCheck = false;
+		if (AttributeSet && Magic && Magic->GetMagicData().Cost > UAbilitySystemBlueprintLibrary::GetFloatAttribute(this, AttributeSet->GetAdrenalineAttribute(), bSucessCheck))
+		{
+			TObjectPtr<UWOGUIManagerSubsystem> UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(OwnerPC->GetLocalPlayer());
+			if (UIManager)
+			{
+				UIManager->CreateResourceWarningWidget(FString("Adrenaline"));
+				UE_LOG(WOGLogCombat, Error, TEXT("Not enough Adrenaline. Can't equip"));
+			}
 			return;
 		}
 
@@ -166,9 +183,24 @@ void AWOGDefender::Ability3HoldButtonTriggered(const FInputActionValue& Value)
 	EquipmentManager->GetMagicShortcutReference(FName("1"), OutMagic);
 	TObjectPtr<AWOGBaseMagic> Magic = Cast<AWOGBaseMagic>(OutMagic);
 	if (Magic && Magic->GetMagicData().AbilityInputType != EAbilityInputType::EAI_Hold) return;
+
+	//Check for Cooldown
 	if (Magic && HasMatchingGameplayTag(Magic->GetMagicData().CooldownTag))
 	{
-		UE_LOG(LogTemp, Error, TEXT("Cooldown in effect. Can't equip"));
+		UE_LOG(WOGLogCombat, Error, TEXT("Cooldown in effect. Can't equip"));
+		return;
+	}
+
+	//Check for resource
+	bool bSucessCheck = false;
+	if (AttributeSet && Magic && Magic->GetMagicData().Cost > UAbilitySystemBlueprintLibrary::GetFloatAttribute(this, AttributeSet->GetAdrenalineAttribute(), bSucessCheck))
+	{
+		TObjectPtr<UWOGUIManagerSubsystem> UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(OwnerPC->GetLocalPlayer());
+		if (UIManager)
+		{
+			UIManager->CreateResourceWarningWidget(FString("Adrenaline"));
+			UE_LOG(WOGLogCombat, Error, TEXT("Not enough Adrenaline. Can't equip"));
+		}
 		return;
 	}
 

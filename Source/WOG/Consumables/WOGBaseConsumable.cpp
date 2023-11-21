@@ -117,6 +117,8 @@ void AWOGBaseConsumable::PostInitializeComponents()
 		ItemComponent->OnPickup.AddDynamic(this, &ThisClass::OnConsumablePickedUp);
 		ItemComponent->OnItemUsed.AddDynamic(this, &ThisClass::OnConsumableUsed);
 		ItemComponent->OnDestroy.AddDynamic(this, &ThisClass::OnConsumableDestroyed);
+		ItemComponent->OnItemDropped.AddDynamic(this, &ThisClass::OnConsumableDestroyed);
+		
 	}
 }
 
@@ -171,15 +173,19 @@ void AWOGBaseConsumable::OnConsumableOverlap(UPrimitiveComponent* OverlappedComp
 	SphereComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	SphereComponent->SetGenerateOverlapEvents(false);
 	ItemComponent->PickUpItem(Inventory);
-
 }
 
 void AWOGBaseConsumable::OnConsumablePickedUp(UAGR_InventoryManager* Inventory)
 {
+	ABasePlayerCharacter* NewOwnerCharacter = Cast<ABasePlayerCharacter>(Inventory->GetOwner());
+	if (NewOwnerCharacter)
+	{
+		SetOwnerCharacter(NewOwnerCharacter);
+	}
+
 	if (OwnerCharacter)
 	{
 		AddAbilityWidget(4);
-
 		GrantAbilities();
 	}
 }
@@ -190,10 +196,10 @@ void AWOGBaseConsumable::OnConsumableUsed(AActor* User, FGameplayTag GameplayTag
 	TObjectPtr<UAGR_InventoryManager> Inventory = UAGRLibrary::GetInventory(OwnerCharacter);
 	if (!Inventory) return;
 
-	if (ItemComponent->CurrentStack - 1 <= 0)
-	{
-		ItemComponent->DestroyItem();
-	}
+	//if (ItemComponent->CurrentStack - 1 <= 0)
+	//{
+		//ItemComponent->DestroyItem();
+	//}
 
 	FText OutNote;
 	Inventory->RemoveItemsOfClass(this->StaticClass(), 1, OutNote);
@@ -237,6 +243,7 @@ bool AWOGBaseConsumable::RemoveGrantedAbilities(AActor* User)
 	for (auto Class : ConsumableData.AbilitiesToGrant)
 	{
 		FGameplayAbilitySpec* AbilitySpec = ASC->FindAbilitySpecFromClass(Class);
+		if (!AbilitySpec) continue;
 		FGameplayAbilitySpecHandle Handle = AbilitySpec->Handle;
 		ASC->ClearAbility(Handle);
 		UE_LOG(LogTemp, Display, TEXT("Ability cleared: %s"), *Handle.ToString())

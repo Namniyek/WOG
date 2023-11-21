@@ -11,7 +11,7 @@
 #include "Components/Spacer.h"
 #include "Components/HorizontalBox.h"
 #include "Types/WOGGameplayTags.h"
-#include "Interfaces/VendorInterface.h"
+#include "Interfaces/InventoryInterface.h"
 #include "Subsystems/WOGUIManagerSubsystem.h"
 #include "PlayerCharacter/BasePlayerCharacter.h"
 #include "Resources/WOGVendor.h"
@@ -48,7 +48,7 @@ void UWOGVendorItem::AttemptPurchase()
 	if (CheckCost(ItemData.CostMap))
 	{
 		//Can afford
-		TObjectPtr<IVendorInterface> Interface = Cast<IVendorInterface>(BuyerActor);
+		TObjectPtr<IInventoryInterface> Interface = Cast<IInventoryInterface>(BuyerActor);
 		if (Interface)
 		{
 			Interface->Execute_BuyItem(BuyerActor, ItemData.CostMap, Vendor, ItemData.ItemClass, ItemData.ItemAmount);

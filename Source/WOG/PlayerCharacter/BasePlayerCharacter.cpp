@@ -40,6 +40,7 @@
 #include "Resources/WOGVendor.h"
 #include "Resources/WOGStashBase.h"
 #include "Subsystems/WOGUIManagerSubsystem.h"
+#include "Consumables/WOGBaseConsumable.h"
 
 
 void ABasePlayerCharacter::OnConstruction(const FTransform& Transform)
@@ -598,6 +599,7 @@ void ABasePlayerCharacter::SetDefaultAbilitiesAndEffects(bool bIsMale, FName Row
 	DefaultAbilitiesAndEffects.Abilities.Append(MeshRow->DefaultAbilitiesAndEffects.Abilities);
 	DefaultAbilitiesAndEffects.Effects.Append(MeshRow->DefaultAbilitiesAndEffects.Effects);
 	DefaultAbilitiesAndEffects.Weapons.Append(MeshRow->DefaultAbilitiesAndEffects.Weapons);
+	DefaultAbilitiesAndEffects.Magics.Append(MeshRow->DefaultAbilitiesAndEffects.Magics);
 
 	GiveDefaultAbilities();
 	ApplyDefaultEffects();
@@ -650,6 +652,14 @@ void ABasePlayerCharacter::TransactionComplete_Implementation()
 	else
 	{
 		UE_LOG(WOGLogUI, Error, TEXT("Transaction complete: No valid UIManagerComponent"));
+	}
+}
+
+void ABasePlayerCharacter::Client_KickPlayerFromVendor_Implementation(AWOGVendor* Vendor)
+{
+	if (Vendor)
+	{
+		Vendor->FreeVendor();
 	}
 }
 
@@ -827,6 +837,15 @@ void ABasePlayerCharacter::EquipWeapon(const FName& Slot)
 		int32 Key = FCString::Atoi(*Slot.ToString());
 		EventPayload.EventMagnitude = Key;
 		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Weapon_Equip, EventPayload);
+	}
+}
+
+void ABasePlayerCharacter::OnConsumablePickedUp(AActor* Item)
+{
+	TObjectPtr<AWOGBaseConsumable> Consumable = Cast<AWOGBaseConsumable>(Item);
+	if (Consumable && InventoryManager)
+	{
+		Consumable->OnConsumablePickedUp(InventoryManager);
 	}
 }
 
@@ -1526,6 +1545,22 @@ void ABasePlayerCharacter::Server_SetStashBusy_Implementation(bool bNewBusy, ABa
 	Stash->SetIsBusy(bNewBusy, UserPlayer);
 }
 
+void ABasePlayerCharacter::Server_SwitchItem_Implementation(AWOGStashBase* Stash, bool bToCommon, AActor* ItemToSwitch, AActor* PreviousItem, FGameplayTagContainer AuxTagsContainer, TSubclassOf<AActor> ItemClass, const int32& Amount)
+{
+	if (Stash)
+	{
+		Stash->SwitchStashedItems(bToCommon, ItemToSwitch, PreviousItem, AuxTagsContainer, ItemClass, Amount);
+	}
+}
+
+void ABasePlayerCharacter::Client_KickPlayerFromStash_Implementation(AWOGStashBase* Stash)
+{
+	if (Stash)
+	{
+		Stash->FreeStash();
+	}
+}
+
 void ABasePlayerCharacter::TargetLocked(AActor* NewTarget)
 {
 	if (!NewTarget)
@@ -1562,7 +1597,12 @@ void ABasePlayerCharacter::PostInitializeComponents()
 	{
 		FTimerHandle TimerHandle;
 		float Delay = 2.f;
-		GetWorldTimerManager().SetTimer(TimerHandle, this, &ThisClass::CreateDefaultTools, Delay);
+		GetWorldTimerManager().SetTimer(TimerHandle, this, &ThisClass::CreateDefaults, Delay);
+	}
+
+	if (InventoryManager)
+	{
+		InventoryManager->OnItemUpdated.AddDynamic(this, &ThisClass::OnConsumablePickedUp);
 	}
 }
 
@@ -1642,6 +1682,9 @@ void ABasePlayerCharacter::Server_StoreWeapons_Implementation()
 	StoreWeapon(FName("1"));
 	StoreWeapon(FName("2"));
 	RestoreTools();
+
+	StoreMagic(FName("1"));
+	StoreMagic(FName("2"));
 }
 
 void ABasePlayerCharacter::Server_RestoreWeapons_Implementation()
@@ -1649,6 +1692,7 @@ void ABasePlayerCharacter::Server_RestoreWeapons_Implementation()
 	StoreTool(FName("1"));
 	StoreTool(FName("2"));
 	RestoreWeapons();
+	RestoreMagic();
 }
 
 void ABasePlayerCharacter::RestoreTools()
@@ -1663,9 +1707,18 @@ void ABasePlayerCharacter::RestoreTools()
 	for (auto OutItem : OutItems)
 	{
 		TObjectPtr<AWOGBaseWeapon> Weapon = Cast<AWOGBaseWeapon>(OutItem);
-		if (!Weapon) return;
+		if (Weapon)
+		{
+			Weapon->RestoreWeapon(this);
+			continue;
+		}
 
-		Weapon->RestoreWeapon(this);
+		TObjectPtr<AWOGBaseMagic> Magic = Cast<AWOGBaseMagic>(OutItem);
+		if (Magic)
+		{
+			Magic->RestoreMagic(this);
+			continue;
+		}
 	}
 }
 
@@ -1675,16 +1728,26 @@ void ABasePlayerCharacter::StoreTool(const FName& Key)
 	AActor* OutItem = nullptr;
 	EquipmentManager->GetWeaponShortcutReference(Key, OutItem);
 
-	if (!OutItem)
+	if (OutItem)
 	{
-		UE_LOG(LogTemp, Error, TEXT("NO VALID ITEM REFERENCE AT KEY : %s"), *Key.ToString());
-		return;
+		TObjectPtr<AWOGBaseWeapon> Weapon = Cast<AWOGBaseWeapon>(OutItem);
+		if (Weapon)
+		{
+			Weapon->StoreWeapon(Key);
+			return;
+		}
 	}
 
-	TObjectPtr<AWOGBaseWeapon> Weapon = Cast<AWOGBaseWeapon>(OutItem);
-	if (!Weapon) return;
-
-	Weapon->StoreWeapon(Key, this);
+	EquipmentManager->GetMagicShortcutReference(Key, OutItem);
+	if (OutItem)
+	{
+		TObjectPtr<AWOGBaseMagic> Magic = Cast<AWOGBaseMagic>(OutItem);
+		if (Magic)
+		{
+			Magic->StoreMagic(Key);
+			return;
+		}
+	}
 }
 
 void ABasePlayerCharacter::StoreWeapon(const FName& Key)
@@ -1695,14 +1758,14 @@ void ABasePlayerCharacter::StoreWeapon(const FName& Key)
 
 	if (!OutItem)
 	{
-		UE_LOG(LogTemp, Error, TEXT("NO VALID ITEM REFERENCE AT KEY : %s"), *Key.ToString());
+		UE_LOG(WOGLogInventory, Error, TEXT("NO VALID ITEM REFERENCE AT KEY : %s"), *Key.ToString());
 		return;
 	}
 
 	TObjectPtr<AWOGBaseWeapon> Weapon = Cast<AWOGBaseWeapon>(OutItem);
 	if (!Weapon) return;
 
-	Weapon->StoreWeapon(Key, this);
+	Weapon->StoreWeapon(Key);
 }
 
 void ABasePlayerCharacter::RestoreWeapons()
@@ -1723,28 +1786,121 @@ void ABasePlayerCharacter::RestoreWeapons()
 	}
 }
 
+void ABasePlayerCharacter::StoreMagic(const FName& Key)
+{
+	if (!EquipmentManager) return;
+	AActor* OutItem = nullptr;
+	EquipmentManager->GetMagicShortcutReference(Key, OutItem);
+
+	if (!OutItem)
+	{
+		UE_LOG(WOGLogInventory, Error, TEXT("NO VALID ITEM REFERENCE AT KEY : %s"), *Key.ToString());
+		return;
+	}
+
+	TObjectPtr<AWOGBaseMagic> Magic = Cast<AWOGBaseMagic>(OutItem);
+	if (!Magic) return;
+
+	Magic->StoreMagic(Key);
+}
+
+void ABasePlayerCharacter::RestoreMagic()
+{
+	if (!InventoryManager) return;
+
+	TArray<AActor*> OutItems;
+	int32 Amount = 0;
+	InventoryManager->GetAllItemsOfTagSlotType(TAG_Inventory_Magic, OutItems, Amount);
+
+	if (!OutItems.Num())
+	{
+		UE_LOG(WOGLogInventory, Error, TEXT("OutItems.Num() < 1"));
+		return;
+	}
+	for (auto OutItem : OutItems)
+	{
+		TObjectPtr<AWOGBaseMagic> Magic = Cast<AWOGBaseMagic>(OutItem);
+		if (!Magic)
+		{
+			UE_LOG(WOGLogInventory, Error, TEXT("Magic invalid"));
+			return;
+		}
+
+		Magic->RestoreMagic(this);
+
+		UE_LOG(WOGLogInventory, Display, TEXT("RestoreMagic() called on %s"), *GetNameSafe(Magic));
+	}
+}
+
+void ABasePlayerCharacter::CreateDefaults()
+{
+	if (GetCharacterData().bIsAttacker)
+	{
+		GrantDefaultMagics();
+	}
+	if (!GetCharacterData().bIsAttacker)
+	{
+		CreateDefaultTools();
+	}
+}
+
 void ABasePlayerCharacter::CreateDefaultTools()
 {
-	FActorSpawnParameters SpawnParams;
-	SpawnParams.Owner = this;
-
-	if (DefaultPickaxeClass)
+	if (!InventoryManager || !HasAuthority())
 	{
-		TObjectPtr<AWOGBaseWeapon> DefaultPickaxe = GetWorld()->SpawnActor<AWOGBaseWeapon>(DefaultPickaxeClass, FTransform(), SpawnParams);
-		if (DefaultPickaxe)
+		return;
+	}
+
+	if (DefaultAbilitiesAndEffects.Weapons.IsEmpty())
+	{
+		UE_LOG(WOGLogInventory, Error, TEXT("No Default weapons to give"));
+		return;
+	}
+
+	for (auto Class : DefaultAbilitiesAndEffects.Weapons)
+	{
+		if (!Class) continue;
+
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Owner = this;
+
+		TObjectPtr<AWOGBaseWeapon> Weapon = GetWorld()->SpawnActor<AWOGBaseWeapon>(Class, FTransform(), SpawnParams);
+		if (Weapon)
 		{
-			InventoryManager->AddItemToInventoryDirectly(DefaultPickaxe);
+			InventoryManager->AddItemToInventoryDirectly(Weapon);
 		}
 	}
 
-	if (DefaultWoodaxeClass)
+	RestoreTools();
+}
+
+void ABasePlayerCharacter::GrantDefaultMagics()
+{
+	if (!InventoryManager || !HasAuthority())
 	{
-		TObjectPtr<AWOGBaseWeapon> DefaultWoodaxe = GetWorld()->SpawnActor<AWOGBaseWeapon>(DefaultWoodaxeClass, FTransform(), SpawnParams);
-		if (DefaultWoodaxe)
+		return;
+	}
+
+	if (DefaultAbilitiesAndEffects.Magics.IsEmpty())
+	{
+		UE_LOG(WOGLogInventory, Error, TEXT("No Default Magics to grant"));
+		return;
+	}
+
+	for(auto Class : DefaultAbilitiesAndEffects.Magics)
+	{
+		if (!Class) continue;
+
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Owner = this;
+
+		TObjectPtr<AWOGBaseMagic> Magic = GetWorld()->SpawnActor<AWOGBaseMagic>(Class, FTransform(), SpawnParams);
+		if (Magic)
 		{
-			InventoryManager->AddItemToInventoryDirectly(DefaultWoodaxe);
+			InventoryManager->AddItemToInventoryDirectly(Magic);
 		}
 	}
 
+	//TO-DO - fix this! Revert the tool thingy 
 	RestoreTools();
 }

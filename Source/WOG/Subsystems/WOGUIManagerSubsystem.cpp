@@ -4,7 +4,7 @@
 #include "WOG.h"
 #include "Data/TODEnum.h"
 #include "UI/Vendors/WOGVendorBaseWidget.h"
-#include "Interfaces/VendorInterface.h"
+#include "Interfaces/InventoryInterface.h"
 #include "PlayerController/WOGPlayerController.h"
 #include "UI/WOGMatchHUD.h"
 #include "UI/WOG_HUD.h"
@@ -115,10 +115,10 @@ void UWOGUIManagerSubsystem::UpdateAvailableResourceWidget()
 {
 	if (!VendorWidget) return;
 
-	TObjectPtr<IVendorInterface> VendorInterface = Cast<IVendorInterface>(VendorWidget);
-	if (VendorInterface)
+	TObjectPtr<IInventoryInterface> Interface = Cast<IInventoryInterface>(VendorWidget);
+	if (Interface)
 	{
-		VendorInterface->Execute_UpdateAvailableResourceWidget(VendorWidget);
+		Interface->Execute_UpdateAvailableResourceWidget(VendorWidget);
 	}
 }
 
@@ -275,6 +275,7 @@ void UWOGUIManagerSubsystem::RemoveAbilityWidget(const int32& AbilityID)
 	if (!Container) return;
 
 	Container->RemoveChildAbility(AbilityID);
+	UE_LOG(WOGLogUI, Display, TEXT("Removed ability %d, from Subsystem"), AbilityID);
 }
 
 void UWOGUIManagerSubsystem::AddAnnouncementWidget(ETimeOfDay NewTOD)
@@ -487,6 +488,8 @@ void UWOGUIManagerSubsystem::AddStashWidget(ABasePlayerCharacter* User, AWOGStas
 	StashWidget = Cast<UWOGStashWidget>(CreateWidget<UUserWidget>(OwnerPC, MatchHUD->StashWidgetClass));
 	if (StashWidget)
 	{
+		StashWidget->SetStashActor(Stash);
+		StashWidget->SetPlayerActor(User);
 		StashWidget->AddToViewport();
 	}
 }

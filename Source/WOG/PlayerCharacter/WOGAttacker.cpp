@@ -21,6 +21,7 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Interfaces/SpawnInterface.h"
 #include "Subsystems/WOGUIManagerSubsystem.h"
+#include "Libraries/WOGBlueprintLibrary.h"
 
 
 AWOGAttacker::AWOGAttacker()
@@ -165,7 +166,7 @@ void AWOGAttacker::AbilitiesButtonPressed(const FInputActionValue& Value)
 
 	if (AbilitiesVector.X > 0)
 	{
-		//Button 4/Right pressed
+		//Button 4/Down pressed
 		SendAbilityLocalInput(EWOGAbilityInputID::Ability4);
 	}
 	if (AbilitiesVector.X < 0)
@@ -186,9 +187,24 @@ void AWOGAttacker::AbilitiesButtonPressed(const FInputActionValue& Value)
 
 		TObjectPtr<AWOGBaseMagic> MagicToEquip = Cast<AWOGBaseMagic>(OutMagic);
 		if (MagicToEquip && MagicToEquip->GetMagicData().AbilityInputType != EAbilityInputType::EAI_Instant) return;
+
+		//Check for Cooldown
 		if (MagicToEquip && HasMatchingGameplayTag(MagicToEquip->GetMagicData().CooldownTag))
 		{
 			UE_LOG(LogTemp, Error, TEXT("Cooldown in effect. Can't equip"));
+			return;
+		}
+
+		//Check for resource
+		bool bSucessCheck = false;
+		if (AttributeSet && MagicToEquip && MagicToEquip->GetMagicData().Cost > UAbilitySystemBlueprintLibrary::GetFloatAttribute(this, AttributeSet->GetManaAttribute(), bSucessCheck))
+		{
+			TObjectPtr<UWOGUIManagerSubsystem> UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(OwnerPC->GetLocalPlayer());
+			if (UIManager)
+			{
+				UIManager->CreateResourceWarningWidget(FString("Mana"));
+				UE_LOG(WOGLogCombat, Error, TEXT("Not enough Mana. Can't equip"));
+			}
 			return;
 		}
 
@@ -199,16 +215,30 @@ void AWOGAttacker::AbilitiesButtonPressed(const FInputActionValue& Value)
 		//Button 3/Down pressed
 		if (!EquipmentManager) return;
 
-		//Check for cooldown tag
 		AActor* OutMagic = nullptr;
 		EquipmentManager->GetMagicShortcutReference(FName("2"), OutMagic);
 		if (!OutMagic) return;
 
 		TObjectPtr<AWOGBaseMagic> MagicToEquip = Cast<AWOGBaseMagic>(OutMagic);
 		if (MagicToEquip && MagicToEquip->GetMagicData().AbilityInputType != EAbilityInputType::EAI_Instant) return;
+
+		//Check for Cooldown
 		if (MagicToEquip && HasMatchingGameplayTag(MagicToEquip->GetMagicData().CooldownTag))
 		{
 			UE_LOG(LogTemp, Error, TEXT("Cooldown in effect. Can't equip"));
+			return;
+		}
+
+		//Check for Resource
+		bool bSucessCheck = false;
+		if (AttributeSet && MagicToEquip && MagicToEquip->GetMagicData().Cost > UAbilitySystemBlueprintLibrary::GetFloatAttribute(this, AttributeSet->GetManaAttribute(), bSucessCheck))
+		{
+			TObjectPtr<UWOGUIManagerSubsystem> UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(OwnerPC->GetLocalPlayer());
+			if (UIManager)
+			{
+				UIManager->CreateResourceWarningWidget(FString("Mana"));
+				UE_LOG(WOGLogCombat, Error, TEXT("Not enough Mana. Can't equip"));
+			}
 			return;
 		}
 
@@ -230,16 +260,30 @@ void AWOGAttacker::Ability2HoldButtonTriggered(const FInputActionValue& Value)
 
 	if (!EquipmentManager) return;
 
-	//Check for cooldown tag
 	AActor* OutMagic = nullptr;
 	EquipmentManager->GetMagicShortcutReference(FName("1"), OutMagic);
 	if (!OutMagic) return;
 
 	TObjectPtr<AWOGBaseMagic> MagicToEquip = Cast<AWOGBaseMagic>(OutMagic);
 	if (MagicToEquip && MagicToEquip->GetMagicData().AbilityInputType != EAbilityInputType::EAI_Hold) return;
+
+	//Check for cooldown
 	if (MagicToEquip && HasMatchingGameplayTag(MagicToEquip->GetMagicData().CooldownTag))
 	{
 		UE_LOG(LogTemp, Error, TEXT("Cooldown in effect. Can't equip"));
+		return;
+	}
+
+	//Check for resource
+	bool bSucessCheck = false;
+	if (AttributeSet && MagicToEquip && MagicToEquip->GetMagicData().Cost > UAbilitySystemBlueprintLibrary::GetFloatAttribute(this, AttributeSet->GetManaAttribute(), bSucessCheck))
+	{
+		TObjectPtr<UWOGUIManagerSubsystem> UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(OwnerPC->GetLocalPlayer());
+		if (UIManager)
+		{
+			UIManager->CreateResourceWarningWidget(FString("Mana"));
+			UE_LOG(WOGLogCombat, Error, TEXT("Not enough Mana. Can't equip"));
+		}
 		return;
 	}
 
@@ -261,16 +305,30 @@ void AWOGAttacker::Ability3HoldButtonTriggered(const FInputActionValue& Value)
 
 	if (!EquipmentManager) return;
 
-	//Check for cooldown tag
 	AActor* OutMagic = nullptr;
 	EquipmentManager->GetMagicShortcutReference(FName("2"), OutMagic);
 	if (!OutMagic) return;
 
 	TObjectPtr<AWOGBaseMagic> MagicToEquip = Cast<AWOGBaseMagic>(OutMagic);
 	if (MagicToEquip && MagicToEquip->GetMagicData().AbilityInputType != EAbilityInputType::EAI_Hold) return;
+
+	//Check for cooldown
 	if (MagicToEquip && HasMatchingGameplayTag(MagicToEquip->GetMagicData().CooldownTag))
 	{
 		UE_LOG(LogTemp, Error, TEXT("Cooldown in effect. Can't equip"));
+		return;
+	}
+
+	//Check for resource
+	bool bSucessCheck = false;
+	if (AttributeSet && MagicToEquip && MagicToEquip->GetMagicData().Cost > UAbilitySystemBlueprintLibrary::GetFloatAttribute(this, AttributeSet->GetManaAttribute(), bSucessCheck))
+	{
+		TObjectPtr<UWOGUIManagerSubsystem> UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(OwnerPC->GetLocalPlayer());
+		if (UIManager)
+		{
+			UIManager->CreateResourceWarningWidget(FString("Mana"));
+			UE_LOG(WOGLogCombat, Error, TEXT("Not enough Mana. Can't equip"));
+		}
 		return;
 	}
 

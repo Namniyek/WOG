@@ -12,6 +12,7 @@
 #include "PlayerCharacter/BasePlayerCharacter.h"
 #include "Subsystems/WOGUIManagerSubsystem.h"
 #include "UI/Vendors/WOGVendorBaseWidget.h"
+#include "Subsystems/WOGWorldSubsystem.h"
 
 AWOGVendor::AWOGVendor()
 {
@@ -50,6 +51,7 @@ void AWOGVendor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifeti
 	DOREPLIFETIME(AWOGVendor, bIsBusy);
 	DOREPLIFETIME(AWOGVendor, PlayerUsingVendor);
 	DOREPLIFETIME(AWOGVendor, OverlappingPlayers);
+	DOREPLIFETIME(AWOGVendor, bIsDay);
 }
 
 void AWOGVendor::BeginPlay()
@@ -75,6 +77,13 @@ void AWOGVendor::BeginPlay()
 		if (OutItems.IsEmpty() || !OutItems[0]) return;
 
 		CommonInventory = UAGRLibrary::GetInventory(OutItems[0]);
+
+		TObjectPtr<UWOGWorldSubsystem> WorldSubsystem = GetWorld()->GetSubsystem<UWOGWorldSubsystem>();
+		if (WorldSubsystem)
+		{
+			WorldSubsystem->OnKeyTimeHitDelegate.AddDynamic(this, &ThisClass::OnKeyTimeHit);
+			WorldSubsystem->TimeOfDayChangedDelegate.AddDynamic(this, &ThisClass::TimeOfDayChanged);
+		}
 	}
 }
 
@@ -110,30 +119,32 @@ void AWOGVendor::Sell(const TArray<FCostMap>& CostMap, TSubclassOf<AActor> ItemC
 	if (OutItems.Num() && OutItems[0])
 	{
 		TObjectPtr<UAGR_ItemComponent> Item = UAGRLibrary::GetItemComponent(OutItems[0]);
-		if (Item)
+		if (!Item)
 		{
-			if (!Item->bStackable)
+			return;
+		}
+
+		if (!Item->bStackable)
+		{
+			Item->DropItem();
+			Item->PickUpItem(CommonInventory);
+		}
+		else
+		{
+			if (Item->CurrentStack > Amount)
 			{
+				VendorInventory->RemoveItemsOfClass(ItemClass, Amount, OutNote);
+				UE_LOG(WOGLogInventory, Display, TEXT("Vendor inventory: %s"), *OutNote.ToString());
+			}
+			else if (Item->CurrentStack <= Amount)
+			{
+				AmountToAdd = Item->CurrentStack;
 				Item->DestroyItem();
 			}
-			else
-			{
-				if (Item->CurrentStack > Amount)
-				{
-					VendorInventory->RemoveItemsOfClass(ItemClass, Amount, OutNote);
-					UE_LOG(WOGLogInventory, Display, TEXT("Vendor inventory: %s"), *OutNote.ToString());
-				}
-				else if (Item->CurrentStack <= Amount)
-				{
-					AmountToAdd = Item->CurrentStack;
-					Item->DestroyItem();
-				}
-			}
+
+			CommonInventory->AddItemsOfClass(ItemClass, AmountToAdd, OutNote);
 		}
 	}
-
-	CommonInventory->AddItemsOfClass(ItemClass, AmountToAdd, OutNote);
-	UE_LOG(WOGLogInventory, Display, TEXT("Common inventory: %s"), *OutNote.ToString());
 
 	FTimerHandle DelayTimer;
 	GetWorldTimerManager().SetTimer(DelayTimer, this, &ThisClass::RefreshVendorItems, 0.05f, false);
@@ -141,7 +152,7 @@ void AWOGVendor::Sell(const TArray<FCostMap>& CostMap, TSubclassOf<AActor> ItemC
 
 void AWOGVendor::RefreshVendorItems()
 {
-	TObjectPtr<IVendorInterface> Interface = Cast<IVendorInterface>(PlayerUsingVendor);
+	TObjectPtr<IInventoryInterface> Interface = Cast<IInventoryInterface>(PlayerUsingVendor);
 	if (Interface)
 	{
 		Interface->Execute_TransactionComplete(PlayerUsingVendor);
@@ -261,7 +272,7 @@ void AWOGVendor::OnCameraBlendInFinished()
 	}
 }
 
-void AWOGVendor::BackFromVendorWidget_Implementation(AActor* Actor)
+void AWOGVendor::BackFromWidget_Implementation(AActor* Actor)
 {
 	if (!Actor) return;
 	FreeVendor();
@@ -306,7 +317,14 @@ void AWOGVendor::OnCameraBlendOutFinished()
 			Actor->SetActorHiddenInGame(false);
 		}
 
-		PlayerUsingVendor->Server_SetVendorBusy(false, PlayerUsingVendor, this);
+		if (bIsDay)
+		{
+			PlayerUsingVendor->Server_SetVendorBusy(false, PlayerUsingVendor, this);
+		}
+		if (!bIsDay)
+		{
+			PlayerUsingVendor->Server_SetVendorBusy(true, PlayerUsingVendor, this);
+		}
 	}
 }
 
@@ -359,4 +377,34 @@ void AWOGVendor::ShowCorrectWidget(bool bIsVendorBusy, ABasePlayerCharacter* Ove
 	}
 }
 
+void AWOGVendor::TimeOfDayChanged(ETimeOfDay TOD)
+{
+	switch (TOD)
+	{
+	case ETimeOfDay::TOD_Dawn2:
+		SetIsBusy(false, nullptr);
+		bIsDay = true;
+		break;
+	case ETimeOfDay::TOD_Dawn3:
+		SetIsBusy(false, nullptr);
+		bIsDay = true;
+		break;
+	}
+}
 
+void AWOGVendor::OnKeyTimeHit(int32 CurrentTime)
+{
+	if (CurrentTime == 1070)
+	{
+		bIsDay = false;
+		if (PlayerUsingVendor)
+		{
+			PlayerUsingVendor->Client_KickPlayerFromVendor(this);
+		}
+		else
+		{
+			SetIsBusy(true, nullptr);
+			ShowCorrectWidget(true, nullptr);
+		}
+	}
+}

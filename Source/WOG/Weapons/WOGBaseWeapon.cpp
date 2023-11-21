@@ -184,13 +184,13 @@ void AWOGBaseWeapon::DropWeapon()
 	SetOwner(nullptr);
 }
 
-void AWOGBaseWeapon::StoreWeapon(const FName& Key, AActor* InventoryActor)
+void AWOGBaseWeapon::StoreWeapon(const FName& Key)
 {
 	if (!OwnerCharacter) return;
 
 	RemoveGrantedAbilities(OwnerCharacter);
 
-	//Unequip weapon form individual inventory
+	//Unequip weapon from equipment manager
 	UAGR_EquipmentManager* Equipment = UAGRLibrary::GetEquipment(OwnerCharacter);
 	if (Equipment)
 	{
@@ -229,21 +229,6 @@ void AWOGBaseWeapon::StoreWeapon(const FName& Key, AActor* InventoryActor)
 	{
 		ItemComponent->ItemAuxTag = TAG_Aux_Weapon_Secondary;
 	}
-
-	//Check for the common inventory and add the weapon directly there 
-	if (!InventoryActor)
-	{
-		UE_LOG(LogTemp, Error, TEXT("No Common inventory actor"));
-		return;
-	}
-	UAGR_InventoryManager* Inventory = UAGRLibrary::GetInventory(InventoryActor);
-	if (!Inventory)
-	{
-		UE_LOG(LogTemp, Error, TEXT("No Common inventory component"));
-		return;
-	}
-	Inventory->AddItemToInventoryDirectly(this);
-
 
 	// Last thing, clear OwnerCharacter
 	OwnerCharacter = nullptr;

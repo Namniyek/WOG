@@ -6,7 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "GameplayTags.h"
 #include "Types/CharacterTypes.h"
-#include "Interfaces/VendorInterface.h"
+#include "Interfaces/InventoryInterface.h"
 #include "WOGVendor.generated.h"
 
 class UWOGVendorItem;
@@ -14,21 +14,21 @@ class UCameraComponent;
 class USphereComponent;
 class UWidgetComponent;
 class UAGR_InventoryManager;
-class ABasePlayerCharacter;
 
 UCLASS()
-class WOG_API AWOGVendor : public AActor, public IVendorInterface
+class WOG_API AWOGVendor : public AActor, public IInventoryInterface
 {
 	GENERATED_BODY()
 	
 public:	
+	friend class ABasePlayerCharacter;
 	AWOGVendor();
 
 	void Sell(const TArray<FCostMap>& CostMap, TSubclassOf<AActor> ItemClass, const int32& Amount);
 
 	void SetIsBusy(const bool& NewBusy, ABasePlayerCharacter* UserPlayer);
 
-	void BackFromVendorWidget_Implementation(AActor* Actor);
+	void BackFromWidget_Implementation(AActor* Actor);
 
 protected:
 	// Called when the game starts or when spawned
@@ -96,6 +96,17 @@ private:
 
 	UFUNCTION()
 	void RefreshVendorItems();
+
+	#pragma region TOD
+	UFUNCTION()
+	void TimeOfDayChanged(ETimeOfDay TOD);
+
+	UFUNCTION()
+	void OnKeyTimeHit(int32 CurrentTime);
+
+	UPROPERTY(Replicated)
+	bool bIsDay = true;
+	#pragma endregion 
 
 public:	
 

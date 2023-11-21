@@ -68,6 +68,7 @@ void UWOGUIManagerComponent::Client_RemoveAbilityWidget_Implementation(const int
 	if (UIManager)
 	{
 		UIManager->RemoveAbilityWidget(AbilityID);
+		UE_LOG(WOGLogUI, Display, TEXT("Removed ability %d"), AbilityID);
 	}
 }
 

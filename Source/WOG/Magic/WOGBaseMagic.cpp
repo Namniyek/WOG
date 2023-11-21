@@ -188,8 +188,6 @@ void AWOGBaseMagic::BeginPlay()
 {
 	Super::BeginPlay();
 	OwnerCharacter = OwnerCharacter != nullptr ? OwnerCharacter : GetOwner() ? Cast<ABasePlayerCharacter>(GetOwner()) : nullptr;
-	
-	InitMagicDefaults();
 }
 
 void AWOGBaseMagic::OnMagicOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -278,6 +276,7 @@ void AWOGBaseMagic::AddAbilityWidget(const int32& Key)
 
 void AWOGBaseMagic::OnMagicPickedUp(UAGR_InventoryManager* Inventory)
 {
+	//Bound and kept just in case
 }
 
 void AWOGBaseMagic::OnMagicEquip(AActor* User, FName SlotName)
@@ -301,6 +300,8 @@ void AWOGBaseMagic::OnMagicEquip(AActor* User, FName SlotName)
 
 		UKismetSystemLibrary::Delay(this, 0.05f, LatentActionInfo);
 		SpawnIdleClass();
+
+		Multicast_HandleStandbyCosmetics(false);
 	}
 	else
 	{
@@ -313,29 +314,19 @@ void AWOGBaseMagic::OnMagicEquip(AActor* User, FName SlotName)
 		{
 			IdleActor->Destroy();
 		}
+
+		Multicast_HandleStandbyCosmetics(false);
 	}
 }
 
 void AWOGBaseMagic::OnMagicUnequip(AActor* User, FName SlotName)
 {
+	//Bound and kept just in case
 }
 
 void AWOGBaseMagic::Multicast_OnMagicEquip_Implementation(AActor* User, FName SlotName)
 {
 	AttachToActor(User, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
-}
-
-void AWOGBaseMagic::AttachToHands()
-{
-	//TO-DO: 
-	//Activate idle Effects on hands
-	//Attach to OwnerCharacter
-}
-
-void AWOGBaseMagic::AttachToBack()
-{
-	//TO-DO: 
-	//Deactivate idle Effects on hands
 }
 
 bool AWOGBaseMagic::GrantMagicAbilities()
@@ -367,9 +358,113 @@ bool AWOGBaseMagic::RemoveGrantedAbilities(AActor* User)
 	return true;
 }
 
-void AWOGBaseMagic::InitMagicDefaults()
+void AWOGBaseMagic::StoreMagic(const FName& Key)
 {
+	if (!OwnerCharacter) return;
 
+	RemoveGrantedAbilities(OwnerCharacter);
+
+	//Unequip weapon from equipment manager
+	UAGR_EquipmentManager* Equipment = UAGRLibrary::GetEquipment(OwnerCharacter);
+	if (Equipment)
+	{
+		Equipment->RemoveMagicShortcutReference(this);
+		FText Note;
+		Equipment->UnEquipByReference(this, Note);
+	}
+
+	/*MeshMain->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+	MeshSecondary->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+
+	MeshMain->SetRelativeTransform(MeshMainOriginalTransform);
+	MeshSecondary->SetRelativeTransform(MeshSecOriginalTransform);*/
+
+	SphereComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	SphereComponent->SetCollisionResponseToAllChannels(ECR_Ignore);
+	SphereComponent->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+	SphereComponent->SetGenerateOverlapEvents(false);
+
+	UAGRAnimMasterComponent* AnimMaster = UAGRLibrary::GetAnimationMaster(OwnerCharacter);
+	if (AnimMaster)
+	{
+		AnimMaster->SetupBasePose(TAG_Pose_Relax);
+	}
+
+	if (OwnerCharacter->GetOwnerPC() && OwnerCharacter->GetOwnerPC()->GetUIManagerComponent())
+	{
+		OwnerCharacter->GetOwnerPC()->GetUIManagerComponent()->Client_RemoveAbilityWidget(AbilityKey);
+	}
+
+	//TO-DO Sort keys
+	if (Key == FName("1"))
+	{
+		ItemComponent->ItemAuxTag = TAG_Aux_Magic_Primary;
+	}
+	else if (Key == FName("2"))
+	{
+		ItemComponent->ItemAuxTag = TAG_Aux_Magic_Secondary;
+	}
+
+	// Last thing, clear OwnerCharacter
+	OwnerCharacter = nullptr;
+}
+
+void AWOGBaseMagic::RestoreMagic(ABasePlayerCharacter* NewOwner)
+{
+	if (!HasAuthority() || !ItemComponent || !NewOwner) return;
+
+	bool bIsActorAttacker = UWOGBlueprintLibrary::GetCharacterData(NewOwner).bIsAttacker;
+	if (MagicData.bIsAttacker != bIsActorAttacker) return;
+
+	UAGR_EquipmentManager* Equipment = UAGRLibrary::GetEquipment(NewOwner);
+	UAGR_InventoryManager* Inventory = UAGRLibrary::GetInventory(NewOwner);
+
+	if (!Equipment || !Inventory)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Equipment or Inventory not valid"));
+		return;
+	}
+
+	FShortcutItemReference MagicRef;
+	int32 KeyInt = -1;
+
+	if (ItemComponent)
+	{
+		if (ItemComponent->ItemAuxTag == TAG_Aux_Magic_Primary)
+		{
+			KeyInt = 1;
+		}
+		else if (ItemComponent->ItemAuxTag == TAG_Aux_Magic_Secondary)
+		{
+			KeyInt = 2;
+		}
+	}
+
+	MagicRef.Key = *FString::FromInt(KeyInt);
+	MagicRef.ItemShortcut = this;
+
+	if (Equipment->SaveMagicShortcutReference(MagicRef))
+	{
+		SetOwnerCharacter(NewOwner);
+		SphereComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		SphereComponent->SetGenerateOverlapEvents(false);
+		ItemComponent->PickUpItem(Inventory);
+		if (OwnerCharacter)
+		{
+			OwnerCharacter->Server_EquipMagic(MagicRef.Key, this);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("Invalid OwnerCharacter"));
+		}
+
+		AddAbilityWidget(KeyInt);
+		return;
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Save weapon reference failed"));
+	}
 }
 
 void AWOGBaseMagic::DropMagic()

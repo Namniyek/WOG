@@ -30,6 +30,18 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UOverlay> AbilityContainer_4;
 
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UOverlay> OverlayInputButton1;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UOverlay> OverlayInputButton2;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UOverlay> OverlayInputButton3;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UOverlay> OverlayInputButton4;
+
 	void AddChildAbility(const int32& AbilityID, UWOGAbilityWidget* WidgetToAdd);
 	void RemoveChildAbility(const int32& AbilityID);
 };

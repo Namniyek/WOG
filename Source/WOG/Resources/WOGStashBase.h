@@ -6,7 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "GameplayTags.h"
 #include "Types/CharacterTypes.h"
-#include "Interfaces/VendorInterface.h"
+#include "Interfaces/InventoryInterface.h"
 #include "WOGStashBase.generated.h"
 
 class UWOGVendorItem;
@@ -14,17 +14,23 @@ class UCameraComponent;
 class USphereComponent;
 class UWidgetComponent;
 class UAGR_InventoryManager;
-class ABasePlayerCharacter;
 
 UCLASS()
-class WOG_API AWOGStashBase : public AActor
+class WOG_API AWOGStashBase : public AActor, public IInventoryInterface
 {
 	GENERATED_BODY()
 	
 public:	
+	friend class ABasePlayerCharacter;
 	AWOGStashBase();
 
 	void SetIsBusy(const bool& NewBusy, ABasePlayerCharacter* UserPlayer);
+
+	void BackFromWidget_Implementation(AActor* Actor);
+
+	void SwitchItem_Implementation(bool bToCommon, AActor* ItemToSwitch, AActor* PreviousItem, FGameplayTagContainer AuxTagsContainer, TSubclassOf<AActor> ItemClass, const int32& Amount);
+
+	void SwitchStashedItems(const bool& bToCommon, AActor* ItemToSwitch, AActor* PreviousItem, FGameplayTagContainer AuxTagsContainer, TSubclassOf<AActor> ItemClass, const int32& Amount);
 
 protected:
 	// Called when the game starts or when spawned
@@ -88,6 +94,17 @@ private:
 
 	UFUNCTION()
 	void RefreshStashItems();
+
+	#pragma region TOD
+	UFUNCTION()
+	void TimeOfDayChanged(ETimeOfDay TOD);
+
+	UFUNCTION()
+	void OnKeyTimeHit(int32 CurrentTime);
+
+	UPROPERTY(Replicated)
+	bool bIsDay = true;
+	#pragma endregion 
 
 public:	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Setup)

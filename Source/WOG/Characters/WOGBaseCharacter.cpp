@@ -2,6 +2,7 @@
 
 
 #include "WOGBaseCharacter.h"
+#include "WOG.h"
 #include "Net/UnrealNetwork.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
@@ -25,6 +26,7 @@
 #include "Components/SizeBox.h"
 #include "UI/WOGCharacterWidgetContainer.h"
 #include "Subsystems/WOGUIManagerSubsystem.h"
+#include "Resources/WOGCommonInventory.h"
 
 AWOGBaseCharacter::AWOGBaseCharacter()
 {
@@ -162,21 +164,43 @@ void AWOGBaseCharacter::OnHealthAttributeChanged(const FOnAttributeChangeData& D
 					EventPayload.EventTag = TAG_Event_Elim;
 					EventPayload.Instigator = InstigatorCharacter->GetController();
 					UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Elim, EventPayload);
-					UE_LOG(LogTemp, Error, TEXT("Killed by Character"));
+					UE_LOG(WOGLogCombat, Error, TEXT("Killed by Character"));
 				}
+
+				GiveDeathResources(EffectContext.GetInstigator());
 			}
 			else if (EffectContext.GetInstigator()->IsA<AWOGBaseEnemy>())
 			{
 				FGameplayEventData EventPayload;
 				EventPayload.EventTag = TAG_Event_Elim;
 				UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Elim, EventPayload);
-				UE_LOG(LogTemp, Error, TEXT("Killed by Enemy"));
+				UE_LOG(WOGLogCombat, Error, TEXT("Killed by Enemy"));
 
 				/*
 				** TO-DO - Add and pass reference to the Owner of the enemy that killed this character
+				** TO-DO - Give death resource to the owner of enemy that killed this character
 				*/
 			}
 		}
+	}
+}
+
+void AWOGBaseCharacter::GiveDeathResources(AActor* InActor)
+{
+	TObjectPtr<ABasePlayerCharacter> InstigatorPlayer = Cast<ABasePlayerCharacter>(InActor);
+	if (!InstigatorPlayer || !InstigatorPlayer->CommonInventory) return;
+
+	TObjectPtr<UAGR_InventoryManager> CommonInventory = UAGRLibrary::GetInventory(InstigatorPlayer->CommonInventory);
+	if (!CommonInventory) return;
+
+	TArray<TSubclassOf<AActor>> OutResources;
+	DeathResourceMap.GenerateKeyArray(OutResources);
+	if (OutResources.IsEmpty()) return;
+
+	FText OutNote;
+	for (auto Resource : OutResources)
+	{
+		CommonInventory->AddItemsOfClass(Resource, *DeathResourceMap.Find(Resource), OutNote);
 	}
 }
 

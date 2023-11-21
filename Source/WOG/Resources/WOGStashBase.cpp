@@ -12,6 +12,7 @@
 #include "Resources/WOGCommonInventory.h"
 #include "PlayerCharacter/BasePlayerCharacter.h"
 #include "Subsystems/WOGUIManagerSubsystem.h"
+#include "Subsystems/WOGWorldSubsystem.h"
 
 AWOGStashBase::AWOGStashBase()
 {
@@ -48,6 +49,7 @@ void AWOGStashBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLif
 	DOREPLIFETIME(AWOGStashBase, bIsBusy);
 	DOREPLIFETIME(AWOGStashBase, PlayerUsingStash);
 	DOREPLIFETIME(AWOGStashBase, OverlappingPlayers);
+	DOREPLIFETIME(AWOGStashBase, bIsDay);
 }
 
 void AWOGStashBase::BeginPlay()
@@ -71,6 +73,13 @@ void AWOGStashBase::BeginPlay()
 		if (OutItems.IsEmpty() || !OutItems[0]) return;
 
 		CommonInventory = UAGRLibrary::GetInventory(OutItems[0]);
+
+		TObjectPtr<UWOGWorldSubsystem> WorldSubsystem = GetWorld()->GetSubsystem<UWOGWorldSubsystem>();
+		if (WorldSubsystem)
+		{
+			WorldSubsystem->OnKeyTimeHitDelegate.AddDynamic(this, &ThisClass::OnKeyTimeHit);
+			WorldSubsystem->TimeOfDayChangedDelegate.AddDynamic(this, &ThisClass::TimeOfDayChanged);
+		}
 	}
 
 }
@@ -138,6 +147,75 @@ void AWOGStashBase::SetIsBusy(const bool& NewBusy, ABasePlayerCharacter* UserPla
 	bIsBusy = NewBusy;
 
 	ShowCorrectWidget(bIsBusy, PlayerUsingStash);
+}
+
+void AWOGStashBase::BackFromWidget_Implementation(AActor* Actor)
+{
+	FreeStash();
+}
+
+void AWOGStashBase::SwitchItem_Implementation(bool bToCommon, AActor* ItemToSwitch, AActor* PreviousItem, FGameplayTagContainer AuxTagsContainer, TSubclassOf<AActor> ItemClass, const int32& Amount)
+{
+	if (!PlayerUsingStash) return;
+	PlayerUsingStash->Server_SwitchItem(this, bToCommon, ItemToSwitch, PreviousItem, AuxTagsContainer, ItemClass, Amount);
+}
+
+void AWOGStashBase::SwitchStashedItems(const bool& bToCommon, AActor* ItemToSwitch, AActor* PreviousItem, FGameplayTagContainer AuxTagsContainer, TSubclassOf<AActor> ItemClass, const int32& Amount)
+{
+	if (!HasAuthority()) return;
+	if (!CommonInventory) return;
+	if (!PlayerUsingStash) return;
+	if (!ItemToSwitch) return;
+
+	bool bIsSwitch = PreviousItem != nullptr;
+
+	TObjectPtr<UAGR_ItemComponent> Item = UAGRLibrary::GetItemComponent(ItemToSwitch);
+	if (!Item) return;
+
+	TObjectPtr<UAGR_InventoryManager> Recipient = bToCommon ? CommonInventory : UAGRLibrary::GetInventory(PlayerUsingStash);
+	if (!Recipient) return;
+
+	TObjectPtr<UAGR_InventoryManager> Giver = bToCommon ? UAGRLibrary::GetInventory(PlayerUsingStash) : CommonInventory;
+
+	if (bIsSwitch && Giver)
+	{
+		if (ItemToSwitch == PreviousItem) return;
+
+		TObjectPtr<UAGR_ItemComponent> SwitchItem = UAGRLibrary::GetItemComponent(PreviousItem);
+		if (SwitchItem && !SwitchItem->bStackable)
+		{
+			SwitchItem->DropItem();
+			SwitchItem->PickUpItem(Giver);
+			SwitchItem->ItemAuxTag = AuxTagsContainer.First();
+		}
+		if (SwitchItem && SwitchItem->bStackable)
+		{
+			FText OutNote;
+			int32 AmountToModify = SwitchItem->CurrentStack < Amount ? SwitchItem->CurrentStack : Amount;
+			Giver->AddItemsOfClass(PreviousItem->GetClass(), SwitchItem->CurrentStack, OutNote);
+			Recipient->RemoveItemsWithTagSlotType(SwitchItem->ItemTagSlotType, SwitchItem->CurrentStack, OutNote);
+
+			UE_LOG(WOGLogInventory, Warning, TEXT("PreviousItem class: %s"), *GetNameSafe(PreviousItem->GetClass()));
+			UE_LOG(WOGLogInventory, Warning, TEXT("%d of %s sent from %s to %s - SWITCHED"), AmountToModify, *GetNameSafe(PreviousItem), *GetNameSafe(Recipient), *GetNameSafe(Giver));
+		}
+	}
+
+	if (!Item->bStackable)
+	{
+		Item->DropItem();
+		Item->PickUpItem(Recipient);
+		Item->ItemAuxTag = AuxTagsContainer.First();
+	}
+	if (Item->bStackable && Giver)
+	{
+		FText OutNote;
+		int32 AmountToModify = Item->CurrentStack < Amount ? Item->CurrentStack : Amount;
+		Giver->RemoveItemsOfClass(ItemClass, AmountToModify, OutNote);
+		Recipient->AddItemsOfClass(ItemClass, AmountToModify, OutNote);
+
+		UE_LOG(WOGLogInventory, Display, TEXT("%d of %s sent from %s to %s - NO SWITCH"), AmountToModify, *GetNameSafe(ItemClass), *GetNameSafe(Giver), *GetNameSafe(Recipient));
+	}
+
 }
 
 void AWOGStashBase::OnRep_IsBusy()
@@ -243,7 +321,14 @@ void AWOGStashBase::OnCameraBlendOutFinished()
 			Actor->SetActorHiddenInGame(false);
 		}
 
-		PlayerUsingStash->Server_SetStashBusy(false, PlayerUsingStash, this);
+		if (bIsDay)
+		{
+			PlayerUsingStash->Server_SetStashBusy(false, PlayerUsingStash, this);
+		}
+		if (!bIsDay)
+		{
+			PlayerUsingStash->Server_SetStashBusy(true, PlayerUsingStash, this);
+		}
 	}
 }
 
@@ -283,5 +368,37 @@ void AWOGStashBase::ShowCorrectWidget(bool bIsVendorBusy, ABasePlayerCharacter* 
 void AWOGStashBase::RefreshStashItems()
 {
 
+}
+
+void AWOGStashBase::TimeOfDayChanged(ETimeOfDay TOD)
+{
+	switch (TOD)
+	{
+	case ETimeOfDay::TOD_Dawn2:
+		SetIsBusy(false, nullptr);
+		bIsDay = true;
+		break;
+	case ETimeOfDay::TOD_Dawn3:
+		SetIsBusy(false, nullptr);
+		bIsDay = true;
+		break;
+	}
+}
+
+void AWOGStashBase::OnKeyTimeHit(int32 CurrentTime)
+{
+	if (CurrentTime == 1070)
+	{
+		bIsDay = false;
+		if (PlayerUsingStash)
+		{
+			PlayerUsingStash->Client_KickPlayerFromStash(this);
+		}
+		else
+		{
+			SetIsBusy(true, nullptr);
+			ShowCorrectWidget(true, nullptr);
+		}
+	}
 }
 
