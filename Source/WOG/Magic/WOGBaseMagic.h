@@ -244,6 +244,8 @@ private:
 	UPROPERTY(Replicated)
 	int32 AbilityKey = 1;
 
+
+
 public:	
 
 	UFUNCTION(BlueprintPure)

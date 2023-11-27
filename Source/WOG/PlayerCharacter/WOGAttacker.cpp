@@ -74,7 +74,7 @@ void AWOGAttacker::PossessMinion()
 		return;
 	}
 
-	OwnerPC = OwnerPC == nullptr ? Cast<AWOGPlayerController>(GetController()) : OwnerPC;
+	OwnerPC = OwnerPC == nullptr ? (TObjectPtr<AWOGPlayerController>) Cast<AWOGPlayerController>(GetController()) : OwnerPC;
 	if (!OwnerPC)
 	{
 		UE_LOG(LogTemp, Error, TEXT("invalid OwnerPC"));
@@ -355,7 +355,7 @@ void AWOGAttacker::PossessRaven()
 		return;
 	}
 
-	OwnerPC = OwnerPC == nullptr ? Cast<AWOGPlayerController>(GetController()) : OwnerPC;
+	OwnerPC = OwnerPC == nullptr ? (TObjectPtr<AWOGPlayerController>) Cast<AWOGPlayerController>(GetController()) : OwnerPC;
 	if (!OwnerPC)
 	{
 		UE_LOG(LogTemp, Error, TEXT("invalid OwnerPC"));

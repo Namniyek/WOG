@@ -105,6 +105,7 @@ void ATimeOfDay::UpdateTimeOfDay(int32 Time)
 	switch (Time)
 	{
 		case 360:
+			if (CurrentDay == 1) TimeOfDay = ETimeOfDay::TOD_Dawn1;
 			if (CurrentDay == 2) TimeOfDay = ETimeOfDay::TOD_Dawn2;
 			if (CurrentDay == 3) TimeOfDay = ETimeOfDay::TOD_Dawn3;
 			if (CurrentDay == 4) TimeOfDay = ETimeOfDay::TOD_Dawn4;

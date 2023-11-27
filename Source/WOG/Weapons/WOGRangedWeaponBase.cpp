@@ -161,7 +161,7 @@ void AWOGRangedWeaponBase::Tick(float DeltaTime)
 
 void AWOGRangedWeaponBase::RecallWeapon_Implementation()
 {
-	OwnerCharacter = OwnerCharacter == nullptr ? Cast<ABasePlayerCharacter>(GetOwner()) : OwnerCharacter;
+	OwnerCharacter = OwnerCharacter == nullptr ? (TObjectPtr<ABasePlayerCharacter>) Cast<ABasePlayerCharacter>(GetOwner()) : OwnerCharacter;
 	if (!OwnerCharacter) return;
 
 	if (CombatManager)

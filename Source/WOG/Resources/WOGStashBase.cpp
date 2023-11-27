@@ -172,10 +172,10 @@ void AWOGStashBase::SwitchStashedItems(const bool& bToCommon, AActor* ItemToSwit
 	TObjectPtr<UAGR_ItemComponent> Item = UAGRLibrary::GetItemComponent(ItemToSwitch);
 	if (!Item) return;
 
-	TObjectPtr<UAGR_InventoryManager> Recipient = bToCommon ? CommonInventory : UAGRLibrary::GetInventory(PlayerUsingStash);
+	TObjectPtr<UAGR_InventoryManager> Recipient = bToCommon ? CommonInventory : (TObjectPtr<UAGR_InventoryManager>) UAGRLibrary::GetInventory(PlayerUsingStash);
 	if (!Recipient) return;
 
-	TObjectPtr<UAGR_InventoryManager> Giver = bToCommon ? UAGRLibrary::GetInventory(PlayerUsingStash) : CommonInventory;
+	TObjectPtr<UAGR_InventoryManager> Giver = bToCommon ? (TObjectPtr<UAGR_InventoryManager>) UAGRLibrary::GetInventory(PlayerUsingStash) : CommonInventory;
 
 	if (bIsSwitch && Giver)
 	{
@@ -205,6 +205,7 @@ void AWOGStashBase::SwitchStashedItems(const bool& bToCommon, AActor* ItemToSwit
 		Item->DropItem();
 		Item->PickUpItem(Recipient);
 		Item->ItemAuxTag = AuxTagsContainer.First();
+		Item->PreviousOwnerIndex = -1;
 	}
 	if (Item->bStackable && Giver)
 	{

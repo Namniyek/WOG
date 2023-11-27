@@ -59,7 +59,7 @@ private:
 	int32 CurrentHour = 0;
 	int32 CurrentMinute = 0;
 	UPROPERTY(Replicated)
-	int32 CurrentDay = 1;
+	int32 CurrentDay = 0;
 
 	void UpdateTimeOfDay(int32 Time);
 

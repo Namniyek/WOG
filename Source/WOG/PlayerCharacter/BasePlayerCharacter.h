@@ -399,9 +399,8 @@ public:
 
 	void HandleWeaponSwitch(bool bStoreWeapons);
 
-	void TakeEquipmentSnapshot();
-	void RestoreEquipmentFromSnapshot();
-	void DestroyEquipment();
+	void SendEquipmentToCommonInventory();
+	void RestoreEquipmentFromCommonInventory();
 
 	#pragma endregion
 

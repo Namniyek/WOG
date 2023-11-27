@@ -259,18 +259,5 @@ struct FPlayerCharacterEquipmentSnapshot
 {
 	GENERATED_USTRUCT_BODY();
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TSubclassOf<AActor> ClassSlotOne = nullptr;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TSubclassOf<AActor> ClassSlotTwo = nullptr;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TSubclassOf<AActor> ClassSlotThree = nullptr;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TSubclassOf<AActor> ClassSlotFour = nullptr;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	int32 SlotFourAmount = 0;
+	TPair<TSubclassOf<AActor>, int32> ConsumableReference;
 };

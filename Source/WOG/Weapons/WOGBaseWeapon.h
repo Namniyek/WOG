@@ -253,9 +253,6 @@ private:
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<AWOGRangedWeaponBase> SpawnedRangedWeapon;
 
-	/*UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<AActor> SpawnedAOEAttack;*/
-
 	void AddAbilityWidget(const int32& Key);
 	UPROPERTY(Replicated)
 	int32 AbilityKey = 1;

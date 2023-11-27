@@ -314,7 +314,7 @@ void AWOGBaseWeapon::PostInitializeComponents()
 void AWOGBaseWeapon::BeginPlay()
 {
 	Super::BeginPlay();
-	OwnerCharacter = OwnerCharacter!=nullptr ? OwnerCharacter : GetOwner() ? Cast<ABasePlayerCharacter>(GetOwner()) : nullptr;
+	OwnerCharacter = OwnerCharacter!=nullptr ? OwnerCharacter : GetOwner() ? (TObjectPtr<ABasePlayerCharacter>) Cast<ABasePlayerCharacter>(GetOwner()) : nullptr;
 	if (!OwnerCharacter)
 	{
 		UE_LOG(LogTemp, Error, TEXT("NO OWNER CHARACTER AT BEGINPLAY"));
@@ -406,13 +406,23 @@ void AWOGBaseWeapon::OnWeaponEquip(AActor* User, FName SlotName)
 		AnimMaster->SetupBasePose(WeaponData.WeaponPoseTag);
 
 		bool Success = GrantWeaponAbilities(User);
-		UE_LOG(LogTemp, Display, TEXT("WeaponGrantedAbilities applied: %d"), Success);
+		UE_LOG(WOGLogCombat, Display, TEXT("WeaponGrantedAbilities applied: %d"), Success);
 	}
 	else
 	{
 		AnimMaster->SetupBasePose(TAG_Pose_Relax);
 
 		bool Success = RemoveGrantedAbilities(User);
+	}
+
+	if (OwnerCharacter)
+	{
+		TObjectPtr<AWOGPlayerController> OwnerPC = Cast<AWOGPlayerController>(OwnerCharacter->GetController());
+		if (OwnerPC && ItemComponent)
+		{
+			ItemComponent->PreviousOwnerIndex = OwnerPC->UserIndex;
+			UE_LOG(WOGLogInventory, Display, TEXT("New PREVIOUS_USER_INDEX for weapon: %d"), ItemComponent->PreviousOwnerIndex);
+		}
 	}
 }
 
@@ -544,7 +554,7 @@ void AWOGBaseWeapon::ResetCombo()
 
 void AWOGBaseWeapon::Server_ThrowWeapon_Implementation(bool IsTargetValid, const FVector_NetQuantize& TargetLocation)
 {
-	OwnerCharacter = OwnerCharacter == nullptr ? Cast<ABasePlayerCharacter>(GetOwner()) : OwnerCharacter;
+	OwnerCharacter = OwnerCharacter == nullptr ? (TObjectPtr<ABasePlayerCharacter>) Cast<ABasePlayerCharacter>(GetOwner()) : OwnerCharacter;
 	if (!OwnerCharacter) return;
 
 	//Spawn throwable weapon actor
@@ -603,7 +613,7 @@ void AWOGBaseWeapon::Server_ThrowWeapon_Implementation(bool IsTargetValid, const
 
 void AWOGBaseWeapon::Server_SpawnWeaponAOE_Implementation(const FVector_NetQuantize& TargetLocation)
 {
-	OwnerCharacter = OwnerCharacter == nullptr ? Cast<ABasePlayerCharacter>(GetOwner()) : OwnerCharacter;
+	OwnerCharacter = OwnerCharacter == nullptr ? (TObjectPtr<ABasePlayerCharacter>) Cast<ABasePlayerCharacter>(GetOwner()) : OwnerCharacter;
 	if (!OwnerCharacter) return;
 
 	//Spawn AOE weapon actor
@@ -653,7 +663,7 @@ void AWOGBaseWeapon::RecallWeapon()
 
 void AWOGBaseWeapon::CatchWeapon()
 {
-	OwnerCharacter = OwnerCharacter == nullptr ? Cast<ABasePlayerCharacter>(GetOwner()) : OwnerCharacter;
+	OwnerCharacter = OwnerCharacter == nullptr ? (TObjectPtr<ABasePlayerCharacter>) Cast<ABasePlayerCharacter>(GetOwner()) : OwnerCharacter;
 	if (!OwnerCharacter) return;
 
 	UAbilitySystemComponent* ASC = OwnerCharacter->GetAbilitySystemComponent();
@@ -683,6 +693,8 @@ void AWOGBaseWeapon::SetOwnerCharacter(ABasePlayerCharacter* NewOwner)
 	if (NewOwner)
 	{
 		OwnerCharacter = NewOwner;
+
+
 	}
 	UE_LOG(LogTemp, Warning, TEXT("New owner of weapon %s is : %s"), *GetNameSafe(this), *GetNameSafe(OwnerCharacter));
 }

@@ -13,6 +13,7 @@
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/PlayerState.h"
 #include "Engine/LocalPlayer.h"
+#include "Online/OnlineSessionNames.h"
 
 const FName SESSION_NAME = TEXT("WOG Session");
 

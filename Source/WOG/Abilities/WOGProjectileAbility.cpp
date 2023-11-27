@@ -19,13 +19,13 @@ void AWOGProjectileAbility::BeginPlay()
 {
 	Super::BeginPlay();
 
-	OwnerCharacter = OwnerCharacter == nullptr ? Cast<ABasePlayerCharacter>(GetOwner()) : OwnerCharacter;
+	OwnerCharacter = OwnerCharacter == nullptr ? (TObjectPtr<ABasePlayerCharacter>) Cast<ABasePlayerCharacter>(GetOwner()) : OwnerCharacter;
 	UE_LOG(LogTemp, Warning, TEXT("OwnerCharacter is valid: %d"), IsValid(OwnerCharacter));
 }
 
 void AWOGProjectileAbility::Equip()
 {
-	OwnerCharacter = OwnerCharacter == nullptr ? Cast<ABasePlayerCharacter>(GetOwner()) : OwnerCharacter;
+	OwnerCharacter = OwnerCharacter == nullptr ? (TObjectPtr<ABasePlayerCharacter>) Cast<ABasePlayerCharacter>(GetOwner()) : OwnerCharacter;
 
 	Client_AddCrosshair();
 

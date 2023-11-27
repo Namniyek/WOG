@@ -65,7 +65,7 @@ void UWOGUIManagerSubsystem::InitVariables()
 
 void UWOGUIManagerSubsystem::SetTODString(ETimeOfDay CurrentTOD, FString& StringMain, FString& StringSec)
 {
-	MatchHUD == nullptr ? Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
+	MatchHUD == nullptr ? (TObjectPtr<AWOGMatchHUD>) Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
 	if (!MatchHUD || !MatchHUD->HUDWidget) return;
 
 	switch (CurrentTOD)
@@ -130,7 +130,7 @@ void UWOGUIManagerSubsystem::UpdateVendorWidgetAfterTransaction()
 
 void UWOGUIManagerSubsystem::CreateResourceWarningWidget(const FString& Attribute)
 {
-	MatchHUD == nullptr ? Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
+	MatchHUD == nullptr ? (TObjectPtr<AWOGMatchHUD>) Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
 	if (!MatchHUD || !MatchHUD->HUDWidget || !IsValid(MatchHUD->AttributeWarningClass)) return;
 
 	TObjectPtr<UWOGWarningWidget> WarningWidget = Cast<UWOGWarningWidget>(CreateWidget<UUserWidget>(OwnerPC, MatchHUD->AttributeWarningClass));
@@ -148,7 +148,7 @@ void UWOGUIManagerSubsystem::CreateResourceWarningWidget(const FString& Attribut
 
 void UWOGUIManagerSubsystem::CreateGenericWarningWidget(const FString& WarningString)
 {
-	MatchHUD == nullptr ? Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
+	MatchHUD == nullptr ? (TObjectPtr<AWOGMatchHUD>) Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
 	if (!MatchHUD || !MatchHUD->HUDWidget || !IsValid(MatchHUD->GenericWarningClass)) return;
 
 	TObjectPtr<UWOGWarningWidget> WarningWidget = Cast<UWOGWarningWidget>(CreateWidget<UUserWidget>(OwnerPC, MatchHUD->GenericWarningClass));
@@ -166,7 +166,7 @@ void UWOGUIManagerSubsystem::CreateGenericWarningWidget(const FString& WarningSt
 
 void UWOGUIManagerSubsystem::AddStaminaWidget()
 {
-	MatchHUD == nullptr ? Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
+	MatchHUD == nullptr ? (TObjectPtr<AWOGMatchHUD>) Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
 	if (!MatchHUD || !IsValid(MatchHUD->StaminaBarClass)) return;
 
 	TObjectPtr<AWOGBaseCharacter> BaseCharacter = Cast<AWOGBaseCharacter>(OwnerPC->GetPawn());
@@ -182,7 +182,7 @@ void UWOGUIManagerSubsystem::AddStaminaWidget()
 
 void UWOGUIManagerSubsystem::AddScreenDamageWidget(const int32& DamageThreshold)
 {
-	MatchHUD == nullptr ? Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
+	MatchHUD == nullptr ? (TObjectPtr<AWOGMatchHUD>) Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
 	if (!MatchHUD || !IsValid(MatchHUD->ScreenDamageWidgetClass)) return;
 
 	TObjectPtr<UWOGScreenDamage> ScreenDamageWidget = Cast<UWOGScreenDamage>(CreateWidget<UUserWidget>(OwnerPC, MatchHUD->ScreenDamageWidgetClass));
@@ -199,7 +199,7 @@ void UWOGUIManagerSubsystem::AddScreenDamageWidget(const int32& DamageThreshold)
 
 void UWOGUIManagerSubsystem::AddHoldProgressBar()
 {
-	MatchHUD == nullptr ? Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
+	MatchHUD == nullptr ? (TObjectPtr<AWOGMatchHUD>) Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
 	if (!MatchHUD || !MatchHUD->HUDWidget || !IsValid(MatchHUD->HoldProgressBarWidgetClass)) return;
 
 	HoldProgressBarWidget = Cast<UWOGHoldProgressBar>(CreateWidget<UUserWidget>(OwnerPC, MatchHUD->HoldProgressBarWidgetClass));
@@ -224,7 +224,7 @@ void UWOGUIManagerSubsystem::RemoveHoldProgressBar()
 
 void UWOGUIManagerSubsystem::AddRavenMarkerWidget(const int32& Amount)
 {
-	MatchHUD == nullptr ? Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
+	MatchHUD == nullptr ? (TObjectPtr<AWOGMatchHUD>) Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
 	if (!MatchHUD || !MatchHUD->HUDWidget || !IsValid(MatchHUD->RavenMarkerWidgetClass)) return;
 
 	RavenMarkerWidget = Cast<UWOGRavenMarkerWidget>(CreateWidget<UUserWidget>(OwnerPC, MatchHUD->RavenMarkerWidgetClass));
@@ -250,7 +250,7 @@ void UWOGUIManagerSubsystem::RemoveRavenMarkerWidget()
 
 void UWOGUIManagerSubsystem::AddAbilityWidget(const int32& AbilityID, TSubclassOf<UUserWidget> Class, UTexture2D* Icon, const float& Cooldown, const FGameplayTag& Tag)
 {
-	MatchHUD == nullptr ? Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
+	MatchHUD == nullptr ? (TObjectPtr<AWOGMatchHUD>) Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
 	if (!MatchHUD || !MatchHUD->HUDWidget) return;
 
 	TObjectPtr<UWOGAbilityWidget> AbilityWidget = Cast<UWOGAbilityWidget>(CreateWidget<UUserWidget>(OwnerPC, Class));
@@ -269,7 +269,7 @@ void UWOGUIManagerSubsystem::AddAbilityWidget(const int32& AbilityID, TSubclassO
 
 void UWOGUIManagerSubsystem::RemoveAbilityWidget(const int32& AbilityID)
 {
-	MatchHUD == nullptr ? Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
+	MatchHUD == nullptr ? (TObjectPtr<AWOGMatchHUD>) Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
 	if (!MatchHUD || !MatchHUD->HUDWidget) return;
 	TObjectPtr<UWOGAbilityContainerWidget> Container = MatchHUD->HUDWidget->GetAbilityContainer();
 	if (!Container) return;
@@ -280,7 +280,7 @@ void UWOGUIManagerSubsystem::RemoveAbilityWidget(const int32& AbilityID)
 
 void UWOGUIManagerSubsystem::AddAnnouncementWidget(ETimeOfDay NewTOD)
 {
-	MatchHUD == nullptr ? Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
+	MatchHUD == nullptr ? (TObjectPtr<AWOGMatchHUD>) Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
 	if (!MatchHUD || !MatchHUD->AnnouncementClass) return;
 
 	TOD = NewTOD;
@@ -293,7 +293,7 @@ void UWOGUIManagerSubsystem::AddAnnouncementWidget(ETimeOfDay NewTOD)
 
 void UWOGUIManagerSubsystem::AddEndgameWidget()
 {
-	MatchHUD == nullptr ? Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
+	MatchHUD == nullptr ? (TObjectPtr<AWOGMatchHUD>) Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
 	if (!MatchHUD) return;
 
 	MatchHUD->AddEndgameWidget();
@@ -301,7 +301,7 @@ void UWOGUIManagerSubsystem::AddEndgameWidget()
 
 void UWOGUIManagerSubsystem::ResetHUD()
 {
-	MatchHUD == nullptr ? Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
+	MatchHUD == nullptr ? (TObjectPtr<AWOGMatchHUD>) Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
 	if (MatchHUD)
 	{
 		MatchHUD->ResetHUDAfterRespawn();
@@ -317,7 +317,7 @@ void UWOGUIManagerSubsystem::ResetHUD()
 
 void UWOGUIManagerSubsystem::AddBarsWidget()
 {
-	MatchHUD == nullptr ? Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
+	MatchHUD == nullptr ? (TObjectPtr<AWOGMatchHUD>) Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
 	if (!MatchHUD || !MatchHUD->HUDWidget || !IsValid(MatchHUD->BarsWidgetClass)) return;
 
 	BarsWidget = CreateWidget<UUserWidget>(OwnerPC, MatchHUD->BarsWidgetClass);
@@ -343,7 +343,7 @@ void UWOGUIManagerSubsystem::RemoveBarsWidget()
 
 void UWOGUIManagerSubsystem::AddMinimapWidget()
 {
-	MatchHUD == nullptr ? Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
+	MatchHUD == nullptr ? (TObjectPtr<AWOGMatchHUD>) Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
 	if (!MatchHUD || !MatchHUD->HUDWidget || !IsValid(MatchHUD->MinimapWidgetClass)) return;
 
 	MinimapWidget = CreateWidget<UUserWidget>(OwnerPC, MatchHUD->MinimapWidgetClass);
@@ -364,10 +364,10 @@ void UWOGUIManagerSubsystem::RemoveMinimapWidget()
 
 void UWOGUIManagerSubsystem::CollapseAbilitiesWidget()
 {
-	MatchHUD == nullptr ? Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
+	MatchHUD == nullptr ? (TObjectPtr<AWOGMatchHUD>) Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
 	if (!MatchHUD || !MatchHUD->HUDWidget || !MatchHUD->HUDWidget->GetAbilitiesContainer()) return;
 
-	AbilityContainerWidget = AbilityContainerWidget == nullptr ? Cast<UUserWidget>(MatchHUD->HUDWidget->GetAbilitiesContainer()->GetChildAt(0)) : AbilityContainerWidget;
+	AbilityContainerWidget = AbilityContainerWidget == nullptr ? (TObjectPtr<UUserWidget>) Cast<UUserWidget>(MatchHUD->HUDWidget->GetAbilitiesContainer()->GetChildAt(0)) : AbilityContainerWidget;
 	if (AbilityContainerWidget && AbilityContainerWidget->GetVisibility() == ESlateVisibility::Visible)
 	{
 		AbilityContainerWidget->SetVisibility(ESlateVisibility::Collapsed);
@@ -376,10 +376,10 @@ void UWOGUIManagerSubsystem::CollapseAbilitiesWidget()
 
 void UWOGUIManagerSubsystem::RestoreAbilitiesWidget()
 {
-	MatchHUD == nullptr ? Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
+	MatchHUD == nullptr ? (TObjectPtr<AWOGMatchHUD>) Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
 	if (!MatchHUD || !MatchHUD->HUDWidget || !MatchHUD->HUDWidget->GetAbilitiesContainer()) return;
 
-	AbilityContainerWidget = AbilityContainerWidget == nullptr ? Cast<UUserWidget>(MatchHUD->HUDWidget->GetAbilitiesContainer()->GetChildAt(0)) : AbilityContainerWidget;
+	AbilityContainerWidget = AbilityContainerWidget == nullptr ? (TObjectPtr<UUserWidget>) Cast<UUserWidget>(MatchHUD->HUDWidget->GetAbilitiesContainer()->GetChildAt(0)) : AbilityContainerWidget;
 	if (AbilityContainerWidget && AbilityContainerWidget->GetVisibility() == ESlateVisibility::Collapsed)
 	{
 		AbilityContainerWidget->SetVisibility(ESlateVisibility::Visible);
@@ -388,10 +388,10 @@ void UWOGUIManagerSubsystem::RestoreAbilitiesWidget()
 
 void UWOGUIManagerSubsystem::CollapseTODWidget()
 {
-	MatchHUD == nullptr ? Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
+	MatchHUD == nullptr ? (TObjectPtr<AWOGMatchHUD>) Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
 	if (!MatchHUD || !MatchHUD->HUDWidget || !MatchHUD->HUDWidget->GetTODContainer()) return;
 
-	TODWidget = TODWidget == nullptr ? Cast<UUserWidget>(MatchHUD->HUDWidget->GetTODContainer()->GetChildAt(0)) : TODWidget;
+	TODWidget = TODWidget == nullptr ? (TObjectPtr<UUserWidget>) Cast<UUserWidget>(MatchHUD->HUDWidget->GetTODContainer()->GetChildAt(0)) : TODWidget;
 	if (TODWidget && TODWidget->GetVisibility() == ESlateVisibility::Visible)
 	{
 		TODWidget->SetVisibility(ESlateVisibility::Collapsed);
@@ -400,10 +400,10 @@ void UWOGUIManagerSubsystem::CollapseTODWidget()
 
 void UWOGUIManagerSubsystem::RestoreTODWidget()
 {
-	MatchHUD == nullptr ? Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
+	MatchHUD == nullptr ? (TObjectPtr<AWOGMatchHUD>) Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
 	if (!MatchHUD || !MatchHUD->HUDWidget || !MatchHUD->HUDWidget->GetTODContainer()) return;
 
-	TODWidget = TODWidget == nullptr ? Cast<UUserWidget>(MatchHUD->HUDWidget->GetTODContainer()->GetChildAt(0)) : TODWidget;
+	TODWidget = TODWidget == nullptr ? (TObjectPtr<UUserWidget>) Cast<UUserWidget>(MatchHUD->HUDWidget->GetTODContainer()->GetChildAt(0)) : TODWidget;
 	if (TODWidget && TODWidget->GetVisibility() == ESlateVisibility::Collapsed)
 	{
 		TODWidget->SetVisibility(ESlateVisibility::Visible);
@@ -412,7 +412,7 @@ void UWOGUIManagerSubsystem::RestoreTODWidget()
 
 void UWOGUIManagerSubsystem::CollapseObjectiveWidget()
 {
-	MatchHUD == nullptr ? Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
+	MatchHUD == nullptr ? (TObjectPtr<AWOGMatchHUD>) Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
 	if (!MatchHUD || !MatchHUD->HUDWidget || !MatchHUD->HUDWidget->GetObjectiveWidget()) return;
 
 	if (MatchHUD->HUDWidget->GetObjectiveWidget()->GetVisibility() == ESlateVisibility::Visible)
@@ -423,7 +423,7 @@ void UWOGUIManagerSubsystem::CollapseObjectiveWidget()
 
 void UWOGUIManagerSubsystem::RestoreObjectiveWidget()
 {
-	MatchHUD == nullptr ? Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
+	MatchHUD == nullptr ? (TObjectPtr<AWOGMatchHUD>) Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
 	if (!MatchHUD || !MatchHUD->HUDWidget || !MatchHUD->HUDWidget->GetObjectiveWidget()) return;
 
 	if (MatchHUD->HUDWidget->GetObjectiveWidget()->GetVisibility() == ESlateVisibility::Collapsed)
@@ -434,7 +434,7 @@ void UWOGUIManagerSubsystem::RestoreObjectiveWidget()
 
 void UWOGUIManagerSubsystem::AddAvailableResourcesWidget()
 {
-	MatchHUD == nullptr ? Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
+	MatchHUD == nullptr ? (TObjectPtr<AWOGMatchHUD>) Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
 	if (!MatchHUD || !MatchHUD->HUDWidget || !IsValid(MatchHUD->AvailableResourceWidgetClass)) return;
 
 	AvailableResourcesWidget = CreateWidget<UUserWidget>(OwnerPC, MatchHUD->AvailableResourceWidgetClass);
@@ -455,7 +455,7 @@ void UWOGUIManagerSubsystem::RemoveAvailableResourcesWidget()
 
 void UWOGUIManagerSubsystem::AddVendorWidget(ABasePlayerCharacter* Buyer, AWOGVendor* Vendor)
 {
-	MatchHUD == nullptr ? Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
+	MatchHUD == nullptr ? (TObjectPtr<AWOGMatchHUD>) Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
 	if (!MatchHUD || !IsValid(MatchHUD->VendorWidgetClass)) return;
 
 	VendorWidget = Cast<UWOGVendorBaseWidget>(CreateWidget<UUserWidget>(OwnerPC, MatchHUD->VendorWidgetClass));
@@ -482,7 +482,7 @@ void UWOGUIManagerSubsystem::RemoveVendorWidget()
 
 void UWOGUIManagerSubsystem::AddStashWidget(ABasePlayerCharacter* User, AWOGStashBase* Stash)
 {
-	MatchHUD == nullptr ? Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
+	MatchHUD == nullptr ? (TObjectPtr<AWOGMatchHUD>) Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
 	if (!MatchHUD || !IsValid(MatchHUD->StashWidgetClass)) return;
 
 	StashWidget = Cast<UWOGStashWidget>(CreateWidget<UUserWidget>(OwnerPC, MatchHUD->StashWidgetClass));

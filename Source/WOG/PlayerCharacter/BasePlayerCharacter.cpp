@@ -156,11 +156,11 @@ void ABasePlayerCharacter::BeginPlay()
 		GetWorldTimerManager().SetTimer(TimerHandle, this, &ThisClass::CreateDefaults, Delay);
 	}
 
-	if (HasAuthority() && (CurrentTOD == ETimeOfDay::TOD_Dusk1 || CurrentTOD == ETimeOfDay::TOD_Dusk3 || CurrentTOD == ETimeOfDay::TOD_Dusk3))
+	if (HasAuthority() && CurrentTOD >= ETimeOfDay::TOD_Dawn1)
 	{
 		FTimerHandle TimerHandle;
 		float Delay = 2.f;
-		GetWorldTimerManager().SetTimer(TimerHandle, this, &ThisClass::RestoreEquipmentFromSnapshot, Delay);
+		GetWorldTimerManager().SetTimer(TimerHandle, this, &ThisClass::RestoreEquipmentFromCommonInventory, Delay);
 	}
 }
 
@@ -1133,7 +1133,7 @@ void ABasePlayerCharacter::HandleStateElimmed(AController* InstigatedBy)
 {
 	if (!HasAuthority()) return;
 
-	WOGGameMode = WOGGameMode == nullptr ?	GetWorld()->GetAuthGameMode<AWOGGameMode>() : WOGGameMode;
+	WOGGameMode = WOGGameMode == nullptr ? (TObjectPtr<AWOGGameMode>) GetWorld()->GetAuthGameMode<AWOGGameMode>() : WOGGameMode;
 
 	TObjectPtr<AWOGPlayerController> Victim = Cast<AWOGPlayerController>(GetController());
 	TObjectPtr<AWOGPlayerController> Attacker = Cast<AWOGPlayerController>(InstigatedBy);
@@ -1641,7 +1641,8 @@ void ABasePlayerCharacter::PostInitializeComponents()
 
 void ABasePlayerCharacter::Elim(bool bPlayerLeftGame)
 {
-	DestroyEquipment();
+	StoreEquipment();
+	SendEquipmentToCommonInventory();
 	Multicast_Elim(bPlayerLeftGame);
 }
 
@@ -1667,7 +1668,7 @@ void ABasePlayerCharacter::Multicast_Elim_Implementation(bool bPlayerLeftGame)
 
 void ABasePlayerCharacter::ElimTimerFinished()
 {
-	WOGGameMode = WOGGameMode == nullptr ? GetWorld()->GetAuthGameMode<AWOGGameMode>() : WOGGameMode;
+	WOGGameMode = WOGGameMode == nullptr ? (TObjectPtr<AWOGGameMode>) GetWorld()->GetAuthGameMode<AWOGGameMode>() : WOGGameMode;
 	APlayerController* PlayerController = Cast<APlayerController>(Controller);
 	if (WOGGameMode && PlayerController)
 	{
@@ -1930,8 +1931,6 @@ void ABasePlayerCharacter::RestoreEquipment()
 	RestoreMagic();
 	RestoreWeapons();
 	RestoreConsumable();
-
-	TakeEquipmentSnapshot();
 }
 
 void ABasePlayerCharacter::CreateDefaults()
@@ -2042,91 +2041,111 @@ void ABasePlayerCharacter::HandleWeaponSwitch(bool bStoreWeapons)
 	}
 }
 
-void ABasePlayerCharacter::TakeEquipmentSnapshot()
+void ABasePlayerCharacter::SendEquipmentToCommonInventory()
 {
-	TObjectPtr<AWOGPlayerState> WOGPlayerState = Cast<AWOGPlayerState>(GetPlayerState());
-	if (!WOGPlayerState || !EquipmentManager) return;
+	if (!HasAuthority()) return;
+	if (!CommonInventory) return;
+	if (!InventoryManager) return;
 
-	FPlayerCharacterEquipmentSnapshot EquipmentSnapshot;
+	const TArray<AActor*> OutItems = InventoryManager->GetAllItems();
+	if (OutItems.IsEmpty()) return;
 
-	AActor* OutItemSlotOne;
-	AActor* OutItemSlotTwo;
-	AActor* OutItemSlotThree;
-	AActor* OutItemSlotFour;
-
-	EquipmentManager->GetWeaponShortcutReference(FName("1"), OutItemSlotOne);
-	if (!GetCharacterData().bIsAttacker)
+	for (AActor* InventoryItem : OutItems)
 	{
-		EquipmentManager->GetWeaponShortcutReference(FName("2"), OutItemSlotTwo);
-		EquipmentManager->GetMagicShortcutReference(FName("1"), OutItemSlotThree);
-	}
-	else
-	{
-		EquipmentManager->GetMagicShortcutReference(FName("1"), OutItemSlotTwo);
-		EquipmentManager->GetMagicShortcutReference(FName("2"), OutItemSlotThree);
-	}
+		TObjectPtr<UAGR_ItemComponent> Item = UAGRLibrary::GetItemComponent(InventoryItem);
+		if (!Item) continue;
 
-	EquipmentManager->GetItemInSlot(NAME_ConsumableSlot_Consumable, OutItemSlotFour);
-	if (OutItemSlotFour/* && UAGRLibrary::GetItemComponent(OutItemSlotFour)*/)
-	{
-		//EquipmentSnapshot.SlotFourAmount = UAGRLibrary::GetItemComponent(OutItemSlotFour)->CurrentStack;
+		TObjectPtr<UAGR_InventoryManager> Recipient = UAGRLibrary::GetInventory(CommonInventory);
+		if (!Recipient) continue;
+
+		if (!Item->bStackable)
+		{
+			Item->DropItem();
+			Item->PickUpItem(Recipient);
+		}
+		if (Item->bStackable)
+		{
+			FText OutNote;
+			int32 AmountToModify = Item->CurrentStack;
+			InventoryManager->RemoveItemsOfClass(InventoryItem->GetClass(), AmountToModify, OutNote);
+			Recipient->AddItemsOfClass(InventoryItem->GetClass(), AmountToModify, OutNote);
+
+			TObjectPtr<AWOGPlayerState> PS = Cast<AWOGPlayerState>(GetPlayerState());
+			if (PS)
+			{
+				FPlayerCharacterEquipmentSnapshot EquipmentSnapshot;
+				EquipmentSnapshot.ConsumableReference.Key = InventoryItem->GetClass();
+				EquipmentSnapshot.ConsumableReference.Value = AmountToModify;
+				PS->SetEquipmentSnapshot(EquipmentSnapshot);
+
+				UE_LOG(WOGLogInventory, Display, TEXT("%d of %s saved to PlayerState"), AmountToModify, *GetNameSafe(InventoryItem->GetClass()));
+			}
+		}
 	}
-
-	if (IsValid(OutItemSlotOne)) EquipmentSnapshot.ClassSlotOne = OutItemSlotOne->GetClass();
-	if (IsValid(OutItemSlotTwo)) EquipmentSnapshot.ClassSlotTwo = OutItemSlotTwo->GetClass();
-	if (IsValid(OutItemSlotThree)) EquipmentSnapshot.ClassSlotThree = OutItemSlotThree->GetClass();
-	if (IsValid(OutItemSlotFour)) EquipmentSnapshot.ClassSlotFour = OutItemSlotFour->GetClass();
-
-	WOGPlayerState->SetEquipmentSnapshot(EquipmentSnapshot);
 }
 
-void ABasePlayerCharacter::RestoreEquipmentFromSnapshot()
+void ABasePlayerCharacter::RestoreEquipmentFromCommonInventory()
 {
-	TObjectPtr<AWOGPlayerState> WOGPlayerState = Cast<AWOGPlayerState>(GetPlayerState());
-	if (!IsValid(WOGPlayerState)) return;
-
-	WOGPlayerState->RestoreEquipmentFromSnapshot();
-}
-
-void ABasePlayerCharacter::DestroyEquipment()
-{
-	if (!EquipmentManager) return;
-
-	AActor* OutItemSlotOne;
-	AActor* OutItemSlotTwo;
-	AActor* OutItemSlotThree;
-	AActor* OutItemSlotFour;
-
-	EquipmentManager->GetWeaponShortcutReference(FName("1"), OutItemSlotOne);
-	EquipmentManager->GetItemInSlot(NAME_ConsumableSlot_Consumable, OutItemSlotFour);
-	if (!GetCharacterData().bIsAttacker)
+	if (!HasAuthority())
 	{
-		EquipmentManager->GetWeaponShortcutReference(FName("2"), OutItemSlotTwo);
-		EquipmentManager->GetMagicShortcutReference(FName("1"), OutItemSlotThree);
+		UE_LOG(WOGLogInventory, Error, TEXT("NO AUTHORITY"));
+		return;
 	}
-	else
+	if (!CommonInventory)
 	{
-		EquipmentManager->GetMagicShortcutReference(FName("1"), OutItemSlotTwo);
-		EquipmentManager->GetMagicShortcutReference(FName("2"), OutItemSlotThree);
+		UE_LOG(WOGLogInventory, Error, TEXT("invalid CommonInventory"));
+		return;
+	}
+	if (!InventoryManager)
+	{
+		UE_LOG(WOGLogInventory, Error, TEXT("invalid InventoryManager"));
+		return;
+	}
+	if (!OwnerPC)
+	{
+		UE_LOG(WOGLogInventory, Error, TEXT("invalid OwnerPC"));
+		return;
 	}
 
-	if (OutItemSlotOne && UAGRLibrary::GetItemComponent(OutItemSlotOne))
+	TObjectPtr<UAGR_InventoryManager> CommonInventoryComponent = UAGRLibrary::GetInventory(CommonInventory);
+	if (!CommonInventoryComponent)
 	{
-		UAGRLibrary::GetItemComponent(OutItemSlotOne)->DestroyItem();
+		UE_LOG(WOGLogInventory, Error, TEXT("invalid CommonInventoryComponent"));
+		return;
 	}
 
-	if (OutItemSlotTwo && UAGRLibrary::GetItemComponent(OutItemSlotTwo))
+	const TArray<AActor*> OutItems = CommonInventoryComponent->GetAllItems();
+	if (OutItems.IsEmpty())
 	{
-		UAGRLibrary::GetItemComponent(OutItemSlotTwo)->DestroyItem();
+		UE_LOG(WOGLogInventory, Error, TEXT("OutItems.IsEmpty()"));
+		return;
 	}
 
-	if (OutItemSlotThree && UAGRLibrary::GetItemComponent(OutItemSlotThree))
+	for (AActor* InventoryItem : OutItems)
 	{
-		UAGRLibrary::GetItemComponent(OutItemSlotThree)->DestroyItem();
+		TObjectPtr<UAGR_ItemComponent> Item = UAGRLibrary::GetItemComponent(InventoryItem);
+		if (!Item) continue;
+		if (Item->PreviousOwnerIndex != OwnerPC->UserIndex) continue;
+
+		if(!Item->bStackable)
+		{
+			Item->DropItem();
+			Item->PickUpItem(InventoryManager);
+		}
 	}
 
-	if (OutItemSlotFour && UAGRLibrary::GetItemComponent(OutItemSlotFour))
+	TObjectPtr<AWOGPlayerState> PS = Cast<AWOGPlayerState>(GetPlayerState());
+	if (PS)
 	{
-		UAGRLibrary::GetItemComponent(OutItemSlotFour)->DestroyItem();
+		const FPlayerCharacterEquipmentSnapshot EquipmentSnapshot = PS->GetEquipmentSnapshot();
+		if (UKismetSystemLibrary::IsValidClass(EquipmentSnapshot.ConsumableReference.Key))
+		{
+			FText OutNote;
+			int32 AmountToModify = EquipmentSnapshot.ConsumableReference.Value;
+			CommonInventoryComponent->RemoveItemsOfClass(EquipmentSnapshot.ConsumableReference.Key, AmountToModify, OutNote);
+			InventoryManager->AddItemsOfClass(EquipmentSnapshot.ConsumableReference.Key, AmountToModify, OutNote);
+		}
 	}
+
+	RestoreEquipment();
 }

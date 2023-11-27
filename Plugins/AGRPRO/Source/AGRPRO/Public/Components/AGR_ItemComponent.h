@@ -76,6 +76,9 @@ public:
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Replicated, Category = "AGR|Base Info")
     FGameplayTag ItemAuxTag;
 
+    UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Replicated, Category = "AGR|Base Info")
+    int32 PreviousOwnerIndex = -1;
+
     UPROPERTY(BlueprintAssignable, EditAnywhere, Category = "AGR|Events")
     FOnPickup OnPickup;
 

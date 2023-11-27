@@ -133,7 +133,7 @@ void AWOGBaseConsumable::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 void AWOGBaseConsumable::BeginPlay()
 {
 	Super::BeginPlay();
-	OwnerCharacter = OwnerCharacter != nullptr ? OwnerCharacter : GetOwner() ? Cast<ABasePlayerCharacter>(GetOwner()) : nullptr;
+	OwnerCharacter = OwnerCharacter != nullptr ? OwnerCharacter : GetOwner() ? (TObjectPtr<ABasePlayerCharacter>) Cast<ABasePlayerCharacter>(GetOwner()) : nullptr;
 
 }
 
@@ -178,17 +178,7 @@ void AWOGBaseConsumable::OnConsumableOverlap(UPrimitiveComponent* OverlappedComp
 
 void AWOGBaseConsumable::OnConsumablePickedUp(UAGR_InventoryManager* Inventory)
 {
-	/*ABasePlayerCharacter* NewOwnerCharacter = Cast<ABasePlayerCharacter>(Inventory->GetOwner());
-	if (NewOwnerCharacter)
-	{
-		SetOwnerCharacter(NewOwnerCharacter);
-	}
 
-	if (OwnerCharacter)
-	{
-		AddAbilityWidget(4);
-		GrantAbilities();
-	}*/
 }
 
 void AWOGBaseConsumable::OnConsumableEquipped(AActor* User, FName SlotName)
@@ -203,6 +193,16 @@ void AWOGBaseConsumable::OnConsumableEquipped(AActor* User, FName SlotName)
 	{
 		AddAbilityWidget(4);
 		GrantAbilities();
+
+		AttachToActor(OwnerCharacter, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+		SetActorHiddenInGame(true);
+
+		TObjectPtr<AWOGPlayerController> OwnerPC = Cast<AWOGPlayerController>(OwnerCharacter->GetController());
+		if (OwnerPC && ItemComponent)
+		{
+			ItemComponent->PreviousOwnerIndex = OwnerPC->UserIndex;
+			UE_LOG(WOGLogInventory, Display, TEXT("New PREVIOUS_USER_INDEX for consumable: %d"), ItemComponent->PreviousOwnerIndex);
+		}
 	}
 }
 
@@ -215,19 +215,20 @@ void AWOGBaseConsumable::OnConsumableUnequipped(AActor* User, FName SlotName)
 
 void AWOGBaseConsumable::OnConsumableUsed(AActor* User, FGameplayTag GameplayTag)
 {
-	if (!ItemComponent || !OwnerCharacter) return;
-	TObjectPtr<UAGR_InventoryManager> Inventory = UAGRLibrary::GetInventory(OwnerCharacter);
-	if (!Inventory) return;
+	if (!ItemComponent || !HasAuthority() || !OwnerCharacter) return;
 
-	//if (ItemComponent->CurrentStack - 1 <= 0)
-	//{
-		//ItemComponent->DestroyItem();
-	//}
+	if (ItemComponent->CurrentStack - 1 <= 0)
+	{
+		RemoveGrantedAbilities(OwnerCharacter);
+		OwnerCharacter->GetOwnerPC()->GetUIManagerComponent()->Client_RemoveAbilityWidget(4);
+		ItemComponent->DestroyItem();
+	}
+	else
+	{
+		ItemComponent->CurrentStack--;
+	}
 
-	FText OutNote;
-	Inventory->RemoveItemsOfClass(this->StaticClass(), 1, OutNote);
-
-	UE_LOG(WOGLogInventory, Display, TEXT("%s, Current stack: %d"), *OutNote.ToString(), ItemComponent->CurrentStack);
+	UE_LOG(WOGLogInventory, Display, TEXT("Current stack: %d"), ItemComponent->CurrentStack);
 }
 
 void AWOGBaseConsumable::OnConsumableDestroyed()

@@ -5,8 +5,8 @@
 
 #include "CoreMinimal.h"
 #include "CPathNode.h"
-#include "Core/Public/HAL/Runnable.h"
-#include "Core/Public/HAL/RunnableThread.h"
+#include "HAL/Runnable.h"
+#include "HAL/RunnableThread.h"
 #include "Kismet/BlueprintAsyncActionBase.h"
 #include <atomic>
 #include <vector>

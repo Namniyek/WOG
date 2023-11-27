@@ -62,7 +62,4 @@ public:
 	FORCEINLINE void SetEquipmentSnapshot(const FPlayerCharacterEquipmentSnapshot& NewEquipment) { EquipmentSnapshot = NewEquipment; }
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE FPlayerCharacterEquipmentSnapshot GetEquipmentSnapshot() const { return EquipmentSnapshot; }
-
-	void RestoreEquipmentFromSnapshot();
-
 };

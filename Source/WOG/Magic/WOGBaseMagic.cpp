@@ -109,7 +109,7 @@ void AWOGBaseMagic::UpdateVendorData(FMagicDataTable* Row)
 
 void AWOGBaseMagic::SpawnIdleClass()
 {
-	OwnerCharacter = OwnerCharacter == nullptr ? Cast<ABasePlayerCharacter>(GetOwner()) : OwnerCharacter;
+	OwnerCharacter = OwnerCharacter == nullptr ? (TObjectPtr<ABasePlayerCharacter>) Cast<ABasePlayerCharacter>(GetOwner()) : OwnerCharacter;
 	if (!OwnerCharacter) return;
 	if (MagicData.AbilityType != EAbilityType::EAT_Projectile && MagicData.AbilityType != EAbilityType::EAT_AOE) return;
 
@@ -186,7 +186,7 @@ void AWOGBaseMagic::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLif
 void AWOGBaseMagic::BeginPlay()
 {
 	Super::BeginPlay();
-	OwnerCharacter = OwnerCharacter != nullptr ? OwnerCharacter : GetOwner() ? Cast<ABasePlayerCharacter>(GetOwner()) : nullptr;
+	OwnerCharacter = OwnerCharacter != nullptr ? OwnerCharacter : GetOwner() ? (TObjectPtr<ABasePlayerCharacter>) Cast<ABasePlayerCharacter>(GetOwner()) : nullptr;
 }
 
 void AWOGBaseMagic::OnMagicOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -314,6 +314,16 @@ void AWOGBaseMagic::OnMagicEquip(AActor* User, FName SlotName)
 		}
 
 		Multicast_HandleStandbyCosmetics(false);
+	}
+
+	if (OwnerCharacter)
+	{
+		TObjectPtr<AWOGPlayerController> OwnerPC = Cast<AWOGPlayerController>(OwnerCharacter->GetController());
+		if (OwnerPC && ItemComponent)
+		{
+			ItemComponent->PreviousOwnerIndex = OwnerPC->UserIndex;
+			UE_LOG(WOGLogInventory, Display, TEXT("New PREVIOUS_USER_INDEX for magic: %d"), ItemComponent->PreviousOwnerIndex);
+		}
 	}
 }
 
@@ -577,7 +587,7 @@ void AWOGBaseMagic::Server_SpawnProjectile_Implementation(const FTransform& Spaw
 
 void AWOGBaseMagic::Server_SpawnAOE_Implementation(const FVector_NetQuantize& TargetLocation)
 {
-	OwnerCharacter = OwnerCharacter == nullptr ? Cast<ABasePlayerCharacter>(GetOwner()) : OwnerCharacter;
+	OwnerCharacter = OwnerCharacter == nullptr ? (TObjectPtr<ABasePlayerCharacter>) Cast<ABasePlayerCharacter>(GetOwner()) : OwnerCharacter;
 	if (!OwnerCharacter) return;
 
 	//Set the correct transform

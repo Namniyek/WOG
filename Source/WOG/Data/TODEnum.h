@@ -4,6 +4,7 @@ UENUM(BlueprintType)
 enum class ETimeOfDay : uint8
 {
 	TOD_Start UMETA(DisplayName = "Start"),
+	TOD_Dawn1 UMETA(DisplayName = "Dawn_1"),
 	TOD_Dusk1 UMETA(DisplayName = "Dusk_1"),
 	TOD_Dawn2 UMETA(DisplayName = "Dawn_2"),
 	TOD_Dusk2 UMETA(DisplayName = "Dusk_2"),
