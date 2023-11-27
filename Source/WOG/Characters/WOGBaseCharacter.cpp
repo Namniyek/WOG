@@ -27,6 +27,7 @@
 #include "UI/WOGCharacterWidgetContainer.h"
 #include "Subsystems/WOGUIManagerSubsystem.h"
 #include "Resources/WOGCommonInventory.h"
+#include "Subsystems/WOGWorldSubsystem.h"
 
 AWOGBaseCharacter::AWOGBaseCharacter()
 {
@@ -77,6 +78,7 @@ void AWOGBaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AWOGBaseCharacter, bIsRagdolling);
+	DOREPLIFETIME(AWOGBaseCharacter, CurrentTOD);
 }
 
 void AWOGBaseCharacter::PossessedBy(AController* NewController)
@@ -97,6 +99,16 @@ void AWOGBaseCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	InitPhysics();
+
+	if (HasAuthority())
+	{
+		TObjectPtr<UWOGWorldSubsystem> WorldSubsystem = GetWorld()->GetSubsystem<UWOGWorldSubsystem>();
+		if (WorldSubsystem)
+		{
+			CurrentTOD = WorldSubsystem->CurrentTOD;
+			WorldSubsystem->TimeOfDayChangedDelegate.AddDynamic(this, &ThisClass::TimeOfDayChanged);
+		}
+	}
 }
 
 void AWOGBaseCharacter::SendAbilityLocalInput(const EWOGAbilityInputID InInputID)
@@ -620,6 +632,17 @@ void AWOGBaseCharacter::FinishTeleportCharacter(const FTransform& Destination)
 {
 	TeleportTo(Destination.GetLocation(), Destination.GetRotation().Rotator());
 	Multicast_StartDissolve(true);
+}
+
+void AWOGBaseCharacter::TimeOfDayChanged(ETimeOfDay TOD)
+{
+	CurrentTOD = TOD;
+	HandleTODChange();
+}
+
+void AWOGBaseCharacter::OnRep_CurrentTOD()
+{
+	HandleTODChange();
 }
 
 void AWOGBaseCharacter::Tick(float DeltaTime)

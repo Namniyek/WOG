@@ -27,7 +27,6 @@
 
 AWOGBaseMagic::AWOGBaseMagic()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 	bReplicates = true;
 	SetReplicateMovement(true);
@@ -308,7 +307,6 @@ void AWOGBaseMagic::OnMagicEquip(AActor* User, FName SlotName)
 		AnimMaster->SetupBasePose(TAG_Pose_Relax);
 
 		bool Success = RemoveGrantedAbilities(User);
-		UE_LOG(LogTemp, Display, TEXT("WeaponAbilities removed: %d"), Success);
 
 		if (IdleActor)
 		{
@@ -411,17 +409,25 @@ void AWOGBaseMagic::StoreMagic(const FName& Key)
 
 void AWOGBaseMagic::RestoreMagic(ABasePlayerCharacter* NewOwner)
 {
-	if (!HasAuthority() || !ItemComponent || !NewOwner) return;
+	if (!HasAuthority() || !ItemComponent || !NewOwner)
+	{
+		UE_LOG(WOGLogInventory, Error, TEXT("!HasAuthority() || !ItemComponent || !NewOwner"));
+		return;
+	}
 
 	bool bIsActorAttacker = UWOGBlueprintLibrary::GetCharacterData(NewOwner).bIsAttacker;
-	if (MagicData.bIsAttacker != bIsActorAttacker) return;
+	if (MagicData.bIsAttacker != bIsActorAttacker)
+	{
+		UE_LOG(WOGLogInventory, Error, TEXT("MagicData.bIsAttacker != bIsActorAttacker"));
+		return;
+	}
 
 	UAGR_EquipmentManager* Equipment = UAGRLibrary::GetEquipment(NewOwner);
 	UAGR_InventoryManager* Inventory = UAGRLibrary::GetInventory(NewOwner);
 
 	if (!Equipment || !Inventory)
 	{
-		UE_LOG(LogTemp, Error, TEXT("Equipment or Inventory not valid"));
+		UE_LOG(WOGLogInventory, Error, TEXT("Equipment or Inventory not valid"));
 		return;
 	}
 
@@ -455,7 +461,7 @@ void AWOGBaseMagic::RestoreMagic(ABasePlayerCharacter* NewOwner)
 		}
 		else
 		{
-			UE_LOG(LogTemp, Error, TEXT("Invalid OwnerCharacter"));
+			UE_LOG(WOGLogInventory, Error, TEXT("Invalid OwnerCharacter"));
 		}
 
 		AddAbilityWidget(KeyInt);
@@ -463,7 +469,7 @@ void AWOGBaseMagic::RestoreMagic(ABasePlayerCharacter* NewOwner)
 	}
 	else
 	{
-		UE_LOG(LogTemp, Error, TEXT("Save weapon reference failed"));
+		UE_LOG(WOGLogInventory, Error, TEXT("Save magic reference failed"));
 	}
 }
 
@@ -674,6 +680,6 @@ void AWOGBaseMagic::SetOwnerCharacter(ABasePlayerCharacter* NewOwner)
 	{
 		OwnerCharacter = NewOwner;
 	}
-	UE_LOG(LogTemp, Warning, TEXT("New owner of magic %s is : %s"), *GetNameSafe(this), *GetNameSafe(OwnerCharacter));
+	UE_LOG(WOGLogInventory, Warning, TEXT("New owner of magic %s is : %s"), *GetNameSafe(this), *GetNameSafe(OwnerCharacter));
 }
 

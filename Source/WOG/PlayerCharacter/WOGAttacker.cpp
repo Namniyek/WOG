@@ -389,7 +389,7 @@ void AWOGAttacker::OnHealthAttributeChanged(const FOnAttributeChangeData& Data)
 
 		if (CurrentExternalMinion)
 		{
-			TObjectPtr<ISpawnInterface> SpawnInterface = Cast<ISpawnInterface>(CurrentExternalMinion);
+			ISpawnInterface* SpawnInterface = Cast<ISpawnInterface>(CurrentExternalMinion);
 			if (SpawnInterface)
 			{
 				SpawnInterface->Execute_UnpossessMinion(CurrentExternalMinion);

@@ -118,7 +118,8 @@ void AWOGBaseConsumable::PostInitializeComponents()
 		ItemComponent->OnItemUsed.AddDynamic(this, &ThisClass::OnConsumableUsed);
 		ItemComponent->OnDestroy.AddDynamic(this, &ThisClass::OnConsumableDestroyed);
 		ItemComponent->OnItemDropped.AddDynamic(this, &ThisClass::OnConsumableDestroyed);
-		
+		ItemComponent->OnEquip.AddDynamic(this, &ThisClass::OnConsumableEquipped);
+		ItemComponent->OnUnEquip.AddDynamic(this, &ThisClass::OnConsumableUnequipped);
 	}
 }
 
@@ -177,7 +178,22 @@ void AWOGBaseConsumable::OnConsumableOverlap(UPrimitiveComponent* OverlappedComp
 
 void AWOGBaseConsumable::OnConsumablePickedUp(UAGR_InventoryManager* Inventory)
 {
-	ABasePlayerCharacter* NewOwnerCharacter = Cast<ABasePlayerCharacter>(Inventory->GetOwner());
+	/*ABasePlayerCharacter* NewOwnerCharacter = Cast<ABasePlayerCharacter>(Inventory->GetOwner());
+	if (NewOwnerCharacter)
+	{
+		SetOwnerCharacter(NewOwnerCharacter);
+	}
+
+	if (OwnerCharacter)
+	{
+		AddAbilityWidget(4);
+		GrantAbilities();
+	}*/
+}
+
+void AWOGBaseConsumable::OnConsumableEquipped(AActor* User, FName SlotName)
+{
+	ABasePlayerCharacter* NewOwnerCharacter = Cast<ABasePlayerCharacter>(User);
 	if (NewOwnerCharacter)
 	{
 		SetOwnerCharacter(NewOwnerCharacter);
@@ -188,6 +204,13 @@ void AWOGBaseConsumable::OnConsumablePickedUp(UAGR_InventoryManager* Inventory)
 		AddAbilityWidget(4);
 		GrantAbilities();
 	}
+}
+
+void AWOGBaseConsumable::OnConsumableUnequipped(AActor* User, FName SlotName)
+{
+	if (!OwnerCharacter || !OwnerCharacter->GetOwnerPC() || !OwnerCharacter->GetOwnerPC()->GetUIManagerComponent()) return;
+	RemoveGrantedAbilities(OwnerCharacter);
+	OwnerCharacter->GetOwnerPC()->GetUIManagerComponent()->Client_RemoveAbilityWidget(4);
 }
 
 void AWOGBaseConsumable::OnConsumableUsed(AActor* User, FGameplayTag GameplayTag)
@@ -209,10 +232,10 @@ void AWOGBaseConsumable::OnConsumableUsed(AActor* User, FGameplayTag GameplayTag
 
 void AWOGBaseConsumable::OnConsumableDestroyed()
 {
-	UE_LOG(WOGLogInventory, Display, TEXT("Consumable destroyed"));
+	/*UE_LOG(WOGLogInventory, Display, TEXT("Consumable destroyed"));
 	if (!OwnerCharacter || !OwnerCharacter->GetOwnerPC() || !OwnerCharacter->GetOwnerPC()->GetUIManagerComponent()) return;
 	RemoveGrantedAbilities(OwnerCharacter);
-	OwnerCharacter->GetOwnerPC()->GetUIManagerComponent()->Client_RemoveAbilityWidget(4);
+	OwnerCharacter->GetOwnerPC()->GetUIManagerComponent()->Client_RemoveAbilityWidget(4);*/
 }
 
 bool AWOGBaseConsumable::GrantAbilities()

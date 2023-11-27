@@ -129,6 +129,12 @@ protected:
 	void OnConsumablePickedUp(UAGR_InventoryManager* Inventory);
 
 	UFUNCTION()
+	void OnConsumableEquipped(AActor* User, FName SlotName);
+
+	UFUNCTION()
+	void OnConsumableUnequipped(AActor* User, FName SlotName);
+
+	UFUNCTION()
 	void OnConsumableUsed(AActor* User, FGameplayTag GameplayTag);
 
 	UFUNCTION()

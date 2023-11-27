@@ -115,7 +115,7 @@ void UWOGUIManagerSubsystem::UpdateAvailableResourceWidget()
 {
 	if (!VendorWidget) return;
 
-	TObjectPtr<IInventoryInterface> Interface = Cast<IInventoryInterface>(VendorWidget);
+	IInventoryInterface* Interface = Cast<IInventoryInterface>(VendorWidget);
 	if (Interface)
 	{
 		Interface->Execute_UpdateAvailableResourceWidget(VendorWidget);

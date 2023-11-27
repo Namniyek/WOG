@@ -48,7 +48,7 @@ void UWOGVendorItem::AttemptPurchase()
 	if (CheckCost(ItemData.CostMap))
 	{
 		//Can afford
-		TObjectPtr<IInventoryInterface> Interface = Cast<IInventoryInterface>(BuyerActor);
+		IInventoryInterface* Interface = Cast<IInventoryInterface>(BuyerActor);
 		if (Interface)
 		{
 			Interface->Execute_BuyItem(BuyerActor, ItemData.CostMap, Vendor, ItemData.ItemClass, ItemData.ItemAmount);

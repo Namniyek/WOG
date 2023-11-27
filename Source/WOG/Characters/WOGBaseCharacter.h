@@ -64,6 +64,19 @@ protected:
 	virtual void ProcessHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh) { /*TO-BE OVERRIDEN IN CHILDREN*/ };
 
 	
+	#pragma region TimeOfDay
+	UFUNCTION()
+	void TimeOfDayChanged(ETimeOfDay TOD);
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, ReplicatedUsing = OnRep_CurrentTOD)
+	ETimeOfDay CurrentTOD;
+
+	UFUNCTION()
+	void OnRep_CurrentTOD();
+
+	virtual void HandleTODChange() {/*TO BE OVERRIDEN IN CHILDREN*/ };
+	#pragma endregion
+
 	UFUNCTION(Server, Reliable, BlueprintCallable)
 	void Server_SetCharacterFrozen(bool bIsFrozen);
 

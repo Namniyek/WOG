@@ -3,6 +3,8 @@
 
 #include "WOGPlayerState.h"
 #include "Net/UnrealNetwork.h"
+#include "Kismet/KismetSystemLibrary.h"
+#include "PlayerCharacter/BasePlayerCharacter.h"
 #include "WOG/ActorComponents/WOGAbilitySystemComponent.h"
 
 AWOGPlayerState::AWOGPlayerState()
@@ -18,7 +20,6 @@ void AWOGPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AWOGPlayerState, PlayerStats);
-	
 }
 
 void AWOGPlayerState::IncreaseTimesElimmed()
@@ -39,4 +40,69 @@ void AWOGPlayerState::SetMostElimmedPlayer(FString Player)
 void AWOGPlayerState::SetPlayerWithMostElimms(FString Player)
 {
 	PlayerStats.PlayerWithMostElimms = Player;
+}
+
+void AWOGPlayerState::RestoreEquipmentFromSnapshot()
+{
+	TObjectPtr<ABasePlayerCharacter> Character = Cast<ABasePlayerCharacter>(GetPawn());
+	if(!IsValid(Character)) return; 
+
+	FText OutNote;
+	if (UKismetSystemLibrary::IsValidClass(EquipmentSnapshot.ClassSlotOne))
+	{
+		AActor* OutItemOne;
+		Character->InventoryManager->AddItemsOfClassWithOutItem(EquipmentSnapshot.ClassSlotOne, 1, OutNote, OutItemOne);
+		if (IsValid(OutItemOne))
+		{
+			TObjectPtr<UAGR_ItemComponent> Item = UAGRLibrary::GetItemComponent(OutItemOne);
+			if (Item)
+			{
+				Item->ItemAuxTag = TAG_Aux_Weapon_Primary;
+			}
+		}
+	}
+
+	if (UKismetSystemLibrary::IsValidClass(EquipmentSnapshot.ClassSlotTwo))
+	{
+		AActor* OutItemTwo;
+		Character->InventoryManager->AddItemsOfClassWithOutItem(EquipmentSnapshot.ClassSlotTwo, 1, OutNote, OutItemTwo);
+		if (IsValid(OutItemTwo))
+		{
+			TObjectPtr<UAGR_ItemComponent> Item = UAGRLibrary::GetItemComponent(OutItemTwo);
+			if (Item)
+			{
+				Item->ItemAuxTag = Character->GetCharacterData().bIsAttacker ? TAG_Aux_Magic_Primary : TAG_Aux_Weapon_Secondary;
+			}
+		}
+	}
+
+	if (UKismetSystemLibrary::IsValidClass(EquipmentSnapshot.ClassSlotThree))
+	{
+		AActor* OutItemThree;
+		Character->InventoryManager->AddItemsOfClassWithOutItem(EquipmentSnapshot.ClassSlotThree, 1, OutNote, OutItemThree);
+		if (IsValid(OutItemThree))
+		{
+			TObjectPtr<UAGR_ItemComponent> Item = UAGRLibrary::GetItemComponent(OutItemThree);
+			if (Item)
+			{
+				Item->ItemAuxTag = Character->GetCharacterData().bIsAttacker ? TAG_Aux_Magic_Secondary : TAG_Aux_Magic_Primary;
+			}
+		}
+	}
+
+	if (UKismetSystemLibrary::IsValidClass(EquipmentSnapshot.ClassSlotFour))
+	{
+		AActor* OutItemFour = nullptr;;
+		Character->InventoryManager->AddItemsOfClassWithOutItem(EquipmentSnapshot.ClassSlotFour, 1, OutNote, OutItemFour);
+		if (IsValid(OutItemFour))
+		{
+			TObjectPtr<UAGR_ItemComponent> Item = UAGRLibrary::GetItemComponent(OutItemFour);
+			if (Item)
+			{
+				Item->CurrentStack = EquipmentSnapshot.SlotFourAmount;
+			}
+		}
+	}
+
+	Character->RestoreEquipment();
 }

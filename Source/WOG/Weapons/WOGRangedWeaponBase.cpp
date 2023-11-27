@@ -134,7 +134,7 @@ void AWOGRangedWeaponBase::OnAttackHit(FHitResult Hit, UPrimitiveComponent* HitM
 	if (Hit.GetActor() && OwnerCharacter)
 	{
 		//Check if we hit character
-		TObjectPtr<IAttributesInterface> AttributesInterface = Cast<IAttributesInterface>(Hit.GetActor());
+		IAttributesInterface* AttributesInterface = Cast<IAttributesInterface>(Hit.GetActor());
 		if (AttributesInterface)
 		{
 			AttributesInterface->Execute_BroadcastHit(Hit.GetActor(), OwnerCharacter, Hit, WeaponData.BaseDamage, UWOGBlueprintLibrary::GetEquippedWeapon(OwnerCharacter));

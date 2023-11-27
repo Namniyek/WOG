@@ -152,7 +152,7 @@ void AWOGVendor::Sell(const TArray<FCostMap>& CostMap, TSubclassOf<AActor> ItemC
 
 void AWOGVendor::RefreshVendorItems()
 {
-	TObjectPtr<IInventoryInterface> Interface = Cast<IInventoryInterface>(PlayerUsingVendor);
+	IInventoryInterface* Interface = Cast<IInventoryInterface>(PlayerUsingVendor);
 	if (Interface)
 	{
 		Interface->Execute_TransactionComplete(PlayerUsingVendor);

@@ -378,6 +378,14 @@ public:
 	void StoreMagic(const FName& Key);
 	void RestoreMagic ();
 
+	void StoreConsumable();
+	void RestoreConsumable();
+	void EquipConsumable(AActor* InItem);
+	void UnequipConsumable();
+
+	void StoreEquipment();
+	void RestoreEquipment();
+
 	UFUNCTION()
 	void CreateDefaults();
 
@@ -386,6 +394,14 @@ public:
 
 	UFUNCTION()
 	void GrantDefaultMagics();
+
+	void DestroyDefaultToolsAndMagics();
+
+	void HandleWeaponSwitch(bool bStoreWeapons);
+
+	void TakeEquipmentSnapshot();
+	void RestoreEquipmentFromSnapshot();
+	void DestroyEquipment();
 
 	#pragma endregion
 
@@ -445,6 +461,10 @@ public:
 	
 	UFUNCTION(Client, reliable)
 	void Client_KickPlayerFromStash(AWOGStashBase* Stash);
+	#pragma endregion
+
+	#pragma region TimeOfDay
+	virtual void HandleTODChange() override;
 	#pragma endregion
 
 

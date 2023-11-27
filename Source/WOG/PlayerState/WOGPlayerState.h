@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerState.h"
+#include "Types/CharacterTypes.h"
 #include "WOGPlayerState.generated.h"
 
 
@@ -45,6 +46,9 @@ private:
 	UPROPERTY(Replicated, VisibleAnywhere) 
 	FPlayerStats PlayerStats;
 
+	UPROPERTY(VisibleAnywhere)
+	FPlayerCharacterEquipmentSnapshot EquipmentSnapshot;
+
 public:
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE FPlayerStats GetPlayerStats() { return PlayerStats; }
@@ -53,6 +57,12 @@ public:
 	void IncreaseTotalElimms();
 	void SetMostElimmedPlayer(FString Player);
 	void SetPlayerWithMostElimms(FString Player);
-	
+
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE void SetEquipmentSnapshot(const FPlayerCharacterEquipmentSnapshot& NewEquipment) { EquipmentSnapshot = NewEquipment; }
+	UFUNCTION(BlueprintPure)
+	FORCEINLINE FPlayerCharacterEquipmentSnapshot GetEquipmentSnapshot() const { return EquipmentSnapshot; }
+
+	void RestoreEquipmentFromSnapshot();
 
 };

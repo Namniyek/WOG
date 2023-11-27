@@ -12,7 +12,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMappingsChanged, APlayerControlle
 /**
  * Manages input mapping for players
  */
-UCLASS(Config = Input)
+UCLASS(Config = Settings)
 class AUTOSETTINGSINPUT_API UInputMappingManager : public UEngineSubsystem
 {
 	GENERATED_BODY()

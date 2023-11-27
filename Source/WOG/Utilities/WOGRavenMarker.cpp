@@ -70,7 +70,7 @@ void AWOGRavenMarker::Destroyed()
 		TObjectPtr<UWOGUIManagerSubsystem> UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(PC->GetLocalPlayer());
 		if (!UIManager || !UIManager->GetRavenMarkerWidget()) return;
 
-		TObjectPtr<ISpawnInterface> Interface = Cast<ISpawnInterface>(UIManager->GetRavenMarkerWidget());
+		ISpawnInterface* Interface = Cast<ISpawnInterface>(UIManager->GetRavenMarkerWidget());
 		if (Interface)
 		{
 			Interface->Execute_IncreaseRavenMarkerWidget(UIManager->GetRavenMarkerWidget());

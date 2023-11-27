@@ -38,4 +38,6 @@ public:
 
 	UPROPERTY(BlueprintAssignable)
 	FOnKeyTimeHit OnKeyTimeHitDelegate;
+
+	ETimeOfDay CurrentTOD;
 };

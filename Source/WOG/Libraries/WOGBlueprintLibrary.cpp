@@ -48,17 +48,14 @@ AWOGBaseMagic* UWOGBlueprintLibrary::GetEquippedMagic(const AActor* Owner)
 AWOGBaseConsumable* UWOGBlueprintLibrary::GetEquippedConsumable(const AActor* Owner)
 {
 	if (!Owner) return nullptr;
-	UAGR_InventoryManager* Inventory = UAGRLibrary::GetInventory(Owner);
-	if (!Inventory) return nullptr;
+	UAGR_EquipmentManager* EquipmentManager = UAGRLibrary::GetEquipment(Owner);
+	if (!EquipmentManager) return nullptr;
 
+	AActor* OutItem;
+	EquipmentManager->GetItemInSlot(NAME_ConsumableSlot_Consumable, OutItem);
+	if (!OutItem) return nullptr;
 
-	TArray<AActor*> EquippedConsumables;
-	int32 Amount = 0;
-	Inventory->GetAllItemsOfTagSlotType(TAG_Inventory_Consumable, EquippedConsumables, Amount);
-	if (EquippedConsumables.IsEmpty()) return nullptr;
-
-	TObjectPtr<AWOGBaseConsumable> EquippedConsumable = Cast<AWOGBaseConsumable>(EquippedConsumables[0]);
-
+	TObjectPtr<AWOGBaseConsumable> EquippedConsumable = Cast<AWOGBaseConsumable>(OutItem);
 	return EquippedConsumable;
 }
 

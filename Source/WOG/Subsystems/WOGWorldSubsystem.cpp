@@ -35,6 +35,7 @@ void UWOGWorldSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 
 void UWOGWorldSubsystem::TimeOfDayChanged(ETimeOfDay TOD)
 {
+	CurrentTOD = TOD;
 	TimeOfDayChangedDelegate.Broadcast(TOD);
 	UE_LOG(WOGLogWorld, Display, TEXT("TimeOfDay = %s"), *UEnum::GetValueAsString(TOD));
 }

@@ -41,6 +41,7 @@
 #include "Resources/WOGStashBase.h"
 #include "Subsystems/WOGUIManagerSubsystem.h"
 #include "Consumables/WOGBaseConsumable.h"
+#include "Subsystems/WOGWorldSubsystem.h"
 
 
 void ABasePlayerCharacter::OnConstruction(const FTransform& Transform)
@@ -143,6 +144,23 @@ void ABasePlayerCharacter::BeginPlay()
 			Subsystem->ClearAllMappings();
 			Subsystem->AddMappingContext(MatchMappingContext, 0);
 		}
+	}
+
+	/*
+	* Create default Pickaxe and Woodaxe
+	*/
+	if (HasAuthority() && CurrentTOD == ETimeOfDay::TOD_Start)
+	{
+		FTimerHandle TimerHandle;
+		float Delay = 2.f;
+		GetWorldTimerManager().SetTimer(TimerHandle, this, &ThisClass::CreateDefaults, Delay);
+	}
+
+	if (HasAuthority() && (CurrentTOD == ETimeOfDay::TOD_Dusk1 || CurrentTOD == ETimeOfDay::TOD_Dusk3 || CurrentTOD == ETimeOfDay::TOD_Dusk3))
+	{
+		FTimerHandle TimerHandle;
+		float Delay = 2.f;
+		GetWorldTimerManager().SetTimer(TimerHandle, this, &ThisClass::RestoreEquipmentFromSnapshot, Delay);
 	}
 }
 
@@ -1078,7 +1096,7 @@ void ABasePlayerCharacter::Server_EquipMagic_Implementation(const FName& Key, AA
 			//InWeapon was never equipped before
 			AActor* PreviousItem;
 			AActor* NewItem;
-			EquipmentManager->EquipItemInSlot(RelevantBackSlot, InMagic, PreviousItem, NewItem);
+			bool Success = EquipmentManager->EquipItemInSlot(RelevantBackSlot, InMagic, PreviousItem, NewItem);
 			UE_LOG(LogTemp, Display, TEXT("Magic Never equipped before - Equipping to MagicRelevantBack Slot"));
 			return;
 		}
@@ -1182,7 +1200,7 @@ void ABasePlayerCharacter::ProcessHit(FHitResult Hit, UPrimitiveComponent* Weapo
 	}
 
 	//Check if we hit build and apply build damage
-	TObjectPtr<IBuildingInterface> BuildInterface = Cast<IBuildingInterface>(Hit.GetActor());
+	IBuildingInterface* BuildInterface = Cast<IBuildingInterface>(Hit.GetActor());
 	if (BuildInterface && HasAuthority())
 	{
 		BuildInterface->Execute_DealDamage(Hit.GetActor(), DamageToApply);
@@ -1191,7 +1209,7 @@ void ABasePlayerCharacter::ProcessHit(FHitResult Hit, UPrimitiveComponent* Weapo
 	}
 
 	//Check if we hit other character
-	TObjectPtr<IAttributesInterface> AttributesInterface = Cast<IAttributesInterface>(Hit.GetActor());
+	IAttributesInterface* AttributesInterface = Cast<IAttributesInterface>(Hit.GetActor());
 	if (AttributesInterface)
 	{
 		bool FoundAttribute;
@@ -1224,7 +1242,7 @@ void ABasePlayerCharacter::ProcessMagicHit(const FHitResult& Hit, const FMagicDa
 	}
 
 	//Check if we hit build and apply build damage
-	TObjectPtr<IBuildingInterface> BuildInterface = Cast<IBuildingInterface>(Hit.GetActor());
+	IBuildingInterface* BuildInterface = Cast<IBuildingInterface>(Hit.GetActor());
 	if (BuildInterface && HasAuthority())
 	{
 		BuildInterface->Execute_DealDamage(Hit.GetActor(), DamageToApply);
@@ -1233,7 +1251,7 @@ void ABasePlayerCharacter::ProcessMagicHit(const FHitResult& Hit, const FMagicDa
 	}
 
 	//Check if we hit other character
-	TObjectPtr<IAttributesInterface> AttributesInterface = Cast<IAttributesInterface>(Hit.GetActor());
+	IAttributesInterface* AttributesInterface = Cast<IAttributesInterface>(Hit.GetActor());
 	if (AttributesInterface)
 	{
 		AttributesInterface->Execute_BroadcastMagicHit(Hit.GetActor(), this, Hit, MagicData);
@@ -1561,6 +1579,31 @@ void ABasePlayerCharacter::Client_KickPlayerFromStash_Implementation(AWOGStashBa
 	}
 }
 
+void ABasePlayerCharacter::HandleTODChange()
+{
+	if (HasAuthority())
+	{
+		switch (CurrentTOD)
+		{
+		case ETimeOfDay::TOD_Dusk1:
+			HandleWeaponSwitch(false);
+			break;
+		case ETimeOfDay::TOD_Dawn2:
+			HandleWeaponSwitch(true);
+			break;
+		case ETimeOfDay::TOD_Dusk2:
+			HandleWeaponSwitch(false);
+			break;
+		case ETimeOfDay::TOD_Dawn3:
+			HandleWeaponSwitch(true);
+			break;
+		case ETimeOfDay::TOD_Dusk3:
+			HandleWeaponSwitch(false);
+			break;
+		}
+	}
+}
+
 void ABasePlayerCharacter::TargetLocked(AActor* NewTarget)
 {
 	if (!NewTarget)
@@ -1590,16 +1633,6 @@ void ABasePlayerCharacter::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 
-	/*
-	* Create default Pickaxe and Woodaxe
-	*/
-	if (HasAuthority())
-	{
-		FTimerHandle TimerHandle;
-		float Delay = 2.f;
-		GetWorldTimerManager().SetTimer(TimerHandle, this, &ThisClass::CreateDefaults, Delay);
-	}
-
 	if (InventoryManager)
 	{
 		InventoryManager->OnItemUpdated.AddDynamic(this, &ThisClass::OnConsumablePickedUp);
@@ -1608,6 +1641,7 @@ void ABasePlayerCharacter::PostInitializeComponents()
 
 void ABasePlayerCharacter::Elim(bool bPlayerLeftGame)
 {
+	DestroyEquipment();
 	Multicast_Elim(bPlayerLeftGame);
 }
 
@@ -1679,20 +1713,15 @@ void ABasePlayerCharacter::Server_DropMagic_Implementation(const FName& Key)
 
 void ABasePlayerCharacter::Server_StoreWeapons_Implementation()
 {
-	StoreWeapon(FName("1"));
-	StoreWeapon(FName("2"));
+	StoreEquipment();
 	RestoreTools();
-
-	StoreMagic(FName("1"));
-	StoreMagic(FName("2"));
 }
 
 void ABasePlayerCharacter::Server_RestoreWeapons_Implementation()
 {
 	StoreTool(FName("1"));
 	StoreTool(FName("2"));
-	RestoreWeapons();
-	RestoreMagic();
+	RestoreEquipment();
 }
 
 void ABasePlayerCharacter::RestoreTools()
@@ -1703,7 +1732,11 @@ void ABasePlayerCharacter::RestoreTools()
 	int32 Amount = 0;
 	InventoryManager->GetAllItemsOfTagSlotType(TAG_Inventory_Tool, OutItems, Amount);
 
-	if (!OutItems.Num()) return;
+	if (!OutItems.Num())
+	{
+		return;
+	}
+
 	for (auto OutItem : OutItems)
 	{
 		TObjectPtr<AWOGBaseWeapon> Weapon = Cast<AWOGBaseWeapon>(OutItem);
@@ -1794,7 +1827,7 @@ void ABasePlayerCharacter::StoreMagic(const FName& Key)
 
 	if (!OutItem)
 	{
-		UE_LOG(WOGLogInventory, Error, TEXT("NO VALID ITEM REFERENCE AT KEY : %s"), *Key.ToString());
+		UE_LOG(WOGLogInventory, Error, TEXT("NO VALID MAGIC REFERENCE AT KEY : %s"), *Key.ToString());
 		return;
 	}
 
@@ -1830,6 +1863,75 @@ void ABasePlayerCharacter::RestoreMagic()
 
 		UE_LOG(WOGLogInventory, Display, TEXT("RestoreMagic() called on %s"), *GetNameSafe(Magic));
 	}
+}
+
+void ABasePlayerCharacter::StoreConsumable()
+{
+	if (!EquipmentManager) return;
+
+	AActor* OutItem;
+	EquipmentManager->GetItemInSlot(NAME_ConsumableSlot_Consumable, OutItem);
+
+	if (OutItem)
+	{
+		UnequipConsumable();
+	}
+}
+
+void ABasePlayerCharacter::RestoreConsumable()
+{
+	if (!InventoryManager) return;
+	TArray<AActor*> OutItems = {};
+	int32 OutAmount = 0;
+	InventoryManager->GetAllItemsOfTagSlotType(TAG_Inventory_Consumable, OutItems, OutAmount);
+
+	if (OutItems.IsEmpty() || !OutItems[0]) return;
+	EquipConsumable(OutItems[0]);
+}
+
+void ABasePlayerCharacter::EquipConsumable(AActor* InItem)
+{
+	if (!InItem) return;
+
+	AActor* PreviousItem;
+	AActor* NewItem;
+	bool Success = EquipmentManager->EquipItemInSlot(NAME_ConsumableSlot_Consumable, InItem, PreviousItem, NewItem);
+	if (Success)
+	{
+		UE_LOG(WOGLogInventory, Display, TEXT("Consumable equipped"));
+	}
+	else
+	{
+		UE_LOG(WOGLogInventory, Error, TEXT("Consumable NOT equipped"));
+	}
+}
+
+void ABasePlayerCharacter::UnequipConsumable()
+{
+	if (!EquipmentManager) return;
+
+	AActor* OutItem;
+	EquipmentManager->UnEquipItemFromSlot(NAME_ConsumableSlot_Consumable, OutItem);
+}
+
+void ABasePlayerCharacter::StoreEquipment()
+{
+	StoreWeapon(FName("1"));
+	StoreWeapon(FName("2"));
+
+	StoreMagic(FName("1"));
+	StoreMagic(FName("2"));
+
+	StoreConsumable();
+}
+
+void ABasePlayerCharacter::RestoreEquipment()
+{
+	RestoreMagic();
+	RestoreWeapons();
+	RestoreConsumable();
+
+	TakeEquipmentSnapshot();
 }
 
 void ABasePlayerCharacter::CreateDefaults()
@@ -1900,7 +2002,131 @@ void ABasePlayerCharacter::GrantDefaultMagics()
 			InventoryManager->AddItemToInventoryDirectly(Magic);
 		}
 	}
-
-	//TO-DO - fix this! Revert the tool thingy 
 	RestoreTools();
+}
+
+void ABasePlayerCharacter::DestroyDefaultToolsAndMagics()
+{
+	if (!HasAuthority() || !InventoryManager) return;
+
+	TArray<AActor*> OutItems = {};
+	int32 Amount = 0;
+	InventoryManager->GetAllItemsOfTagSlotType(TAG_Inventory_Tool, OutItems, Amount);
+
+	if (OutItems.IsEmpty()) return;
+
+	for (AActor* Item : OutItems)
+	{
+		if (!Item) continue;
+
+		TObjectPtr<UAGR_ItemComponent> ItemComp = UAGRLibrary::GetItemComponent(Item);
+		if (!ItemComp) continue;
+
+		ItemComp->DestroyItem();
+	}
+}
+
+void ABasePlayerCharacter::HandleWeaponSwitch(bool bStoreWeapons)
+{
+	if (bStoreWeapons)
+	{
+		StoreEquipment();
+		CreateDefaults();
+	}
+	else
+	{
+		StoreTool(FName("1"));
+		StoreTool(FName("2"));
+		DestroyDefaultToolsAndMagics();
+		RestoreEquipment();
+	}
+}
+
+void ABasePlayerCharacter::TakeEquipmentSnapshot()
+{
+	TObjectPtr<AWOGPlayerState> WOGPlayerState = Cast<AWOGPlayerState>(GetPlayerState());
+	if (!WOGPlayerState || !EquipmentManager) return;
+
+	FPlayerCharacterEquipmentSnapshot EquipmentSnapshot;
+
+	AActor* OutItemSlotOne;
+	AActor* OutItemSlotTwo;
+	AActor* OutItemSlotThree;
+	AActor* OutItemSlotFour;
+
+	EquipmentManager->GetWeaponShortcutReference(FName("1"), OutItemSlotOne);
+	if (!GetCharacterData().bIsAttacker)
+	{
+		EquipmentManager->GetWeaponShortcutReference(FName("2"), OutItemSlotTwo);
+		EquipmentManager->GetMagicShortcutReference(FName("1"), OutItemSlotThree);
+	}
+	else
+	{
+		EquipmentManager->GetMagicShortcutReference(FName("1"), OutItemSlotTwo);
+		EquipmentManager->GetMagicShortcutReference(FName("2"), OutItemSlotThree);
+	}
+
+	EquipmentManager->GetItemInSlot(NAME_ConsumableSlot_Consumable, OutItemSlotFour);
+	if (OutItemSlotFour/* && UAGRLibrary::GetItemComponent(OutItemSlotFour)*/)
+	{
+		//EquipmentSnapshot.SlotFourAmount = UAGRLibrary::GetItemComponent(OutItemSlotFour)->CurrentStack;
+	}
+
+	if (IsValid(OutItemSlotOne)) EquipmentSnapshot.ClassSlotOne = OutItemSlotOne->GetClass();
+	if (IsValid(OutItemSlotTwo)) EquipmentSnapshot.ClassSlotTwo = OutItemSlotTwo->GetClass();
+	if (IsValid(OutItemSlotThree)) EquipmentSnapshot.ClassSlotThree = OutItemSlotThree->GetClass();
+	if (IsValid(OutItemSlotFour)) EquipmentSnapshot.ClassSlotFour = OutItemSlotFour->GetClass();
+
+	WOGPlayerState->SetEquipmentSnapshot(EquipmentSnapshot);
+}
+
+void ABasePlayerCharacter::RestoreEquipmentFromSnapshot()
+{
+	TObjectPtr<AWOGPlayerState> WOGPlayerState = Cast<AWOGPlayerState>(GetPlayerState());
+	if (!IsValid(WOGPlayerState)) return;
+
+	WOGPlayerState->RestoreEquipmentFromSnapshot();
+}
+
+void ABasePlayerCharacter::DestroyEquipment()
+{
+	if (!EquipmentManager) return;
+
+	AActor* OutItemSlotOne;
+	AActor* OutItemSlotTwo;
+	AActor* OutItemSlotThree;
+	AActor* OutItemSlotFour;
+
+	EquipmentManager->GetWeaponShortcutReference(FName("1"), OutItemSlotOne);
+	EquipmentManager->GetItemInSlot(NAME_ConsumableSlot_Consumable, OutItemSlotFour);
+	if (!GetCharacterData().bIsAttacker)
+	{
+		EquipmentManager->GetWeaponShortcutReference(FName("2"), OutItemSlotTwo);
+		EquipmentManager->GetMagicShortcutReference(FName("1"), OutItemSlotThree);
+	}
+	else
+	{
+		EquipmentManager->GetMagicShortcutReference(FName("1"), OutItemSlotTwo);
+		EquipmentManager->GetMagicShortcutReference(FName("2"), OutItemSlotThree);
+	}
+
+	if (OutItemSlotOne && UAGRLibrary::GetItemComponent(OutItemSlotOne))
+	{
+		UAGRLibrary::GetItemComponent(OutItemSlotOne)->DestroyItem();
+	}
+
+	if (OutItemSlotTwo && UAGRLibrary::GetItemComponent(OutItemSlotTwo))
+	{
+		UAGRLibrary::GetItemComponent(OutItemSlotTwo)->DestroyItem();
+	}
+
+	if (OutItemSlotThree && UAGRLibrary::GetItemComponent(OutItemSlotThree))
+	{
+		UAGRLibrary::GetItemComponent(OutItemSlotThree)->DestroyItem();
+	}
+
+	if (OutItemSlotFour && UAGRLibrary::GetItemComponent(OutItemSlotFour))
+	{
+		UAGRLibrary::GetItemComponent(OutItemSlotFour)->DestroyItem();
+	}
 }

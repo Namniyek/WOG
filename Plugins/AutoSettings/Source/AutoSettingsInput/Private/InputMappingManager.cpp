@@ -31,7 +31,10 @@ UInputMappingManager::UInputMappingManager()
 {
 	if(HasAllFlags(RF_ClassDefaultObject))
 	{
-		FConfigUtils::MigrateConfigPropertiesFromSection(this, TEXT("/Script/AutoSettings.InputMappingManager"));
+		// Migrate from AutoSettings module
+		FConfigUtils::MigrateConfigPropertiesFromSection(this, TEXT("Input"), TEXT("/Script/AutoSettings.InputMappingManager"));
+		// Migrate from Input ini
+		FConfigUtils::MigrateConfigPropertiesFromSection(this, TEXT("Input"), TEXT("/Script/AutoSettingsInput.InputMappingManager"));
 	}
 }
 

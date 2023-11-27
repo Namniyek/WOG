@@ -112,7 +112,7 @@ void AWOGGameState::DayChanged(int32 DayNumber)
 
 void AWOGGameState::HandleWeaponSwitch(bool bStoreWeapons)
 {
-	if (!HasAuthority()) return;
+	/*if (!HasAuthority()) return;
 	for (auto Player : PlayerArray)
 	{
 		if (!Player || !Player->GetPlayerController()) continue;
@@ -128,7 +128,7 @@ void AWOGGameState::HandleWeaponSwitch(bool bStoreWeapons)
 		{
 			Character->Server_RestoreWeapons();
 		}
-	}
+	}*/
 }
 
 void AWOGGameState::HandleTODAnnouncement(ETimeOfDay TOD)
