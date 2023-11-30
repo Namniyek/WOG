@@ -136,9 +136,6 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void PossessedBy(AController* NewController) override;
 
-	UPROPERTY(ReplicatedUsing = OnRep_PlayerProfile, EditDefaultsOnly, BlueprintReadWrite)
-	FPlayerData PlayerProfile;
-
 	virtual void PostInitializeComponents();
 
 	#pragma region Handle Elim
@@ -158,19 +155,16 @@ public:
 	#pragma region Player Input Variables
 	/*
 	** MappingContexts
-	**/
+	*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Mapping Contexts", meta = (AllowPrivateAccess = "true"))
 	class UInputMappingContext* MatchMappingContext;
-
-	//UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Mapping Contexts", meta = (AllowPrivateAccess = "true"))
-	//UInputMappingContext* RadialMenuMappingContext;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Mapping Contexts", meta = (AllowPrivateAccess = "true"))
 	UInputMappingContext* SpawnModeMappingContext;
 
 	/*
 	** Input actions
-	**/
+	*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Base Match", meta = (AllowPrivateAccess = "true"))
 	class UInputAction* JumpAction;
 
@@ -216,10 +210,17 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Base Match", meta = (AllowPrivateAccess = "true"))
 	UInputAction* WeaponRangedAction;
 
-	#pragma endregion
+
+	/*
+	** Other variables
+	*/
+	UPROPERTY(BlueprintReadWrite)
+	bool bSecondaryButtonPressed = false;
 
 	UPROPERTY(BlueprintAssignable, BlueprintCallable)
 	FOnInteractComplete OnInteractComplete;
+
+	#pragma endregion
 
 protected:
 
@@ -298,6 +299,17 @@ protected:
 	#pragma endregion
 
 	#pragma region Player Profile Section
+public:
+	UFUNCTION(Server, reliable, BlueprintCallable)
+	void Server_SetPlayerProfile(const FPlayerData& NewPlayerProfile);
+
+	UFUNCTION(BlueprintNativeEvent)
+	void UpdatePlayerProfile(const FPlayerData& NewPlayerProfile);
+
+protected:
+	UPROPERTY(ReplicatedUsing = OnRep_PlayerProfile, EditDefaultsOnly, BlueprintReadWrite)
+	FPlayerData PlayerProfile;
+
 	UFUNCTION()
 	void OnRep_PlayerProfile();
 
@@ -310,7 +322,6 @@ protected:
 	void SetColors(FName Primary, FName Skin, FName BodyPaint, FName HairColor);
 	void SetMeshesAndAnimations(bool bIsMale, FName RowName);
 	void SetDefaultAbilitiesAndEffects(bool bIsMale, FName RowName);
-
 	#pragma endregion
 
 	#pragma region Inventory
@@ -414,17 +425,25 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<class UAGR_InventoryManager> InventoryManager;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<UAGR_CombatManager> CombatManager;
+
 	#pragma endregion
 
 	#pragma region Handle Combat
+	
+	UFUNCTION()
+	virtual void OnStartAttack();
+	TArray<TObjectPtr<AActor>> HitActorsToIgnore;
 
-	virtual void BroadcastHit_Implementation(AActor* AgressorActor, const FHitResult& Hit, const float& DamageToApply, AActor* InstigatorWeapon) override;
+	UFUNCTION()
+	virtual void OnAttackHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh);
 
+	virtual void BroadcastHit_Implementation(AActor* AgressorActor, const FHitResult& Hit, const float& DamageToApply, AActor* InstigatorWeapon);
 	virtual void BroadcastMagicHit_Implementation(AActor* AgressorActor, const FHitResult& Hit, const struct FMagicDataTable& AgressorMagicData);
 
-	virtual void ProcessHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh) override;
-
-	virtual void ProcessMagicHit(const FHitResult& Hit, const struct FMagicDataTable& MagicData) override;
+	virtual void ProcessHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh);
+	virtual void ProcessMagicHit(const FHitResult& Hit, const struct FMagicDataTable& MagicData);
 
 	#pragma endregion
 
@@ -434,6 +453,9 @@ public:
 	TObjectPtr<AWOGCommonInventory> CommonInventory;
 
 	void FindCommonInventory();
+
+	UFUNCTION(Server, reliable)
+	void Server_CollectResource(UAGR_ItemComponent* ItemToCollect);
 	#pragma endregion
 
 	#pragma region Vendors
@@ -466,7 +488,38 @@ public:
 	virtual void HandleTODChange() override;
 	#pragma endregion
 
+	#pragma region Animation
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setup|Animations")
+	float SpeedRequiredForLeap;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setup|Animations")
+	TObjectPtr<class UAnimMontage> DodgeMontage;
+	#pragma endregion
+
+	#pragma region UI
+	UFUNCTION()
+	void AddHoldProgressBar();
+	UFUNCTION()
+	void RemoveHoldProgressBarWidget();
+
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<UWidgetComponent> StaminaWidgetContainer;
+	#pragma endregion
+
+	#pragma region Material variables
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UMaterialInterface* Material;
+	#pragma endregion
+
+	#pragma region Teleport
+	UFUNCTION()
+	void FinishTeleportCharacter(const FTransform& Destination);
+
+	UFUNCTION(BlueprintCallable, Server, reliable)
+	void Server_StartTeleportCharacter(const FTransform& Destination);
+	#pragma endregion
+
+	#pragma region Targeting
 	UFUNCTION()
 	void TargetLocked(AActor* NewTarget);
 
@@ -476,14 +529,12 @@ public:
 	UFUNCTION(Server, reliable)
 	void Server_SetCurrentTarget(AActor* NewTarget = nullptr);
 
-	UPROPERTY(BlueprintReadOnly, Replicated, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<AWOGPlayerController> OwnerPC = nullptr;
-
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Replicated)
 	TObjectPtr<AActor> CurrentTarget = nullptr;
+	#pragma endregion
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setup|Animations")
-	TObjectPtr<class UAnimMontage> DodgeMontage;
+	UPROPERTY(BlueprintReadOnly, Replicated, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<AWOGPlayerController> OwnerPC = nullptr;
 
 public:
 	//public Getters and Setters 
@@ -493,16 +544,12 @@ public:
 	FORCEINLINE void SetOwnerPC(AWOGPlayerController* NewPC) { OwnerPC = NewPC; }
 	FORCEINLINE TObjectPtr<AWOGPlayerController> GetOwnerPC() { return OwnerPC; }
 	FORCEINLINE TObjectPtr<AActor>GetCurrentTarget() { return CurrentTarget; }
-
+	FORCEINLINE FPlayerData GetPlayerProfile() const { return PlayerProfile; }
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE AWOGCommonInventory* GetCommonInventory() const { return CommonInventory; }
+	FORCEINLINE float GetSpeedRequiredForLeap() const { return SpeedRequiredForLeap; }
 
-	UFUNCTION(Server, reliable, BlueprintCallable)
-	void Server_SetPlayerProfile(const FPlayerData& NewPlayerProfile);
-
-	UFUNCTION(BlueprintNativeEvent)
-	void UpdatePlayerProfile(const FPlayerData& NewPlayerProfile);
-
-
+	//Can return nullptr
+	UWOGCharacterWidgetContainer* GetStaminaWidgetContainer() const;
 
 };

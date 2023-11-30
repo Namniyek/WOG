@@ -71,7 +71,7 @@ void AWOGPlayerController::OnPossess(APawn* aPawn)
 	if (!WOGSavegame || !PlayerCharacter) return;
 
 	PlayerCharacter->Server_SetPlayerProfile(WOGSavegame->PlayerProfile);
-	bIsAttacker = PlayerCharacter->PlayerProfile.bIsAttacker;
+	bIsAttacker = PlayerCharacter->GetPlayerProfile().bIsAttacker;
 	SetPawn(PlayerCharacter);
 	PlayerCharacter->SetOwnerPC(this);
 

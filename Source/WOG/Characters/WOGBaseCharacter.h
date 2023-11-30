@@ -25,6 +25,7 @@ class UMotionWarpingComponent;
 class UWOGHoldProgressBar;
 class UWidgetComponent;
 class UWOGCharacterWidgetContainer;
+class UAnimMontage;
 
 UCLASS()
 class WOG_API AWOGBaseCharacter : public ACharacter, public IAttributesInterface, public IAbilitySystemInterface
@@ -35,34 +36,36 @@ public:
 	AWOGBaseCharacter();
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
 	virtual void PossessedBy(AController* NewController) override;
-
-	bool ApplyGameplayEffectToSelf(TSubclassOf<UGameplayEffect> Effect, FGameplayEffectContextHandle InEffectContext, float Duration = 1.f);
-	
-	void GiveDefaultAbilities();
-	void ApplyDefaultEffects();
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	UMaterialInterface* Material;
-
-	UFUNCTION(BlueprintCallable)
-	virtual void ProcessMagicHit(const FHitResult& Hit, const struct FMagicDataTable& MagicData) { /*TO-BE OVERRIDEN IN CHILDREN*/ };
+	virtual void Tick(float DeltaTime) override;
+	virtual void Elim(bool bPlayerLeftGame) { /*To be overriden in Children*/ };
 
 protected:
 	virtual void BeginPlay() override;
+
+	UPROPERTY()
+	TObjectPtr<AWOGGameMode> WOGGameMode;
+
+	#pragma region GAS functions
+public:
+	bool ApplyGameplayEffectToSelf(TSubclassOf<UGameplayEffect> Effect, FGameplayEffectContextHandle InEffectContext, float Duration = 1.f);
+
+	void GiveDefaultAbilities();
+	void ApplyDefaultEffects();
+
+	bool HasMatchingGameplayTag(FGameplayTag TagToCheck) const;
+
+	UFUNCTION(BlueprintPure)
+	UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+
+protected:
 	void SendAbilityLocalInput(const EWOGAbilityInputID InInputID);
 	virtual void OnHealthAttributeChanged(const FOnAttributeChangeData& Data);
 	void GiveDeathResources(AActor* InActor);
 	virtual void OnStaminaAttributeChanged(const FOnAttributeChangeData& Data);
 	virtual void OnMaxMovementSpeedAttributeChanged(const FOnAttributeChangeData& Data);
 	virtual void OnGameplayEffectAppliedToSelf(UAbilitySystemComponent* Source, const FGameplayEffectSpec& Spec, FActiveGameplayEffectHandle Handle);
-	UFUNCTION()
-	virtual void OnStartAttack();
-	UFUNCTION()
-	virtual void OnAttackHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh);
-	virtual void ProcessHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh) { /*TO-BE OVERRIDEN IN CHILDREN*/ };
-
+	#pragma endregion
 	
 	#pragma region TimeOfDay
 	UFUNCTION()
@@ -77,6 +80,7 @@ protected:
 	virtual void HandleTODChange() {/*TO BE OVERRIDEN IN CHILDREN*/ };
 	#pragma endregion
 
+	#pragma region Freeze functionality
 	UFUNCTION(Server, Reliable, BlueprintCallable)
 	void Server_SetCharacterFrozen(bool bIsFrozen);
 
@@ -85,11 +89,9 @@ protected:
 
 	UFUNCTION(BlueprintNativeEvent)
 	void SetCharacterFrozen(bool bIsFrozen);
+	#pragma endregion
 
-	virtual void ToggleStrafeMovement(bool bIsStrafe);
-
-	TArray<TObjectPtr<AActor>> HitActorsToIgnore;
-
+	#pragma region Setup
 	UPROPERTY(EditDefaultsOnly, Category = "Setup|Abilities and Effects")
 	FCharacterAbilityData DefaultAbilitiesAndEffects;
 
@@ -98,22 +100,20 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Setup|Character Data")
 	TMap<TSubclassOf<AActor>, int32> DeathResourceMap;
+	#pragma endregion
 
 	#pragma region Actor Components
 	UPROPERTY()
 	TObjectPtr<UWOGAbilitySystemComponent> AbilitySystemComponent;
+
 	UPROPERTY()
 	TObjectPtr<UWOGAttributeSetBase> AttributeSet;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<UAGR_CombatManager> CombatManager;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<UAGRAnimMasterComponent> AnimManager;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<UMotionWarpingComponent> MotionWarping;
-
 	#pragma endregion
 
 	#pragma region Handle Elim
@@ -127,51 +127,6 @@ protected:
 	virtual void HandleStateElimmed(AController* InstigatedBy = nullptr) { /*TO-BE OVERRIDEN IN CHILDREN*/ };
 
 	#pragma endregion
-
-	#pragma region Interfaces functions
-
-	virtual void BroadcastHit_Implementation(AActor* AgressorActor, const FHitResult& Hit, const float& DamageToApply, AActor* InstigatorWeapon) override {/*To be overriden in Children*/};
-
-public:
-	UFUNCTION(BlueprintPure)
-	UAbilitySystemComponent* GetAbilitySystemComponent() const override;
-
-	#pragma endregion
-
-	#pragma region Animation Variables
-
-protected:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setup|Animations")
-	float SpeedRequiredForLeap;
-
-	#pragma endregion
-
-	UPROPERTY()
-	TObjectPtr<AWOGGameMode> WOGGameMode;
-
-	#pragma region Cosmetic Hits
-	/*
-	**Calculate if the hit is frontal
-	**Will check Agressor param first, and if not valid will fallback to vector
-	*/
-	UFUNCTION(BlueprintPure)
-	bool IsHitFrontal(const float& AngleTolerance, const AActor * Victim, const FVector& Location, const AActor* Agressor = nullptr);
-
-	/*
-	**Calcualate Hit direction. Returns name of the direction
-	*/
-	UFUNCTION(BlueprintPure)
-	FName CalculateHitDirection(const FVector& WeaponLocation);
-	FVector LastHitDirection;
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
-	FHitResult LastHitResult;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setup|Animations")
-	TObjectPtr<class UAnimMontage> UnarmedHurtMontage;
-	#pragma endregion
-
-	UPROPERTY(BlueprintReadWrite)
-	bool bSecondaryButtonPressed = false;
 
 	#pragma region Ragdoll
 
@@ -211,29 +166,22 @@ protected:
 	FVector PelvisOffset;
 
 	FVectorSpringState SpringState;
-
-	#pragma endregion
-
-	#pragma region UI
-	UFUNCTION()
-	void AddHoldProgressBar();
-	UFUNCTION()
-	void RemoveHoldProgressBarWidget();
-
-	UPROPERTY(EditDefaultsOnly)
-	TObjectPtr<UWidgetComponent> StaminaWidgetContainer;
 	#pragma endregion
 
 	#pragma region DissolveEffect
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UMaterialInstanceDynamic* CharacterMI;
+
 	UPROPERTY(VisibleAnywhere)
 	UTimelineComponent* DissolveTimeline;
 	FOnTimelineFloat DissolveTrack;
 	FOnTimelineEvent DissolveTimelineFinished;
 
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category = "Setup|Dissolve")
 	TObjectPtr<UCurveFloat> DissolveCurve;
 
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category = "Setup|Dissolve")
 	FLinearColor DissolveColor;
 
 	UFUNCTION()
@@ -244,33 +192,34 @@ protected:
 
 	UFUNCTION(NetMulticast, reliable)
 	void Multicast_StartDissolve(bool bIsReversed = false);
-
-	UFUNCTION()
-	void FinishTeleportCharacter(const FTransform& Destination);
-
-public:
-	UFUNCTION(BlueprintCallable, Server, reliable)
-	void Server_StartTeleportCharacter(const FTransform& Destination);
-protected:
 	#pragma endregion
 
-	#pragma region Material variables
+	#pragma region Animation
+	virtual void ToggleStrafeMovement(bool bIsStrafe);
+	#pragma endregion
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-	UMaterialInstanceDynamic* CharacterMI;
+	#pragma region Cosmetic Hits
+	/*
+	**Calculate if the hit is frontal
+	**Will check Agressor param first, and if not valid will fallback to vector
+	*/
+	UFUNCTION(BlueprintPure)
+	bool IsHitFrontal(const float& AngleTolerance, const AActor* Victim, const FVector& Location, const AActor* Agressor = nullptr);
 
+	/*
+	**Calcualate Hit direction. Returns name of the direction
+	*/
+	UFUNCTION(BlueprintPure)
+	FName CalculateHitDirection(const FVector& WeaponLocation);
+	FVector LastHitDirection;
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+	FHitResult LastHitResult;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setup|Animations")
+	TObjectPtr<UAnimMontage> UnarmedHurtMontage;
 	#pragma endregion
 
 public:	
-	virtual void Tick(float DeltaTime) override;
-
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
-	virtual void Elim(bool bPlayerLeftGame) { /*To be overriden in Children*/ };
-
-	bool HasMatchingGameplayTag(FGameplayTag TagToCheck) const;
-
-	FORCEINLINE float GetSpeedRequiredForLeap() const { return SpeedRequiredForLeap; }
 	FORCEINLINE UWOGAttributeSetBase* GetAttributeSetBase() const { return AttributeSet; }
 	FORCEINLINE void SetDefaultAbilitiesAndEffects(const FCharacterAbilityData& Data) { DefaultAbilitiesAndEffects = Data; }
 	FORCEINLINE FCharacterData GetCharacterData() const { return CharacterData; }
@@ -279,7 +228,4 @@ public:
 	FORCEINLINE bool GetIsRagdolling() const { return bIsRagdolling; }
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE bool GetIsLayingOnBack() const { return bIsLayingOnBack; }
-	
-	//Can return nullptr
-	UWOGCharacterWidgetContainer* GetStaminaWidgetContainer() const;
 };

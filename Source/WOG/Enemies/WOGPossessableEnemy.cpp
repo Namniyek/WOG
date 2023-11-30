@@ -66,7 +66,6 @@ void AWOGPossessableEnemy::BeginPlay()
 	TObjectPtr<UWOGWorldSubsystem> WorldSubsystem = GetWorld()->GetSubsystem<UWOGWorldSubsystem>();
 	if (WorldSubsystem)
 	{
-		WorldSubsystem->TimeOfDayChangedDelegate.AddDynamic(this, &ThisClass::TODChanged);
 		WorldSubsystem->OnKeyTimeHitDelegate.AddDynamic(this, &ThisClass::KeyTimeHit);
 		UE_LOG(WOGLogSpawn, Display, TEXT("Delegates bound -> PossessableCharacter"));
 	}
@@ -85,6 +84,10 @@ void AWOGPossessableEnemy::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ThisClass::LookActionPressed);
 		//Jump:
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &ThisClass::JumpActionPressed);
+		//Primary
+		EnhancedInputComponent->BindAction(PrimaryLightAction, ETriggerEvent::Triggered, this, &ThisClass::PrimaryLightButtonPressed);
+		//Secondary
+		EnhancedInputComponent->BindAction(SecondaryAction, ETriggerEvent::Triggered, this, &ThisClass::SecondaryLightButtonPressed);
 	}
 }
 
@@ -128,6 +131,18 @@ void AWOGPossessableEnemy::JumpActionPressed(const FInputActionValue& Value)
 	UE_LOG(LogTemp, Warning, TEXT("JUMPY JUMP"));
 }
 
+void AWOGPossessableEnemy::PrimaryLightButtonPressed(const FInputActionValue& Value)
+{
+	SendAbilityLocalInput(EWOGAbilityInputID::AttackLight);
+	UE_LOG(WOGLogSpawn, Display, TEXT("Primary Light button pressed"));
+}
+
+void AWOGPossessableEnemy::SecondaryLightButtonPressed(const FInputActionValue& Value)
+{
+	SendAbilityLocalInput(EWOGAbilityInputID::Block);
+	UE_LOG(WOGLogSpawn, Display, TEXT("Secondary Light button pressed"));
+}
+
 void AWOGPossessableEnemy::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
@@ -148,9 +163,9 @@ void AWOGPossessableEnemy::UnpossessMinion_Implementation()
 	Server_UnpossessMinion();
 }
 
-void AWOGPossessableEnemy::TODChanged(ETimeOfDay TOD)
+void AWOGPossessableEnemy::HandleTODChange()
 {
-	switch (TOD)
+	switch (CurrentTOD)
 	{
 	case ETimeOfDay::TOD_Dawn2:
 		Destroy();

@@ -20,11 +20,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "MotionWarpingComponent.h"
 #include "Components/CapsuleComponent.h"
-#include "Blueprint/UserWidget.h"
 #include "PlayerController/WOGPlayerController.h"
-#include "Components/WidgetComponent.h"
-#include "Components/SizeBox.h"
-#include "UI/WOGCharacterWidgetContainer.h"
 #include "Subsystems/WOGUIManagerSubsystem.h"
 #include "Resources/WOGCommonInventory.h"
 #include "Subsystems/WOGWorldSubsystem.h"
@@ -44,24 +40,10 @@ AWOGBaseCharacter::AWOGBaseCharacter()
 
 	AttributeSet = CreateDefaultSubobject<UWOGAttributeSetBase>(TEXT("AttributeSet"));
 
-	CombatManager = CreateDefaultSubobject<UAGR_CombatManager>(TEXT("CombatManager"));
-	CombatManager->SetIsReplicated(true);
-	CombatManager->OnStartAttack.AddDynamic(this, &ThisClass::OnStartAttack);
-	CombatManager->OnAttackHitEvent.AddDynamic(this, &ThisClass::OnAttackHit);
-
 	AnimManager = CreateDefaultSubobject<UAGRAnimMasterComponent>(TEXT("AnimManager"));
 	AnimManager->SetIsReplicated(true);
 
 	MotionWarping = CreateDefaultSubobject<UMotionWarpingComponent>(TEXT("MotionWarping"));
-
-	StaminaWidgetContainer = CreateDefaultSubobject<UWidgetComponent>(TEXT("Stamina Widget Container"));
-	StaminaWidgetContainer->SetWidgetSpace(EWidgetSpace::Screen);
-	StaminaWidgetContainer->SetDrawAtDesiredSize(true);
-	StaminaWidgetContainer->SetupAttachment(GetRootComponent());
-
-	SpeedRequiredForLeap = 750.f;
-
-	LastHitResult = FHitResult();
 
 	DissolveTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("DissolveTimelineComponent"));
 
@@ -71,6 +53,9 @@ AWOGBaseCharacter::AWOGBaseCharacter()
 	TargetGroundLocation = FVector();
 	PelvisOffset = FVector();
 	SpringState = FVectorSpringState();
+
+	LastHitResult = FHitResult();
+	LastHitDirection = FVector();
 }
 
 void AWOGBaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -233,27 +218,6 @@ void AWOGBaseCharacter::OnStaminaAttributeChanged(const FOnAttributeChangeData& 
 			UIManager->AddStaminaWidget();
 		}
 	}
-	/*
-	//Add tired vocal cue locally
-	if (Data.NewValue < Data.OldValue && UKismetMathLibrary::NearlyEqual_FloatFloat(Data.NewValue, AttributeSet->GetMaxStamina() * 0.2f, 0.5f))
-	{
-		if (AbilitySystemComponent)
-		{
-			FGameplayCueParameters Params;
-			AbilitySystemComponent->ExecuteGameplayCueLocal(TAG_Cue_Vocal_Movement_Tired, Params);
-		}
-	}
-
-	//Remove the tired vocal cue locally
-	if (Data.NewValue > Data.OldValue && UKismetMathLibrary::NearlyEqual_FloatFloat(Data.NewValue, AttributeSet->GetMaxStamina() * 0.2f, 0.5f))
-	{
-		if (AbilitySystemComponent)
-		{
-			FGameplayCueParameters Params;
-			AbilitySystemComponent->RemoveGameplayCueLocal(TAG_Cue_Vocal_Movement_Tired, Params);
-		}
-	}
-	*/
 }
 
 void AWOGBaseCharacter::OnMaxMovementSpeedAttributeChanged(const FOnAttributeChangeData& Data)
@@ -277,22 +241,6 @@ void AWOGBaseCharacter::OnGameplayEffectAppliedToSelf(UAbilitySystemComponent* S
 			UE_LOG(LogTemp, Display, TEXT("Server_SetCharacterFrozen(true) called"));
 		}
 	}
-}
-
-void AWOGBaseCharacter::OnStartAttack()
-{
-	HitActorsToIgnore.Empty();
-}
-
-void AWOGBaseCharacter::OnAttackHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh)
-{
-	//Handle early returns
-	if (!Hit.bBlockingHit || !Hit.GetActor()) return;
-	if (HitActorsToIgnore.Contains(Hit.GetActor())) return;
-
-	HitActorsToIgnore.AddUnique(Hit.GetActor());
-	
-	ProcessHit(Hit, WeaponMesh);
 }
 
 void AWOGBaseCharacter::Server_SetCharacterFrozen_Implementation(bool bIsFrozen)
@@ -369,15 +317,15 @@ bool AWOGBaseCharacter::IsHitFrontal(const float& AngleTolerance, const AActor* 
 {
 	//We check first if the Agressor actor is valid.
 	//If it is we use it, if it's not, we use the vector param.
-	FRotator LookAtRotation = Agressor != nullptr ? 
+	FRotator LookAtRotation = Agressor != nullptr ?
 		UKismetMathLibrary::FindLookAtRotation(Victim->GetActorLocation(), Agressor->GetActorLocation()) :
 		UKismetMathLibrary::FindLookAtRotation(Victim->GetActorLocation(), Location);
 
 	FRotator DeltaRotator = UKismetMathLibrary::NormalizedDeltaRotator(GetActorRotation(), LookAtRotation);
 
-	bool bIsHitFrontal = 
+	bool bIsHitFrontal =
 		!(UKismetMathLibrary::InRange_FloatFloat(DeltaRotator.Yaw, -180, -AngleTolerance) ||
-		UKismetMathLibrary::InRange_FloatFloat(DeltaRotator.Yaw, AngleTolerance, 180));
+			UKismetMathLibrary::InRange_FloatFloat(DeltaRotator.Yaw, AngleTolerance, 180));
 
 	return bIsHitFrontal;
 }
@@ -615,25 +563,6 @@ void AWOGBaseCharacter::OnDissolveTimelineFinished()
 	}
 }
 
-void AWOGBaseCharacter::Server_StartTeleportCharacter_Implementation(const FTransform& Destination)
-{
-	FTimerHandle TeleportTimerHandle;
-	FTimerDelegate TeleportDelegate;
-	float TeleportTimerDuration = 1.5f;
-
-	TeleportDelegate.BindUFunction(this, FName("FinishTeleportCharacter"), Destination);
-
-	GetWorldTimerManager().SetTimer(TeleportTimerHandle, TeleportDelegate, TeleportTimerDuration, false);
-
-	Multicast_StartDissolve();
-}
-
-void AWOGBaseCharacter::FinishTeleportCharacter(const FTransform& Destination)
-{
-	TeleportTo(Destination.GetLocation(), Destination.GetRotation().Rotator());
-	Multicast_StartDissolve(true);
-}
-
 void AWOGBaseCharacter::TimeOfDayChanged(ETimeOfDay TOD)
 {
 	CurrentTOD = TOD;
@@ -650,43 +579,6 @@ void AWOGBaseCharacter::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	UpdateCapsuleLocation();
-}
-
-UWOGCharacterWidgetContainer* AWOGBaseCharacter::GetStaminaWidgetContainer() const
-{
-	if (!StaminaWidgetContainer) return nullptr;
-	TObjectPtr<UWOGCharacterWidgetContainer> StaminaContainer = Cast<UWOGCharacterWidgetContainer>(StaminaWidgetContainer->GetWidget());
-	return StaminaContainer;
-}
-
-void AWOGBaseCharacter::AddHoldProgressBar()
-{
-	TObjectPtr<AWOGPlayerController> OwnerController = Cast<AWOGPlayerController>(Controller);
-	if (!OwnerController || !IsLocallyControlled()) return;
-
-	TObjectPtr<UWOGUIManagerSubsystem> UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(OwnerController->GetLocalPlayer());
-	if (UIManager)
-	{
-		UIManager->AddHoldProgressBar();
-	}
-}
-
-void AWOGBaseCharacter::RemoveHoldProgressBarWidget()
-{
-	TObjectPtr<AWOGPlayerController> OwnerController = Cast<AWOGPlayerController>(Controller);
-	if (!OwnerController || !IsLocallyControlled()) return;
-
-	TObjectPtr<UWOGUIManagerSubsystem> UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(OwnerController->GetLocalPlayer());
-	if (UIManager)
-	{
-		UIManager->RemoveHoldProgressBar();
-	}
-}
-
-void AWOGBaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
 }
 
 bool AWOGBaseCharacter::HasMatchingGameplayTag(FGameplayTag TagToCheck) const

@@ -20,4 +20,9 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta=(AllowPrivateAccess = "true"))
 	TObjectPtr<UAGR_InventoryManager> Inventory;
 
+public:
+
+	FORCEINLINE UAGR_InventoryManager* GetInventoryComponent() const { return Inventory; }
+
+
 };

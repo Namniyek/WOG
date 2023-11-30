@@ -16,12 +16,14 @@
 #include "Magic/WOGBaseMagic.h"
 #include "Kismet/GameplayStatics.h"
 #include "Enemies/WOGRaven.h"
+#include "Enemies/WOGMinerGiant.h"
 #include "Net/UnrealNetwork.h"
 #include "AbilitySystem/AttributeSets/WOGAttributeSetBase.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Interfaces/SpawnInterface.h"
 #include "Subsystems/WOGUIManagerSubsystem.h"
 #include "Libraries/WOGBlueprintLibrary.h"
+//#include "Enemies/WOGPossessableEnemy.h"
 
 
 AWOGAttacker::AWOGAttacker()
@@ -39,6 +41,7 @@ void AWOGAttacker::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AWOGAttacker, Raven);
+	DOREPLIFETIME(AWOGAttacker, Miner);
 	DOREPLIFETIME(AWOGAttacker, CurrentExternalMinion);
 	DOREPLIFETIME(AWOGAttacker, bCanPossessMinion);
 }
@@ -48,6 +51,7 @@ void AWOGAttacker::BeginPlay()
 	Super::BeginPlay();
 
 	SetAllocatedRaven();
+	SetAllocatedMiner();
 }
 
 void AWOGAttacker::SetAllocatedRaven()
@@ -59,6 +63,17 @@ void AWOGAttacker::SetAllocatedRaven()
 	if (OutActors.IsEmpty()) return;
 
 	Raven = Cast<AWOGRaven>(OutActors[0]);
+}
+
+void AWOGAttacker::SetAllocatedMiner()
+{
+	TArray<AActor*> OutActors;
+	FName Tag = FName(*FString::FromInt(PlayerProfile.UserIndex));
+	UGameplayStatics::GetAllActorsOfClassWithTag(this, AWOGMinerGiant::StaticClass(), Tag, OutActors);
+
+	if (OutActors.IsEmpty()) return;
+
+	Miner = Cast<AWOGMinerGiant>(OutActors[0]);
 }
 
 void AWOGAttacker::PossessMinion()
@@ -374,6 +389,36 @@ void AWOGAttacker::PossessRaven()
 	{
 		UIManager->AddRavenMarkerWidget(Raven->SpawnedMarkers.Num());
 	}
+}
+
+void AWOGAttacker::PossessMiner()
+{
+	if (!bCanPossessMinion && OwnerPC)
+	{
+		TObjectPtr<UWOGUIManagerSubsystem> UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(OwnerPC->GetLocalPlayer());
+		if (UIManager)
+		{
+			UIManager->CreateResourceWarningWidget(FString("Health"));
+			UE_LOG(WOGLogSpawn, Error, TEXT("Health too low, can't possess"));
+		}
+		return;
+	}
+
+	if (!Miner)
+	{
+		UE_LOG(LogTemp, Error, TEXT("No valid miner reference"));
+		return;
+	}
+
+	OwnerPC = OwnerPC == nullptr ? (TObjectPtr<AWOGPlayerController>) Cast<AWOGPlayerController>(GetController()) : OwnerPC;
+	if (!OwnerPC)
+	{
+		UE_LOG(LogTemp, Error, TEXT("invalid OwnerPC"));
+		return;
+	}
+
+	OwnerPC->Server_PossessMinion(Miner);
+	TargetComponent->TargetLockOff();
 }
 
 void AWOGAttacker::OnHealthAttributeChanged(const FOnAttributeChangeData& Data)

@@ -18,11 +18,35 @@ AWOGBaseEnemy::AWOGBaseEnemy()
 	PrimaryActorTick.bCanEverTick = false;
 	bReplicates = true;
 
+	CombatManager = CreateDefaultSubobject<UAGR_CombatManager>(TEXT("CombatManager"));
+	CombatManager->SetIsReplicated(true);
+	CombatManager->OnStartAttack.AddDynamic(this, &ThisClass::OnStartAttack);
+	CombatManager->OnAttackHitEvent.AddDynamic(this, &ThisClass::OnAttackHit);
+
 }
 
 void AWOGBaseEnemy::BeginPlay()
 {
 	Super::BeginPlay();
+
+	GiveDefaultAbilities();
+	ApplyDefaultEffects();
+}
+
+void AWOGBaseEnemy::OnStartAttack()
+{
+	HitActorsToIgnore.Empty();
+}
+
+void AWOGBaseEnemy::OnAttackHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh)
+{
+	//Handle early returns
+	if (!Hit.bBlockingHit || !Hit.GetActor()) return;
+	if (HitActorsToIgnore.Contains(Hit.GetActor())) return;
+
+	HitActorsToIgnore.AddUnique(Hit.GetActor());
+
+	ProcessHit(Hit, WeaponMesh);
 }
 
 void AWOGBaseEnemy::ProcessHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh)
@@ -72,6 +96,11 @@ void AWOGBaseEnemy::BroadcastHit_Implementation(AActor* AgressorActor, const FHi
 		UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(OutSpec, FGameplayTag::RequestGameplayTag(TEXT("Damage.Attribute.Health")), -DamageToApply);
 		AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*OutSpec.Data);
 	}
+}
+
+void AWOGBaseEnemy::ProcessMagicHit(const FHitResult& Hit, const FMagicDataTable& MagicData)
+{
+
 }
 
 void AWOGBaseEnemy::HandleStateElimmed(AController* InstigatedBy)

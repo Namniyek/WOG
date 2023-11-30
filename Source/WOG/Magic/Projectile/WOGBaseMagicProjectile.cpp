@@ -6,7 +6,7 @@
 #include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
 #include "Components/SphereComponent.h"
-#include "Characters/WOGBaseCharacter.h"
+#include "PlayerCharacter/BasePlayerCharacter.h"
 #include "Sound/SoundCue.h"
 #include "Components/AudioComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -70,7 +70,7 @@ void AWOGBaseMagicProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* O
 {
 	if (OtherActor == GetOwner()) return;
 
-	TObjectPtr<AWOGBaseCharacter> HitCharacter = Cast<AWOGBaseCharacter>(OtherActor);
+	TObjectPtr<ABasePlayerCharacter> HitCharacter = Cast<ABasePlayerCharacter>(OtherActor);
 
 	if (HitCharacter)
 	{

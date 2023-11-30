@@ -169,7 +169,7 @@ void UWOGUIManagerSubsystem::AddStaminaWidget()
 	MatchHUD == nullptr ? (TObjectPtr<AWOGMatchHUD>) Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
 	if (!MatchHUD || !IsValid(MatchHUD->StaminaBarClass)) return;
 
-	TObjectPtr<AWOGBaseCharacter> BaseCharacter = Cast<AWOGBaseCharacter>(OwnerPC->GetPawn());
+	TObjectPtr<ABasePlayerCharacter> BaseCharacter = Cast<ABasePlayerCharacter>(OwnerPC->GetPawn());
 	if (!BaseCharacter || !BaseCharacter->GetStaminaWidgetContainer() || !BaseCharacter->GetStaminaWidgetContainer()->GetContainer()) return;
 	if (BaseCharacter->GetStaminaWidgetContainer()->GetContainer()->HasAnyChildren()) return;
 

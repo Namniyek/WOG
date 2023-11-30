@@ -19,20 +19,26 @@ protected:
 	virtual void BeginPlay() override;
 
 	#pragma region Actor Components
-
-
-	#pragma endregion
-
-	#pragma region Interface Functions
-	virtual void ProcessHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh) override;
-
-	virtual void BroadcastHit_Implementation(AActor* AgressorActor, const FHitResult& Hit, const float& DamageToApply, AActor* InstigatorWeapon) override;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<UAGR_CombatManager> CombatManager;
 
 	#pragma endregion
 
-	virtual void HandleStateElimmed(AController* InstigatedBy = nullptr) override;
+	#pragma region Handle Combat
+	UFUNCTION()
+	virtual void OnStartAttack();
+	TArray<TObjectPtr<AActor>> HitActorsToIgnore;
 
-	#pragma region Handle Damage
+	UFUNCTION()
+	virtual void OnAttackHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh);
+
+	virtual void ProcessHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh);
+	virtual void ProcessMagicHit(const FHitResult& Hit, const struct FMagicDataTable& MagicData);
+
+	virtual void BroadcastHit_Implementation(AActor* AgressorActor, const FHitResult& Hit, const float& DamageToApply, AActor* InstigatorWeapon);
+	#pragma endregion
+
+	#pragma region Handle Elim
 
 	virtual void Elim(bool bPlayerLeftGame) override;
 
@@ -42,11 +48,6 @@ protected:
 	UFUNCTION()
 	void ElimTimerFinished();
 
+	virtual void HandleStateElimmed(AController* InstigatedBy = nullptr) override;
 	#pragma endregion
-
-private:
-
-
-public:	
-
 };

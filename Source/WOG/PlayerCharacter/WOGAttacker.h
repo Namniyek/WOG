@@ -11,6 +11,8 @@
  */
 
 class AWOGRaven;
+class AWOGMinerGiant;
+class AWOGPossessableEnemy;
 
 UCLASS()
 class WOG_API AWOGAttacker : public ABasePlayerCharacter
@@ -47,6 +49,9 @@ protected:
 	UFUNCTION(BlueprintAuthorityOnly)
 	void SetAllocatedRaven();
 
+	UFUNCTION(BlueprintAuthorityOnly)
+	void SetAllocatedMiner();
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<UWOGSpawnComponent> SpawnComponent;
 
@@ -75,8 +80,14 @@ protected:
 	UPROPERTY(Replicated, VisibleAnywhere)
 	TObjectPtr<AWOGRaven> Raven;
 
+	UPROPERTY(Replicated, VisibleAnywhere)
+	TObjectPtr<AWOGMinerGiant> Miner;
+
 	UFUNCTION(BlueprintCallable)
 	void PossessRaven();
+
+	UFUNCTION(BlueprintCallable)
+	void PossessMiner();
 
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly)
 	bool bCanPossessMinion;

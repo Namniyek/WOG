@@ -29,8 +29,9 @@
 #include "Components/AGR_InventoryManager.h"
 #include "Components/AGRAnimMasterComponent.h"
 #include "Libraries/WOGBlueprintLibrary.h"
-#include "WOG/Interfaces/BuildingInterface.h"
-#include "WOG/Interfaces/AttributesInterface.h"
+#include "Interfaces/BuildingInterface.h"
+#include "Interfaces/AttributesInterface.h"
+#include "Interfaces/ResourcesInterface.h"
 #include "TargetSystemComponent.h"
 #include "Magic/WOGBaseMagic.h"
 #include "AbilitySystem/AttributeSets/WOGAttributeSetBase.h"
@@ -39,9 +40,13 @@
 #include "Resources/WOGCommonInventory.h"
 #include "Resources/WOGVendor.h"
 #include "Resources/WOGStashBase.h"
+#include "Resources/WOGResourceBase.h"
 #include "Subsystems/WOGUIManagerSubsystem.h"
 #include "Consumables/WOGBaseConsumable.h"
 #include "Subsystems/WOGWorldSubsystem.h"
+#include "Blueprint/UserWidget.h"
+#include "Components/WidgetComponent.h"
+#include "UI/WOGCharacterWidgetContainer.h"
 
 
 void ABasePlayerCharacter::OnConstruction(const FTransform& Transform)
@@ -61,9 +66,17 @@ ABasePlayerCharacter::ABasePlayerCharacter()
 
 	EquipmentManager = CreateDefaultSubobject<UAGR_EquipmentManager>(TEXT("EquipmentManager"));
 	EquipmentManager->SetIsReplicated(true);
+
 	InventoryManager = CreateDefaultSubobject<UAGR_InventoryManager>(TEXT("InventoryManager"));
 	InventoryManager->SetIsReplicated(true);
+
 	TargetComponent = CreateDefaultSubobject<UTargetSystemComponent>(TEXT("TargetComponent"));
+
+	CombatManager = CreateDefaultSubobject<UAGR_CombatManager>(TEXT("CombatManager"));
+	CombatManager->SetIsReplicated(true);
+	CombatManager->OnStartAttack.AddDynamic(this, &ThisClass::OnStartAttack);
+	CombatManager->OnAttackHitEvent.AddDynamic(this, &ThisClass::OnAttackHit);
+
 
 
 	// Set size for collision capsule
@@ -111,6 +124,13 @@ ABasePlayerCharacter::ABasePlayerCharacter()
 	{
 		GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECR_Ignore);
 	}
+
+	SpeedRequiredForLeap = 750.f;
+
+	StaminaWidgetContainer = CreateDefaultSubobject<UWidgetComponent>(TEXT("Stamina Widget Container"));
+	StaminaWidgetContainer->SetWidgetSpace(EWidgetSpace::Screen);
+	StaminaWidgetContainer->SetDrawAtDesiredSize(true);
+	StaminaWidgetContainer->SetupAttachment(GetRootComponent());
 }
 
 void ABasePlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -648,6 +668,15 @@ void ABasePlayerCharacter::FindCommonInventory()
 	}
 }
 
+void ABasePlayerCharacter::Server_CollectResource_Implementation(UAGR_ItemComponent* ItemToCollect)
+{
+	if (!ItemToCollect) return;
+	if (!CommonInventory || !CommonInventory->GetInventoryComponent()) return;
+
+	ItemToCollect->PickUpItem(CommonInventory->GetInventoryComponent());
+	ItemToCollect->GetOwner()->Destroy();
+}
+
 void ABasePlayerCharacter::BuyItem_Implementation(const TArray<FCostMap>& CostMap, AWOGVendor* VendorActor, TSubclassOf<AActor> ItemClass, const int32& Amount)
 {
 	Server_BuyItem(CostMap, VendorActor, ItemClass, Amount);
@@ -1165,13 +1194,13 @@ void ABasePlayerCharacter::ProcessHit(FHitResult Hit, UPrimitiveComponent* Weapo
 	AWOGBaseWeapon* AttackerWeapon = WeaponMesh->GetOwner() ? Cast<AWOGBaseWeapon>(WeaponMesh->GetOwner()) : nullptr;
 	if (!AttackerWeapon)
 	{
-		UE_LOG(LogTemp, Error, TEXT("No Attacker Weapon"));
+		UE_LOG(WOGLogCombat, Error, TEXT("No Attacker Weapon"));
 	}
 
 	AWOGBaseCharacter* AttackerCharacter = AttackerWeapon ? Cast<AWOGBaseCharacter>(AttackerWeapon->GetOwner()) : nullptr;
 	if (!AttackerCharacter)
 	{
-		UE_LOG(LogTemp, Error, TEXT("No Attacker Character"));
+		UE_LOG(WOGLogCombat, Error, TEXT("No Attacker Character"));
 		return;
 	}
 
@@ -1204,7 +1233,16 @@ void ABasePlayerCharacter::ProcessHit(FHitResult Hit, UPrimitiveComponent* Weapo
 	if (BuildInterface && HasAuthority())
 	{
 		BuildInterface->Execute_DealDamage(Hit.GetActor(), DamageToApply);
-		UE_LOG(LogTemp, Warning, TEXT("Build damaged with %f"), DamageToApply);
+		UE_LOG(WOGLogCombat, Warning, TEXT("Build damaged with %f"), DamageToApply);
+		return;
+	}
+
+	//Check if we hit resources source
+	bool bImplementsInterface = UKismetSystemLibrary::DoesImplementInterface(Hit.GetActor(), UResourcesInterface::StaticClass());
+	if (bImplementsInterface)
+	{
+		IResourcesInterface::Execute_ResourcesHit(Hit.GetActor(), Hit, GetActorLocation(), 1);
+		UE_LOG(WOGLogCombat, Warning, TEXT("Resource damaged with 1"));
 		return;
 	}
 
@@ -1256,6 +1294,28 @@ void ABasePlayerCharacter::ProcessMagicHit(const FHitResult& Hit, const FMagicDa
 	{
 		AttributesInterface->Execute_BroadcastMagicHit(Hit.GetActor(), this, Hit, MagicData);
 	}
+}
+
+void ABasePlayerCharacter::OnStartAttack()
+{
+	HitActorsToIgnore.Empty();
+}
+
+void ABasePlayerCharacter::OnAttackHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh)
+{
+	//Handle early returns
+	if (!Hit.bBlockingHit || !Hit.GetActor())
+	{
+		return;
+	}
+	if (HitActorsToIgnore.Contains(Hit.GetActor()))
+	{
+		return;
+	}
+
+	HitActorsToIgnore.AddUnique(Hit.GetActor());
+
+	ProcessHit(Hit, WeaponMesh);
 }
 
 void ABasePlayerCharacter::BroadcastHit_Implementation(AActor* AgressorActor, const FHitResult& Hit, const float& DamageToApply, AActor* InstigatorWeapon)
@@ -1604,6 +1664,49 @@ void ABasePlayerCharacter::HandleTODChange()
 	}
 }
 
+void ABasePlayerCharacter::AddHoldProgressBar()
+{
+	TObjectPtr<AWOGPlayerController> OwnerController = Cast<AWOGPlayerController>(Controller);
+	if (!OwnerController || !IsLocallyControlled()) return;
+
+	TObjectPtr<UWOGUIManagerSubsystem> UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(OwnerController->GetLocalPlayer());
+	if (UIManager)
+	{
+		UIManager->AddHoldProgressBar();
+	}
+}
+
+void ABasePlayerCharacter::RemoveHoldProgressBarWidget()
+{
+	TObjectPtr<AWOGPlayerController> OwnerController = Cast<AWOGPlayerController>(Controller);
+	if (!OwnerController || !IsLocallyControlled()) return;
+
+	TObjectPtr<UWOGUIManagerSubsystem> UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(OwnerController->GetLocalPlayer());
+	if (UIManager)
+	{
+		UIManager->RemoveHoldProgressBar();
+	}
+}
+
+void ABasePlayerCharacter::FinishTeleportCharacter(const FTransform& Destination)
+{
+	TeleportTo(Destination.GetLocation(), Destination.GetRotation().Rotator());
+	Multicast_StartDissolve(true);
+}
+
+void ABasePlayerCharacter::Server_StartTeleportCharacter_Implementation(const FTransform& Destination)
+{
+	FTimerHandle TeleportTimerHandle;
+	FTimerDelegate TeleportDelegate;
+	float TeleportTimerDuration = 1.5f;
+
+	TeleportDelegate.BindUFunction(this, FName("FinishTeleportCharacter"), Destination);
+
+	GetWorldTimerManager().SetTimer(TeleportTimerHandle, TeleportDelegate, TeleportTimerDuration, false);
+
+	Multicast_StartDissolve();
+}
+
 void ABasePlayerCharacter::TargetLocked(AActor* NewTarget)
 {
 	if (!NewTarget)
@@ -1622,6 +1725,13 @@ void ABasePlayerCharacter::TargetUnlocked(AActor* OldTarget)
 	Server_SetCurrentTarget();
 
 	ToggleStrafeMovement(false);
+}
+
+UWOGCharacterWidgetContainer* ABasePlayerCharacter::GetStaminaWidgetContainer() const
+{
+	if (!StaminaWidgetContainer) return nullptr;
+	TObjectPtr<UWOGCharacterWidgetContainer> StaminaContainer = Cast<UWOGCharacterWidgetContainer>(StaminaWidgetContainer->GetWidget());
+	return StaminaContainer;
 }
 
 void ABasePlayerCharacter::Server_SetCurrentTarget_Implementation(AActor* NewTarget)

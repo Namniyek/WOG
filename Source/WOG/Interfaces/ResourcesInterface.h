@@ -24,7 +24,7 @@ class WOG_API IResourcesInterface
 public:
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-	void ResourcesHit(const FHitResult& Hit, const FVector& InstigatorLocation);
+	void ResourcesHit(const FHitResult& Hit, const FVector& InstigatorLocation, const int32& HitAmount);
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void CollectResource(const AActor* Owner);
