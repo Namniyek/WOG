@@ -13,5 +13,8 @@ UCLASS()
 class WOG_API AWOGBaseDayNPCAIController : public AAIController
 {
 	GENERATED_BODY()
+
+public:
+	AWOGBaseDayNPCAIController(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 	
 };

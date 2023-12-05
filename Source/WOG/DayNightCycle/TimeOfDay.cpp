@@ -78,6 +78,11 @@ void ATimeOfDay::UpdateTime()
 		TimeOfDayChanged.Broadcast(TimeOfDay);
 	}
 
+	if (RepCurrentTime == 1020)
+	{
+		OnKeyTimeHit.Broadcast(RepCurrentTime);
+	}
+
 	if (RepCurrentTime == 1070)
 	{
 		OnKeyTimeHit.Broadcast(RepCurrentTime);

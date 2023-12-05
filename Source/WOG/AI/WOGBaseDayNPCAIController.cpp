@@ -2,4 +2,10 @@
 
 
 #include "AI/WOGBaseDayNPCAIController.h"
+#include "Navigation/CrowdFollowingComponent.h"
 
+AWOGBaseDayNPCAIController::AWOGBaseDayNPCAIController(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer.SetDefaultSubobjectClass<UCrowdFollowingComponent>(TEXT("PathFollowingComponent")))
+{
+
+}

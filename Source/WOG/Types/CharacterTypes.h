@@ -261,3 +261,14 @@ struct FPlayerCharacterEquipmentSnapshot
 
 	TPair<TSubclassOf<AActor>, int32> ConsumableReference;
 };
+
+UENUM(BlueprintType)
+enum class EDayNPCState : uint8
+{
+	EDNS_Idle UMETA(DisplayName = "Idle"),
+	EDNS_Working UMETA(DisplayName = "Working"),
+	EDNS_Resting UMETA(DisplayName = "Resting"),
+	EDNS_Return UMETA(DisplayName = "Returning Home"),
+
+	EDNS_MAX UMETA(DisplayName = "DefaultMAX")
+};
