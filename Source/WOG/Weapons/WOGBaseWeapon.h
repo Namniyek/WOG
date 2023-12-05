@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Engine/DataTable.h"
-#include "WOG/Types/CharacterTypes.h"
+#include "Data/WOGDataTypes.h"
 #include "Components/StaticMeshComponent.h"
 #include "GameplayTagContainer.h"
 #include "GameplayAbilitySpec.h"

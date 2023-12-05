@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "Types/CharacterTypes.h"
+#include "Data/WOGDataTypes.h"
 #include "WOGVendorItem.generated.h"
 
 class UCommonBorder;

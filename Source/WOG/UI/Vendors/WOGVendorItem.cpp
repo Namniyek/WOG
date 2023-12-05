@@ -15,6 +15,7 @@
 #include "Subsystems/WOGUIManagerSubsystem.h"
 #include "PlayerCharacter/BasePlayerCharacter.h"
 #include "Resources/WOGVendor.h"
+#include "Data/WOGDataTypes.h"
 
 void UWOGVendorItem::NativeConstruct()
 {

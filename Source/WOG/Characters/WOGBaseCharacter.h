@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Types/CharacterTypes.h"
+#include "Data/WOGDataTypes.h"
 #include "Interfaces/AttributesInterface.h"
 #include "Abilities/GameplayAbility.h"
 #include "AbilitySystemInterface.h"
@@ -35,7 +36,6 @@ class WOG_API AWOGBaseCharacter : public ACharacter, public IAttributesInterface
 public:
 	AWOGBaseCharacter();
 
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void Tick(float DeltaTime) override;
 	virtual void Elim(bool bPlayerLeftGame) { /*To be overriden in Children*/ };

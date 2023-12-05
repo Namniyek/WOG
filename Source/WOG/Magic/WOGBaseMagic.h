@@ -7,7 +7,7 @@
 #include "GameplayTagContainer.h"
 #include "Engine/DataTable.h"
 #include "GameplayAbilitySpec.h"
-#include "Types/CharacterTypes.h"
+#include "Data/WOGDataTypes.h"
 #include "WOGBaseMagic.generated.h"
 
 class UAnimMontage;

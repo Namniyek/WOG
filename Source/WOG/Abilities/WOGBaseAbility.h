@@ -4,17 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "WOG/Types/CharacterTypes.h"
+#include "Data/WOGDataTypes.h"
 #include "WOGBaseAbility.generated.h"
-
 
 class UAnimMontage;
 class USoundCue;
 class ABasePlayerCharacter;
 class UNiagaraSystem;
-
-
-
 
 UCLASS()
 class WOG_API AWOGBaseAbility : public AActor

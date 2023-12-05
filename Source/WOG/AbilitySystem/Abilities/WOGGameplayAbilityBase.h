@@ -4,7 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
-#include "Types/CharacterTypes.h"
+//#include "Types/CharacterTypes.h"
+#include "Data/WOGDataTypes.h"
 #include "WOGGameplayAbilityBase.generated.h"
 
 /**
