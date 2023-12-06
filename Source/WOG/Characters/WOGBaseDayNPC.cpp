@@ -10,6 +10,7 @@ AWOGBaseDayNPC::AWOGBaseDayNPC()
 {
 	CurrentState = EDayNPCState::EDNS_MAX;
 	PreviousSlot = nullptr;
+	SpawnLocation = FVector();
 }
 
 void AWOGBaseDayNPC::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -33,6 +34,29 @@ void AWOGBaseDayNPC::BeginPlay()
 	GiveDefaultAbilities();
 	ApplyDefaultEffects();
 
+	InitCurrentState();
+}
+
+void AWOGBaseDayNPC::InitCurrentState()
+{
+	if (!HasAuthority()) return;
+
+	switch (CurrentTOD)
+	{
+	case ETimeOfDay::TOD_Dawn1:
+		SetCurrentState(EDayNPCState::EDNS_Working);
+		break;
+	case ETimeOfDay::TOD_Dawn2:
+		SetCurrentState(EDayNPCState::EDNS_Working);
+		break;
+	case ETimeOfDay::TOD_Dawn3:
+		SetCurrentState(EDayNPCState::EDNS_Working);
+		break;
+	default:
+		break;
+	}
+
+	SpawnLocation = GetActorLocation();
 }
 
 void AWOGBaseDayNPC::HandleTODChange()

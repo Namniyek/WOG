@@ -2,7 +2,7 @@
 #include "CoreMinimal.h"
 #include "GameplayTags.h"
 #include "GameplayTagContainer.h"
-#include "Types/WOGGameplayTags.h"
+#include "Data/WOGGameplayTags.h"
 #include "WOGDataTypes.generated.h"
 
 class USoundCue;
@@ -177,4 +177,18 @@ struct FVendorItemData
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Consumable", meta = (EditCondition = "ItemType == EItemType::EIT_Consumable", EditConditionHides))
 	float ConsumableDuration = 0.f;
+};
+
+USTRUCT(BlueprintType)
+struct FVector3DWithWidget
+{
+	GENERATED_USTRUCT_BODY();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Vector3D with Widget", Meta = (MakeEditWidget = true))
+	FVector Vector;
+
+	FVector3DWithWidget()
+		:Vector(FVector::ZeroVector)
+	{
+	}
 };

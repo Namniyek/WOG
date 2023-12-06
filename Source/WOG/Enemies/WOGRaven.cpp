@@ -12,7 +12,7 @@
 #include "Utilities/WOGRavenMarker.h"
 #include "Subsystems/WOGWorldSubsystem.h"
 #include "AbilitySystemBlueprintLibrary.h"
-#include "Types/WOGGameplayTags.h"
+#include "Data/WOGGameplayTags.h"
 #include "Subsystems/WOGUIManagerSubsystem.h"
 
 

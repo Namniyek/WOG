@@ -11,7 +11,6 @@
 // Sets default values
 ATimeOfDay::ATimeOfDay()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 	bReplicates = true;
 	SetReplicateMovement(false);
@@ -36,15 +35,9 @@ void ATimeOfDay::BeginPlay()
 	if (HasAuthority())
 	{
 		CurrentTime = StartingTime;
+		UpdateTimeOfDay(CurrentTime);
 		GetWorldTimerManager().SetTimer(UpdateTimeHandle, this, &ThisClass::UpdateTime, UpdateFrequency, true);
 	}
-}
-
-void ATimeOfDay::OnRep_CurrentTime()
-{
-	ConvertTimeFormat(RepCurrentTime);
-	DayChanged.Broadcast(CurrentDay);
-	TimeUpdated(RepCurrentTime, CurrentHour, CurrentMinute);
 }
 
 void ATimeOfDay::UpdateTime()
@@ -56,8 +49,8 @@ void ATimeOfDay::UpdateTime()
 	}
 
 	CurrentTime += 1;
-	
-	RepCurrentTime = CurrentTime; 
+
+	RepCurrentTime = CurrentTime;
 
 	if (RepCurrentTime >= 1440)
 	{
@@ -95,6 +88,13 @@ void ATimeOfDay::UpdateTime()
 	}
 
 	ConvertTimeFormat(RepCurrentTime);
+	TimeUpdated(RepCurrentTime, CurrentHour, CurrentMinute);
+}
+
+void ATimeOfDay::OnRep_CurrentTime()
+{
+	ConvertTimeFormat(RepCurrentTime);
+	DayChanged.Broadcast(CurrentDay);
 	TimeUpdated(RepCurrentTime, CurrentHour, CurrentMinute);
 }
 

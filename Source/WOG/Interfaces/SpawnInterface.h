@@ -34,4 +34,7 @@ public:
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void DecreaseRavenMarkerWidget();
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void SetSpawnerActive(bool NewActive);
 };

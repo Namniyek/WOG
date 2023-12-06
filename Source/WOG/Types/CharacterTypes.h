@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameplayTags.h"
 #include "GameplayTagContainer.h"
-#include "Types/WOGGameplayTags.h"
+#include "Data/WOGGameplayTags.h"
 #include "CharacterTypes.generated.h"
 
 class USoundCue;

@@ -9,7 +9,7 @@
 #include "WOG/PlayerController/WOGPlayerController.h"
 #include "WOG/ActorComponents/WOGSpawnComponent.h"
 #include "AbilitySystemComponent.h"
-#include "Types/WOGGameplayTags.h"
+#include "Data/WOGGameplayTags.h"
 #include "Components/AGR_EquipmentManager.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "ActorComponents/WOGAbilitySystemComponent.h"
@@ -23,7 +23,6 @@
 #include "Interfaces/SpawnInterface.h"
 #include "Subsystems/WOGUIManagerSubsystem.h"
 #include "Libraries/WOGBlueprintLibrary.h"
-//#include "Enemies/WOGPossessableEnemy.h"
 
 
 AWOGAttacker::AWOGAttacker()

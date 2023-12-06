@@ -8,7 +8,7 @@
 #include "PlayerCharacter/BasePlayerCharacter.h"
 #include "AbilitySystemLog.h"
 #include "AbilitySystemGlobals.h"
-#include "Types/WOGGameplayTags.h"
+#include "Data/WOGGameplayTags.h"
 #include "PlayerController/WOGPlayerController.h"
 #include "ActorComponents/WOGAbilitySystemComponent.h"
 #include "Subsystems/WOGUIManagerSubsystem.h"

@@ -4,7 +4,7 @@
 #include "AbilitySystem/Abilities/WOGGameplayAbilityCastMagic.h"
 #include "Magic/WOGBaseMagic.h"
 #include "Libraries/WOGBlueprintLibrary.h"
-#include "Types/WOGGameplayTags.h"
+#include "Data/WOGGameplayTags.h"
 
 const FGameplayTagContainer* UWOGGameplayAbilityCastMagic::GetCooldownTags() const
 {

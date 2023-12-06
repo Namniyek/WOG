@@ -7,7 +7,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "WOG/ActorComponents/WOGBuildComponent.h"
 #include "AbilitySystemComponent.h"
-#include "Types/WOGGameplayTags.h"
+#include "Data/WOGGameplayTags.h"
 #include "Components/AGR_EquipmentManager.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "Magic/WOGBaseMagic.h"

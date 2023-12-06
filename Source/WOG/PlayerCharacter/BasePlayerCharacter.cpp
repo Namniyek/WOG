@@ -24,7 +24,7 @@
 #include "AbilitySystemBlueprintLibrary.h"
 #include "GameplayTagContainer.h"
 #include "PlayerState/WOGPlayerState.h"
-#include "Types/WOGGameplayTags.h"
+#include "Data/WOGGameplayTags.h"
 #include "Components/AGR_EquipmentManager.h"
 #include "Components/AGR_InventoryManager.h"
 #include "Components/AGRAnimMasterComponent.h"

@@ -11,7 +11,7 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "AbilitySystemComponent.h"
-#include "Types/WOGGameplayTags.h"
+#include "Data/WOGGameplayTags.h"
 #include "Subsystems/WOGWorldSubsystem.h"
 
 AWOGPossessableEnemy::AWOGPossessableEnemy()

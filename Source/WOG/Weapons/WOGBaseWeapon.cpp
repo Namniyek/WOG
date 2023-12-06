@@ -13,7 +13,7 @@
 #include "Components/SphereComponent.h"
 #include "Data/AGRLibrary.h"
 #include "AbilitySystemBlueprintLibrary.h"
-#include "Types/WOGGameplayTags.h"
+#include "Data/WOGGameplayTags.h"
 #include "Types/CharacterTypes.h"
 #include "GameplayTags.h"
 #include "AbilitySystem/Abilities/WOGGameplayAbilityBase.h"

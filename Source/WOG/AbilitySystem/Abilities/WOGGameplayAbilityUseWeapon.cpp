@@ -3,7 +3,7 @@
 
 #include "AbilitySystem/Abilities/WOGGameplayAbilityUseWeapon.h"
 #include "Libraries/WOGBlueprintLibrary.h"
-#include "Types/WOGGameplayTags.h"
+#include "Data/WOGGameplayTags.h"
 #include "Weapons/WOGBaseWeapon.h"
 
 const FGameplayTagContainer* UWOGGameplayAbilityUseWeapon::GetCooldownTags() const

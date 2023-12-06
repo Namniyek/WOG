@@ -32,6 +32,7 @@ void AWOGBaseActivitySlot::BeginPlay()
 
 }
 
+#if WITH_EDITOR
 void AWOGBaseActivitySlot::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
@@ -41,6 +42,7 @@ void AWOGBaseActivitySlot::PostEditChangeProperty(FPropertyChangedEvent& Propert
 		UpdateActionMontage();
 	}
 }
+#endif
 
 void AWOGBaseActivitySlot::UpdateActionMontage()
 {

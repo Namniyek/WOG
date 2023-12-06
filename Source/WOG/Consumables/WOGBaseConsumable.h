@@ -7,6 +7,7 @@
 #include "Engine/DataTable.h"
 #include "GameplayAbilitySpec.h"
 #include "Types/CharacterTypes.h"
+#include "Data/WOGDataTypes.h"
 #include "WOGBaseConsumable.generated.h"
 
 class UGameplayEffect;

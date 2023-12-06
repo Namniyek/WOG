@@ -9,7 +9,7 @@
 #include "Libraries/WOGBlueprintLibrary.h"
 #include "Data/AGRLibrary.h"
 #include "AbilitySystemComponent.h"
-#include "WOG/Types/WOGGameplayTags.h"
+#include "Data/WOGGameplayTags.h"
 #include "GameplayEffect.h"
 
 

@@ -9,7 +9,7 @@
 #include "ActorComponents/WOGAbilitySystemComponent.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "GameplayEffectExtension.h"
-#include "Types/WOGGameplayTags.h"
+#include "Data/WOGGameplayTags.h"
 #include "Components/CapsuleComponent.h"
 
 // Sets default values

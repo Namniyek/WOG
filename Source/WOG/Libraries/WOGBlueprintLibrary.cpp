@@ -7,7 +7,7 @@
 #include "Magic/WOGBaseMagic.h"
 #include "Data/AGRLibrary.h"
 #include "Characters/WOGBaseCharacter.h"
-#include "Types/WOGGameplayTags.h"
+#include "Data/WOGGameplayTags.h"
 #include "Consumables/WOGBaseConsumable.h"
 #include "PlayerController/WOGPlayerController.h"
 

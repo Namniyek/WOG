@@ -4,7 +4,7 @@
 #include "UI/Vendors/WOGVendorBaseWidget.h"
 #include "WOG.h"
 #include "Resources/WOGVendor.h"
-#include "Types/WOGGameplayTags.h"
+#include "Data/WOGGameplayTags.h"
 #include "CommonTextBlock.h"
 #include "Components/ScrollBox.h"
 #include "Data/AGRLibrary.h"

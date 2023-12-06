@@ -13,7 +13,7 @@
 #include "PlayerController/WOGPlayerController.h"
 #include "ActorComponents/WOGUIManagerComponent.h"
 #include "Libraries/WOGBlueprintLibrary.h"
-#include "Types/WOGGameplayTags.h"
+#include "Data/WOGGameplayTags.h"
 #include "Kismet/KismetSystemLibrary.h"
 
 

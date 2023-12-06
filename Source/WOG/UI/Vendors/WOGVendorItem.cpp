@@ -10,7 +10,7 @@
 #include "Components/ScrollBox.h"
 #include "Components/Spacer.h"
 #include "Components/HorizontalBox.h"
-#include "Types/WOGGameplayTags.h"
+#include "Data/WOGGameplayTags.h"
 #include "Interfaces/InventoryInterface.h"
 #include "Subsystems/WOGUIManagerSubsystem.h"
 #include "PlayerCharacter/BasePlayerCharacter.h"

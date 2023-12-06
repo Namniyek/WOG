@@ -16,7 +16,7 @@
 #include "AbilitySystemBlueprintLibrary.h"
 #include "PlayerCharacter/BasePlayerCharacter.h"
 #include "Enemies/WOGBaseEnemy.h"
-#include "Types/WOGGameplayTags.h"
+#include "Data/WOGGameplayTags.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "MotionWarpingComponent.h"
 #include "Components/CapsuleComponent.h"

@@ -24,8 +24,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FGameplayTag MainActivitySlotTag; 
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FGameplayTag RestActivitySlotTag;
+
 protected:
 	virtual void BeginPlay() override;
+	void InitCurrentState();
 
 	virtual void HandleTODChange() override;
 
@@ -40,7 +44,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	TObjectPtr<AWOGBaseActivitySlot> PreviousSlot;
-	
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	FVector SpawnLocation;
 
 public:
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
