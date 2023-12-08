@@ -11,6 +11,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnActivitySlotEntered, AWOGBaseAct
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnActivitySlotExited, bool, bSuccess, AWOGBaseActivitySlot*, Slot, AActor*, PreviousActor);
 
 class UWOGAnimationCollectionData;
+class USoundCue;
+class UNiagaraSystem;
 
 UCLASS()
 class WOG_API AWOGBaseActivitySlot : public AActor
@@ -36,17 +38,32 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup")
 	bool bIsStatic;
 
-protected:
-	virtual void BeginPlay() override;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup")
+	FName ActionPropSocket;
 
-	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly)
-	bool bIsSlotReserved;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup")
+	TSubclassOf<AActor> ActionPropClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Cosmetics")
+	TObjectPtr<USoundCue> ActionSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Cosmetics")
+	TObjectPtr<UNiagaraSystem> ActionParticleFX;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Cosmetics")
+	FName ActionParticleFXSocket;
 
 	UPROPERTY(BlueprintAssignable, BlueprintCallable)
 	FOnActivitySlotEntered OnActivitySlotEnteredDelegate;
 
 	UPROPERTY(BlueprintAssignable, BlueprintCallable)
 	FOnActivitySlotExited OnActivitySlotExitedDelegate;
+
+protected:
+	virtual void BeginPlay() override;
+
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly)
+	bool bIsSlotReserved;
 
 	#if WITH_EDITOR
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;

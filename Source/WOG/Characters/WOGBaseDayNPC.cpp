@@ -11,6 +11,7 @@ AWOGBaseDayNPC::AWOGBaseDayNPC()
 	CurrentState = EDayNPCState::EDNS_MAX;
 	PreviousSlot = nullptr;
 	SpawnLocation = FVector();
+	CurrentSlotIndex = 0;
 }
 
 void AWOGBaseDayNPC::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -103,4 +104,39 @@ void AWOGBaseDayNPC::SetCurrentState(EDayNPCState NewState)
 {
 	CurrentState = NewState;
 	HandleStateChange();
+}
+
+FGameplayTag AWOGBaseDayNPC::GetNextActivitySlotTag()
+{
+	if (ActivitySlotsTags.IsEmpty()) return FGameplayTag();
+
+	TArray<FGameplayTag> Array = ActivitySlotsTags.GetGameplayTagArray();
+	
+	//Shuffles array
+	if (Array.Num() > 0)
+	{
+		int32 LastIndex = Array.Num() - 1;
+		for (int32 i = 0; i <= LastIndex; ++i)
+		{
+			int32 Index = FMath::RandRange(i, LastIndex);
+			if (i != Index)
+			{
+				Array.Swap(i, Index);
+			}
+		}
+	}
+
+	return Array[CurrentSlotIndex];
+}
+
+void AWOGBaseDayNPC::IncrementCurrentSlotIndex()
+{
+	if (CurrentSlotIndex + 1 > ActivitySlotsTags.Num() - 1)
+	{
+		CurrentSlotIndex = 0;
+	}
+	else
+	{
+		CurrentSlotIndex++;
+	}
 }

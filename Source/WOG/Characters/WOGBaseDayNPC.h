@@ -22,10 +22,7 @@ public:
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	FGameplayTag MainActivitySlotTag; 
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	FGameplayTag RestActivitySlotTag;
+	FGameplayTagContainer ActivitySlotsTags;
 
 protected:
 	virtual void BeginPlay() override;
@@ -48,10 +45,19 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	FVector SpawnLocation;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	int32 CurrentSlotIndex;
+
 public:
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
 	void SetCurrentState(EDayNPCState NewState);
 
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE EDayNPCState GetCurrentState() const { return CurrentState; }
+
+	UFUNCTION(BlueprintPure)
+	FGameplayTag GetNextActivitySlotTag();
+
+	UFUNCTION(BlueprintCallable)
+	void IncrementCurrentSlotIndex();
 };

@@ -13,6 +13,7 @@
 #include "Subsystems/WOGUIManagerSubsystem.h"
 #include "UI/Vendors/WOGVendorBaseWidget.h"
 #include "Subsystems/WOGWorldSubsystem.h"
+#include "AI/ActivitySlots/WOGBaseActivitySlot.h"
 
 AWOGVendor::AWOGVendor()
 {
@@ -71,6 +72,9 @@ void AWOGVendor::BeginPlay()
 
 	if (HasAuthority())
 	{
+		SetIsBusy(true, nullptr);
+		ShowCorrectWidget(true, nullptr);
+
 		TArray<AActor*> OutItems = {};
 		UGameplayStatics::GetAllActorsOfClassWithTag(this, AWOGCommonInventory::StaticClass(), CommonInventoryTag, OutItems);
 
@@ -83,6 +87,12 @@ void AWOGVendor::BeginPlay()
 		{
 			WorldSubsystem->OnKeyTimeHitDelegate.AddDynamic(this, &ThisClass::OnKeyTimeHit);
 			WorldSubsystem->TimeOfDayChangedDelegate.AddDynamic(this, &ThisClass::TimeOfDayChanged);
+		}
+
+		if (AssignedActivitySlot)
+		{
+			AssignedActivitySlot->OnActivitySlotEnteredDelegate.AddDynamic(this, &ThisClass::OnAssignedActivitySlotEntered);
+			AssignedActivitySlot->OnActivitySlotExitedDelegate.AddDynamic(this, &ThisClass::OnAssignedActivitySlotExited);
 		}
 	}
 }
@@ -346,7 +356,7 @@ void AWOGVendor::OnRep_IsBusy()
 
 void AWOGVendor::ShowCorrectWidget(bool bIsVendorBusy, ABasePlayerCharacter* OverlappingActor)
 {
-	if (!OverlappingActor) return;
+	//if (!OverlappingActor) return;
 
 	for (auto Player : OverlappingPlayers)
 	{
@@ -356,7 +366,7 @@ void AWOGVendor::ShowCorrectWidget(bool bIsVendorBusy, ABasePlayerCharacter* Ove
 			if (Player->IsLocallyControlled())
 			{
 				InteractWidget->SetHiddenInGame(true);
-				if (Player != OverlappingActor)
+				if (OverlappingActor && Player != OverlappingActor)
 				{
 					BusyWidget->SetHiddenInGame(false);
 				}
@@ -406,5 +416,23 @@ void AWOGVendor::OnKeyTimeHit(int32 CurrentTime)
 			SetIsBusy(true, nullptr);
 			ShowCorrectWidget(true, nullptr);
 		}
+	}
+}
+
+void AWOGVendor::OnAssignedActivitySlotEntered(AWOGBaseActivitySlot* Slot, AActor* NewActor)
+{
+	if (HasAuthority() && Slot == AssignedActivitySlot)
+	{
+		SetIsBusy(false, nullptr);
+		ShowCorrectWidget(false, nullptr);
+	}
+}
+
+void AWOGVendor::OnAssignedActivitySlotExited(bool bSuccess, AWOGBaseActivitySlot* Slot, AActor* PreviousActor)
+{
+	if (HasAuthority() && Slot == AssignedActivitySlot)
+	{
+		SetIsBusy(true, nullptr);
+		ShowCorrectWidget(true, nullptr);
 	}
 }
