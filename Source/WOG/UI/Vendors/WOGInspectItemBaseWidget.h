@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "Types/CharacterTypes.h"
+#include "Data/WOGDataTypes.h"
 #include "WOGInspectItemBaseWidget.generated.h"
 
 /**

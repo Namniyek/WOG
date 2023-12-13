@@ -40,8 +40,7 @@ void AWOGDayNPCSpawner::BeginPlay()
 
 void AWOGDayNPCSpawner::SetSpawnerActive_Implementation(bool NewActive)
 {
-	if (!HasAuthority()) return;
-	bIsSpawnerActive = NewActive;
+	SetIsSpawnerActive(NewActive);
 }
 
 void AWOGDayNPCSpawner::TimeOfDayChanged(ETimeOfDay TOD)
@@ -213,4 +212,8 @@ void AWOGDayNPCSpawner::PostEditChangeProperty(FPropertyChangedEvent& PostEditCh
 }
 #endif
 
-
+void AWOGDayNPCSpawner::SetIsSpawnerActive(bool NewActive)
+{
+	if (!HasAuthority()) return;
+	bIsSpawnerActive = NewActive;
+}

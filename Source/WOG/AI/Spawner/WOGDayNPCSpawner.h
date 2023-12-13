@@ -68,4 +68,6 @@ private:
 
 public:	
 
+	void SetIsSpawnerActive(bool NewActive);
+
 };

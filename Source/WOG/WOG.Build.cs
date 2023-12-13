@@ -27,7 +27,8 @@ public class WOG : ModuleRules
             "AutoSettingsInput",
             "CPathfinding",
             "CommonUI",
-            "MetasoundEngine"
+            "MetasoundEngine",
+            "GeometryCollectionEngine"
         });
 
         PublicIncludePaths.Add("WOG/");
