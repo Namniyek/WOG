@@ -7,6 +7,8 @@
 #include "WOG.h"
 #include "AI/Spawner/WOGDayNPCSpawner.h"
 #include "Subsystems/WOGWorldSubsystem.h"
+#include "Kismet/GameplayStatics.h"
+#include "GameState/WOGGameState.h"
 
 AWOGBaseTarget::AWOGBaseTarget()
 {
@@ -23,6 +25,8 @@ AWOGBaseTarget::AWOGBaseTarget()
 	Health = MaxHealth;
 
 	DestroyDelay = 3.f;
+
+	TargetScore = 5;
 }
 
 void AWOGBaseTarget::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -132,6 +136,7 @@ void AWOGBaseTarget::HandleDestruction()
 	}
 
 	HandleChaosDestruction();
+	BroadcastDestructionToGameState();
 
 	FTimerHandle TimerHandle;
 	GetWorldTimerManager().SetTimer(TimerHandle, this, &ThisClass::DestroyTarget, DestroyDelay);
@@ -178,6 +183,20 @@ void AWOGBaseTarget::KeyTimeHit(int32 CurrentTime)
 		Multicast_HandleDoorOpening(true);
 		break;
 	}
+}
+
+void AWOGBaseTarget::BroadcastDestructionToGameState()
+{
+	if (!HasAuthority()) return;
+
+	TObjectPtr<AWOGGameState> GameState = Cast<AWOGGameState>(UGameplayStatics::GetGameState(this));
+	if (!GameState)
+	{
+		UE_LOG(WOGLogWorld, Error, TEXT("Invalid GameState from destruction of %s"), *GetNameSafe(this));
+		return;
+	}
+
+	GameState->SubtractFromCurrentTargetScore(TargetScore);
 }
 
 void AWOGBaseTarget::Multicast_HandleDoorOpening_Implementation(bool bIsOpen)

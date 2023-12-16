@@ -11,12 +11,15 @@
 /**
  * 
  */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnCurrentTargetScoreChanged);
+
 UCLASS()
 class WOG_API AWOGGameState : public AGameState
 {
 	GENERATED_BODY()
 
 public:
+	AWOGGameState();
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	void HandleTODAnnouncement(ETimeOfDay TOD);
@@ -35,9 +38,20 @@ protected:
 	UFUNCTION()
 	void TimeOfDayChanged(ETimeOfDay TOD);
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated)
+	int32 TotalTargetScore;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated)
+	int32 CurrentTargetScore;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnCurrentTargetScoreChanged OnCurrentTargetScoreChangedDelegate;
+
 private:
 	void SetupTOD();
 	int32 FinishMatchDayNumber = 4;
+
+	void InitTargetScores();
 
 	UFUNCTION()
 	void DayChanged(int32 DayNumber);
@@ -68,5 +82,13 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_SetEndgamePlayerStats();
 	void SetEndgamePlayerStats();
+
+	void SubtractFromCurrentTargetScore(const int32& ScoreToSubtract);
+
+	UFUNCTION(NetMulticast, reliable)
+	void Multicast_UpdateCurrentTargetScore();
+
+	UFUNCTION(BlueprintPure)
+	float GetTargetScorePercentage();
 
 };

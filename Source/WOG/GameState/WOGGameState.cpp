@@ -14,8 +14,14 @@
 #include "PlayerCharacter//WOGAttacker.h"
 #include "Libraries/WOGBlueprintLibrary.h"
 #include "ActorComponents/WOGUIManagerComponent.h"
+#include "Target/WOGBaseTarget.h"
+#include "WOG.h"
 
-
+AWOGGameState::AWOGGameState()
+{
+	CurrentTargetScore = 0;
+	TotalTargetScore = 0;
+}
 
 void AWOGGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
@@ -23,12 +29,15 @@ void AWOGGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLif
 	DOREPLIFETIME(AWOGGameState, bAttackersWon);
 	DOREPLIFETIME(AWOGGameState, MostElimmedPlayer);
 	DOREPLIFETIME(AWOGGameState, PlayerWithMostElimms);
+	DOREPLIFETIME(AWOGGameState, CurrentTargetScore);
+	DOREPLIFETIME(AWOGGameState, TotalTargetScore);
 }
 
 void AWOGGameState::HandleMatchHasStarted()
 {
 	Super::HandleMatchHasStarted();
 	SetupTOD();
+	InitTargetScores();
 
 	switch (FinishMatchTOD)
 	{
@@ -64,25 +73,25 @@ void AWOGGameState::TimeOfDayChanged(ETimeOfDay TOD)
 		HandleTODAnnouncement(TOD);
 	}
 	
-	//Handle weapon switching
-	switch (TOD)
-	{
-	case ETimeOfDay::TOD_Dusk1:
-		HandleWeaponSwitch(false);
-		break;
-	case ETimeOfDay::TOD_Dawn2:
-		HandleWeaponSwitch(true);
-		break;
-	case ETimeOfDay::TOD_Dusk2:
-		HandleWeaponSwitch(false);
-		break;
-	case ETimeOfDay::TOD_Dawn3:
-		HandleWeaponSwitch(true);
-		break;
-	case ETimeOfDay::TOD_Dusk3:
-		HandleWeaponSwitch(false);
-		break;
-	}
+	////Handle weapon switching
+	//switch (TOD)
+	//{
+	//case ETimeOfDay::TOD_Dusk1:
+	//	HandleWeaponSwitch(false);
+	//	break;
+	//case ETimeOfDay::TOD_Dawn2:
+	//	HandleWeaponSwitch(true);
+	//	break;
+	//case ETimeOfDay::TOD_Dusk2:
+	//	HandleWeaponSwitch(false);
+	//	break;
+	//case ETimeOfDay::TOD_Dawn3:
+	//	HandleWeaponSwitch(true);
+	//	break;
+	//case ETimeOfDay::TOD_Dusk3:
+	//	HandleWeaponSwitch(false);
+	//	break;
+	//}
 
 	//Handle teleporting Attackers to base
 	if (TOD == ETimeOfDay::TOD_Dawn2 || TOD == ETimeOfDay::TOD_Dawn3)
@@ -100,6 +109,34 @@ void AWOGGameState::TimeOfDayChanged(ETimeOfDay TOD)
 			}
 		}
 	}
+}
+
+void AWOGGameState::InitTargetScores()
+{
+	if (!HasAuthority()) return;
+
+	TArray<AActor*> OutTargets;
+	UGameplayStatics::GetAllActorsOfClass(this, AWOGBaseTarget::StaticClass(), OutTargets);
+
+	if (OutTargets.IsEmpty())
+	{
+		UE_LOG(WOGLogWorld, Error, TEXT("No Targets found in level"));
+		return;
+	}
+
+	for (AActor* TargetActor : OutTargets)
+	{
+		if (!TargetActor) continue;
+
+		AWOGBaseTarget* Target = Cast<AWOGBaseTarget>(TargetActor);
+		if (!Target) continue;
+
+		TotalTargetScore = TotalTargetScore + Target->GetTargetScore();
+	}
+
+	CurrentTargetScore = TotalTargetScore;
+	UE_LOG(WOGLogWorld, Display, TEXT("TotalTargetScore: %d"), TotalTargetScore);
+	UE_LOG(WOGLogWorld, Display, TEXT("CurrentTargetScore: %d"), CurrentTargetScore);
 }
 
 void AWOGGameState::DayChanged(int32 DayNumber)
@@ -225,6 +262,38 @@ void AWOGGameState::SetEndgamePlayerStats()
 		WOGPlayerState->SetMostElimmedPlayer(MostElimmedPlayer);
 		WOGPlayerState->SetPlayerWithMostElimms(PlayerWithMostElimms);
 	}
+}
+
+void AWOGGameState::SubtractFromCurrentTargetScore(const int32& ScoreToSubtract)
+{
+	if (!HasAuthority()) return;
+
+	CurrentTargetScore = CurrentTargetScore - ScoreToSubtract;
+	UE_LOG(WOGLogWorld, Display, TEXT("CurrentTargetScore: %d"), CurrentTargetScore);
+
+	OnCurrentTargetScoreChangedDelegate.Broadcast();
+	Multicast_UpdateCurrentTargetScore();
+
+	if (CurrentTargetScore <= 0)
+	{
+		//Attackers have destroyed all the targets
+		bAttackersWon = true;
+
+		FTimerHandle EndGameTimerHandle;
+		GetWorldTimerManager().SetTimer(EndGameTimerHandle, this, &ThisClass::Server_HandleEndGame, 3.f);
+	}
+}
+
+float AWOGGameState::GetTargetScorePercentage()
+{
+	return CurrentTargetScore/TotalTargetScore;
+}
+
+void AWOGGameState::Multicast_UpdateCurrentTargetScore_Implementation()
+{
+	if (HasAuthority()) return;
+	
+	OnCurrentTargetScoreChangedDelegate.Broadcast();
 }
 
 

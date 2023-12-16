@@ -82,6 +82,13 @@ protected:
 	UFUNCTION()
 	void KeyTimeHit(int32 CurrentTime);
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	int32 TargetScore;
+
+	void BroadcastDestructionToGameState();
+
 public:	
 
+	UFUNCTION(BlueprintPure)
+	FORCEINLINE int32 GetTargetScore() const { return TargetScore; }
 };
