@@ -29,7 +29,7 @@ public:
 
 	// The AActor Subclass to search for targetable Actors.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Target System")
-	TSubclassOf<AActor> TargetableActors;
+	TArray<TSubclassOf<AActor>> TargetableActors;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Target System")
 	TEnumAsByte<ECollisionChannel> TargetableCollisionChannel;
@@ -72,19 +72,6 @@ public:
 	// The Widget Draw Size for the Widget class to use when locked on Target.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Target System|Widget")
 	float LockedOnWidgetDrawSize = 32.0f;
-
-	// The Socket name to attach the LockedOn Widget.
-	//
-	// You should use this to configure the Bone or Socket name the widget should be attached to, and allow
-	// the widget to move with target character's animation (Ex: spine_03)
-	//
-	// Set it to None to attach the Widget Component to the Root Component instead of the Mesh.
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Target System|Widget")
-	FName LockedOnWidgetParentSocket = FName("spine_03");
-
-	// The Relative Location to apply on Target LockedOn Widget when attached to a target.
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Target System|Widget")
-	FVector LockedOnWidgetRelativeLocation = FVector(0.0f, 0.0f, 0.0f);
 
 	// Setting this to true will tell the Target System to adjust the Pitch Offset (the Y axis) when locked on,
 	// depending on the distance to the target actor.
@@ -201,6 +188,7 @@ private:
 
 	//~ Actors search / trace
 
+	TArray<AActor*> FindTargetableActors() const;
 	TArray<AActor*> GetAllActorsOfClass(TSubclassOf<AActor> ActorClass) const;
 	TArray<AActor*> FindTargetsInRange(TArray<AActor*> ActorsToLook, float RangeMin, float RangeMax) const;
 

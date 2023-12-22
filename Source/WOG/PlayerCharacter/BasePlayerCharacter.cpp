@@ -1232,7 +1232,7 @@ void ABasePlayerCharacter::ProcessHit(FHitResult Hit, UPrimitiveComponent* Weapo
 	IBuildingInterface* BuildInterface = Cast<IBuildingInterface>(Hit.GetActor());
 	if (BuildInterface && HasAuthority())
 	{
-		BuildInterface->Execute_DealDamage(Hit.GetActor(), DamageToApply);
+		BuildInterface->Execute_DealDamage(Hit.GetActor(), DamageToApply, this);
 		UE_LOG(WOGLogCombat, Warning, TEXT("Build damaged with %f"), DamageToApply);
 		return;
 	}
@@ -1283,7 +1283,7 @@ void ABasePlayerCharacter::ProcessMagicHit(const FHitResult& Hit, const FMagicDa
 	IBuildingInterface* BuildInterface = Cast<IBuildingInterface>(Hit.GetActor());
 	if (BuildInterface && HasAuthority())
 	{
-		BuildInterface->Execute_DealDamage(Hit.GetActor(), DamageToApply);
+		BuildInterface->Execute_DealDamage(Hit.GetActor(), DamageToApply, this);
 		UE_LOG(LogTemp, Warning, TEXT("Build damaged with %f"), DamageToApply);
 		return;
 	}

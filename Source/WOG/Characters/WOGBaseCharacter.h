@@ -10,6 +10,7 @@
 #include "Abilities/GameplayAbility.h"
 #include "AbilitySystemInterface.h"
 #include "Data/AGRLibrary.h"
+#include "TargetSystemTargetableInterface.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/TimelineComponent.h"
@@ -29,7 +30,7 @@ class UWOGCharacterWidgetContainer;
 class UAnimMontage;
 
 UCLASS()
-class WOG_API AWOGBaseCharacter : public ACharacter, public IAttributesInterface, public IAbilitySystemInterface
+class WOG_API AWOGBaseCharacter : public ACharacter, public IAttributesInterface, public IAbilitySystemInterface, public ITargetSystemTargetableInterface
 {
 	GENERATED_BODY()
 

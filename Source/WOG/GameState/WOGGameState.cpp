@@ -21,6 +21,7 @@ AWOGGameState::AWOGGameState()
 {
 	CurrentTargetScore = 0;
 	TotalTargetScore = 0;
+	EndGameDelay = 5.f;
 }
 
 void AWOGGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -72,26 +73,6 @@ void AWOGGameState::TimeOfDayChanged(ETimeOfDay TOD)
 	{
 		HandleTODAnnouncement(TOD);
 	}
-	
-	////Handle weapon switching
-	//switch (TOD)
-	//{
-	//case ETimeOfDay::TOD_Dusk1:
-	//	HandleWeaponSwitch(false);
-	//	break;
-	//case ETimeOfDay::TOD_Dawn2:
-	//	HandleWeaponSwitch(true);
-	//	break;
-	//case ETimeOfDay::TOD_Dusk2:
-	//	HandleWeaponSwitch(false);
-	//	break;
-	//case ETimeOfDay::TOD_Dawn3:
-	//	HandleWeaponSwitch(true);
-	//	break;
-	//case ETimeOfDay::TOD_Dusk3:
-	//	HandleWeaponSwitch(false);
-	//	break;
-	//}
 
 	//Handle teleporting Attackers to base
 	if (TOD == ETimeOfDay::TOD_Dawn2 || TOD == ETimeOfDay::TOD_Dawn3)
@@ -145,27 +126,6 @@ void AWOGGameState::DayChanged(int32 DayNumber)
 	{
 		Server_HandleEndGame();
 	}
-}
-
-void AWOGGameState::HandleWeaponSwitch(bool bStoreWeapons)
-{
-	/*if (!HasAuthority()) return;
-	for (auto Player : PlayerArray)
-	{
-		if (!Player || !Player->GetPlayerController()) continue;
-
-		ABasePlayerCharacter* Character = Cast<ABasePlayerCharacter>(Player->GetPawn());
-		if (!Character) continue;
-
-		if (bStoreWeapons)
-		{
-			Character->Server_StoreWeapons();
-		}
-		else
-		{
-			Character->Server_RestoreWeapons();
-		}
-	}*/
 }
 
 void AWOGGameState::HandleTODAnnouncement(ETimeOfDay TOD)
@@ -280,7 +240,7 @@ void AWOGGameState::SubtractFromCurrentTargetScore(const int32& ScoreToSubtract)
 		bAttackersWon = true;
 
 		FTimerHandle EndGameTimerHandle;
-		GetWorldTimerManager().SetTimer(EndGameTimerHandle, this, &ThisClass::Server_HandleEndGame, 3.f);
+		GetWorldTimerManager().SetTimer(EndGameTimerHandle, this, &ThisClass::Server_HandleEndGame, EndGameDelay);
 	}
 }
 

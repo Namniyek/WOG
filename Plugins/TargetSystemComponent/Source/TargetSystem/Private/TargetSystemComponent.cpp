@@ -18,7 +18,7 @@ UTargetSystemComponent::UTargetSystemComponent()
 	PrimaryComponentTick.bCanEverTick = true;
 
 	LockedOnWidgetClass = StaticLoadClass(UObject::StaticClass(), nullptr, TEXT("/TargetSystem/UI/WBP_LockOn.WBP_LockOn_C"));
-	TargetableActors = APawn::StaticClass();
+	TargetableActors.Add(APawn::StaticClass());
 	TargetableCollisionChannel = ECollisionChannel::ECC_Pawn;
 }
 
@@ -95,7 +95,7 @@ void UTargetSystemComponent::TargetActor()
 	}
 	else
 	{
-		const TArray<AActor*> Actors = GetAllActorsOfClass(TargetableActors);
+		const TArray<AActor*> Actors = FindTargetableActors();
 		LockedOnTargetActor = FindNearestTarget(Actors);
 		TargetLockOn(LockedOnTargetActor);
 	}
@@ -137,7 +137,7 @@ void UTargetSystemComponent::TargetActorWithAxisInput(const float AxisValue)
 	ClosestTargetDistance = MinimumDistanceToEnable;
 
 	// Get All Actors of Class
-	TArray<AActor*> Actors = GetAllActorsOfClass(TargetableActors);
+	TArray<AActor*> Actors = FindTargetableActors();
 
 	// For each of these actors, check line trace and ignore Current Target and build the list of actors to look from
 	TArray<AActor*> ActorsToLook;
@@ -389,8 +389,14 @@ void UTargetSystemComponent::CreateAndAttachTargetLockedOnWidgetComponent(AActor
 	TargetLockedOnWidgetComponent = NewObject<UWidgetComponent>(TargetActor, MakeUniqueObjectName(TargetActor, UWidgetComponent::StaticClass(), FName("TargetLockOn")));
 	TargetLockedOnWidgetComponent->SetWidgetClass(LockedOnWidgetClass);
 
-	UMeshComponent* MeshComponent = TargetActor->FindComponentByClass<UMeshComponent>();
-	USceneComponent* ParentComponent = MeshComponent && LockedOnWidgetParentSocket != NAME_None ? MeshComponent : TargetActor->GetRootComponent();
+	USceneComponent* ParentComponent = TargetActor->GetRootComponent();
+	FName ParentSocket = NAME_None;
+
+	const bool bIsImplemented = TargetActor->GetClass()->ImplementsInterface(UTargetSystemTargetableInterface::StaticClass());
+	if (bIsImplemented)
+	{
+		ITargetSystemTargetableInterface::Execute_GetTargetWidgetAttachmentParent(TargetActor, ParentComponent, ParentSocket);
+	}
 
 	if (IsValid(OwnerPlayerController))
 	{
@@ -399,11 +405,28 @@ void UTargetSystemComponent::CreateAndAttachTargetLockedOnWidgetComponent(AActor
 
 	TargetLockedOnWidgetComponent->ComponentTags.Add(FName("TargetSystem.LockOnWidget"));
 	TargetLockedOnWidgetComponent->SetWidgetSpace(EWidgetSpace::Screen);
-	TargetLockedOnWidgetComponent->SetupAttachment(ParentComponent, LockedOnWidgetParentSocket);
-	TargetLockedOnWidgetComponent->SetRelativeLocation(LockedOnWidgetRelativeLocation);
+	TargetLockedOnWidgetComponent->SetupAttachment(ParentComponent, ParentSocket);
 	TargetLockedOnWidgetComponent->SetDrawSize(FVector2D(LockedOnWidgetDrawSize, LockedOnWidgetDrawSize));
 	TargetLockedOnWidgetComponent->SetVisibility(true);
 	TargetLockedOnWidgetComponent->RegisterComponent();
+}
+
+TArray<AActor*> UTargetSystemComponent::FindTargetableActors() const
+{
+	if (TargetableActors.IsEmpty())
+	{
+		TS_LOG(Error, TEXT("No valid class for targeting specified"));
+		return TArray<AActor*>();
+	}
+	
+	TArray<AActor*> OutActors;
+	for (TSubclassOf<AActor> ActorClass : TargetableActors)
+	{
+		TArray<AActor*> TempOutActors = GetAllActorsOfClass(ActorClass);
+		OutActors.Append(TempOutActors);
+	}
+
+	return OutActors;
 }
 
 TArray<AActor*> UTargetSystemComponent::GetAllActorsOfClass(const TSubclassOf<AActor> ActorClass) const
@@ -425,12 +448,7 @@ TArray<AActor*> UTargetSystemComponent::GetAllActorsOfClass(const TSubclassOf<AA
 bool UTargetSystemComponent::TargetIsTargetable(const AActor* Actor)
 {
 	const bool bIsImplemented = Actor->GetClass()->ImplementsInterface(UTargetSystemTargetableInterface::StaticClass());
-	if (bIsImplemented)
-	{
-		return ITargetSystemTargetableInterface::Execute_IsTargetable(Actor);
-	}
-
-	return true;
+	return bIsImplemented;
 }
 
 void UTargetSystemComponent::SetupLocalPlayerController()
@@ -479,7 +497,6 @@ AActor* UTargetSystemComponent::FindNearestTarget(TArray<AActor*> Actors) const
 
 	return Target;
 }
-
 
 bool UTargetSystemComponent::LineTraceForActor(const AActor* OtherActor, const TArray<AActor*>& ActorsToIgnore) const
 {
@@ -586,7 +603,7 @@ bool UTargetSystemComponent::ShouldBreakLineOfSight() const
 		return true;
 	}
 
-	TArray<AActor*> ActorsToIgnore = GetAllActorsOfClass(TargetableActors);
+	TArray<AActor*> ActorsToIgnore = FindTargetableActors();
 	ActorsToIgnore.Remove(LockedOnTargetActor);
 
 	FHitResult HitResult;

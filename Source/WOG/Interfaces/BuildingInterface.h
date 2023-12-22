@@ -34,7 +34,7 @@ public:
 	void InteractWithBuild();
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-	void DealDamage(const float& Damage);
+	void DealDamage(const float& Damage, const AActor* Agressor);
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void AddBuildChild(AActor* Actor);

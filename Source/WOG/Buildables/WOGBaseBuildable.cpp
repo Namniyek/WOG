@@ -6,6 +6,7 @@
 #include "Components/BoxComponent.h"
 #include "DrawDebugHelpers.h"
 #include "Components/ArrowComponent.h"
+#include "TargetSystemComponent.h"
 
 AWOGBaseBuildable::AWOGBaseBuildable()
 {
@@ -52,8 +53,17 @@ void AWOGBaseBuildable::AddBuildChild_Implementation(AActor* Actor)
 	BuildChildren.AddUnique(Actor);
 }
 
-void AWOGBaseBuildable::DealDamage_Implementation(const float& Damage)
+void AWOGBaseBuildable::DealDamage_Implementation(const float& Damage, const AActor* Agressor)
 {
+	if (Agressor && BuildHealth - Damage <= 0)
+	{
+		UTargetSystemComponent* TargetComp = Agressor->GetComponentByClass<UTargetSystemComponent>();
+		if (TargetComp)
+		{
+			TargetComp->TargetLockOff();
+		}
+	}
+
 	if (bIsDead || !HasAuthority()) return;
 
 	BuildHealth -= Damage;
@@ -85,7 +95,7 @@ void AWOGBaseBuildable::Multicast_DestroyBuild_Implementation()
 		{
 			if (Child->GetClass()->ImplementsInterface(UBuildingInterface::StaticClass()))
 			{
-				IBuildingInterface::Execute_DealDamage(Child, 9999999.f);
+				IBuildingInterface::Execute_DealDamage(Child, 9999999.f, nullptr);
 			}
 			else
 			{

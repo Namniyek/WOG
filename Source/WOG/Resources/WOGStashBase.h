@@ -110,4 +110,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Setup)
 	FName CommonInventoryTag;
 
+	UFUNCTION(BlueprintImplementableEvent)
+	void HandleCosmetics(bool bNewBusy);
+
 };

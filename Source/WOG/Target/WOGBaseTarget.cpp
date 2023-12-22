@@ -9,6 +9,7 @@
 #include "Subsystems/WOGWorldSubsystem.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameState/WOGGameState.h"
+#include "TargetSystemComponent.h"
 
 AWOGBaseTarget::AWOGBaseTarget()
 {
@@ -55,12 +56,12 @@ void AWOGBaseTarget::UpdateRestCollection(const UGeometryCollection* RestCollect
 	GeometryCollectionComp->SetRestCollection(RestCollectionIn);
 }
 
-void AWOGBaseTarget::DealDamage_Implementation(const float& Damage)
+void AWOGBaseTarget::DealDamage_Implementation(const float& Damage, const AActor* Agressor)
 {
-	HandleDamage(Damage);
+	HandleDamage(Damage, Agressor);
 }
 
-void AWOGBaseTarget::HandleDamage(const float& Damage)
+void AWOGBaseTarget::HandleDamage(const float& Damage, const AActor* Agressor)
 {
 	if (!HasAuthority()) return;
 
@@ -69,12 +70,26 @@ void AWOGBaseTarget::HandleDamage(const float& Damage)
 		Health = 0;
 		HandleDestruction();
 		HandleHealthBar(false);
+		Multicast_ForceTargetOff(Agressor);
 	}
 	else
 	{
 		Health = Health - Damage;
 		HandleHealthBar(true);
 	}
+}
+
+void AWOGBaseTarget::Multicast_ForceTargetOff_Implementation(const AActor* Agressor)
+{
+	if (Agressor)
+	{
+		UTargetSystemComponent* TargetComp = Agressor->GetComponentByClass<UTargetSystemComponent>();
+		if (TargetComp)
+		{
+			TargetComp->TargetLockOff();
+		}
+	}
+
 }
 
 void AWOGBaseTarget::HandleHealthBar(bool NewVisible)
@@ -109,6 +124,7 @@ void AWOGBaseTarget::OnRep_Health()
 
 void AWOGBaseTarget::HandleDestruction()
 {
+
 	if (!HasAuthority()) return;
 	if (!RootMesh) return;
 

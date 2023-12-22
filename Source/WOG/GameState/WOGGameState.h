@@ -26,11 +26,14 @@ public:
 	UFUNCTION(Server, Reliable)
 	void Server_HandleEndGame();
 
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category = Setup)
 	TSubclassOf<class AActor> TimeOfDayClass;
 
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category = Setup)
 	ETimeOfDay FinishMatchTOD = ETimeOfDay::TOD_Dawn4;
+
+	UPROPERTY(EditDefaultsOnly, Category = Setup)
+	float EndGameDelay;
 
 protected:
 	virtual void HandleMatchHasStarted() override;
@@ -55,8 +58,6 @@ private:
 
 	UFUNCTION()
 	void DayChanged(int32 DayNumber);
-
-	void HandleWeaponSwitch(bool bStoreWeapons);
 
 	class ATimeOfDay* TODActor;
 

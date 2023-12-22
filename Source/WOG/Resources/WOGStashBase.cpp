@@ -147,6 +147,7 @@ void AWOGStashBase::SetIsBusy(const bool& NewBusy, ABasePlayerCharacter* UserPla
 	bIsBusy = NewBusy;
 
 	ShowCorrectWidget(bIsBusy, PlayerUsingStash);
+	HandleCosmetics(bIsBusy);
 }
 
 void AWOGStashBase::BackFromWidget_Implementation(AActor* Actor)
@@ -224,6 +225,7 @@ void AWOGStashBase::OnRep_IsBusy()
 	if (HasAuthority()) return;
 
 	ShowCorrectWidget(bIsBusy, PlayerUsingStash);
+	HandleCosmetics(bIsBusy);
 }
 
 void AWOGStashBase::OnInteractWithStashComplete(ABasePlayerCharacter* Interactor)

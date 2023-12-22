@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Interfaces/BuildingInterface.h"
+#include "TargetSystemTargetableInterface.h"
 #include "WOGBaseTarget.generated.h"
 
 class UGeometryCollectionComponent;
@@ -12,7 +13,7 @@ class UGeometryCollection;
 class AWOGDayNPCSpawner;
 
 UCLASS()
-class WOG_API AWOGBaseTarget : public AActor, public IBuildingInterface
+class WOG_API AWOGBaseTarget : public AActor, public IBuildingInterface, public ITargetSystemTargetableInterface
 {
 	GENERATED_BODY()
 	
@@ -39,13 +40,16 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "ChaosPhysics")
 	void UpdateRestCollection(const UGeometryCollection* RestCollectionIn);
 
-	virtual void DealDamage_Implementation(const float& Damage) override;
+	virtual void DealDamage_Implementation(const float& Damage, const AActor* Agressor) override;
 
 	UFUNCTION()
-	void HandleDamage(const float& Damage);
+	void HandleDamage(const float& Damage, const AActor* Agressor);
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void HandleChaosDestruction();
+
+	UFUNCTION(NetMulticast, unreliable)
+	void Multicast_ForceTargetOff(const AActor* Agressor);
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void ShowHealthBar();
