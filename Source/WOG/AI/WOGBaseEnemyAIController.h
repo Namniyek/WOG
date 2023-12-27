@@ -14,6 +14,9 @@ class WOG_API AWOGBaseEnemyAIController : public AAIController
 {
 	GENERATED_BODY()
 
+public:
+	AWOGBaseEnemyAIController(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
+
 protected:
 
 	virtual void BeginPlay() override;

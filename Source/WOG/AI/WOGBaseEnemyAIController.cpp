@@ -2,6 +2,13 @@
 
 
 #include "WOGBaseEnemyAIController.h"
+#include "Navigation/CrowdFollowingComponent.h"
+
+AWOGBaseEnemyAIController::AWOGBaseEnemyAIController(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer.SetDefaultSubobjectClass<UCrowdFollowingComponent>(TEXT("PathFollowingComponent")))
+{
+
+}
 
 void AWOGBaseEnemyAIController::BeginPlay()
 {

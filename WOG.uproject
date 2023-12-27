@@ -124,6 +124,11 @@
 		{
 			"Name": "SkeletalMeshModelingTools",
 			"Enabled": true
+		},
+		{
+			"Name": "GBW_Scratch",
+			"Enabled": true,
+			"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/product/5167bd6c4cea4f08b4ddf213e1942c79"
 		}
 	]
 }

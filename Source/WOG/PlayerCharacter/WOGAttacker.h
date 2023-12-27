@@ -13,6 +13,7 @@
 class AWOGRaven;
 class AWOGMinerGiant;
 class AWOGPossessableEnemy;
+class UWOGEnemyOrderComponent;
 
 UCLASS()
 class WOG_API AWOGAttacker : public ABasePlayerCharacter
@@ -26,6 +27,11 @@ public:
 
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<USceneComponent> SquadSlot_0;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<USceneComponent> SquadSlot_1;
 	#pragma region Player Input Variables
 	/*
 	** MappingContexts
@@ -45,6 +51,9 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<UWOGEnemyOrderComponent> EnemyOrderComponent;
 
 	UFUNCTION(BlueprintAuthorityOnly)
 	void SetAllocatedRaven();
@@ -103,4 +112,7 @@ public:
 	UWOGSpawnComponent* GetSpawnComponent() { return SpawnComponent; }
 
 	void SetCurrentExternalMinion(AActor* NewMinion);
+
+	UFUNCTION(BlueprintPure)
+	FORCEINLINE UWOGEnemyOrderComponent* GetEnemyOrderComponent() const { return EnemyOrderComponent; }
 };

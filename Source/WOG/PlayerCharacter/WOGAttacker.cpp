@@ -23,6 +23,7 @@
 #include "Interfaces/SpawnInterface.h"
 #include "Subsystems/WOGUIManagerSubsystem.h"
 #include "Libraries/WOGBlueprintLibrary.h"
+#include "ActorComponents/WOGEnemyOrderComponent.h"
 
 
 AWOGAttacker::AWOGAttacker()
@@ -33,6 +34,13 @@ AWOGAttacker::AWOGAttacker()
 	CurrentExternalMinion = nullptr;
 	bCanPossessMinion = true;
 
+	SquadSlot_0 = CreateDefaultSubobject<USceneComponent>(TEXT("SquadSlot_0"));
+	SquadSlot_0->SetupAttachment(GetRootComponent());
+	SquadSlot_1 = CreateDefaultSubobject<USceneComponent>(TEXT("SquadSlot_1"));
+	SquadSlot_1->SetupAttachment(GetRootComponent());
+
+	EnemyOrderComponent = CreateDefaultSubobject<UWOGEnemyOrderComponent>(TEXT("Enemy Order Component"));
+	EnemyOrderComponent->SetIsReplicated(true);
 }
 
 void AWOGAttacker::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -97,7 +105,7 @@ void AWOGAttacker::PossessMinion()
 
 	if (!CurrentTarget)
 	{
-		UE_LOG(LogTemp, Error, TEXT("invalid CurrentTarget"));
+		UE_LOG(LogTemp, Error, TEXT("invalid CurrentTargetActor"));
 		return;
 	}
 

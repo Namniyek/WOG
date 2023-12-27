@@ -6,6 +6,7 @@
 #include "WOGDataTypes.generated.h"
 
 class USoundCue;
+class AWOGBaseEnemy;
 
 UENUM(BlueprintType)
 enum class ECosmeticHit : uint8
@@ -185,10 +186,48 @@ struct FVector3DWithWidget
 	GENERATED_USTRUCT_BODY();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Vector3D with Widget", Meta = (MakeEditWidget = true))
-	FVector Vector;
+	FVector Vector = FVector();
 
 	FVector3DWithWidget()
 		:Vector(FVector::ZeroVector)
 	{
 	}
+};
+
+USTRUCT(BlueprintType)
+struct FEnemyCombatSlot
+{
+	GENERATED_USTRUCT_BODY();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy Combat Slot")
+	int32 SlotIndex = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy Combat Slot")
+	TObjectPtr<USceneComponent> Location = nullptr;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Enemy Combat Slot")
+	TObjectPtr<AWOGBaseEnemy> CurrentEnemy = nullptr;
+};
+
+UENUM(BlueprintType)
+enum class EEnemyOrder : uint8
+{
+	EEO_None UMETA(DisplayName = "None"),
+	EEO_Hold UMETA(DisplayName = "Hold"),
+	EEO_Follow UMETA(DisplayName = "Follow"),
+	EEO_AttackTarget UMETA(DisplayName = "Attack Target"),
+	EEO_AttackRandom UMETA(DisplayName = "Attack Random"),
+
+	EEO_MAX UMETA(DisplayName = "DefaultMAX")
+};
+
+UENUM(BlueprintType)
+enum class EEnemyState : uint8
+{
+	EES_None UMETA(DisplayName = "None"),
+	EES_Dead UMETA(DisplayName = "Dead"),
+	EES_AtSquadSlot UMETA(DisplayName = "At Squad Slot"),
+	EES_AtTargetSlot UMETA(DisplayName = "At Target Slot"),
+
+	EES_MAX UMETA(DisplayName = "DefaultMAX")
 };

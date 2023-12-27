@@ -8,6 +8,9 @@
 #include "Types/CharacterTypes.h"
 #include "WOGSpawnComponent.generated.h"
 
+class UCameraComponent;
+class AWOGBaseSquad;
+
 /**
  * 
  */
@@ -43,8 +46,6 @@ public:
 	FCharacterAbilityData DefaultAbilitiesAndEffects;
 
 };
-
-class UCameraComponent;
 
 UCLASS(meta = (BlueprintSpawnableComponent))
 class WOG_API UWOGSpawnComponent : public UWOGBaseActorComponent
@@ -116,6 +117,8 @@ protected:
 	void Spawn(FTransform Transform, int32 ID);
 
 	TArray<FVector> GetSpawnLocations(const FVector& MiddleLocation, float GridSize, int32 Amount);
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<AWOGBaseSquad> SquadClass;
 
 public:
 

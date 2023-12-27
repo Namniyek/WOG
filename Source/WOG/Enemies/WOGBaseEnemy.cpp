@@ -2,6 +2,8 @@
 
 
 #include "WOGBaseEnemy.h"
+#include "WOG.h"
+#include "Net/UnrealNetwork.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "AIController.h"
 #include "WOG/Weapons/WOGBaseWeapon.h"
@@ -11,8 +13,9 @@
 #include "GameplayEffectExtension.h"
 #include "Data/WOGGameplayTags.h"
 #include "Components/CapsuleComponent.h"
+#include "PlayerCharacter/WOGAttacker.h"
+#include "AI/Combat/WOGBaseSquad.h"
 
-// Sets default values
 AWOGBaseEnemy::AWOGBaseEnemy()
 {
 	PrimaryActorTick.bCanEverTick = false;
@@ -23,6 +26,15 @@ AWOGBaseEnemy::AWOGBaseEnemy()
 	CombatManager->OnStartAttack.AddDynamic(this, &ThisClass::OnStartAttack);
 	CombatManager->OnAttackHitEvent.AddDynamic(this, &ThisClass::OnAttackHit);
 
+}
+
+void AWOGBaseEnemy::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AWOGBaseEnemy, OwnerAttacker);
+	DOREPLIFETIME(AWOGBaseEnemy, OwnerSquad);
+	DOREPLIFETIME(AWOGBaseEnemy, SquadUnitIndex);
 }
 
 void AWOGBaseEnemy::BeginPlay()
@@ -108,8 +120,50 @@ void AWOGBaseEnemy::HandleStateElimmed(AController* InstigatedBy)
 	Elim(false);
 }
 
+void AWOGBaseEnemy::SetOwnerAttacker(AWOGAttacker* NewOwner)
+{
+	if (!HasAuthority()) return;
+	if (!NewOwner)
+	{
+		UE_LOG(WOGLogSpawn, Error, TEXT("Invalid AttackerOwner on spawned Minion: %s"), *GetNameSafe(this));
+		return;
+	}
+
+	OwnerAttacker = NewOwner;
+}
+
+void AWOGBaseEnemy::SetOwnerSquad(AWOGBaseSquad* NewOwnerSquad)
+{
+	if (!HasAuthority()) return;
+	if (!NewOwnerSquad)
+	{
+		UE_LOG(WOGLogSpawn, Error, TEXT("Invalid OwnerSquad on spawned Minion: %s"), *GetNameSafe(this));
+		return;
+	}
+
+	OwnerSquad = NewOwnerSquad;
+}
+
+void AWOGBaseEnemy::SetSquadUnitIndex(const int32& NewIndex)
+{
+	if (!HasAuthority()) return;
+
+	SquadUnitIndex = NewIndex;
+}
+
 void AWOGBaseEnemy::Elim(bool bPlayerLeftGame)
 {
+	if (OwnerSquad)
+	{
+		for (auto Slot : OwnerSquad->SquadSlots)
+		{
+			if (Slot.CurrentEnemy && Slot.CurrentEnemy == this)
+			{
+				Slot.CurrentEnemy = nullptr;
+			}
+		}
+	}
+
 	Multicast_Elim(bPlayerLeftGame);
 }
 

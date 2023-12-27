@@ -2,6 +2,7 @@
 
 
 #include "WOGSpawnComponent.h"
+#include "WOG.h"
 #include "WOG/PlayerCharacter/WOGAttacker.h"
 #include "Engine/World.h"
 #include "Engine/EngineTypes.h"
@@ -14,7 +15,11 @@
 #include "WOG/Interfaces/AttributesInterface.h"
 #include "EnhancedInputSubsystems.h"
 #include "Data/AGRLibrary.h"
+#include "Data/WOGDataTypes.h"
 #include "Components/AGR_EquipmentManager.h"
+#include "AI/Combat/WOGBaseSquad.h"
+#include "Components/BillboardComponent.h"
+#include "ActorComponents/WOGEnemyOrderComponent.h"
 
 UWOGSpawnComponent::UWOGSpawnComponent()
 {
@@ -241,8 +246,35 @@ void UWOGSpawnComponent::Server_Spawn_Implementation(FTransform Transform, int32
 
 void UWOGSpawnComponent::Spawn(FTransform Transform, int32 ID)
 {
+	if (!AttackerCharacter) return;
 
-	TArray<FVector> Spawns = GetSpawnLocations(Transform.GetLocation(), 100, Spawnables[ID]->AmountUnits);
+	/*
+	*Start by spawning the WOGSquadActor
+	*/
+	FActorSpawnParameters SquadParams;
+	SquadParams.Owner = AttackerCharacter ? AttackerCharacter : nullptr;
+	SquadParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+	FVector SquadLocation = Transform.GetLocation() + FVector(0.f, 0.f, Spawnables[ID]->HeightOffset);
+	TObjectPtr<AActor> SpawnedSquadActor = GetWorld()->SpawnActor<AActor>(SquadClass, SquadLocation, Transform.GetRotation().Rotator(), SquadParams);
+	TObjectPtr<AWOGBaseSquad> SpawnedSquad = Cast<AWOGBaseSquad>(SpawnedSquadActor);
+	int32 CurrentSlotIndex = 0;
+	if (!SpawnedSquad)
+	{
+		UE_LOG(WOGLogSpawn, Error, TEXT("WOGSquad Not Spawned"));
+		return;
+	}
+
+	UWOGEnemyOrderComponent* OrderComp = AttackerCharacter->GetEnemyOrderComponent();
+	if (OrderComp)
+	{
+		OrderComp->HandleCurrentSquads(SpawnedSquad, true);
+	}
+
+	/*
+	*Handle the actual spawn of the enemies
+	*/
+	TArray<FVector> Spawns = GetSpawnLocations(Transform.GetLocation(), 150, Spawnables[ID]->AmountUnits);
 
 	for (auto Spawn : Spawns)
 	{
@@ -257,9 +289,23 @@ void UWOGSpawnComponent::Spawn(FTransform Transform, int32 ID)
 
 		if (TObjectPtr<AWOGBaseEnemy> SpawnedEnemy = Cast<AWOGBaseEnemy>(SpawnedActor))
 		{
+			//Handle the squad assign logic and init
+			FEnemyCombatSlot Slot;
+			Slot.SlotIndex = CurrentSlotIndex;
+			Slot.Location = SpawnedSquad->SlotComponentsArray[CurrentSlotIndex];
+			Slot.CurrentEnemy = SpawnedEnemy;
+
+			SpawnedSquad->SquadSlots.Add(Slot);
+			CurrentSlotIndex++;
+
+			//Handle the spawned enemy logic and init
+			SpawnedEnemy->SetActorTransform(Slot.Location->GetComponentTransform());
 			SpawnedEnemy->SetDefaultAbilitiesAndEffects(Spawnables[ID]->DefaultAbilitiesAndEffects);
 			SpawnedEnemy->GiveDefaultAbilities();
 			SpawnedEnemy->ApplyDefaultEffects();
+			SpawnedEnemy->SetOwnerAttacker(AttackerCharacter ? AttackerCharacter : nullptr);
+			SpawnedEnemy->SetOwnerSquad(SpawnedSquad);
+			SpawnedEnemy->SetSquadUnitIndex(Slot.SlotIndex);
 		}
 	}
 }

@@ -1,0 +1,88 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "GameFramework/Actor.h"
+#include "Data/WOGDataTypes.h"
+#include "WOGBaseSquad.generated.h"
+
+UCLASS()
+class WOG_API AWOGBaseSquad : public AActor
+{
+	GENERATED_BODY()
+	
+public:	
+	AWOGBaseSquad();
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
+
+protected:
+	virtual void BeginPlay() override;
+
+	UPROPERTY(Replicated, BlueprintReadOnly, VisibleAnywhere)
+	EEnemyOrder CurrentSquadOrder;
+
+	UPROPERTY(Replicated, BlueprintReadOnly, VisibleAnywhere)
+	TObjectPtr<AActor> CurrentTargetActor;
+
+	UPROPERTY(Replicated, BlueprintReadOnly, VisibleAnywhere)
+	FVector_NetQuantize CurrentTargetLocation;
+
+	#pragma region Slot Components
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	TObjectPtr<USceneComponent> RootComp;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	TObjectPtr<USceneComponent> Slot_0;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	TObjectPtr<USceneComponent> Slot_1;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	TObjectPtr<USceneComponent> Slot_2;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	TObjectPtr<USceneComponent> Slot_3;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	TObjectPtr<USceneComponent> Slot_4;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	TObjectPtr<USceneComponent> Slot_5;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	TObjectPtr<USceneComponent> Slot_6;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	TObjectPtr<USceneComponent> Slot_7;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	TObjectPtr<USceneComponent> Slot_8;
+	#pragma endregion
+
+public:	
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	TArray<USceneComponent*> SlotComponentsArray;
+
+	UPROPERTY(Replicated, BlueprintReadOnly, EditAnywhere)
+	TArray<FEnemyCombatSlot> SquadSlots;
+
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
+	void SetCurrentSquadOrder(const EEnemyOrder& NewOrder);
+
+	UFUNCTION(BlueprintPure)
+	FORCEINLINE EEnemyOrder GetCurrentSquadOrder() const { return CurrentSquadOrder; }
+
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
+	void SetCurrentTargetActor(AActor*& NewTarget);
+
+	UFUNCTION(BlueprintPure)
+	FORCEINLINE AActor* GetCurrentTargetActor() const { return CurrentTargetActor; }
+
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
+	void SetCurrentTargetLocation(const FVector_NetQuantize& NewTarget);
+
+	UFUNCTION(BlueprintPure)
+	FORCEINLINE FVector_NetQuantize GetCurrentTargetLocation() const { return CurrentTargetLocation; }
+};
