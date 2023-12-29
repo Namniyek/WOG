@@ -24,6 +24,7 @@
 #include "Subsystems/WOGUIManagerSubsystem.h"
 #include "Resources/WOGCommonInventory.h"
 #include "Subsystems/WOGWorldSubsystem.h"
+#include "TargetSystemComponent.h"
 
 AWOGBaseCharacter::AWOGBaseCharacter()
 {
@@ -154,7 +155,7 @@ void AWOGBaseCharacter::OnHealthAttributeChanged(const FOnAttributeChangeData& D
 
 			if (EffectContext.GetInstigator()->IsA<ABasePlayerCharacter>())
 			{
-				ACharacter* InstigatorCharacter = Cast<ACharacter>(EffectContext.GetInstigator());
+				ABasePlayerCharacter* InstigatorCharacter = Cast<ABasePlayerCharacter>(EffectContext.GetInstigator());
 				if (InstigatorCharacter && InstigatorCharacter->GetController())
 				{
 					FGameplayEventData EventPayload;
@@ -162,6 +163,11 @@ void AWOGBaseCharacter::OnHealthAttributeChanged(const FOnAttributeChangeData& D
 					EventPayload.Instigator = InstigatorCharacter->GetController();
 					UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Elim, EventPayload);
 					UE_LOG(WOGLogCombat, Error, TEXT("Killed by Character"));
+
+					if (InstigatorCharacter->GetTargetComponent())
+					{
+						InstigatorCharacter->GetTargetComponent()->TargetLockOff();
+					}
 				}
 
 				GiveDeathResources(EffectContext.GetInstigator());

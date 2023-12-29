@@ -4,11 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "TargetSystemTargetableInterface.h"
+#include "Interfaces/TargetInterface.h"
 #include "WOGBaseResourceGather.generated.h"
 
 UCLASS()
-class WOG_API AWOGBaseResourceGather : public AActor, public ITargetSystemTargetableInterface
+class WOG_API AWOGBaseResourceGather : public AActor, public ITargetInterface
 {
 	GENERATED_BODY()
 	

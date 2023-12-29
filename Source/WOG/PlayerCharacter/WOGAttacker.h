@@ -32,6 +32,9 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<USceneComponent> SquadSlot_1;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<USceneComponent> SquadSlot_2;
 	#pragma region Player Input Variables
 	/*
 	** MappingContexts

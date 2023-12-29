@@ -31,19 +31,45 @@ protected:
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<AWOGAttacker> OwnerAttacker;
 
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
-	void SendOrder(AWOGBaseSquad* Squad, const EEnemyOrder& NewOrder, const FTransform& TargetTansform = FTransform(), AActor* TargetActor = nullptr);
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly)
+	TObjectPtr<AWOGBaseSquad> CurrentlySelectedSquad;
+
+private:
 
 public:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Setup)
+	int32 MaxAmountSquads;
+
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE TArray<AWOGBaseSquad*> GetCurrentSquads() const { return CurrentSquads; }
 
 	UFUNCTION(BlueprintPure)
-	USceneComponent* GetNextAvailableSquadSlot() const;
+	USceneComponent* GetNextAvailableSquadSlot(AWOGBaseSquad* Squad) const;
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
 	void HandleCurrentSquads(AWOGBaseSquad* Squad, bool bAdd);
 
 	UFUNCTION(Server, reliable, BlueprintCallable)
 	void Server_SendOrder(AWOGBaseSquad* Squad, const EEnemyOrder& NewOrder, const FTransform& TargetTansform = FTransform(), AActor* TargetActor = nullptr);
+
+	UFUNCTION(BlueprintCallable)
+	void SetCurrentlySelectedSquad(AWOGBaseSquad* NewSquad);
+
+	UFUNCTION(BlueprintPure)
+	FORCEINLINE AWOGBaseSquad* GetCurrentlySelectedSquad() const { return CurrentlySelectedSquad; }
+
+	UFUNCTION(BlueprintCallable)
+	void IncreaseCurrentlySelectedSquad();
+
+	UFUNCTION(BlueprintCallable)
+	void DecreaseCurrentlySelectedSquad();
+
+	/*UFUNCTION(Server, reliable, BlueprintCallable)
+	void Server_IncreaseCurrentlySelectedSquad();
+
+	UFUNCTION(Server, reliable, BlueprintCallable)
+	void Server_DecreaseCurrentlySelectedSquad();
+
+	UFUNCTION(Client, reliable, BlueprintCallable)
+	void Client_SetCurrentlySelectedSquad(AWOGBaseSquad* NewSquad);*/
 };

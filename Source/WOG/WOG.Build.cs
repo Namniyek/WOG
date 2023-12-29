@@ -28,7 +28,8 @@ public class WOG : ModuleRules
             "CPathfinding",
             "CommonUI",
             "MetasoundEngine",
-            "GeometryCollectionEngine"
+            "GeometryCollectionEngine",
+            "AIModule"
         });
 
         PublicIncludePaths.Add("WOG/");

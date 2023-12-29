@@ -38,6 +38,8 @@ AWOGAttacker::AWOGAttacker()
 	SquadSlot_0->SetupAttachment(GetRootComponent());
 	SquadSlot_1 = CreateDefaultSubobject<USceneComponent>(TEXT("SquadSlot_1"));
 	SquadSlot_1->SetupAttachment(GetRootComponent());
+	SquadSlot_2 = CreateDefaultSubobject<USceneComponent>(TEXT("SquadSlot_2"));
+	SquadSlot_2->SetupAttachment(GetRootComponent());
 
 	EnemyOrderComponent = CreateDefaultSubobject<UWOGEnemyOrderComponent>(TEXT("Enemy Order Component"));
 	EnemyOrderComponent->SetIsReplicated(true);

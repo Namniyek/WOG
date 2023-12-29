@@ -35,6 +35,7 @@ void AWOGBaseEnemy::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLif
 	DOREPLIFETIME(AWOGBaseEnemy, OwnerAttacker);
 	DOREPLIFETIME(AWOGBaseEnemy, OwnerSquad);
 	DOREPLIFETIME(AWOGBaseEnemy, SquadUnitIndex);
+	DOREPLIFETIME(AWOGBaseEnemy, CurrentEnemyState);
 }
 
 void AWOGBaseEnemy::BeginPlay()
@@ -43,6 +44,11 @@ void AWOGBaseEnemy::BeginPlay()
 
 	GiveDefaultAbilities();
 	ApplyDefaultEffects();
+}
+
+void AWOGBaseEnemy::Destroyed()
+{
+	Super::Destroyed();
 }
 
 void AWOGBaseEnemy::OnStartAttack()
@@ -120,6 +126,16 @@ void AWOGBaseEnemy::HandleStateElimmed(AController* InstigatedBy)
 	Elim(false);
 }
 
+AWOGBaseSquad* AWOGBaseEnemy::GetEnemyOwnerSquad_Implementation()
+{
+	return OwnerSquad;
+}
+
+int32 AWOGBaseEnemy::GetEnemySquadUnitIndex_Implementation()
+{
+	return SquadUnitIndex;
+}
+
 void AWOGBaseEnemy::SetOwnerAttacker(AWOGAttacker* NewOwner)
 {
 	if (!HasAuthority()) return;
@@ -151,20 +167,29 @@ void AWOGBaseEnemy::SetSquadUnitIndex(const int32& NewIndex)
 	SquadUnitIndex = NewIndex;
 }
 
+void AWOGBaseEnemy::SetCurrentEnemyState(const EEnemyState& NewState)
+{
+	if (!HasAuthority()) return;
+
+	CurrentEnemyState = NewState;
+
+	OnEnemyStateChangedDelegate.Broadcast();
+	UE_LOG(WOGLogSpawn, Display, TEXT("EnemyState Changed"));
+}
+
 void AWOGBaseEnemy::Elim(bool bPlayerLeftGame)
 {
 	if (OwnerSquad)
 	{
-		for (auto Slot : OwnerSquad->SquadSlots)
-		{
-			if (Slot.CurrentEnemy && Slot.CurrentEnemy == this)
-			{
-				Slot.CurrentEnemy = nullptr;
-			}
-		}
+		OwnerSquad->DeregisterDeadSquadMember(this);
 	}
 
 	Multicast_Elim(bPlayerLeftGame);
+
+	/*
+	**Handle destroy timer
+	*/
+	GetWorld()->GetTimerManager().SetTimer(ElimTimer, this, &ThisClass::ElimTimerFinished, ElimDelay);
 }
 
 void AWOGBaseEnemy::Multicast_Elim_Implementation(bool bPlayerLeftGame)
@@ -176,11 +201,6 @@ void AWOGBaseEnemy::Multicast_Elim_Implementation(bool bPlayerLeftGame)
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	FVector ImpulseDirection = LastHitDirection.GetSafeNormal() * -65000.f;
 	GetMesh()->AddImpulse(ImpulseDirection);
-
-	/*
-	**Handle destroy timer
-	*/
-	GetWorld()->GetTimerManager().SetTimer(ElimTimer, this, &ThisClass::ElimTimerFinished, ElimDelay);
 }
 
 void AWOGBaseEnemy::ElimTimerFinished()

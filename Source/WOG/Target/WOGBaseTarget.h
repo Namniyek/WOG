@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Interfaces/BuildingInterface.h"
-#include "TargetSystemTargetableInterface.h"
+#include "Interfaces/TargetInterface.h"
 #include "WOGBaseTarget.generated.h"
 
 class UGeometryCollectionComponent;
@@ -13,7 +13,7 @@ class UGeometryCollection;
 class AWOGDayNPCSpawner;
 
 UCLASS()
-class WOG_API AWOGBaseTarget : public AActor, public IBuildingInterface, public ITargetSystemTargetableInterface
+class WOG_API AWOGBaseTarget : public AActor, public IBuildingInterface, public ITargetInterface
 {
 	GENERATED_BODY()
 	

@@ -2,6 +2,8 @@
 #include "AI/Combat/WOGBaseSquad.h"
 #include "WOG.h"
 #include "Net/UnrealNetwork.h"
+#include "ActorComponents/WOGEnemyOrderComponent.h"
+#include "Enemies/WOGBaseEnemy.h"
 
 AWOGBaseSquad::AWOGBaseSquad()
 {
@@ -81,7 +83,93 @@ void AWOGBaseSquad::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLif
 void AWOGBaseSquad::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	/*UWOGEnemyOrderComponent* OrderComp = GetOwner()->GetComponentByClass<UWOGEnemyOrderComponent>();
+	if (OrderComp)
+	{
+		OrderComp->SetCurrentlySelectedSquad(OrderComp->GetCurrentSquads().Last());
+	}*/
+}
+
+void AWOGBaseSquad::SendOrder(const EEnemyOrder& NewOrder, const FTransform& TargetTansform, AActor* TargetActor)
+{
+	if (!GetOwner() || !GetOwner()->HasAuthority()) return;
+
+	UWOGEnemyOrderComponent* OrderComp = GetOwner()->GetComponentByClass<UWOGEnemyOrderComponent>();
+
+	SetCurrentSquadOrder(NewOrder);
+
+	switch (CurrentSquadOrder)
+	{
+	case EEnemyOrder::EEO_Hold:
+
+		/*
+		*Squad should hold at the established position
+		*/
+		DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+		SetActorTransform(TargetTansform);
+		SetEnemyStateOnSquad(EEnemyState::EES_AtSquadSlot);
+		break;
+
+	case EEnemyOrder::EEO_Follow:
+
+		/*
+		*Squad should follow the owner around
+		*/
+		if(OrderComp && OrderComp->GetNextAvailableSquadSlot(this))
+		{
+			AttachToComponent(OrderComp->GetNextAvailableSquadSlot(this), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+			SetEnemyStateOnSquad(EEnemyState::EES_AtSquadSlot);
+		}
+		break;
+
+	case EEnemyOrder::EEO_AttackTarget:
+
+		/*
+		*Squad will attack a specific target
+		*/
+		if (OrderComp && OrderComp->GetNextAvailableSquadSlot(this))
+		{
+			AttachToComponent(OrderComp->GetNextAvailableSquadSlot(this), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+		}
+
+		if (TargetActor)
+		{
+			SetCurrentTargetActor(TargetActor);
+			SetEnemyStateOnSquad(EEnemyState::EES_AtTargetSlot);
+		}
+		break;
+	case EEnemyOrder::EEO_AttackRandom:
+
+		/*
+		*Squad will attack a random target within range
+		*/
+		if (OrderComp && OrderComp->GetNextAvailableSquadSlot(this))
+		{
+			AttachToComponent(OrderComp->GetNextAvailableSquadSlot(this), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+		}
+
+		if (TargetActor)
+		{
+			SetCurrentTargetActor(TargetActor);
+			SetEnemyStateOnSquad(EEnemyState::EES_AtTargetSlot);
+		}
+
+		break;
+	default:
+		break;
+	}
+}
+
+void AWOGBaseSquad::SetEnemyStateOnSquad(const EEnemyState& NewState)
+{
+	for (FEnemyCombatSlot EnemySlot : SquadSlots)
+	{
+		if (EnemySlot.CurrentEnemy)
+		{
+			EnemySlot.CurrentEnemy->SetCurrentEnemyState(NewState);
+		}
+	}
 }
 
 void AWOGBaseSquad::SetCurrentSquadOrder(const EEnemyOrder& NewOrder)
@@ -103,6 +191,54 @@ void AWOGBaseSquad::SetCurrentTargetLocation(const FVector_NetQuantize& NewTarge
 	CurrentTargetLocation = NewTarget;
 }
 
+void AWOGBaseSquad::DeregisterDeadSquadMember(AWOGBaseEnemy* DeadEnemy)
+{
+	if (!HasAuthority()) return;
+	for (int32 i = 0; i < SquadSlots.Num(); i++)
+	{
+		if (SquadSlots[i].CurrentEnemy && SquadSlots[i].CurrentEnemy == DeadEnemy)
+		{
+			UE_LOG(WOGLogCombat, Display, TEXT("%s is dead and deregistered from squad"), *GetNameSafe(SquadSlots[i].CurrentEnemy));
+			SquadSlots[i].CurrentEnemy = nullptr;
+			CheckIsSquadEmpty();
+		}
+	}
+}
 
+void AWOGBaseSquad::CheckIsSquadEmpty()
+{
+	UE_LOG(WOGLogCombat, Display, TEXT("Checking if squad is empty..."));
+
+	for (int32 i = 0; i < SquadSlots.Num(); i++)
+	{
+		if (SquadSlots[i].CurrentEnemy != nullptr)
+		{
+			//we parsed through the whole squad and found a valid pointer to some enemy
+			//Squad NOT empty
+			UE_LOG(WOGLogCombat, Display, TEXT("%s is still in the squad"), *GetNameSafe(SquadSlots[i].CurrentEnemy));
+			return;
+		}
+	}
+
+	//we parsed through the whole squad and found no valid pointers to anybody
+	//Squad is empty
+	UE_LOG(WOGLogCombat, Display, TEXT("Squad is empty"));
+	DeregisterSquad();
+	return;
+}
+
+void AWOGBaseSquad::DeregisterSquad()
+{
+	if (!GetOwner() || !GetOwner()->HasAuthority()) return;
+	UE_LOG(WOGLogCombat, Display, TEXT("Attempting to deregister squad..."));
+	UWOGEnemyOrderComponent* OrderComp = GetOwner()->GetComponentByClass<UWOGEnemyOrderComponent>();
+	if (OrderComp)
+	{
+		OrderComp->HandleCurrentSquads(this, false);
+		UE_LOG(WOGLogCombat, Display, TEXT("HandleCurrentSquad() called"));
+	}
+
+	Destroy();
+}
 
 

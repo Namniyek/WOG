@@ -6,6 +6,8 @@
 #include "UObject/Interface.h"
 #include "SpawnInterface.generated.h"
 
+class AWOGBaseSquad;
+
 // This class does not need to be modified.
 UINTERFACE(MinimalAPI)
 class USpawnInterface : public UInterface
@@ -37,4 +39,10 @@ public:
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void SetSpawnerActive(bool NewActive);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	AWOGBaseSquad* GetEnemyOwnerSquad();
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	int32 GetEnemySquadUnitIndex();
 };

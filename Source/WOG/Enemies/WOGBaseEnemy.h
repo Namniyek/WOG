@@ -10,6 +10,8 @@
 class AWOGAttacker;
 class AWOGBaseSquad;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnEnemyStateChanged);
+
 UCLASS()
 class WOG_API AWOGBaseEnemy : public AWOGBaseCharacter, public ISpawnInterface
 {
@@ -62,6 +64,21 @@ protected:
 	void ElimTimerFinished();
 
 	virtual void HandleStateElimmed(AController* InstigatedBy = nullptr) override;
+
+	virtual void Destroyed() override;
+	#pragma endregion
+
+	UPROPERTY(Replicated, VisibleAnywhere)
+	EEnemyState CurrentEnemyState;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnEnemyStateChanged OnEnemyStateChangedDelegate;
+
+	#pragma region Interface functions
+
+	AWOGBaseSquad* GetEnemyOwnerSquad_Implementation();
+
+	int32 GetEnemySquadUnitIndex_Implementation();
 	#pragma endregion
 
 public:
@@ -82,4 +99,10 @@ public:
 
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE int32 GetSquadUnitIndex() const { return SquadUnitIndex; }
+
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
+	void SetCurrentEnemyState(const EEnemyState& NewState);
+
+	UFUNCTION(BlueprintPure)
+	FORCEINLINE EEnemyState GetCurrentEnemyState() const { return CurrentEnemyState; }
 };

@@ -1,7 +1,7 @@
 // Copyright 2018-2021 Mickael Daniel. All Rights Reserved.
 
 #include "TargetSystemComponent.h"
-#include "TargetSystemTargetableInterface.h"
+#include "WOG/Interfaces/TargetInterface.h"
 #include "Components/WidgetComponent.h"
 #include "EngineUtils.h"
 #include "TargetSystemLog.h"
@@ -392,10 +392,10 @@ void UTargetSystemComponent::CreateAndAttachTargetLockedOnWidgetComponent(AActor
 	USceneComponent* ParentComponent = TargetActor->GetRootComponent();
 	FName ParentSocket = NAME_None;
 
-	const bool bIsImplemented = TargetActor->GetClass()->ImplementsInterface(UTargetSystemTargetableInterface::StaticClass());
+	const bool bIsImplemented = TargetActor->GetClass()->ImplementsInterface(UTargetInterface::StaticClass());
 	if (bIsImplemented)
 	{
-		ITargetSystemTargetableInterface::Execute_GetTargetWidgetAttachmentParent(TargetActor, ParentComponent, ParentSocket);
+		ITargetInterface::Execute_GetTargetWidgetAttachmentParent(TargetActor, ParentComponent, ParentSocket);
 	}
 
 	if (IsValid(OwnerPlayerController))
@@ -447,7 +447,7 @@ TArray<AActor*> UTargetSystemComponent::GetAllActorsOfClass(const TSubclassOf<AA
 
 bool UTargetSystemComponent::TargetIsTargetable(const AActor* Actor)
 {
-	const bool bIsImplemented = Actor->GetClass()->ImplementsInterface(UTargetSystemTargetableInterface::StaticClass());
+	const bool bIsImplemented = Actor->GetClass()->ImplementsInterface(UTargetInterface::StaticClass());
 	return bIsImplemented;
 }
 

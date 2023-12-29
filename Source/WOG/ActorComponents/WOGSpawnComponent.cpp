@@ -246,7 +246,26 @@ void UWOGSpawnComponent::Server_Spawn_Implementation(FTransform Transform, int32
 
 void UWOGSpawnComponent::Spawn(FTransform Transform, int32 ID)
 {
-	if (!AttackerCharacter) return;
+	if (!AttackerCharacter)
+	{
+		UE_LOG(WOGLogSpawn, Error, TEXT("Attacker character invalid"));
+		return;
+	}
+	UWOGEnemyOrderComponent* OrderComp = AttackerCharacter->GetEnemyOrderComponent();
+	if (!OrderComp)
+	{
+		UE_LOG(WOGLogSpawn, Error, TEXT("Order component invalid"));
+		return;
+	}
+
+	/*
+	*Check how many active squads the attacker has
+	*/
+	if (OrderComp->GetCurrentSquads().Num() > OrderComp->MaxAmountSquads - 1)
+	{
+		UE_LOG(WOGLogSpawn, Error, TEXT("too many currently active squads"));
+		return;
+	}
 
 	/*
 	*Start by spawning the WOGSquadActor
@@ -265,11 +284,9 @@ void UWOGSpawnComponent::Spawn(FTransform Transform, int32 ID)
 		return;
 	}
 
-	UWOGEnemyOrderComponent* OrderComp = AttackerCharacter->GetEnemyOrderComponent();
-	if (OrderComp)
-	{
-		OrderComp->HandleCurrentSquads(SpawnedSquad, true);
-	}
+	//Register the spawned squad
+	OrderComp->HandleCurrentSquads(SpawnedSquad, true);
+	OrderComp->SetCurrentlySelectedSquad(SpawnedSquad);
 
 	/*
 	*Handle the actual spawn of the enemies
@@ -296,6 +313,7 @@ void UWOGSpawnComponent::Spawn(FTransform Transform, int32 ID)
 			Slot.CurrentEnemy = SpawnedEnemy;
 
 			SpawnedSquad->SquadSlots.Add(Slot);
+
 			CurrentSlotIndex++;
 
 			//Handle the spawned enemy logic and init
@@ -308,6 +326,8 @@ void UWOGSpawnComponent::Spawn(FTransform Transform, int32 ID)
 			SpawnedEnemy->SetSquadUnitIndex(Slot.SlotIndex);
 		}
 	}
+
+	SpawnedSquad->SendOrder(EEnemyOrder::EEO_Hold, SpawnedSquad->GetTransform());
 }
 
 TArray<FVector> UWOGSpawnComponent::GetSpawnLocations(const FVector& MiddleLocation, float GridSize, int32 Amount)

@@ -10,6 +10,8 @@ UWOGEnemyOrderComponent::UWOGEnemyOrderComponent()
 {
 	SetIsReplicated(true);
 
+	MaxAmountSquads = 3;
+
 }
 
 void UWOGEnemyOrderComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -18,6 +20,7 @@ void UWOGEnemyOrderComponent::GetLifetimeReplicatedProps(TArray<FLifetimePropert
 
 	DOREPLIFETIME(UWOGEnemyOrderComponent, CurrentSquads);
 	DOREPLIFETIME(UWOGEnemyOrderComponent, OwnerAttacker);
+	DOREPLIFETIME(UWOGEnemyOrderComponent, CurrentlySelectedSquad);
 }
 
 void UWOGEnemyOrderComponent::BeginPlay()
@@ -27,68 +30,40 @@ void UWOGEnemyOrderComponent::BeginPlay()
 	OwnerAttacker = Cast<AWOGAttacker>(GetOwner());
 }
 
-void UWOGEnemyOrderComponent::SendOrder(AWOGBaseSquad* Squad, const EEnemyOrder& NewOrder, const FTransform& TargetTansform, AActor* TargetActor)
-{
-	if (!GetOwner() || !GetOwner()->HasAuthority()) return;
-	if (!Squad)
-	{
-		UE_LOG(WOGLogSpawn, Error, TEXT("Invalid squand for order"));
-		return;
-	}
-
-	Squad->SetCurrentSquadOrder(NewOrder);
-
-	switch (NewOrder)
-	{
-	case EEnemyOrder::EEO_Hold:
-
-		Squad->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-		Squad->SetActorTransform(TargetTansform);
-		break;
-
-	case EEnemyOrder::EEO_Follow:
-		if (GetNextAvailableSquadSlot())
-		{
-			Squad->AttachToComponent(GetNextAvailableSquadSlot(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
-		}
-		break;
-
-	case EEnemyOrder::EEO_AttackTarget:
-		break;
-	case EEnemyOrder::EEO_AttackRandom:
-		break;
-	default:
-		break;
-	}
-}
-
-USceneComponent* UWOGEnemyOrderComponent::GetNextAvailableSquadSlot() const
+USceneComponent* UWOGEnemyOrderComponent::GetNextAvailableSquadSlot(AWOGBaseSquad* Squad) const
 {
 	if (GetOwner() && OwnerAttacker == nullptr)
 	{
 		Cast<AWOGAttacker>(GetOwner());
 	}
 
-	//No current active squads
-	if (CurrentSquads.Num() == 0)
+	for(int32 i = 0; i < CurrentSquads.Num(); i++)
 	{
-		return OwnerAttacker->SquadSlot_0;
+		if (CurrentSquads[i] && Squad == CurrentSquads[i])
+		{
+			if (i == 0)
+			{
+				return OwnerAttacker->SquadSlot_0;
+			}
+			else if (i == 1)
+			{
+				return OwnerAttacker->SquadSlot_1;
+			}
+			else if (i == 2)
+			{
+				return OwnerAttacker->SquadSlot_2;
+			}
+		}
 	}
-	// One current active squad
-	else if (CurrentSquads.Num() == 1)
-	{
-		return OwnerAttacker->SquadSlot_1;
-	}
-	//handles edge cases
-	else
-	{
-		return nullptr;
-	}
+	return nullptr;
 }
 
 void UWOGEnemyOrderComponent::HandleCurrentSquads(AWOGBaseSquad* Squad, bool bAdd)
 {
-	if(!Squad) return;
+	if (!Squad)
+	{
+		return;
+	}
 	if (!GetOwner() || !GetOwner()->HasAuthority()) return;
 
 	if (bAdd)
@@ -112,7 +87,69 @@ void UWOGEnemyOrderComponent::HandleCurrentSquads(AWOGBaseSquad* Squad, bool bAd
 
 }
 
+void UWOGEnemyOrderComponent::SetCurrentlySelectedSquad(AWOGBaseSquad* NewSquad)
+{
+	CurrentlySelectedSquad = NewSquad;
+	UE_LOG(WOGLogSpawn, Warning, TEXT("Local role of %s is %s for %s"), *GetNameSafe(GetOwner()), *UEnum::GetValueAsString(GetOwnerRole()), *GetNameSafe(NewSquad));
+}
+
+/*
+* Maybe not needed if we're ok with having a replicated variable being used locally only.
+* 
+void UWOGEnemyOrderComponent::Server_IncreaseCurrentlySelectedSquad_Implementation()
+{
+	IncreaseCurrentlySelectedSquad();
+}
+
+void UWOGEnemyOrderComponent::Server_DecreaseCurrentlySelectedSquad_Implementation()
+{
+	DecreaseCurrentlySelectedSquad();
+}
+
+void UWOGEnemyOrderComponent::Client_SetCurrentlySelectedSquad_Implementation(AWOGBaseSquad* NewSquad)
+{
+	SetCurrentlySelectedSquad(NewSquad);
+}*/
+
+void UWOGEnemyOrderComponent::IncreaseCurrentlySelectedSquad()
+{
+	for (int32 i = 0; i < CurrentSquads.Num(); i++)
+	{
+		if (CurrentSquads[i] && CurrentSquads[i] == CurrentlySelectedSquad)
+		{
+			if (i == CurrentSquads.Num() - 1)
+			{
+				SetCurrentlySelectedSquad(CurrentSquads[0]);
+			}
+			else
+			{
+				SetCurrentlySelectedSquad(CurrentSquads[i+1]);
+			}
+			return;
+		}
+	}
+}
+
+void UWOGEnemyOrderComponent::DecreaseCurrentlySelectedSquad()
+{
+	for (int32 i = 0; i < CurrentSquads.Num(); i++)
+	{
+		if (CurrentSquads[i] && CurrentSquads[i] == CurrentlySelectedSquad)
+		{
+			if (i == 0)
+			{
+				SetCurrentlySelectedSquad(CurrentSquads[CurrentSquads.Num()-1]);
+			}
+			else
+			{
+				SetCurrentlySelectedSquad(CurrentSquads[i - 1]);
+			}
+			return;
+		}
+	}
+}
+
 void UWOGEnemyOrderComponent::Server_SendOrder_Implementation(AWOGBaseSquad* Squad, const EEnemyOrder& NewOrder, const FTransform& TargetTansform, AActor* TargetActor)
 {
-	SendOrder(Squad, NewOrder, TargetTansform, TargetActor);
+	Squad->SendOrder(NewOrder, TargetTansform, TargetActor);
 }

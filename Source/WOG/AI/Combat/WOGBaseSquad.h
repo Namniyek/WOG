@@ -13,6 +13,7 @@ class WOG_API AWOGBaseSquad : public AActor
 	GENERATED_BODY()
 	
 public:	
+	friend class UWOGEnemyOrderComponent;
 	AWOGBaseSquad();
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
 
@@ -61,7 +62,15 @@ protected:
 	TObjectPtr<USceneComponent> Slot_8;
 	#pragma endregion
 
+private:
+	void SetEnemyStateOnSquad(const EEnemyState& NewState);
+	void CheckIsSquadEmpty();
+	void DeregisterSquad();
+
 public:	
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
+	void SendOrder(const EEnemyOrder& NewOrder, const FTransform& TargetTansform = FTransform(), AActor* TargetActor = nullptr);
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	TArray<USceneComponent*> SlotComponentsArray;
 
@@ -85,4 +94,7 @@ public:
 
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE FVector_NetQuantize GetCurrentTargetLocation() const { return CurrentTargetLocation; }
+
+	UFUNCTION()
+	void DeregisterDeadSquadMember(AWOGBaseEnemy* DeadEnemy);
 };
