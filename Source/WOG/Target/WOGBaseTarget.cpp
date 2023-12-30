@@ -10,6 +10,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "GameState/WOGGameState.h"
 #include "TargetSystemComponent.h"
+#include "Libraries/WOGBlueprintLibrary.h"
 
 AWOGBaseTarget::AWOGBaseTarget()
 {
@@ -213,6 +214,40 @@ void AWOGBaseTarget::BroadcastDestructionToGameState()
 	}
 
 	GameState->SubtractFromCurrentTargetScore(TargetScore);
+}
+
+bool AWOGBaseTarget::IsTargetable_Implementation(AActor* TargeterActor) const
+{
+	//For targets, check if the targeter is attacker and then return true if that is the case.
+	//We only want attackers to be able to target WOGBaseTargets
+	bool bIsTargeterAttacker = UWOGBlueprintLibrary::GetCharacterData(TargeterActor).bIsAttacker;
+	return bIsTargeterAttacker;
+}
+
+FVector AWOGBaseTarget::GetMeleeAttackSlot_Implementation(const int32& SlotIndex) const
+{
+	if (SlotIndex < MeleeSlots.Num())
+	{
+		return MeleeSlots[SlotIndex].Vector;
+	}
+	else
+	{
+		UE_LOG(WOGLogCombat, Error, TEXT("No corresponding MeleeAttackSlot on %s that corresponds to the provided index %d"), *GetNameSafe(this), SlotIndex);
+		return FVector();
+	}
+}
+
+FVector AWOGBaseTarget::GetRangedAttackSlot_Implementation(const int32& SlotIndex) const
+{
+	if (SlotIndex < RangedSlots.Num())
+	{
+		return RangedSlots[SlotIndex].Vector;
+	}
+	else
+	{
+		UE_LOG(WOGLogCombat, Error, TEXT("No corresponding RangedAttackSlot on %s that corresponds to the provided index %d"), *GetNameSafe(this), SlotIndex);
+		return FVector();
+	}
 }
 
 void AWOGBaseTarget::Multicast_HandleDoorOpening_Implementation(bool bIsOpen)

@@ -25,6 +25,7 @@
 #include "Resources/WOGCommonInventory.h"
 #include "Subsystems/WOGWorldSubsystem.h"
 #include "TargetSystemComponent.h"
+#include "Libraries/WOGBlueprintLibrary.h"
 
 AWOGBaseCharacter::AWOGBaseCharacter()
 {
@@ -373,6 +374,16 @@ FName AWOGBaseCharacter::CalculateHitDirection(const FVector& WeaponLocation)
 	}
 
 	return FName("");
+}
+
+bool AWOGBaseCharacter::IsTargetable_Implementation(AActor* TargeterActor) const
+{
+	//For characters, check if the targeter is attacker and then return true if targeter and the target are not the same
+	//bool bIsTargeterAttacker = UWOGBlueprintLibrary::GetCharacterData(TargeterActor).bIsAttacker;
+	//UE_LOG(WOGLogCombat, Display, TEXT("%s is Targetable by %s = %d"), *GetNameSafe(this), *GetNameSafe(TargeterActor), bIsTargeterAttacker != GetCharacterData().bIsAttacker);
+	//return bIsTargeterAttacker != GetCharacterData().bIsAttacker; 
+
+	return true;
 }
 
 void AWOGBaseCharacter::Server_ToRagdoll_Implementation(const float& Radius, const float& Strength, const FVector_NetQuantize& Origin)

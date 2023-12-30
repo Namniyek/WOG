@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
+#include "Data/WOGDataTypes.h"
 #include "TargetInterface.generated.h"
 
 // This class does not need to be modified.
@@ -22,6 +23,15 @@ class WOG_API ITargetInterface
 
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Target System")
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Target")
 	void GetTargetWidgetAttachmentParent(USceneComponent*& OutParentComponent, FName& OutSocketName) const;
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Target")
+	bool IsTargetable(AActor* TargeterActor) const;
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Combat")
+	FVector GetMeleeAttackSlot(const int32& SlotIndex) const;
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Combat")
+	FVector GetRangedAttackSlot(const int32& SlotIndex) const;
 };

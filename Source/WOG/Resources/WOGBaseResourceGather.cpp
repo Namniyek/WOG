@@ -6,3 +6,8 @@ AWOGBaseResourceGather::AWOGBaseResourceGather()
 	PrimaryActorTick.bCanEverTick = false;
 }
 
+bool AWOGBaseResourceGather::IsTargetable_Implementation(AActor* TargeterActor) const
+{
+	return true;
+}
+

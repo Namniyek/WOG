@@ -26,6 +26,13 @@ AWOGBaseEnemy::AWOGBaseEnemy()
 	CombatManager->OnStartAttack.AddDynamic(this, &ThisClass::OnStartAttack);
 	CombatManager->OnAttackHitEvent.AddDynamic(this, &ThisClass::OnAttackHit);
 
+	CharacterData.bIsAttacker = true;
+
+	bUseControllerRotationPitch = true;
+	bUseControllerRotationRoll = true;
+	bUseControllerRotationYaw = true;
+	GetCharacterMovement()->bUseControllerDesiredRotation = true;
+	GetCharacterMovement()->bOrientRotationToMovement = false;
 }
 
 void AWOGBaseEnemy::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

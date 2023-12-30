@@ -226,7 +226,7 @@ private:
 	void ResetIsSwitchingTarget();
 	bool ShouldSwitchTargetActor(float AxisValue);
 
-	static bool TargetIsTargetable(const AActor* Actor);
+	bool TargetIsTargetable(AActor* Actor) const;
 
 	/**
 	 *  Sets up cached Owner PlayerController from Owner Pawn.

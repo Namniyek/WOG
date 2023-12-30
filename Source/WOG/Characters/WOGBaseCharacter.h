@@ -220,6 +220,12 @@ protected:
 	TObjectPtr<UAnimMontage> UnarmedHurtMontage;
 	#pragma endregion
 
+	#pragma region Interface Functions
+
+	bool IsTargetable_Implementation(AActor* TargeterActor) const;
+
+	#pragma endregion
+
 public:	
 	FORCEINLINE UWOGAttributeSetBase* GetAttributeSetBase() const { return AttributeSet; }
 	FORCEINLINE void SetDefaultAbilitiesAndEffects(const FCharacterAbilityData& Data) { DefaultAbilitiesAndEffects = Data; }

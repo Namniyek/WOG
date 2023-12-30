@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Data/WOGDataTypes.h"
 #include "GameFramework/Actor.h"
 #include "Interfaces/BuildingInterface.h"
 #include "Interfaces/TargetInterface.h"
@@ -90,6 +91,18 @@ protected:
 	int32 TargetScore;
 
 	void BroadcastDestructionToGameState();
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TArray<FVector3DWithWidget> MeleeSlots;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TArray<FVector3DWithWidget> RangedSlots;
+
+	#pragma region Interface functions
+	bool IsTargetable_Implementation(AActor* TargeterActor) const;
+	FVector GetMeleeAttackSlot_Implementation(const int32& SlotIndex) const;
+	FVector GetRangedAttackSlot_Implementation(const int32& SlotIndex) const;
+	#pragma endregion
 
 public:	
 

@@ -445,10 +445,18 @@ TArray<AActor*> UTargetSystemComponent::GetAllActorsOfClass(const TSubclassOf<AA
 	return Actors;
 }
 
-bool UTargetSystemComponent::TargetIsTargetable(const AActor* Actor)
+bool UTargetSystemComponent::TargetIsTargetable(AActor* Actor) const
 {
-	const bool bIsImplemented = Actor->GetClass()->ImplementsInterface(UTargetInterface::StaticClass());
-	return bIsImplemented;
+	bool bIsImplemented = Actor->GetClass()->ImplementsInterface(UTargetInterface::StaticClass());
+	if (bIsImplemented)
+	{
+
+		return ITargetInterface::Execute_IsTargetable(Actor, GetOwner());
+	}
+	else
+	{
+		return false;
+	}
 }
 
 void UTargetSystemComponent::SetupLocalPlayerController()

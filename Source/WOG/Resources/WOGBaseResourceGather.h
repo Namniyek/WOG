@@ -15,4 +15,10 @@ class WOG_API AWOGBaseResourceGather : public AActor, public ITargetInterface
 public:	
 	AWOGBaseResourceGather();
 
+protected:
+
+	#pragma region Interface functions
+	bool IsTargetable_Implementation(AActor* TargeterActor) const;
+	#pragma endregion
+
 };
