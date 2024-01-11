@@ -63,13 +63,4 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void DecreaseCurrentlySelectedSquad();
-
-	/*UFUNCTION(Server, reliable, BlueprintCallable)
-	void Server_IncreaseCurrentlySelectedSquad();
-
-	UFUNCTION(Server, reliable, BlueprintCallable)
-	void Server_DecreaseCurrentlySelectedSquad();
-
-	UFUNCTION(Client, reliable, BlueprintCallable)
-	void Client_SetCurrentlySelectedSquad(AWOGBaseSquad* NewSquad);*/
 };

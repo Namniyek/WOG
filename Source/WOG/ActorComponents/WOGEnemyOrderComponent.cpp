@@ -11,7 +11,6 @@ UWOGEnemyOrderComponent::UWOGEnemyOrderComponent()
 	SetIsReplicated(true);
 
 	MaxAmountSquads = 3;
-
 }
 
 void UWOGEnemyOrderComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -92,24 +91,6 @@ void UWOGEnemyOrderComponent::SetCurrentlySelectedSquad(AWOGBaseSquad* NewSquad)
 	CurrentlySelectedSquad = NewSquad;
 	UE_LOG(WOGLogSpawn, Warning, TEXT("Local role of %s is %s for %s"), *GetNameSafe(GetOwner()), *UEnum::GetValueAsString(GetOwnerRole()), *GetNameSafe(NewSquad));
 }
-
-/*
-* Maybe not needed if we're ok with having a replicated variable being used locally only.
-* 
-void UWOGEnemyOrderComponent::Server_IncreaseCurrentlySelectedSquad_Implementation()
-{
-	IncreaseCurrentlySelectedSquad();
-}
-
-void UWOGEnemyOrderComponent::Server_DecreaseCurrentlySelectedSquad_Implementation()
-{
-	DecreaseCurrentlySelectedSquad();
-}
-
-void UWOGEnemyOrderComponent::Client_SetCurrentlySelectedSquad_Implementation(AWOGBaseSquad* NewSquad)
-{
-	SetCurrentlySelectedSquad(NewSquad);
-}*/
 
 void UWOGEnemyOrderComponent::IncreaseCurrentlySelectedSquad()
 {

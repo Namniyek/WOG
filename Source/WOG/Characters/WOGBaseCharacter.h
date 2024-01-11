@@ -197,6 +197,9 @@ protected:
 
 	#pragma region Animation
 	virtual void ToggleStrafeMovement(bool bIsStrafe);
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setup|Animations")
+	TObjectPtr<UAnimMontage> UnarmedHurtMontage;
 	#pragma endregion
 
 	#pragma region Cosmetic Hits
@@ -215,9 +218,6 @@ protected:
 	FVector LastHitDirection;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	FHitResult LastHitResult;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setup|Animations")
-	TObjectPtr<UAnimMontage> UnarmedHurtMontage;
 	#pragma endregion
 
 	#pragma region Interface Functions

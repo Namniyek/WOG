@@ -324,9 +324,12 @@ void UWOGSpawnComponent::Spawn(FTransform Transform, int32 ID)
 			SpawnedEnemy->SetOwnerAttacker(AttackerCharacter ? AttackerCharacter : nullptr);
 			SpawnedEnemy->SetOwnerSquad(SpawnedSquad);
 			SpawnedEnemy->SetSquadUnitIndex(Slot.SlotIndex);
+			SpawnedEnemy->SetBaseDamage(Spawnables[ID]->BaseDamage);
+			SpawnedEnemy->SetAttackMontage(Spawnables[ID]->AttackMontage);
 		}
 	}
 
+	SpawnedSquad->SetSquadType(Spawnables[ID]->SquadType);
 	SpawnedSquad->SendOrder(EEnemyOrder::EEO_Hold, SpawnedSquad->GetTransform());
 }
 

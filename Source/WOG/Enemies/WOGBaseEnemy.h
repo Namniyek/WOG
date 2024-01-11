@@ -40,6 +40,9 @@ protected:
 	#pragma endregion
 
 	#pragma region Handle Combat
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+	float BaseDamage = 10.f;
+
 	UFUNCTION()
 	virtual void OnStartAttack();
 	TArray<TObjectPtr<AActor>> HitActorsToIgnore;
@@ -81,6 +84,11 @@ protected:
 	int32 GetEnemySquadUnitIndex_Implementation();
 	#pragma endregion
 
+	#pragma region Animation
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setup|Animations")
+	TObjectPtr<UAnimMontage> AttackMontage;
+	#pragma endregion
+
 public:
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
 	void SetOwnerAttacker(AWOGAttacker* NewOwner);
@@ -105,4 +113,7 @@ public:
 
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE EEnemyState GetCurrentEnemyState() const { return CurrentEnemyState; }
+
+	void SetBaseDamage(const float& NewDamage);
+	void SetAttackMontage(UAnimMontage* NewMontage);
 };

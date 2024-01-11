@@ -4,6 +4,7 @@
 #include "Net/UnrealNetwork.h"
 #include "ActorComponents/WOGEnemyOrderComponent.h"
 #include "Enemies/WOGBaseEnemy.h"
+#include "Target/WOGBaseTarget.h"
 
 AWOGBaseSquad::AWOGBaseSquad()
 {
@@ -14,6 +15,8 @@ AWOGBaseSquad::AWOGBaseSquad()
 
 	RootComp = CreateDefaultSubobject<USceneComponent>(TEXT("RootComp"));
 	SetRootComponent(RootComp);
+
+	SquadType = EEnemySquadType::EEST_Melee;
 
 	Slot_0 = CreateDefaultSubobject<USceneComponent>(TEXT("Slot_0"));
 	Slot_0->SetupAttachment(GetRootComponent());
@@ -78,17 +81,12 @@ void AWOGBaseSquad::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLif
 	DOREPLIFETIME(AWOGBaseSquad, SquadSlots);
 	DOREPLIFETIME(AWOGBaseSquad, CurrentTargetLocation);
 	DOREPLIFETIME(AWOGBaseSquad, CurrentTargetActor);
+	DOREPLIFETIME(AWOGBaseSquad, SquadType);
 }
 
 void AWOGBaseSquad::BeginPlay()
 {
 	Super::BeginPlay();
-
-	/*UWOGEnemyOrderComponent* OrderComp = GetOwner()->GetComponentByClass<UWOGEnemyOrderComponent>();
-	if (OrderComp)
-	{
-		OrderComp->SetCurrentlySelectedSquad(OrderComp->GetCurrentSquads().Last());
-	}*/
 }
 
 void AWOGBaseSquad::SendOrder(const EEnemyOrder& NewOrder, const FTransform& TargetTansform, AActor* TargetActor)
@@ -97,21 +95,37 @@ void AWOGBaseSquad::SendOrder(const EEnemyOrder& NewOrder, const FTransform& Tar
 
 	UWOGEnemyOrderComponent* OrderComp = GetOwner()->GetComponentByClass<UWOGEnemyOrderComponent>();
 
-	SetCurrentSquadOrder(NewOrder);
-
-	switch (CurrentSquadOrder)
+	switch (NewOrder)
 	{
 	case EEnemyOrder::EEO_Hold:
+
+		//Check if the Current target actor is valid and implements the Target Interface
+		// if so, free the squad slot on the previous target
+		if (CurrentTargetActor && CurrentTargetActor->GetClass()->ImplementsInterface(UTargetInterface::StaticClass()))
+		{
+			ITargetInterface::Execute_FreeCurrentMeleeSquadSlot(CurrentTargetActor);
+		}
 
 		/*
 		*Squad should hold at the established position
 		*/
+
 		DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 		SetActorTransform(TargetTansform);
 		SetEnemyStateOnSquad(EEnemyState::EES_AtSquadSlot);
+		SetCurrentTargetActor(nullptr);
+
+		SetCurrentSquadOrder(NewOrder);
 		break;
 
 	case EEnemyOrder::EEO_Follow:
+
+		//Check if the Current target actor is valid and implements the Target Interface
+		// if so, free the squad slot on the previous target
+		if (CurrentTargetActor && CurrentTargetActor->GetClass()->ImplementsInterface(UTargetInterface::StaticClass()))
+		{
+			ITargetInterface::Execute_FreeCurrentMeleeSquadSlot(CurrentTargetActor);
+		}
 
 		/*
 		*Squad should follow the owner around
@@ -120,6 +134,9 @@ void AWOGBaseSquad::SendOrder(const EEnemyOrder& NewOrder, const FTransform& Tar
 		{
 			AttachToComponent(OrderComp->GetNextAvailableSquadSlot(this), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 			SetEnemyStateOnSquad(EEnemyState::EES_AtSquadSlot);
+			SetCurrentTargetActor(nullptr);
+
+			SetCurrentSquadOrder(NewOrder);
 		}
 		break;
 
@@ -133,10 +150,29 @@ void AWOGBaseSquad::SendOrder(const EEnemyOrder& NewOrder, const FTransform& Tar
 			AttachToComponent(OrderComp->GetNextAvailableSquadSlot(this), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 		}
 
-		if (TargetActor)
+		//Check if target has an availability for squad
+		if (TargetActor && TargetActor->GetClass()->ImplementsInterface(UTargetInterface::StaticClass()))
 		{
-			SetCurrentTargetActor(TargetActor);
-			SetEnemyStateOnSquad(EEnemyState::EES_AtTargetSlot);
+			if (SquadType == EEnemySquadType::EEST_Melee && ITargetInterface::Execute_IsCurrentMeleeSquadSlotAvailable(TargetActor))
+			{
+				ITargetInterface::Execute_SetCurrentMeleeSquadSlot(TargetActor, this);
+				SetCurrentTargetActor(TargetActor);
+				SetEnemyStateOnSquad(EEnemyState::EES_AtTargetSlot);
+				SetCurrentSquadOrder(NewOrder);
+				return;
+			}
+
+			if (SquadType == EEnemySquadType::EEST_Ranged && ITargetInterface::Execute_IsCurrentRangedSquadSlotAvailable(TargetActor))
+			{
+				ITargetInterface::Execute_SetCurrentRangedSquadSlot(TargetActor, this);
+				SetCurrentTargetActor(TargetActor);
+				SetEnemyStateOnSquad(EEnemyState::EES_AtTargetSlot);
+				SetCurrentSquadOrder(NewOrder);
+				return;
+			}
+
+			SendOrder(EEnemyOrder::EEO_Follow);
+			UE_LOG(WOGLogCombat, Error, TEXT("Too many squads attaching same target"));
 		}
 		break;
 	case EEnemyOrder::EEO_AttackRandom:
@@ -153,12 +189,19 @@ void AWOGBaseSquad::SendOrder(const EEnemyOrder& NewOrder, const FTransform& Tar
 		{
 			SetCurrentTargetActor(TargetActor);
 			SetEnemyStateOnSquad(EEnemyState::EES_AtTargetSlot);
+
+			SetCurrentSquadOrder(NewOrder);
 		}
 
 		break;
 	default:
 		break;
 	}
+}
+
+void AWOGBaseSquad::OnCurrentTargetDestroyed(AActor* Destroyer)
+{
+	SendOrder(EEnemyOrder::EEO_Follow);
 }
 
 void AWOGBaseSquad::SetEnemyStateOnSquad(const EEnemyState& NewState)
@@ -179,10 +222,40 @@ void AWOGBaseSquad::SetCurrentSquadOrder(const EEnemyOrder& NewOrder)
 	CurrentSquadOrder = NewOrder;
 }
 
-void AWOGBaseSquad::SetCurrentTargetActor(AActor*& NewTarget)
+void AWOGBaseSquad::SetCurrentTargetActor(AActor* NewTarget)
 {
 	if (!HasAuthority()) return;
-	CurrentTargetActor = NewTarget;
+
+	if (NewTarget != nullptr)
+	{
+		CurrentTargetActor = NewTarget;
+		AWOGBaseTarget* Target = Cast<AWOGBaseTarget>(CurrentTargetActor);
+		if (Target)
+		{
+			Target->OnTargetDestroyedDelegate.AddDynamic(this, &ThisClass::OnCurrentTargetDestroyed);
+		}
+
+		return;
+	}
+
+	if (NewTarget == nullptr && CurrentTargetActor != nullptr)
+	{
+		AWOGBaseTarget* Target = Cast<AWOGBaseTarget>(CurrentTargetActor);
+		if (Target)
+		{
+			Target->OnTargetDestroyedDelegate.Clear();
+		}
+
+		CurrentTargetActor = NewTarget;
+		return;
+	}
+
+
+
+
+
+
+
 }
 
 void AWOGBaseSquad::SetCurrentTargetLocation(const FVector_NetQuantize& NewTarget)

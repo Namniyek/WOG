@@ -7,6 +7,8 @@
 #include "Data/WOGDataTypes.h"
 #include "WOGBaseSquad.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTargetDestroyedDelegate, AActor*, Destroyer);
+
 UCLASS()
 class WOG_API AWOGBaseSquad : public AActor
 {
@@ -28,6 +30,9 @@ protected:
 
 	UPROPERTY(Replicated, BlueprintReadOnly, VisibleAnywhere)
 	FVector_NetQuantize CurrentTargetLocation;
+
+	UPROPERTY(Replicated, BlueprintReadOnly, VisibleAnywhere)
+	EEnemySquadType SquadType;
 
 	#pragma region Slot Components
 
@@ -66,10 +71,16 @@ private:
 	void SetEnemyStateOnSquad(const EEnemyState& NewState);
 	void CheckIsSquadEmpty();
 	void DeregisterSquad();
+	
+	UFUNCTION()
+	void OnCurrentTargetDestroyed(AActor* Destroyer);
 
 public:	
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
 	void SendOrder(const EEnemyOrder& NewOrder, const FTransform& TargetTansform = FTransform(), AActor* TargetActor = nullptr);
+
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
+	FORCEINLINE void SetSquadType(EEnemySquadType& NewType) { SquadType = NewType; };
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	TArray<USceneComponent*> SlotComponentsArray;
@@ -84,7 +95,7 @@ public:
 	FORCEINLINE EEnemyOrder GetCurrentSquadOrder() const { return CurrentSquadOrder; }
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
-	void SetCurrentTargetActor(AActor*& NewTarget);
+	void SetCurrentTargetActor(AActor* NewTarget);
 
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE AActor* GetCurrentTargetActor() const { return CurrentTargetActor; }

@@ -15,6 +15,8 @@
 #include "Components/CapsuleComponent.h"
 #include "PlayerCharacter/WOGAttacker.h"
 #include "AI/Combat/WOGBaseSquad.h"
+#include "Interfaces/BuildingInterface.h"
+#include "AbilitySystem/AttributeSets/WOGAttributeSetBase.h"
 
 AWOGBaseEnemy::AWOGBaseEnemy()
 {
@@ -33,6 +35,8 @@ AWOGBaseEnemy::AWOGBaseEnemy()
 	bUseControllerRotationYaw = true;
 	GetCharacterMovement()->bUseControllerDesiredRotation = true;
 	GetCharacterMovement()->bOrientRotationToMovement = false;
+
+	BaseDamage = 10.f;
 }
 
 void AWOGBaseEnemy::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -76,7 +80,31 @@ void AWOGBaseEnemy::OnAttackHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh)
 
 void AWOGBaseEnemy::ProcessHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh)
 {
+	if (!WeaponMesh) return;
 
+	//Get the Damage to apply values:
+	float DamageToApply = BaseDamage;
+
+	//Check if we hit build and apply build damage
+	IBuildingInterface* BuildInterface = Cast<IBuildingInterface>(Hit.GetActor());
+	if (BuildInterface && HasAuthority())
+	{
+		BuildInterface->Execute_DealDamage(Hit.GetActor(), DamageToApply, this);
+		UE_LOG(WOGLogCombat, Warning, TEXT("Build damaged with %f"), DamageToApply);
+		return;
+	}
+
+	//Check if we hit other character
+	IAttributesInterface* AttributesInterface = Cast<IAttributesInterface>(Hit.GetActor());
+	if (AttributesInterface)
+	{
+		bool FoundAttribute;
+		float DamageReduction = UAbilitySystemBlueprintLibrary::GetFloatAttribute(Hit.GetActor(), AttributeSet->GetDamageReductionAttribute(), FoundAttribute);
+		DamageToApply *= (1 - DamageReduction);
+		UE_LOG(LogTemp, Warning, TEXT("DamageToApply after DamageReduction of %f : %f"), DamageReduction, DamageToApply);
+
+		AttributesInterface->Execute_BroadcastHit(Hit.GetActor(), OwnerAttacker, Hit, DamageToApply, this);
+	}
 }
 
 void AWOGBaseEnemy::BroadcastHit_Implementation(AActor* AgressorActor, const FHitResult& Hit, const float& DamageToApply, AActor* InstigatorWeapon)
@@ -182,6 +210,18 @@ void AWOGBaseEnemy::SetCurrentEnemyState(const EEnemyState& NewState)
 
 	OnEnemyStateChangedDelegate.Broadcast();
 	UE_LOG(WOGLogSpawn, Display, TEXT("EnemyState Changed"));
+}
+
+void AWOGBaseEnemy::SetBaseDamage(const float& NewDamage)
+{
+	if (!HasAuthority()) return;
+	BaseDamage = NewDamage;
+}
+
+void AWOGBaseEnemy::SetAttackMontage(UAnimMontage* NewMontage)
+{
+	if (!HasAuthority() || !NewMontage) return;
+	AttackMontage = NewMontage;
 }
 
 void AWOGBaseEnemy::Elim(bool bPlayerLeftGame)

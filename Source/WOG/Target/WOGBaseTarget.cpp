@@ -29,12 +29,17 @@ AWOGBaseTarget::AWOGBaseTarget()
 	DestroyDelay = 3.f;
 
 	TargetScore = 5;
+
+	CurrentMeleeSquad = nullptr;
+	CurrentRangedSquad = nullptr;
 }
 
 void AWOGBaseTarget::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME(AWOGBaseTarget, Health)
+	DOREPLIFETIME(AWOGBaseTarget, Health);
+	DOREPLIFETIME(AWOGBaseTarget, CurrentMeleeSquad);
+	DOREPLIFETIME(AWOGBaseTarget, CurrentRangedSquad);
 }
 
 void AWOGBaseTarget::BeginPlay()
@@ -125,7 +130,6 @@ void AWOGBaseTarget::OnRep_Health()
 
 void AWOGBaseTarget::HandleDestruction()
 {
-
 	if (!HasAuthority()) return;
 	if (!RootMesh) return;
 
@@ -154,6 +158,7 @@ void AWOGBaseTarget::HandleDestruction()
 
 	HandleChaosDestruction();
 	BroadcastDestructionToGameState();
+	OnTargetDestroyedDelegate.Broadcast(nullptr);
 
 	FTimerHandle TimerHandle;
 	GetWorldTimerManager().SetTimer(TimerHandle, this, &ThisClass::DestroyTarget, DestroyDelay);
@@ -247,6 +252,52 @@ FVector AWOGBaseTarget::GetRangedAttackSlot_Implementation(const int32& SlotInde
 	{
 		UE_LOG(WOGLogCombat, Error, TEXT("No corresponding RangedAttackSlot on %s that corresponds to the provided index %d"), *GetNameSafe(this), SlotIndex);
 		return FVector();
+	}
+}
+
+bool AWOGBaseTarget::IsCurrentMeleeSquadSlotAvailable_Implementation() const
+{
+	return CurrentMeleeSquad == nullptr;
+}
+
+bool AWOGBaseTarget::IsCurrentRangedSquadSlotAvailable_Implementation() const
+{
+	return CurrentRangedSquad == nullptr;
+}
+
+void AWOGBaseTarget::FreeCurrentRangedSquadSlot_Implementation()
+{
+	SetCurrentRangedSquad(nullptr);
+}
+
+void AWOGBaseTarget::FreeCurrentMeleeSquadSlot_Implementation()
+{
+	SetCurrentMeleeSquad(nullptr);
+}
+
+void AWOGBaseTarget::SetCurrentRangedSquadSlot_Implementation(AWOGBaseSquad* NewSquad)
+{
+	SetCurrentRangedSquad(NewSquad);
+}
+
+void AWOGBaseTarget::SetCurrentMeleeSquadSlot_Implementation(AWOGBaseSquad* NewSquad)
+{
+	SetCurrentMeleeSquad(NewSquad);
+}
+
+void AWOGBaseTarget::SetCurrentRangedSquad(AWOGBaseSquad* NewSquad)
+{
+	if (HasAuthority())
+	{
+		CurrentRangedSquad = NewSquad;
+	}
+}
+
+void AWOGBaseTarget::SetCurrentMeleeSquad(AWOGBaseSquad* NewSquad)
+{
+	if (HasAuthority())
+	{
+		CurrentMeleeSquad = NewSquad;
 	}
 }
 

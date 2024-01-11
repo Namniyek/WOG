@@ -127,8 +127,8 @@ void AWOGBaseCharacter::ApplyDefaultEffects()
 
 	for (auto DefaultEffect : DefaultAbilitiesAndEffects.Effects)
 	{
-
 		ApplyGameplayEffectToSelf(DefaultEffect, EffectContext);
+		UE_LOG(WOGLogSpawn, Display, TEXT("Applied effect: %s on %s"), *GetNameSafe(DefaultEffect), *GetNameSafe(this));
 	}
 }
 
@@ -379,11 +379,8 @@ FName AWOGBaseCharacter::CalculateHitDirection(const FVector& WeaponLocation)
 bool AWOGBaseCharacter::IsTargetable_Implementation(AActor* TargeterActor) const
 {
 	//For characters, check if the targeter is attacker and then return true if targeter and the target are not the same
-	//bool bIsTargeterAttacker = UWOGBlueprintLibrary::GetCharacterData(TargeterActor).bIsAttacker;
-	//UE_LOG(WOGLogCombat, Display, TEXT("%s is Targetable by %s = %d"), *GetNameSafe(this), *GetNameSafe(TargeterActor), bIsTargeterAttacker != GetCharacterData().bIsAttacker);
-	//return bIsTargeterAttacker != GetCharacterData().bIsAttacker; 
-
-	return true;
+	bool bIsTargeterAttacker = UWOGBlueprintLibrary::GetCharacterData(TargeterActor).bIsAttacker;
+	return bIsTargeterAttacker != GetCharacterData().bIsAttacker; 
 }
 
 void AWOGBaseCharacter::Server_ToRagdoll_Implementation(const float& Radius, const float& Strength, const FVector_NetQuantize& Origin)

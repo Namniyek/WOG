@@ -10,6 +10,11 @@
 /**
  * 
  */
+
+class UGameplayEffect;
+class AWOGBaseCharacter;
+class AWOGBaseWeapon;
+
 UCLASS()
 class WOG_API UWOGAnimNotifyAttackSwing : public UAnimNotifyState_Trail
 {
@@ -19,15 +24,21 @@ class WOG_API UWOGAnimNotifyAttackSwing : public UAnimNotifyState_Trail
 	virtual void NotifyTick(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float FrameDeltaTime, const FAnimNotifyEventReference& EventReference) override;
 	virtual void NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference) override;
 	
-	TObjectPtr<class ABasePlayerCharacter> OwnerCharacter;
-	TObjectPtr<class AWOGBaseWeapon> Weapon;
+	TObjectPtr<AWOGBaseCharacter> OwnerCharacter;
+	TObjectPtr<AWOGBaseWeapon> Weapon;
 
 	void StartTrace(AActor* Owner);
 	void EndTrace(AActor* Owner);
 
+	void HandleSwingPlayerCharacter();
+	void HandleSwingEnemy();
+
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameplayEffect")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setup")
 	TSubclassOf<class UGameplayEffect> EffectToApply;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setup")
+	bool bIsEnemy = false;
 
 
 };

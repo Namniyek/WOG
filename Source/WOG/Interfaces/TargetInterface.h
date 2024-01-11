@@ -7,6 +7,8 @@
 #include "Data/WOGDataTypes.h"
 #include "TargetInterface.generated.h"
 
+class AWOGBaseSquad;
+
 // This class does not need to be modified.
 UINTERFACE(MinimalAPI)
 class UTargetInterface : public UInterface
@@ -34,4 +36,22 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Combat")
 	FVector GetRangedAttackSlot(const int32& SlotIndex) const;
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Combat")
+	bool IsCurrentMeleeSquadSlotAvailable() const;
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Combat")
+	bool IsCurrentRangedSquadSlotAvailable() const;
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Combat")
+	void FreeCurrentRangedSquadSlot();
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Combat")
+	void FreeCurrentMeleeSquadSlot();
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Combat")
+	void SetCurrentRangedSquadSlot(AWOGBaseSquad* NewSquad);
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Combat")
+	void SetCurrentMeleeSquadSlot(AWOGBaseSquad* NewSquad);
 };

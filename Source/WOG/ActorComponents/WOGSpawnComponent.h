@@ -6,6 +6,7 @@
 #include "WOGBaseActorComponent.h"
 #include "Engine/DataTable.h"
 #include "Types/CharacterTypes.h"
+#include "Data/WOGDataTypes.h"
 #include "WOGSpawnComponent.generated.h"
 
 class UCameraComponent;
@@ -45,6 +46,14 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Initial Setup")
 	FCharacterAbilityData DefaultAbilitiesAndEffects;
 
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Initial Setup")
+	EEnemySquadType SquadType = EEnemySquadType::EEST_Melee;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Initial Setup")
+	float BaseDamage = 10.f;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Initial Setup")
+	TObjectPtr<UAnimMontage> AttackMontage = nullptr;
 };
 
 UCLASS(meta = (BlueprintSpawnableComponent))

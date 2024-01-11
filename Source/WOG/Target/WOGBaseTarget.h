@@ -7,6 +7,7 @@
 #include "GameFramework/Actor.h"
 #include "Interfaces/BuildingInterface.h"
 #include "Interfaces/TargetInterface.h"
+#include "AI/Combat/WOGBaseSquad.h"
 #include "WOGBaseTarget.generated.h"
 
 class UGeometryCollectionComponent;
@@ -24,6 +25,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TObjectPtr<AWOGDayNPCSpawner> ConnectedSpawner;
+
+	UPROPERTY(BlueprintAssignable, BlueprintCallable)
+	FOnTargetDestroyedDelegate OnTargetDestroyedDelegate;
 
 protected:
 	virtual void BeginPlay() override;
@@ -98,14 +102,38 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TArray<FVector3DWithWidget> RangedSlots;
 
+	UPROPERTY(Replicated, VisibleAnywhere)
+	TObjectPtr<AWOGBaseSquad> CurrentMeleeSquad;
+
+	UPROPERTY(Replicated, VisibleAnywhere)
+	TObjectPtr<AWOGBaseSquad> CurrentRangedSquad;
+
 	#pragma region Interface functions
 	bool IsTargetable_Implementation(AActor* TargeterActor) const;
 	FVector GetMeleeAttackSlot_Implementation(const int32& SlotIndex) const;
 	FVector GetRangedAttackSlot_Implementation(const int32& SlotIndex) const;
+	bool IsCurrentMeleeSquadSlotAvailable_Implementation() const;
+	bool IsCurrentRangedSquadSlotAvailable_Implementation() const;
+	void FreeCurrentRangedSquadSlot_Implementation();
+	void FreeCurrentMeleeSquadSlot_Implementation();
+	void SetCurrentRangedSquadSlot_Implementation(AWOGBaseSquad* NewSquad);
+	void SetCurrentMeleeSquadSlot_Implementation(AWOGBaseSquad* NewSquad);
 	#pragma endregion
 
 public:	
 
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE int32 GetTargetScore() const { return TargetScore; }
+
+	UFUNCTION(BlueprintAuthorityOnly, BlueprintCallable)
+	void SetCurrentRangedSquad(AWOGBaseSquad* NewSquad);
+
+	UFUNCTION(BlueprintAuthorityOnly, BlueprintCallable)
+	void SetCurrentMeleeSquad(AWOGBaseSquad* NewSquad);
+
+	UFUNCTION(BlueprintPure)
+	FORCEINLINE AWOGBaseSquad* GetCurrentRangedSquad() const { return CurrentRangedSquad; }
+	UFUNCTION(BlueprintPure)
+	FORCEINLINE AWOGBaseSquad* GetCurrentMeleeSquad() const { return CurrentMeleeSquad; }
+
 };
