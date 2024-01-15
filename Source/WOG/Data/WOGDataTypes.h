@@ -228,6 +228,7 @@ enum class EEnemyState : uint8
 	EES_Dead UMETA(DisplayName = "Dead"),
 	EES_AtSquadSlot UMETA(DisplayName = "At Squad Slot"),
 	EES_AtTargetSlot UMETA(DisplayName = "At Target Slot"),
+	EES_AtTargetPlayer UMETA(DisplayName = "At Target Player"),
 
 	EES_MAX UMETA(DisplayName = "DefaultMAX")
 };
@@ -240,4 +241,14 @@ enum class EEnemySquadType : uint8
 	EEST_Ranged UMETA(DisplayName = "Ranged"),
 
 	EEST_MAX UMETA(DisplayName = "DefaultMAX")
+};
+
+UENUM(BlueprintType)
+enum class ECharacterMovementSpeed : uint8
+{
+	ECMS_Idle UMETA(DisplayName = "Idle"),
+	ECMS_Walking UMETA(DisplayName = "Walking"),
+	ECMS_Running UMETA(DisplayName = "Running"),
+
+	ECMS_MAX UMETA(DisplayName = "DefaultMAX")
 };

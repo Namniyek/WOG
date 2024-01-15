@@ -19,6 +19,8 @@ public:
 	AWOGDefender();
 	friend class UWOGBuildComponent;
 
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 	UFUNCTION(BlueprintCallable)
 	void DestroyComponent(UActorComponent* ComponentToDestroy);
 
@@ -65,8 +67,29 @@ protected:
 
 	#pragma endregion
 
+	#pragma region Interface functions
+	bool IsCurrentMeleeSquadSlotAvailable_Implementation() const;
+	bool IsCurrentRangedSquadSlotAvailable_Implementation() const;
+	void FreeCurrentRangedSquadSlot_Implementation();
+	void FreeCurrentMeleeSquadSlot_Implementation();
+	void SetCurrentRangedSquadSlot_Implementation(AWOGBaseSquad* NewSquad);
+	void SetCurrentMeleeSquadSlot_Implementation(AWOGBaseSquad* NewSquad);
+	#pragma endregion
+
+	UPROPERTY(Replicated, VisibleAnywhere)
+	TObjectPtr<AWOGBaseSquad> CurrentMeleeSquad;
+
+	UPROPERTY(Replicated, VisibleAnywhere)
+	TObjectPtr<AWOGBaseSquad> CurrentRangedSquad;
+
 public:
 	UFUNCTION(BlueprintCallable)
 	FORCEINLINE UWOGBuildComponent* GetBuildComponent() { return BuildComponent; }
+
+	UFUNCTION(BlueprintAuthorityOnly, BlueprintCallable)
+	void SetCurrentRangedSquad(AWOGBaseSquad* NewSquad);
+
+	UFUNCTION(BlueprintAuthorityOnly, BlueprintCallable)
+	void SetCurrentMeleeSquad(AWOGBaseSquad* NewSquad);
 	
 };

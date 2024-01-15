@@ -49,11 +49,17 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Initial Setup")
 	EEnemySquadType SquadType = EEnemySquadType::EEST_Melee;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Initial Setup")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Combat")
 	float BaseDamage = 10.f;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Initial Setup")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Combat")
 	TObjectPtr<UAnimMontage> AttackMontage = nullptr;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Combat")
+	float AttackRange = 150.f;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Combat")
+	float DefendRange = 400.f;
 };
 
 UCLASS(meta = (BlueprintSpawnableComponent))

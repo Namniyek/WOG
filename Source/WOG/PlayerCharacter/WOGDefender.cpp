@@ -14,11 +14,22 @@
 #include "AbilitySystem/AttributeSets/WOGAttributeSetBase.h"
 #include "Subsystems/WOGUIManagerSubsystem.h"
 #include "WOG/PlayerController/WOGPlayerController.h"
+#include "Net/UnrealNetwork.h"
 
 AWOGDefender::AWOGDefender()
 {
 	BuildComponent = CreateDefaultSubobject<UWOGBuildComponent>(TEXT("BuildingComponent"));
 	BuildComponent->SetIsReplicated(true);
+
+	CurrentMeleeSquad = nullptr;
+	CurrentRangedSquad = nullptr;
+}
+
+void AWOGDefender::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AWOGDefender, CurrentMeleeSquad);
+	DOREPLIFETIME(AWOGDefender, CurrentRangedSquad);
 }
 
 void AWOGDefender::DestroyComponent(UActorComponent* ComponentToDestroy)
@@ -206,4 +217,50 @@ void AWOGDefender::Ability3HoldButtonTriggered(const FInputActionValue& Value)
 
 	//Execute ability
 	SendAbilityLocalInput(EWOGAbilityInputID::Ability3);
+}
+
+bool AWOGDefender::IsCurrentMeleeSquadSlotAvailable_Implementation() const
+{
+	return CurrentMeleeSquad == nullptr;
+}
+
+bool AWOGDefender::IsCurrentRangedSquadSlotAvailable_Implementation() const
+{
+	return CurrentRangedSquad == nullptr;
+}
+
+void AWOGDefender::FreeCurrentRangedSquadSlot_Implementation()
+{
+	SetCurrentRangedSquad(nullptr);
+}
+
+void AWOGDefender::FreeCurrentMeleeSquadSlot_Implementation()
+{
+	SetCurrentMeleeSquad(nullptr);
+}
+
+void AWOGDefender::SetCurrentRangedSquadSlot_Implementation(AWOGBaseSquad* NewSquad)
+{
+	SetCurrentRangedSquad(NewSquad);
+}
+
+void AWOGDefender::SetCurrentMeleeSquadSlot_Implementation(AWOGBaseSquad* NewSquad)
+{
+	SetCurrentMeleeSquad(NewSquad);
+}
+
+void AWOGDefender::SetCurrentRangedSquad(AWOGBaseSquad* NewSquad)
+{
+	if (HasAuthority())
+	{
+		CurrentRangedSquad = NewSquad;
+	}
+}
+
+void AWOGDefender::SetCurrentMeleeSquad(AWOGBaseSquad* NewSquad)
+{
+	if (HasAuthority())
+	{
+		CurrentMeleeSquad = NewSquad;
+	}
 }

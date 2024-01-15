@@ -326,6 +326,8 @@ void UWOGSpawnComponent::Spawn(FTransform Transform, int32 ID)
 			SpawnedEnemy->SetSquadUnitIndex(Slot.SlotIndex);
 			SpawnedEnemy->SetBaseDamage(Spawnables[ID]->BaseDamage);
 			SpawnedEnemy->SetAttackMontage(Spawnables[ID]->AttackMontage);
+			SpawnedEnemy->SetAttackRange(Spawnables[ID]->AttackRange);
+			SpawnedEnemy->SetDefendRange(Spawnables[ID]->DefendRange);
 		}
 	}
 

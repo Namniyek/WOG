@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
+#include "Data/WOGDataTypes.h"
 #include "SpawnInterface.generated.h"
 
 class AWOGBaseSquad;
@@ -45,4 +46,15 @@ public:
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	int32 GetEnemySquadUnitIndex();
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void SetMovementSpeed(const ECharacterMovementSpeed& NewMovementSpeed);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	float GetAttackRangeValue();
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	float GetDefendRangeValue();
+
+
 };

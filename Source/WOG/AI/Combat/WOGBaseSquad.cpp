@@ -5,6 +5,7 @@
 #include "ActorComponents/WOGEnemyOrderComponent.h"
 #include "Enemies/WOGBaseEnemy.h"
 #include "Target/WOGBaseTarget.h"
+#include "PlayerCharacter/WOGDefender.h"
 
 AWOGBaseSquad::AWOGBaseSquad()
 {
@@ -91,6 +92,13 @@ void AWOGBaseSquad::BeginPlay()
 
 void AWOGBaseSquad::SendOrder(const EEnemyOrder& NewOrder, const FTransform& TargetTansform, AActor* TargetActor)
 {
+	/*
+	*
+	*TO-DO REFACTOR into smaller functions!!!!!!!!!!!!!!
+	*This function is a monster
+	*	
+	*/
+
 	if (!GetOwner() || !GetOwner()->HasAuthority()) return;
 
 	UWOGEnemyOrderComponent* OrderComp = GetOwner()->GetComponentByClass<UWOGEnemyOrderComponent>();
@@ -144,15 +152,26 @@ void AWOGBaseSquad::SendOrder(const EEnemyOrder& NewOrder, const FTransform& Tar
 
 		/*
 		*Squad will attack a specific target
+		* 1st, check if TargetActor is valid, if not, default to Follow order
 		*/
+		if (!TargetActor)
+		{
+			SendOrder(EEnemyOrder::EEO_Follow);
+			UE_LOG(WOGLogCombat, Error, TEXT("TargetActor invalid, default to FOLLOW order"));
+			return;
+		}
+
+		//Attach the squad actor to the squad slot on attacker
 		if (OrderComp && OrderComp->GetNextAvailableSquadSlot(this))
 		{
 			AttachToComponent(OrderComp->GetNextAvailableSquadSlot(this), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 		}
 
-		//Check if target has an availability for squad
-		if (TargetActor && TargetActor->GetClass()->ImplementsInterface(UTargetInterface::StaticClass()))
+		//Check if TargetActor is a player or a building
+		// Target is a Building
+		if (TargetActor->IsA<AWOGBaseTarget>() && TargetActor->GetClass()->ImplementsInterface(UTargetInterface::StaticClass()))
 		{
+			//Check if target has an availability for squad
 			if (SquadType == EEnemySquadType::EEST_Melee && ITargetInterface::Execute_IsCurrentMeleeSquadSlotAvailable(TargetActor))
 			{
 				ITargetInterface::Execute_SetCurrentMeleeSquadSlot(TargetActor, this);
@@ -171,9 +190,38 @@ void AWOGBaseSquad::SendOrder(const EEnemyOrder& NewOrder, const FTransform& Tar
 				return;
 			}
 
+			// if not, default to Follow order
 			SendOrder(EEnemyOrder::EEO_Follow);
 			UE_LOG(WOGLogCombat, Error, TEXT("Too many squads attaching same target"));
 		}
+
+		//Target is a player
+		if (TargetActor->IsA<AWOGDefender>() && TargetActor->GetClass()->ImplementsInterface(UTargetInterface::StaticClass()))
+		{
+			//Check if target has an availability for squad
+			if (SquadType == EEnemySquadType::EEST_Melee && ITargetInterface::Execute_IsCurrentMeleeSquadSlotAvailable(TargetActor))
+			{
+				ITargetInterface::Execute_SetCurrentMeleeSquadSlot(TargetActor, this);
+				SetCurrentTargetActor(TargetActor);
+				SetEnemyStateOnSquad(EEnemyState::EES_AtTargetPlayer);
+				SetCurrentSquadOrder(NewOrder);
+				return;
+			}
+
+			if (SquadType == EEnemySquadType::EEST_Ranged && ITargetInterface::Execute_IsCurrentRangedSquadSlotAvailable(TargetActor))
+			{
+				ITargetInterface::Execute_SetCurrentRangedSquadSlot(TargetActor, this);
+				SetCurrentTargetActor(TargetActor);
+				SetEnemyStateOnSquad(EEnemyState::EES_AtTargetPlayer);
+				SetCurrentSquadOrder(NewOrder);
+				return;
+			}
+
+			// if not, default to Follow order
+			SendOrder(EEnemyOrder::EEO_Follow);
+			UE_LOG(WOGLogCombat, Error, TEXT("Too many squads attaching same target"));
+		}
+
 		break;
 	case EEnemyOrder::EEO_AttackRandom:
 

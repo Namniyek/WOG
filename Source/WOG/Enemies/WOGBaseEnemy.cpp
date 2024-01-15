@@ -47,6 +47,8 @@ void AWOGBaseEnemy::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLif
 	DOREPLIFETIME(AWOGBaseEnemy, OwnerSquad);
 	DOREPLIFETIME(AWOGBaseEnemy, SquadUnitIndex);
 	DOREPLIFETIME(AWOGBaseEnemy, CurrentEnemyState);
+	DOREPLIFETIME(AWOGBaseEnemy, AttackRange);
+	DOREPLIFETIME(AWOGBaseEnemy, DefendRange);
 }
 
 void AWOGBaseEnemy::BeginPlay()
@@ -171,6 +173,16 @@ int32 AWOGBaseEnemy::GetEnemySquadUnitIndex_Implementation()
 	return SquadUnitIndex;
 }
 
+float AWOGBaseEnemy::GetAttackRangeValue_Implementation()
+{
+	return AttackRange;
+}
+
+float AWOGBaseEnemy::GetDefendRangeValue_Implementation()
+{
+	return DefendRange;
+}
+
 void AWOGBaseEnemy::SetOwnerAttacker(AWOGAttacker* NewOwner)
 {
 	if (!HasAuthority()) return;
@@ -222,6 +234,18 @@ void AWOGBaseEnemy::SetAttackMontage(UAnimMontage* NewMontage)
 {
 	if (!HasAuthority() || !NewMontage) return;
 	AttackMontage = NewMontage;
+}
+
+void AWOGBaseEnemy::SetAttackRange(const float& NewRadius)
+{
+	if (!HasAuthority()) return;
+	AttackRange = NewRadius;
+}
+
+void AWOGBaseEnemy::SetDefendRange(const float& NewRadius)
+{
+	if (!HasAuthority()) return;
+	DefendRange = NewRadius;
 }
 
 void AWOGBaseEnemy::Elim(bool bPlayerLeftGame)

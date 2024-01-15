@@ -43,6 +43,12 @@ protected:
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	float BaseDamage = 10.f;
 
+	UPROPERTY(Replicated, VisibleAnywhere)
+	float AttackRange;
+
+	UPROPERTY(Replicated, VisibleAnywhere)
+	float DefendRange;
+
 	UFUNCTION()
 	virtual void OnStartAttack();
 	TArray<TObjectPtr<AActor>> HitActorsToIgnore;
@@ -82,6 +88,9 @@ protected:
 	AWOGBaseSquad* GetEnemyOwnerSquad_Implementation();
 
 	int32 GetEnemySquadUnitIndex_Implementation();
+
+	float GetAttackRangeValue_Implementation();
+	float GetDefendRangeValue_Implementation();
 	#pragma endregion
 
 	#pragma region Animation
@@ -116,4 +125,16 @@ public:
 
 	void SetBaseDamage(const float& NewDamage);
 	void SetAttackMontage(UAnimMontage* NewMontage);
+
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
+	void SetAttackRange(const float& NewRadius);
+
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
+	void SetDefendRange(const float& NewRadius);
+
+	UFUNCTION(BlueprintPure)
+	FORCEINLINE float GetAttackRange() const { return AttackRange; }
+
+	UFUNCTION(BlueprintPure)
+	FORCEINLINE float GetDefendRange() const { return DefendRange; }
 };
