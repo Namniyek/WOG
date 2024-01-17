@@ -41,6 +41,9 @@ protected:
 
 	#pragma region Handle Combat
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+	TSubclassOf<UGameplayEffect> DamageEffect;
+
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	float BaseDamage = 10.f;
 
 	UPROPERTY(Replicated, VisibleAnywhere)
@@ -137,4 +140,9 @@ public:
 
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE float GetDefendRange() const { return DefendRange; }
+
+	UFUNCTION()
+	void SetDamageEffect(const TSubclassOf<UGameplayEffect>& NewDamageEffect);
+	UFUNCTION(BlueprintPure)
+	FORCEINLINE TSubclassOf<UGameplayEffect> GetDamageEffect() const { return DamageEffect; }
 };

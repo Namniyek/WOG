@@ -16,6 +16,7 @@
 #include "PlayerCharacter/WOGAttacker.h"
 #include "AI/Combat/WOGBaseSquad.h"
 #include "Interfaces/BuildingInterface.h"
+#include "Interfaces/AttributesInterface.h"
 #include "AbilitySystem/AttributeSets/WOGAttributeSetBase.h"
 
 AWOGBaseEnemy::AWOGBaseEnemy()
@@ -37,6 +38,7 @@ AWOGBaseEnemy::AWOGBaseEnemy()
 	GetCharacterMovement()->bOrientRotationToMovement = false;
 
 	BaseDamage = 10.f;
+	DamageEffect = nullptr;
 }
 
 void AWOGBaseEnemy::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -105,7 +107,7 @@ void AWOGBaseEnemy::ProcessHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh)
 		DamageToApply *= (1 - DamageReduction);
 		UE_LOG(LogTemp, Warning, TEXT("DamageToApply after DamageReduction of %f : %f"), DamageReduction, DamageToApply);
 
-		AttributesInterface->Execute_BroadcastHit(Hit.GetActor(), OwnerAttacker, Hit, DamageToApply, this);
+		AttributesInterface->Execute_BroadcastHit(Hit.GetActor(), this, Hit, DamageToApply, this);
 	}
 }
 
@@ -150,6 +152,7 @@ void AWOGBaseEnemy::BroadcastHit_Implementation(AActor* AgressorActor, const FHi
 		FGameplayEffectSpecHandle OutSpec = AbilitySystemComponent->MakeOutgoingSpec(Weapon->GetWeaponData().WeaponDamageEffect, 1, DamageContext);
 		UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(OutSpec, FGameplayTag::RequestGameplayTag(TEXT("Damage.Attribute.Health")), -DamageToApply);
 		AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*OutSpec.Data);
+		UE_LOG(WOGLogCombat, Display, TEXT("Damage applied to %s : %f"), *GetNameSafe(this), DamageToApply);
 	}
 }
 
@@ -248,14 +251,25 @@ void AWOGBaseEnemy::SetDefendRange(const float& NewRadius)
 	DefendRange = NewRadius;
 }
 
+void AWOGBaseEnemy::SetDamageEffect(const TSubclassOf<UGameplayEffect>& NewDamageEffect)
+{
+	if (!HasAuthority()) return;
+	DamageEffect = NewDamageEffect;
+}
+
 void AWOGBaseEnemy::Elim(bool bPlayerLeftGame)
 {
 	if (OwnerSquad)
 	{
+		if (OwnerSquad->GetCurrentTargetActor() && OwnerSquad->GetCurrentTargetActor()->GetClass()->ImplementsInterface(UAttributesInterface::StaticClass()))
+		{
+			IAttributesInterface::Execute_RestoreAttackTokens(OwnerSquad->GetCurrentTargetActor(), 1);
+		}
+
 		OwnerSquad->DeregisterDeadSquadMember(this);
 	}
 
-	Multicast_Elim(bPlayerLeftGame);
+	//Multicast_Elim(bPlayerLeftGame);
 
 	/*
 	**Handle destroy timer

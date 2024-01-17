@@ -101,6 +101,12 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Setup|Character Data")
 	TMap<TSubclassOf<AActor>, int32> DeathResourceMap;
+
+	UPROPERTY(Replicated, VisibleAnywhere, Category = "Setup|Combat")
+	int32 AvailableAttackTokens;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Setup|Combat")
+	int32 MaxAttackTokens;
 	#pragma endregion
 
 	#pragma region Actor Components

@@ -31,4 +31,13 @@ public:
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void BroadcastMagicHit(AActor* AgressorActor, const FHitResult& Hit, const struct FMagicDataTable& AgressorMagicData);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	bool ReserveAttackTokens(const int32& AmountToReserve);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void RestoreAttackTokens(const int32& AmountToRestore);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	int32 GetAvailableAttackTokens();
 };

@@ -352,6 +352,13 @@ void AWOGBaseSquad::DeregisterSquad()
 {
 	if (!GetOwner() || !GetOwner()->HasAuthority()) return;
 	UE_LOG(WOGLogCombat, Display, TEXT("Attempting to deregister squad..."));
+
+	if (CurrentTargetActor && CurrentTargetActor->GetClass()->ImplementsInterface(UTargetInterface::StaticClass()))
+	{
+		ITargetInterface::Execute_FreeCurrentMeleeSquadSlot(CurrentTargetActor);
+		ITargetInterface::Execute_FreeCurrentRangedSquadSlot(CurrentTargetActor);
+	}
+
 	UWOGEnemyOrderComponent* OrderComp = GetOwner()->GetComponentByClass<UWOGEnemyOrderComponent>();
 	if (OrderComp)
 	{

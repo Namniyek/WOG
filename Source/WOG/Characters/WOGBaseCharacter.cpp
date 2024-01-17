@@ -15,6 +15,7 @@
 #include "AbilitySystem/Abilities/WOGGameplayAbilityBase.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "PlayerCharacter/BasePlayerCharacter.h"
+#include "PlayerCharacter/WOGAttacker.h"
 #include "Enemies/WOGBaseEnemy.h"
 #include "Data/WOGGameplayTags.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -26,6 +27,7 @@
 #include "Subsystems/WOGWorldSubsystem.h"
 #include "TargetSystemComponent.h"
 #include "Libraries/WOGBlueprintLibrary.h"
+#include "AI/Combat/WOGBaseSquad.h"
 
 AWOGBaseCharacter::AWOGBaseCharacter()
 {
@@ -58,6 +60,9 @@ AWOGBaseCharacter::AWOGBaseCharacter()
 
 	LastHitResult = FHitResult();
 	LastHitDirection = FVector();
+
+	MaxAttackTokens = 1;
+	AvailableAttackTokens = MaxAttackTokens;
 }
 
 void AWOGBaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -66,6 +71,7 @@ void AWOGBaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 
 	DOREPLIFETIME(AWOGBaseCharacter, bIsRagdolling);
 	DOREPLIFETIME(AWOGBaseCharacter, CurrentTOD);
+	DOREPLIFETIME(AWOGBaseCharacter, AvailableAttackTokens);
 }
 
 void AWOGBaseCharacter::PossessedBy(AController* NewController)
@@ -95,6 +101,8 @@ void AWOGBaseCharacter::BeginPlay()
 			CurrentTOD = WorldSubsystem->CurrentTOD;
 			WorldSubsystem->TimeOfDayChangedDelegate.AddDynamic(this, &ThisClass::TimeOfDayChanged);
 		}
+
+		AvailableAttackTokens = MaxAttackTokens;
 	}
 }
 
@@ -148,7 +156,9 @@ bool AWOGBaseCharacter::ApplyGameplayEffectToSelf(TSubclassOf<UGameplayEffect> E
 
 void AWOGBaseCharacter::OnHealthAttributeChanged(const FOnAttributeChangeData& Data)
 {
-	if (Data.NewValue <= 0 && Data.OldValue > 0 && HasAuthority())
+	UE_LOG(WOGLogCombat, Display, TEXT("%s Damaged: new health: %f"), *GetNameSafe(this), Data.NewValue);
+
+	if (Data.NewValue <= 0 && Data.OldValue >= 0 && HasAuthority())
 	{
 		if (Data.GEModData)
 		{
@@ -175,15 +185,22 @@ void AWOGBaseCharacter::OnHealthAttributeChanged(const FOnAttributeChangeData& D
 			}
 			else if (EffectContext.GetInstigator()->IsA<AWOGBaseEnemy>())
 			{
-				FGameplayEventData EventPayload;
-				EventPayload.EventTag = TAG_Event_Elim;
-				UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Elim, EventPayload);
-				UE_LOG(WOGLogCombat, Error, TEXT("Killed by Enemy"));
+				AWOGBaseEnemy* InstigatorEnemy = Cast<AWOGBaseEnemy>(EffectContext.GetInstigator());
+				if (InstigatorEnemy && InstigatorEnemy->GetOwnerAttacker() && InstigatorEnemy->GetOwnerAttacker()->GetController())
+				{
+					FGameplayEventData EventPayload;
+					EventPayload.EventTag = TAG_Event_Elim;
+					EventPayload.Instigator = InstigatorEnemy->GetOwnerAttacker()->GetController();
+					UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Elim, EventPayload);
+					UE_LOG(WOGLogCombat, Error, TEXT("Killed by Enemy"));
 
-				/*
-				** TO-DO - Add and pass reference to the Owner of the enemy that killed this character
-				** TO-DO - Give death resource to the owner of enemy that killed this character
-				*/
+					if (InstigatorEnemy->GetOwnerSquad())
+					{
+						InstigatorEnemy->GetOwnerSquad()->SendOrder(EEnemyOrder::EEO_Follow);
+					}
+				}
+
+				GiveDeathResources(InstigatorEnemy->GetOwnerAttacker());
 			}
 		}
 	}
@@ -592,7 +609,10 @@ void AWOGBaseCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	UpdateCapsuleLocation();
+	if (!HasMatchingGameplayTag(TAG_State_Dead))
+	{
+		UpdateCapsuleLocation();
+	}
 }
 
 bool AWOGBaseCharacter::HasMatchingGameplayTag(FGameplayTag TagToCheck) const

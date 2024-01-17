@@ -60,6 +60,9 @@ public:
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Combat")
 	float DefendRange = 400.f;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Combat")
+	TSubclassOf<UGameplayEffect> DamageEffect = nullptr;
 };
 
 UCLASS(meta = (BlueprintSpawnableComponent))

@@ -291,18 +291,19 @@ void UWOGSpawnComponent::Spawn(FTransform Transform, int32 ID)
 	/*
 	*Handle the actual spawn of the enemies
 	*/
-	TArray<FVector> Spawns = GetSpawnLocations(Transform.GetLocation(), 150, Spawnables[ID]->AmountUnits);
+	//TArray<FVector> Spawns = GetSpawnLocations(Transform.GetLocation(), 150, Spawnables[ID]->AmountUnits);
 
-	for (auto Spawn : Spawns)
+	//for (auto Spawn : Spawns)
+	for (int32 i = 0; i<Spawnables[ID]->AmountUnits; i++)
 	{
-		Transform.SetLocation(Spawn + FVector(0.f, 0.f, Spawnables[ID]->HeightOffset));
+		Transform.SetLocation(Transform.GetLocation() + FVector((Spawnables[ID]->AmountUnits*150), 0.f, Spawnables[ID]->HeightOffset));
 
 		FActorSpawnParameters Params;
 		Params.Owner = AttackerCharacter ? AttackerCharacter : nullptr;
 		Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
 		TObjectPtr<AActor> SpawnedActor = GetWorld()->SpawnActor<AActor>(Spawnables[ID]->Actor, Transform, Params);
-		UE_LOG(LogTemp, Warning, TEXT("Spawned at: %s"), *Spawn.ToString());
+		//UE_LOG(LogTemp, Warning, TEXT("Spawned at: %s"), *Spawn.ToString());
 
 		if (TObjectPtr<AWOGBaseEnemy> SpawnedEnemy = Cast<AWOGBaseEnemy>(SpawnedActor))
 		{
@@ -328,6 +329,7 @@ void UWOGSpawnComponent::Spawn(FTransform Transform, int32 ID)
 			SpawnedEnemy->SetAttackMontage(Spawnables[ID]->AttackMontage);
 			SpawnedEnemy->SetAttackRange(Spawnables[ID]->AttackRange);
 			SpawnedEnemy->SetDefendRange(Spawnables[ID]->DefendRange);
+			SpawnedEnemy->SetDamageEffect(Spawnables[ID]->DamageEffect);
 		}
 	}
 
