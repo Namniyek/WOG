@@ -116,13 +116,66 @@ void AWOGBaseEnemy::BroadcastHit_Implementation(AActor* AgressorActor, const FHi
 	if (HasMatchingGameplayTag(TAG_State_Dead)) return;
 	if (HasMatchingGameplayTag(TAG_State_Dodging)) return;
 
+	AWOGBaseCharacter* AgressorCharacter = Cast<AWOGBaseCharacter>(AgressorActor);
+	AWOGBaseWeapon* AgressorWeapon = Cast<AWOGBaseWeapon>(InstigatorWeapon);
+
+	if (!AgressorCharacter)
+	{
+		UE_LOG(WOGLogCombat, Error, TEXT("No valid Agressor Character"));
+		return;
+	}
+	if (!AgressorWeapon)
+	{
+		UE_LOG(WOGLogCombat, Warning, TEXT("No valid Agressor Weapon"));
+	}
+
 	//Store the last hit result
 	LastHitResult = Hit;
 
-	UE_LOG(LogTemp, Warning, TEXT("%s damaged with %s, by %s, in the amount : %f"), *GetNameSafe(Hit.GetActor()), *GetNameSafe(InstigatorWeapon), *GetNameSafe(AgressorActor), DamageToApply);
+	//Handle Ranged Weapon Throw Hit
+	if (AgressorCharacter->HasMatchingGameplayTag(TAG_State_Weapon_Ranged_Throw) || AgressorCharacter->HasMatchingGameplayTag(TAG_State_Weapon_Ranged_AOE))
+	{
+		//Victim hit by shield throw
+		if (AgressorWeapon && AgressorWeapon->GetWeaponData().WeaponTag.MatchesTag(TAG_Inventory_Weapon_Shield))
+		{
+			FGameplayEventData EventPayload;
+			EventPayload.EventTag = AgressorWeapon->GetWeaponData().RangedTag;
+			EventPayload.EventMagnitude = AgressorWeapon->GetWeaponData().StunDuration;
+			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, AgressorWeapon->GetWeaponData().RangedTag, EventPayload);
+			UE_LOG(WOGLogCombat, Warning, TEXT("Shield throw hit and applied: %s during %f seconds"), *AgressorWeapon->GetWeaponData().RangedTag.ToString(), AgressorWeapon->GetWeaponData().StunDuration);
+
+			FGameplayCueParameters CueParams;
+			CueParams.Location = Hit.ImpactPoint;
+			CueParams.EffectCauser = AgressorCharacter;
+			AbilitySystemComponent->ExecuteGameplayCueLocal(TAG_Cue_Weapon_BodyHit, CueParams);
+		}
+
+		//Victim hit by dual weapon throw
+		if (AgressorWeapon && AgressorWeapon->GetWeaponData().WeaponTag.MatchesTag(TAG_Inventory_Weapon_DualWield))
+		{
+			FGameplayEventData EventPayload;
+			EventPayload.EventTag = AgressorWeapon->GetWeaponData().RangedTag;
+			EventPayload.EventMagnitude = AgressorWeapon->GetWeaponData().StunDuration;
+			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, AgressorWeapon->GetWeaponData().RangedTag, EventPayload);
+			UE_LOG(WOGLogCombat, Warning, TEXT("Weapon throw hit and applied: %s during %f seconds"), *AgressorWeapon->GetWeaponData().RangedTag.ToString(), AgressorWeapon->GetWeaponData().StunDuration);
+
+			FGameplayCueParameters CueParams;
+			CueParams.Location = Hit.ImpactPoint;
+			CueParams.EffectCauser = AgressorCharacter;
+			AbilitySystemComponent->ExecuteGameplayCueLocal(TAG_Cue_Weapon_BodyHit, CueParams);
+		}
+
+		//Victim hit by two handed ranged attack
+		if (AgressorWeapon && AgressorWeapon->GetWeaponData().WeaponTag.MatchesTag(TAG_Inventory_Weapon_TwoHanded))
+		{
+			FGameplayEventData EventPayload;
+			EventPayload.EventTag = AgressorWeapon->GetWeaponData().RangedTag;
+			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, AgressorWeapon->GetWeaponData().RangedTag, EventPayload);
+			UE_LOG(WOGLogCombat, Warning, TEXT("Weapon AOE hit and applied: %s"), *AgressorWeapon->GetWeaponData().RangedTag.ToString());
+		}
+	}
 
 	//Apply HitReact or KO to character
-	TObjectPtr<AWOGBaseCharacter> AgressorCharacter = Cast<AWOGBaseCharacter>(AgressorActor);
 	if (AgressorCharacter && AgressorCharacter->HasMatchingGameplayTag(TAG_State_Weapon_AttackHeavy) && IsHitFrontal(60.f, this, FVector::Zero(), InstigatorWeapon))
 	{
 		//Send event KO
@@ -142,14 +195,13 @@ void AWOGBaseEnemy::BroadcastHit_Implementation(AActor* AgressorActor, const FHi
 	}
 
 	//Apply damage to character if authority
-	TObjectPtr<AWOGBaseWeapon> Weapon = Cast<AWOGBaseWeapon>(InstigatorWeapon);
-	if (HasAuthority() && AgressorCharacter && AbilitySystemComponent.Get() && Weapon && Weapon->GetWeaponData().WeaponDamageEffect)
+	if (HasAuthority() && AgressorCharacter && AbilitySystemComponent.Get() && AgressorWeapon && AgressorWeapon->GetWeaponData().WeaponDamageEffect)
 	{
 		FGameplayEffectContextHandle DamageContext = AbilitySystemComponent.Get()->MakeEffectContext();
-		DamageContext.AddInstigator(AgressorCharacter, Weapon);
+		DamageContext.AddInstigator(AgressorCharacter, AgressorWeapon);
 		DamageContext.AddHitResult(Hit);
 
-		FGameplayEffectSpecHandle OutSpec = AbilitySystemComponent->MakeOutgoingSpec(Weapon->GetWeaponData().WeaponDamageEffect, 1, DamageContext);
+		FGameplayEffectSpecHandle OutSpec = AbilitySystemComponent->MakeOutgoingSpec(AgressorWeapon->GetWeaponData().WeaponDamageEffect, 1, DamageContext);
 		UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(OutSpec, FGameplayTag::RequestGameplayTag(TEXT("Damage.Attribute.Health")), -DamageToApply);
 		AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*OutSpec.Data);
 		UE_LOG(WOGLogCombat, Display, TEXT("Damage applied to %s : %f"), *GetNameSafe(this), DamageToApply);

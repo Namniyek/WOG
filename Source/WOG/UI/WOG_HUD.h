@@ -59,6 +59,9 @@ private:
 	UPROPERTY(meta = (BindWidget))
 	USizeBox* BarsContainer;
 
+	UPROPERTY(meta = (BindWidget))
+	USizeBox* SquadOrderContainer;
+
 public:
 	UFUNCTION(BlueprintPure)
 	float GetHealthPercent();
@@ -82,5 +85,6 @@ public:
 	FORCEINLINE USizeBox* GetAvailableResourceContainer() const { return AvailableResourceContainer; }
 	FORCEINLINE USizeBox* GetMinimapContainer() const { return MinimapContainer; }
 	FORCEINLINE USizeBox* GetTODContainer() const { return TODContainer; }
+	FORCEINLINE USizeBox* GetSquadOrderContainer() const { return SquadOrderContainer; }
 
 };

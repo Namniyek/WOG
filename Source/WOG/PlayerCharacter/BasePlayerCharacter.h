@@ -201,8 +201,17 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Base Match", meta = (AllowPrivateAccess = "true"))
 	UInputAction* RadialMenuAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Spawn Mode", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Spawn Mode", meta = (AllowPrivateAccess = "true"))
 	UInputAction* SpawnAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Spawn Mode", meta = (AllowPrivateAccess = "true"))
+	UInputAction* AlternativeAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Spawn Mode", meta = (AllowPrivateAccess = "true"))
+	UInputAction* AlternativeModeAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Spawn Mode", meta = (AllowPrivateAccess = "true"))
+	UInputAction* ChangeActiveSquadAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Spawn Mode", meta = (AllowPrivateAccess = "true"))
 	UInputAction* RotateSpawnAction;
@@ -210,12 +219,14 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Base Match", meta = (AllowPrivateAccess = "true"))
 	UInputAction* WeaponRangedAction;
 
-
 	/*
 	** Other variables
 	*/
 	UPROPERTY(BlueprintReadWrite)
 	bool bSecondaryButtonPressed = false;
+
+	UPROPERTY()
+	bool bIsAlternativeModeEnabled = false;
 
 	UPROPERTY(BlueprintAssignable, BlueprintCallable)
 	FOnInteractComplete OnInteractComplete;
@@ -293,9 +304,14 @@ protected:
 	void PrimaryExecuteHeavyAttack(const FInputActionValue& Value);
 	void SecondaryButtonPressed(const FInputActionValue& Value);
 	void SecondaryButtonReleased(const FInputActionValue& Value);
-
-
 	
+	void AlternativeModeActionPressed(const FInputActionValue& Value);
+	void AlternativeModeActionReleased(const FInputActionValue& Value);
+	virtual void AlternativeModeEnabled(const bool& NewEnabled) { /*To be overriden in children*/ };
+
+	virtual void ChangeActiveSquadActionPressed(const FInputActionValue& Value) { /*To be overriden in children*/ };
+	virtual void AlternativeActionPressed(const FInputActionValue& Value) { /*To be overriden in children*/ };
+
 	#pragma endregion
 
 	#pragma region Player Profile Section

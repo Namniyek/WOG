@@ -11,6 +11,8 @@
 #include "Engine/World.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
+#include "GameFramework/SpringArmComponent.h"
+
 
 // Sets default values for this component's properties
 UTargetSystemComponent::UTargetSystemComponent()

@@ -71,6 +71,9 @@ private:
 	void SetEnemyStateOnSquad(const EEnemyState& NewState);
 	void CheckIsSquadEmpty();
 	void DeregisterSquad();
+
+	AActor* FindRandomTarget();
+	AActor* GetClosestActor(TArray<AActor*> InArray);
 	
 	UFUNCTION()
 	void OnCurrentTargetDestroyed(AActor* Destroyer);

@@ -6,6 +6,8 @@
 #include "Enemies/WOGBaseEnemy.h"
 #include "Target/WOGBaseTarget.h"
 #include "PlayerCharacter/WOGDefender.h"
+#include "Kismet/GameplayStatics.h"
+#include "Interfaces/TargetInterface.h"
 
 AWOGBaseSquad::AWOGBaseSquad()
 {
@@ -127,7 +129,6 @@ void AWOGBaseSquad::SendOrder(const EEnemyOrder& NewOrder, const FTransform& Tar
 		break;
 
 	case EEnemyOrder::EEO_Follow:
-
 		//Check if the Current target actor is valid and implements the Target Interface
 		// if so, free the squad slot on the previous target
 		if (CurrentTargetActor && CurrentTargetActor->GetClass()->ImplementsInterface(UTargetInterface::StaticClass()))
@@ -228,19 +229,16 @@ void AWOGBaseSquad::SendOrder(const EEnemyOrder& NewOrder, const FTransform& Tar
 		/*
 		*Squad will attack a random target within range
 		*/
-		if (OrderComp && OrderComp->GetNextAvailableSquadSlot(this))
-		{
-			AttachToComponent(OrderComp->GetNextAvailableSquadSlot(this), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
-		}
-
+		TargetActor = FindRandomTarget();
 		if (TargetActor)
 		{
-			SetCurrentTargetActor(TargetActor);
-			SetEnemyStateOnSquad(EEnemyState::EES_AtTargetSlot);
-
-			SetCurrentSquadOrder(NewOrder);
+			SendOrder(EEnemyOrder::EEO_AttackTarget, FTransform(), TargetActor);
+			return;
 		}
 
+		// if not, default to Follow order
+		SendOrder(EEnemyOrder::EEO_Follow);
+		UE_LOG(WOGLogCombat, Error, TEXT("No valid random target"));
 		break;
 	default:
 		break;
@@ -250,6 +248,69 @@ void AWOGBaseSquad::SendOrder(const EEnemyOrder& NewOrder, const FTransform& Tar
 void AWOGBaseSquad::OnCurrentTargetDestroyed(AActor* Destroyer)
 {
 	SendOrder(EEnemyOrder::EEO_Follow);
+}
+
+AActor* AWOGBaseSquad::FindRandomTarget()
+{
+	TArray<AActor*> OutActors;
+	UGameplayStatics::GetAllActorsWithInterface(GetWorld(), UTargetInterface::StaticClass(), OutActors);
+
+	if (OutActors.IsEmpty())
+	{
+		UE_LOG(WOGLogSpawn, Error, TEXT("OutActors is EMPTY"));
+		return nullptr;
+	}
+
+	TArray<AActor*> ReturnActors = {};
+
+	for (auto Actor : OutActors)
+	{
+		UE_LOG(WOGLogSpawn, Display, TEXT("%s iterated"), *GetNameSafe(Actor));
+
+		if (!Actor->IsA<AWOGBaseTarget>())
+		{
+			UE_LOG(WOGLogSpawn, Warning, TEXT("%s is not a WOGBaseTarget"), *GetNameSafe(Actor));
+			continue;
+		}
+
+		if (SquadType == EEnemySquadType::EEST_Melee && ITargetInterface::Execute_IsCurrentMeleeSquadSlotAvailable(Actor))
+		{
+			ReturnActors.AddUnique(Actor);
+			UE_LOG(WOGLogSpawn, Display, TEXT("%s added to ReturnActors"), *GetNameSafe(Actor));
+			continue;
+		}
+
+		if (SquadType == EEnemySquadType::EEST_Ranged && ITargetInterface::Execute_IsCurrentRangedSquadSlotAvailable(Actor))
+		{
+			ReturnActors.AddUnique(Actor);
+			UE_LOG(WOGLogSpawn, Display, TEXT("%s added to ReturnActors"), *GetNameSafe(Actor));
+			continue;
+		}
+	}
+
+	if (ReturnActors.IsEmpty())
+	{
+		UE_LOG(WOGLogSpawn, Error, TEXT("ReturnActors is EMPTY"));
+		return nullptr;
+	}
+
+	AActor* ClosestTarget = GetClosestActor(ReturnActors);
+	return ClosestTarget;
+}
+
+AActor* AWOGBaseSquad::GetClosestActor(TArray<AActor*> InArray)
+{
+	AActor* ClosestActor = nullptr;
+	float ClosestDistance = 1000000000.f;
+
+	for (auto Actor : InArray)
+	{
+		float CurrentDistance = Actor->GetDistanceTo(this);
+		ClosestDistance = CurrentDistance <= ClosestDistance ? CurrentDistance : ClosestDistance;
+		ClosestActor = CurrentDistance <= ClosestDistance ? Actor : ClosestActor;
+	}
+
+	return ClosestActor;
 }
 
 void AWOGBaseSquad::SetEnemyStateOnSquad(const EEnemyState& NewState)

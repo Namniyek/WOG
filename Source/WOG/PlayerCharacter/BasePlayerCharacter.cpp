@@ -222,6 +222,12 @@ void ABasePlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 		EnhancedInputComponent->BindAction(SecondaryAction, ETriggerEvent::Triggered, this, &ThisClass::SecondaryButtonReleased);
 		//Weapon Ranged
 		EnhancedInputComponent->BindAction(WeaponRangedAction, ETriggerEvent::Triggered, this, &ThisClass::WeaponRangedActionPressed);
+
+		//Spawn orders
+		EnhancedInputComponent->BindAction(AlternativeModeAction, ETriggerEvent::Started, this, &ThisClass::AlternativeModeActionPressed);
+		EnhancedInputComponent->BindAction(AlternativeModeAction, ETriggerEvent::Triggered, this, &ThisClass::AlternativeModeActionReleased);
+		EnhancedInputComponent->BindAction(AlternativeAction, ETriggerEvent::Triggered, this, &ThisClass::AlternativeActionPressed);
+		EnhancedInputComponent->BindAction(ChangeActiveSquadAction, ETriggerEvent::Triggered, this, &ThisClass::ChangeActiveSquadActionPressed);
 	}
 }
 
@@ -493,6 +499,16 @@ void ABasePlayerCharacter::SecondaryButtonReleased(const FInputActionValue& Valu
 	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Purple, FString("StopBlocking"));
 
 	bSecondaryButtonPressed = false;
+}
+
+void ABasePlayerCharacter::AlternativeModeActionPressed(const FInputActionValue& Value)
+{
+	AlternativeModeEnabled(true);
+}
+
+void ABasePlayerCharacter::AlternativeModeActionReleased(const FInputActionValue& Value)
+{
+	AlternativeModeEnabled(false);
 }
 
 void ABasePlayerCharacter::Server_SetPlayerProfile_Implementation(const FPlayerData& NewPlayerProfile)

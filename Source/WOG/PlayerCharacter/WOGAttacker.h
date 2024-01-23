@@ -87,6 +87,10 @@ protected:
 	virtual void Ability3HoldButtonStarted(const FInputActionValue& Value) override;
 	virtual void Ability3HoldButtonTriggered(const FInputActionValue& Value) override;
 
+	virtual void ChangeActiveSquadActionPressed(const FInputActionValue& Value) override;
+	virtual void AlternativeActionPressed(const FInputActionValue& Value) override;
+	virtual void AlternativeModeEnabled(const bool& NewEnabled) override;
+
 	#pragma endregion
 
 	UPROPERTY(Replicated, VisibleAnywhere)

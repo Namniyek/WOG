@@ -80,6 +80,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Setup | WidgetClasses")
 	TSubclassOf<UWOGStashWidget> StashWidgetClass;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Setup | WidgetClasses")
+	TSubclassOf<UUserWidget> SquadOrderWidgetClass;
+
 	#pragma endregion
 
 	#pragma region Widget References

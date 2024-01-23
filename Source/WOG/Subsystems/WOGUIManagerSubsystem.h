@@ -45,6 +45,7 @@ private:
 	TObjectPtr<UUserWidget> MinimapWidget;
 	TObjectPtr<UUserWidget> AbilityContainerWidget;
 	TObjectPtr<UUserWidget> AvailableResourcesWidget;
+	TObjectPtr<UUserWidget> SquadOrderWidget;
 
 	UPROPERTY()
 	TObjectPtr<UWOGHoldProgressBar> HoldProgressBarWidget = nullptr;
@@ -145,4 +146,9 @@ public:
 	void AddStashWidget(ABasePlayerCharacter* User, AWOGStashBase* Stash);
 	UFUNCTION(BlueprintCallable)
 	void RemoveStashWidget();
+
+	UFUNCTION(BlueprintCallable)
+	void AddSquadOrderWidget();
+	UFUNCTION(BlueprintCallable)
+	void RemoveSquadOrderWidget();
 };

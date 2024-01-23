@@ -82,6 +82,8 @@ void UWOGEnemyOrderComponent::HandleCurrentSquads(AWOGBaseSquad* Squad, bool bAd
 				CurrentSquads.Remove(Squad);
 			}
 		}
+
+		IncreaseCurrentlySelectedSquad();
 	}
 
 }

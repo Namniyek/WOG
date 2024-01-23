@@ -24,6 +24,7 @@
 #include "Subsystems/WOGUIManagerSubsystem.h"
 #include "Libraries/WOGBlueprintLibrary.h"
 #include "ActorComponents/WOGEnemyOrderComponent.h"
+#include "Camera/CameraComponent.h"
 
 
 AWOGAttacker::AWOGAttacker()
@@ -358,6 +359,94 @@ void AWOGAttacker::Ability3HoldButtonTriggered(const FInputActionValue& Value)
 
 	//Execute ability
 	SendAbilityLocalInput(EWOGAbilityInputID::Ability3);
+}
+
+void AWOGAttacker::AlternativeActionPressed(const FInputActionValue& Value)
+{
+	if (!bIsAlternativeModeEnabled || !EnemyOrderComponent || !EnemyOrderComponent->GetCurrentlySelectedSquad()) return;
+	FVector2D OrderAction = Value.Get<FVector2D>();
+
+	//Key 1/Left pressed
+	if (OrderAction.X < 0)
+	{
+		//Attack Target order
+		if (CurrentTarget)
+		{
+			EnemyOrderComponent->Server_SendOrder(EnemyOrderComponent->GetCurrentlySelectedSquad(), EEnemyOrder::EEO_AttackTarget, FTransform(), CurrentTarget);
+		}
+	}
+
+	//Key 2/Up pressed
+	if (OrderAction.Y > 0)
+	{
+		//Hold order
+		FHitResult HitResult;
+		FVector Start = FollowCamera->GetComponentLocation() + (FollowCamera->GetForwardVector() * 300.f);
+		FVector End = FollowCamera->GetComponentLocation() + (FollowCamera->GetForwardVector() * 50000.f);
+		FCollisionQueryParams Params;
+		Params.AddIgnoredActor(this);
+
+		bool bFoundHit = GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECollisionChannel::ECC_Visibility, Params);
+
+		if (bFoundHit)
+		{
+			FTransform HoldTransform = FTransform();
+			HoldTransform.SetLocation(HitResult.Location + FVector(0, 0, 100));
+			EnemyOrderComponent->Server_SendOrder(EnemyOrderComponent->GetCurrentlySelectedSquad(), EEnemyOrder::EEO_Hold, HoldTransform);
+		}
+	}
+
+	//Key 3/Right pressed
+	if (OrderAction.X > 0)
+	{
+		//Attack random order
+	
+		EnemyOrderComponent->Server_SendOrder(EnemyOrderComponent->GetCurrentlySelectedSquad(), EEnemyOrder::EEO_AttackRandom);
+	}
+
+	//Key 4/Down pressed
+	if (OrderAction.Y < 0)
+	{
+		//Follow order
+		EnemyOrderComponent->Server_SendOrder(EnemyOrderComponent->GetCurrentlySelectedSquad(), EEnemyOrder::EEO_Follow);
+	}
+}
+
+void AWOGAttacker::AlternativeModeEnabled(const bool& NewEnabled)
+{
+	if (!OwnerPC) return;
+	bIsAlternativeModeEnabled = NewEnabled;
+	UE_LOG(WOGLogCombat, Display, TEXT("AlternativeMode enabled: %s"), bIsAlternativeModeEnabled ? *FString("True") : *FString("False"));
+
+	TObjectPtr<UWOGUIManagerSubsystem> UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(OwnerPC->GetLocalPlayer());
+	if (!UIManager)
+	{
+		UE_LOG(WOGLogUI, Error, TEXT("UIManagerSubsystem from AAttacker invalid"));
+		return;
+	}
+
+	if (bIsAlternativeModeEnabled)
+	{
+		UIManager->AddSquadOrderWidget();
+	}
+	else
+	{
+		UIManager->RemoveSquadOrderWidget();
+	}
+}
+
+void AWOGAttacker::ChangeActiveSquadActionPressed(const FInputActionValue& Value)
+{
+	if (!bIsAlternativeModeEnabled || !EnemyOrderComponent) return;
+	FVector2D SquadAction = Value.Get<FVector2D>();
+	if (SquadAction.X < 0)
+	{
+		EnemyOrderComponent->DecreaseCurrentlySelectedSquad();
+	}
+	if (SquadAction.X > 0)
+	{
+		EnemyOrderComponent->IncreaseCurrentlySelectedSquad();
+	}
 }
 
 void AWOGAttacker::PossessRaven()

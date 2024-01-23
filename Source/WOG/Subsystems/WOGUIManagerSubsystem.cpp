@@ -506,3 +506,34 @@ void UWOGUIManagerSubsystem::RemoveStashWidget()
 		UE_LOG(WOGLogUI, Error, TEXT("StashWidget NOT removed from subsystem"));
 	}
 }
+
+void UWOGUIManagerSubsystem::AddSquadOrderWidget()
+{
+	MatchHUD == nullptr ? (TObjectPtr<AWOGMatchHUD>) Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
+	if (!MatchHUD || !MatchHUD->HUDWidget || !IsValid(MatchHUD->SquadOrderWidgetClass)) return;
+
+	SquadOrderWidget = CreateWidget<UUserWidget>(OwnerPC, MatchHUD->SquadOrderWidgetClass);
+	if (SquadOrderWidget && MatchHUD->HUDWidget->GetSquadOrderContainer())
+	{
+		CollapseAbilitiesWidget();
+		RemoveAvailableResourcesWidget();
+		MatchHUD->HUDWidget->GetSquadOrderContainer()->ClearChildren();
+		MatchHUD->HUDWidget->GetSquadOrderContainer()->AddChild(SquadOrderWidget);
+	}
+
+}
+
+void UWOGUIManagerSubsystem::RemoveSquadOrderWidget()
+{
+	if (SquadOrderWidget)
+	{
+		SquadOrderWidget->RemoveFromParent();
+		RestoreAbilitiesWidget();
+		AddAvailableResourcesWidget();
+		UE_LOG(WOGLogUI, Display, TEXT("SquadOrderWidget removed from subsystem"));
+	}
+	else
+	{
+		UE_LOG(WOGLogUI, Error, TEXT("SquadOrderWidget NOT removed from subsystem"));
+	}
+}
