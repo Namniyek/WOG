@@ -111,4 +111,10 @@ public:
 
 	UFUNCTION()
 	void DeregisterDeadSquadMember(AWOGBaseEnemy* DeadEnemy);
+
+	UPROPERTY(Replicated, BlueprintReadOnly)
+	FText SquadName = FText();
+
+	UPROPERTY(Replicated, BlueprintReadOnly)
+	TObjectPtr<UTexture2D> SquadIcon = nullptr;
 };

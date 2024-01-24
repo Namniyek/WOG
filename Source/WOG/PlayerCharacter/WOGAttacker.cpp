@@ -373,6 +373,7 @@ void AWOGAttacker::AlternativeActionPressed(const FInputActionValue& Value)
 		if (CurrentTarget)
 		{
 			EnemyOrderComponent->Server_SendOrder(EnemyOrderComponent->GetCurrentlySelectedSquad(), EEnemyOrder::EEO_AttackTarget, FTransform(), CurrentTarget);
+			EnemyOrderComponent->OnOrderSentDelegate.Broadcast(1);
 		}
 	}
 
@@ -393,6 +394,7 @@ void AWOGAttacker::AlternativeActionPressed(const FInputActionValue& Value)
 			FTransform HoldTransform = FTransform();
 			HoldTransform.SetLocation(HitResult.Location + FVector(0, 0, 100));
 			EnemyOrderComponent->Server_SendOrder(EnemyOrderComponent->GetCurrentlySelectedSquad(), EEnemyOrder::EEO_Hold, HoldTransform);
+			EnemyOrderComponent->OnOrderSentDelegate.Broadcast(2);
 		}
 	}
 
@@ -402,6 +404,7 @@ void AWOGAttacker::AlternativeActionPressed(const FInputActionValue& Value)
 		//Attack random order
 	
 		EnemyOrderComponent->Server_SendOrder(EnemyOrderComponent->GetCurrentlySelectedSquad(), EEnemyOrder::EEO_AttackRandom);
+		EnemyOrderComponent->OnOrderSentDelegate.Broadcast(3);
 	}
 
 	//Key 4/Down pressed
@@ -409,6 +412,7 @@ void AWOGAttacker::AlternativeActionPressed(const FInputActionValue& Value)
 	{
 		//Follow order
 		EnemyOrderComponent->Server_SendOrder(EnemyOrderComponent->GetCurrentlySelectedSquad(), EEnemyOrder::EEO_Follow);
+		EnemyOrderComponent->OnOrderSentDelegate.Broadcast(4);
 	}
 }
 

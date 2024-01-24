@@ -10,6 +10,10 @@
 /**
  * 
  */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSquadUpdatedDelegate, bool, bSquadAdded);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCurrentActiveSquadUpdatedDelegate, int32, CurrentActiveSquadIndex);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnOrderSentDelegate, int32, OrderIndex);
+
 class AWOGBaseSquad;
 class AWOGAttacker;
 
@@ -34,7 +38,19 @@ protected:
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<AWOGBaseSquad> CurrentlySelectedSquad;
 
+	UPROPERTY(BlueprintCallable, BlueprintAssignable)
+	FOnSquadUpdatedDelegate OnSquadUpdatedDelegate;
+
+	UPROPERTY(BlueprintCallable, BlueprintAssignable)
+	FOnCurrentActiveSquadUpdatedDelegate OnCurrentActiveSquadUpdatedDelegate;
+
 private:
+
+	UFUNCTION(Client, reliable)
+	void Client_CurrentSquadsUpdated();
+
+	UFUNCTION(Client, reliable)
+	void Client_CurrentActiveSquadUpdated(const int32& NewSquadIndex);
 
 public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Setup)
@@ -63,4 +79,7 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void DecreaseCurrentlySelectedSquad();
+
+	UPROPERTY(BlueprintCallable, BlueprintAssignable)
+	FOnOrderSentDelegate OnOrderSentDelegate;
 };

@@ -20,6 +20,8 @@ AWOGBaseSquad::AWOGBaseSquad()
 	SetRootComponent(RootComp);
 
 	SquadType = EEnemySquadType::EEST_Melee;
+	SquadName = FText();
+	SquadIcon = nullptr;
 
 	Slot_0 = CreateDefaultSubobject<USceneComponent>(TEXT("Slot_0"));
 	Slot_0->SetupAttachment(GetRootComponent());
@@ -85,6 +87,8 @@ void AWOGBaseSquad::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLif
 	DOREPLIFETIME(AWOGBaseSquad, CurrentTargetLocation);
 	DOREPLIFETIME(AWOGBaseSquad, CurrentTargetActor);
 	DOREPLIFETIME(AWOGBaseSquad, SquadType);
+	DOREPLIFETIME(AWOGBaseSquad, SquadName);
+	DOREPLIFETIME(AWOGBaseSquad, SquadIcon);
 }
 
 void AWOGBaseSquad::BeginPlay()

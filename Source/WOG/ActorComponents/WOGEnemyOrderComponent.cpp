@@ -29,6 +29,16 @@ void UWOGEnemyOrderComponent::BeginPlay()
 	OwnerAttacker = Cast<AWOGAttacker>(GetOwner());
 }
 
+void UWOGEnemyOrderComponent::Client_CurrentSquadsUpdated_Implementation()
+{
+	OnSquadUpdatedDelegate.Broadcast(true);
+}
+
+void UWOGEnemyOrderComponent::Client_CurrentActiveSquadUpdated_Implementation(const int32& NewSquadIndex)
+{
+	OnCurrentActiveSquadUpdatedDelegate.Broadcast(NewSquadIndex);
+}
+
 USceneComponent* UWOGEnemyOrderComponent::GetNextAvailableSquadSlot(AWOGBaseSquad* Squad) const
 {
 	if (GetOwner() && OwnerAttacker == nullptr)
@@ -69,6 +79,7 @@ void UWOGEnemyOrderComponent::HandleCurrentSquads(AWOGBaseSquad* Squad, bool bAd
 	{
 		//Add to the current squad array
 		CurrentSquads.AddUnique(Squad);
+		Client_CurrentSquadsUpdated();
 	}
 	else
 	{
@@ -80,6 +91,7 @@ void UWOGEnemyOrderComponent::HandleCurrentSquads(AWOGBaseSquad* Squad, bool bAd
 			if (CurrentSquads[i] == Squad)
 			{
 				CurrentSquads.Remove(Squad);
+				Client_CurrentSquadsUpdated();
 			}
 		}
 
@@ -92,6 +104,14 @@ void UWOGEnemyOrderComponent::SetCurrentlySelectedSquad(AWOGBaseSquad* NewSquad)
 {
 	CurrentlySelectedSquad = NewSquad;
 	UE_LOG(WOGLogSpawn, Warning, TEXT("Local role of %s is %s for %s"), *GetNameSafe(GetOwner()), *UEnum::GetValueAsString(GetOwnerRole()), *GetNameSafe(NewSquad));
+	
+	for (int32 i = 0; i < CurrentSquads.Num(); i++)
+	{
+		if (CurrentSquads[i] == CurrentlySelectedSquad)
+		{
+			Client_CurrentActiveSquadUpdated(i);
+		}
+	}
 }
 
 void UWOGEnemyOrderComponent::IncreaseCurrentlySelectedSquad()

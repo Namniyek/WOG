@@ -349,7 +349,7 @@ void UWOGUIManagerSubsystem::AddMinimapWidget()
 	MinimapWidget = CreateWidget<UUserWidget>(OwnerPC, MatchHUD->MinimapWidgetClass);
 	if (MinimapWidget && MatchHUD->HUDWidget->GetMinimapContainer())
 	{
-		MatchHUD->HUDWidget->GetMinimapContainer()->ClearChildren();
+		//MatchHUD->HUDWidget->GetMinimapContainer()->ClearChildren();
 		MatchHUD->HUDWidget->GetMinimapContainer()->AddChild(MinimapWidget);
 	}
 }
@@ -516,11 +516,9 @@ void UWOGUIManagerSubsystem::AddSquadOrderWidget()
 	if (SquadOrderWidget && MatchHUD->HUDWidget->GetSquadOrderContainer())
 	{
 		CollapseAbilitiesWidget();
-		RemoveAvailableResourcesWidget();
 		MatchHUD->HUDWidget->GetSquadOrderContainer()->ClearChildren();
 		MatchHUD->HUDWidget->GetSquadOrderContainer()->AddChild(SquadOrderWidget);
 	}
-
 }
 
 void UWOGUIManagerSubsystem::RemoveSquadOrderWidget()
@@ -529,8 +527,8 @@ void UWOGUIManagerSubsystem::RemoveSquadOrderWidget()
 	{
 		SquadOrderWidget->RemoveFromParent();
 		RestoreAbilitiesWidget();
-		AddAvailableResourcesWidget();
 		UE_LOG(WOGLogUI, Display, TEXT("SquadOrderWidget removed from subsystem"));
+		SquadOrderWidget = nullptr;
 	}
 	else
 	{

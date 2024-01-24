@@ -334,6 +334,8 @@ void UWOGSpawnComponent::Spawn(FTransform Transform, int32 ID)
 	}
 
 	SpawnedSquad->SetSquadType(Spawnables[ID]->SquadType);
+	SpawnedSquad->SquadIcon = Spawnables[ID]->Icon;
+	SpawnedSquad->SquadName = Spawnables[ID]->Name;
 	SpawnedSquad->SendOrder(EEnemyOrder::EEO_Hold, SpawnedSquad->GetTransform());
 }
 
