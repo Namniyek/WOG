@@ -1801,7 +1801,6 @@ void ABasePlayerCharacter::Multicast_Elim_Implementation(bool bPlayerLeftGame)
 	GetMesh()->AddImpulse(ImpulseDirection);
 	TargetComponent->TargetLockOff();
 	if(OwnerPC)	OwnerPC->SetDefaultPawn(nullptr);
-	
 
 	/*
 	**Handle respawn timer

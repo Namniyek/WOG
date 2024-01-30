@@ -177,6 +177,9 @@ protected:
 
 	#pragma region DissolveEffect
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UMaterialInterface* Material;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UMaterialInstanceDynamic* CharacterMI;
 
@@ -199,6 +202,8 @@ protected:
 
 	UFUNCTION(NetMulticast, reliable)
 	void Multicast_StartDissolve(bool bIsReversed = false);
+
+	void StartDissolve(bool bIsReversed = false);
 	#pragma endregion
 
 	#pragma region Animation
@@ -221,6 +226,7 @@ protected:
 	*/
 	UFUNCTION(BlueprintPure)
 	FName CalculateHitDirection(const FVector& WeaponLocation);
+
 	FVector LastHitDirection;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	FHitResult LastHitResult;

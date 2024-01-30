@@ -8,6 +8,7 @@
 #include "Data/WOGDataTypes.h"
 #include "CharacterTypes.generated.h"
 
+class UAnimMontage;
 class USoundCue;
 
 USTRUCT(BlueprintType)
@@ -92,6 +93,9 @@ struct FCharacterData
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Vocals | Movement")
 	TObjectPtr<USoundCue> EffortLongSound = nullptr;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Animations")
+	UAnimMontage* ActionsMontage = nullptr;
 };
 
 USTRUCT(BlueprintType)

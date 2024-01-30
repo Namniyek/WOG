@@ -19,6 +19,8 @@ class WOG_API AWOGBaseEnemy : public AWOGBaseCharacter, public ISpawnInterface
 
 public:
 	AWOGBaseEnemy();
+	virtual void OnConstruction(const FTransform& Transform) override;
+
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
 
 protected:
@@ -32,6 +34,9 @@ protected:
 
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly)
 	int32 SquadUnitIndex;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<UStaticMeshComponent> StaticMeshWeapon;
 
 	#pragma region Actor Components
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)

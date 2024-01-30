@@ -522,11 +522,6 @@ public:
 	TObjectPtr<UWidgetComponent> StaminaWidgetContainer;
 	#pragma endregion
 
-	#pragma region Material variables
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	UMaterialInterface* Material;
-	#pragma endregion
-
 	#pragma region Teleport
 	UFUNCTION()
 	void FinishTeleportCharacter(const FTransform& Destination);

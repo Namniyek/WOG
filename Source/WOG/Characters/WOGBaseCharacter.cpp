@@ -28,6 +28,7 @@
 #include "TargetSystemComponent.h"
 #include "Libraries/WOGBlueprintLibrary.h"
 #include "AI/Combat/WOGBaseSquad.h"
+#include "Components/StaticMeshComponent.h"
 
 AWOGBaseCharacter::AWOGBaseCharacter()
 {
@@ -172,6 +173,7 @@ void AWOGBaseCharacter::OnHealthAttributeChanged(const FOnAttributeChangeData& D
 					FGameplayEventData EventPayload;
 					EventPayload.EventTag = TAG_Event_Elim;
 					EventPayload.Instigator = InstigatorCharacter->GetController();
+					EventPayload.OptionalObject = EffectContext.GetInstigator();
 					UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Elim, EventPayload);
 					UE_LOG(WOGLogCombat, Error, TEXT("Killed by Character"));
 
@@ -191,6 +193,7 @@ void AWOGBaseCharacter::OnHealthAttributeChanged(const FOnAttributeChangeData& D
 					FGameplayEventData EventPayload;
 					EventPayload.EventTag = TAG_Event_Elim;
 					EventPayload.Instigator = InstigatorEnemy->GetOwnerAttacker()->GetController();
+					EventPayload.OptionalObject = EffectContext.GetInstigator();
 					UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Elim, EventPayload);
 					UE_LOG(WOGLogCombat, Error, TEXT("Killed by Enemy"));
 
@@ -542,14 +545,19 @@ void AWOGBaseCharacter::InitPhysics()
 
 void AWOGBaseCharacter::Multicast_StartDissolve_Implementation(bool bIsReversed)
 {
+	StartDissolve(bIsReversed);
+}
+
+void AWOGBaseCharacter::StartDissolve(bool bIsReversed)
+{
+	if (!DissolveCurve || !DissolveTimeline) return;
+
 	DissolveTrack.BindDynamic(this, &AWOGBaseCharacter::UpdateDissolveMaterial);
 	DissolveTimelineFinished.BindDynamic(this, &AWOGBaseCharacter::OnDissolveTimelineFinished);
 
-	if(!DissolveCurve || !DissolveTimeline) return;
-
 	DissolveTimeline->AddInterpFloat(DissolveCurve, DissolveTrack);
 	DissolveTimeline->SetTimelineFinishedFunc(DissolveTimelineFinished);
-	if(!bIsReversed)
+	if (!bIsReversed)
 	{
 		DissolveTimeline->PlayFromStart();
 	}
@@ -560,7 +568,7 @@ void AWOGBaseCharacter::Multicast_StartDissolve_Implementation(bool bIsReversed)
 
 	if (IsLocallyControlled() && Controller)
 	{
-		TObjectPtr<APlayerController> PC = CastChecked<APlayerController>(Controller);
+		TObjectPtr<APlayerController> PC = Cast<APlayerController>(Controller);
 		if (PC)
 		{
 			DisableInput(PC);
@@ -586,7 +594,7 @@ void AWOGBaseCharacter::OnDissolveTimelineFinished()
 	UE_LOG(LogTemp, Warning, TEXT("TimelineFinsihed"));
 	if (IsLocallyControlled() && Controller)
 	{
-		TObjectPtr<APlayerController> PC = CastChecked<APlayerController>(Controller);
+		TObjectPtr<APlayerController> PC = Cast<APlayerController>(Controller);
 		if (PC)
 		{
 			EnableInput(PC);

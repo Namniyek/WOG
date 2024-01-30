@@ -66,6 +66,10 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Spawn_Raven_RemoveMarker, "Event.Spawn.Raven.Re
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Spawn_Raven_MoveLeft, "Event.Spawn.Raven.MoveLeft");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Spawn_Raven_MoveRight, "Event.Spawn.Raven.MoveRight");
 
+UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Order_Follow, "Event.Order.Follow");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Order_Hold, "Event.Order.Hold");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Order_Attack_Target, "Event.Order.Attack.Target");
+
 
 //Inventory tags
 

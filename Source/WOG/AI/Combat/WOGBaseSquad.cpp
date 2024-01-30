@@ -8,6 +8,8 @@
 #include "PlayerCharacter/WOGDefender.h"
 #include "Kismet/GameplayStatics.h"
 #include "Interfaces/TargetInterface.h"
+#include "Libraries/WOGBlueprintLibrary.h"
+#include "ActorComponents/WOGUIManagerComponent.h"
 
 AWOGBaseSquad::AWOGBaseSquad()
 {
@@ -107,6 +109,16 @@ void AWOGBaseSquad::SendOrder(const EEnemyOrder& NewOrder, const FTransform& Tar
 
 	if (!GetOwner() || !GetOwner()->HasAuthority()) return;
 
+	/*
+	**Get a reference to the UI manager in case an order fails.
+	*/
+	APawn* OwnerPawn = Cast<APawn>(GetOwner());
+	UWOGUIManagerComponent* UIManager = nullptr;
+	if (OwnerPawn && OwnerPawn->GetController())
+	{
+		UIManager = UWOGBlueprintLibrary::GetUIManagerComponent(OwnerPawn->GetController());
+	}
+
 	UWOGEnemyOrderComponent* OrderComp = GetOwner()->GetComponentByClass<UWOGEnemyOrderComponent>();
 
 	switch (NewOrder)
@@ -162,6 +174,10 @@ void AWOGBaseSquad::SendOrder(const EEnemyOrder& NewOrder, const FTransform& Tar
 		if (!TargetActor)
 		{
 			SendOrder(EEnemyOrder::EEO_Follow);
+			if (UIManager)
+			{
+				UIManager->Client_CreateGenericWarningWidget(FString("NoValidTarget"));
+			}
 			UE_LOG(WOGLogCombat, Error, TEXT("TargetActor invalid, default to FOLLOW order"));
 			return;
 		}
@@ -197,6 +213,10 @@ void AWOGBaseSquad::SendOrder(const EEnemyOrder& NewOrder, const FTransform& Tar
 
 			// if not, default to Follow order
 			SendOrder(EEnemyOrder::EEO_Follow);
+			if (UIManager)
+			{
+				UIManager->Client_CreateGenericWarningWidget(FString("TooManySquadsOnTarget"));
+			}
 			UE_LOG(WOGLogCombat, Error, TEXT("Too many squads attaching same target"));
 		}
 
@@ -224,6 +244,10 @@ void AWOGBaseSquad::SendOrder(const EEnemyOrder& NewOrder, const FTransform& Tar
 
 			// if not, default to Follow order
 			SendOrder(EEnemyOrder::EEO_Follow);
+			if (UIManager)
+			{
+				UIManager->Client_CreateGenericWarningWidget(FString("TooManySquadsOnTarget"));
+			}
 			UE_LOG(WOGLogCombat, Error, TEXT("Too many squads attaching same target"));
 		}
 
@@ -242,6 +266,10 @@ void AWOGBaseSquad::SendOrder(const EEnemyOrder& NewOrder, const FTransform& Tar
 
 		// if not, default to Follow order
 		SendOrder(EEnemyOrder::EEO_Follow);
+		if (UIManager)
+		{
+			UIManager->Client_CreateGenericWarningWidget(FString("NoValidTarget"));
+		}
 		UE_LOG(WOGLogCombat, Error, TEXT("No valid random target"));
 		break;
 	default:

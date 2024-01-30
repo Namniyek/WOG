@@ -76,4 +76,7 @@ public:
 
 	UFUNCTION(Client, Reliable, BlueprintCallable)
 	void Client_UpdateVendorWidget();
+
+	UFUNCTION(Client, Reliable, BlueprintCallable)
+	void Client_CreateGenericWarningWidget(const FString& WarningString);
 };

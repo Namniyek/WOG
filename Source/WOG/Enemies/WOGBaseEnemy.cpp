@@ -39,6 +39,21 @@ AWOGBaseEnemy::AWOGBaseEnemy()
 
 	BaseDamage = 10.f;
 	DamageEffect = nullptr;
+
+	StaticMeshWeapon = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Weapon Static Mesh"));
+	StaticMeshWeapon->SetIsReplicated(true);
+	StaticMeshWeapon->SetupAttachment(GetMesh(), FName("Hand_R_Sword"));
+	StaticMeshWeapon->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+}
+
+void AWOGBaseEnemy::OnConstruction(const FTransform& Transform)
+{
+	Super::OnConstruction(Transform);
+
+	if (Material)
+	{
+		CharacterMI = UMaterialInstanceDynamic::Create(Material, this);
+	}
 }
 
 void AWOGBaseEnemy::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -59,6 +74,11 @@ void AWOGBaseEnemy::BeginPlay()
 
 	GiveDefaultAbilities();
 	ApplyDefaultEffects();
+
+	if (CharacterMI)
+	{
+		GetMesh()->SetMaterial(0, CharacterMI);
+	}
 }
 
 void AWOGBaseEnemy::Destroyed()
@@ -321,7 +341,23 @@ void AWOGBaseEnemy::Elim(bool bPlayerLeftGame)
 		OwnerSquad->DeregisterDeadSquadMember(this);
 	}
 
-	//Multicast_Elim(bPlayerLeftGame);
+	if (StaticMeshWeapon)
+	{
+		StaticMeshWeapon->DestroyComponent();
+	}
+
+	Multicast_StartDissolve();
+
+	if (GetCharacterMovement())
+	{
+		GetCharacterMovement()->DisableMovement();
+		GetCharacterMovement()->StopMovementImmediately();
+	}
+
+	if (GetCapsuleComponent())
+	{
+		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
 
 	/*
 	**Handle destroy timer
@@ -332,16 +368,16 @@ void AWOGBaseEnemy::Elim(bool bPlayerLeftGame)
 void AWOGBaseEnemy::Multicast_Elim_Implementation(bool bPlayerLeftGame)
 {
 	GetMesh()->SetCollisionProfileName(FName("Ragdoll"));
-	GetMesh()->SetAllBodiesSimulatePhysics(true);
-	GetCharacterMovement()->DisableMovement();
-	GetCharacterMovement()->StopMovementImmediately();
-	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	FVector ImpulseDirection = LastHitDirection.GetSafeNormal() * -65000.f;
-	GetMesh()->AddImpulse(ImpulseDirection);
+	GetMesh()->bPauseAnims = true;
+	if (GetCapsuleComponent())
+	{
+		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
 }
 
 void AWOGBaseEnemy::ElimTimerFinished()
 {
+	Multicast_Elim(false);
 	Destroy();
 }
 

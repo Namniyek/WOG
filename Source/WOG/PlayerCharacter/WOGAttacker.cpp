@@ -187,6 +187,7 @@ void AWOGAttacker::SpawnActionPressed(const FInputActionValue& Value)
 
 void AWOGAttacker::AbilitiesButtonPressed(const FInputActionValue& Value)
 {
+	if (bIsAlternativeModeEnabled) return;
 	FVector2D AbilitiesVector = Value.Get<FVector2D>();
 
 	if (AbilitiesVector.X > 0)
@@ -273,6 +274,7 @@ void AWOGAttacker::AbilitiesButtonPressed(const FInputActionValue& Value)
 
 void AWOGAttacker::Ability2HoldButtonStarted(const FInputActionValue& Value)
 {
+	if (bIsAlternativeModeEnabled) return;
 	AbilityHoldStarted(FName("1"));
 }
 
@@ -284,6 +286,7 @@ void AWOGAttacker::Ability2HoldButtonTriggered(const FInputActionValue& Value)
 	RemoveHoldProgressBarWidget();
 
 	if (!EquipmentManager) return;
+	if (bIsAlternativeModeEnabled) return;
 
 	AActor* OutMagic = nullptr;
 	EquipmentManager->GetMagicShortcutReference(FName("1"), OutMagic);
@@ -318,6 +321,7 @@ void AWOGAttacker::Ability2HoldButtonTriggered(const FInputActionValue& Value)
 
 void AWOGAttacker::Ability3HoldButtonStarted(const FInputActionValue& Value)
 {
+	if (bIsAlternativeModeEnabled) return;
 	AbilityHoldStarted(FName("2"));
 }
 
@@ -329,6 +333,7 @@ void AWOGAttacker::Ability3HoldButtonTriggered(const FInputActionValue& Value)
 	RemoveHoldProgressBarWidget();
 
 	if (!EquipmentManager) return;
+	if (bIsAlternativeModeEnabled) return;
 
 	AActor* OutMagic = nullptr;
 	EquipmentManager->GetMagicShortcutReference(FName("2"), OutMagic);
@@ -374,6 +379,10 @@ void AWOGAttacker::AlternativeActionPressed(const FInputActionValue& Value)
 		{
 			EnemyOrderComponent->Server_SendOrder(EnemyOrderComponent->GetCurrentlySelectedSquad(), EEnemyOrder::EEO_AttackTarget, FTransform(), CurrentTarget);
 			EnemyOrderComponent->OnOrderSentDelegate.Broadcast(1);
+
+			FGameplayEventData EventPayload;
+			EventPayload.EventTag = TAG_Event_Order_Attack_Target;
+			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Order_Attack_Target, EventPayload);
 		}
 	}
 
@@ -395,6 +404,10 @@ void AWOGAttacker::AlternativeActionPressed(const FInputActionValue& Value)
 			HoldTransform.SetLocation(HitResult.Location + FVector(0, 0, 100));
 			EnemyOrderComponent->Server_SendOrder(EnemyOrderComponent->GetCurrentlySelectedSquad(), EEnemyOrder::EEO_Hold, HoldTransform);
 			EnemyOrderComponent->OnOrderSentDelegate.Broadcast(2);
+
+			FGameplayEventData EventPayload;
+			EventPayload.EventTag = TAG_Event_Order_Hold;
+			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Order_Hold, EventPayload);
 		}
 	}
 
@@ -405,6 +418,10 @@ void AWOGAttacker::AlternativeActionPressed(const FInputActionValue& Value)
 	
 		EnemyOrderComponent->Server_SendOrder(EnemyOrderComponent->GetCurrentlySelectedSquad(), EEnemyOrder::EEO_AttackRandom);
 		EnemyOrderComponent->OnOrderSentDelegate.Broadcast(3);
+
+		FGameplayEventData EventPayload;
+		EventPayload.EventTag = TAG_Event_Order_Attack_Target;
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Order_Attack_Target, EventPayload);
 	}
 
 	//Key 4/Down pressed
@@ -413,6 +430,10 @@ void AWOGAttacker::AlternativeActionPressed(const FInputActionValue& Value)
 		//Follow order
 		EnemyOrderComponent->Server_SendOrder(EnemyOrderComponent->GetCurrentlySelectedSquad(), EEnemyOrder::EEO_Follow);
 		EnemyOrderComponent->OnOrderSentDelegate.Broadcast(4);
+
+		FGameplayEventData EventPayload;
+		EventPayload.EventTag = TAG_Event_Order_Follow;
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Order_Follow, EventPayload);
 	}
 }
 

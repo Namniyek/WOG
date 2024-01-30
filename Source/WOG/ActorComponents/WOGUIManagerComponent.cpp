@@ -175,3 +175,11 @@ void UWOGUIManagerComponent::Client_UpdateVendorWidget_Implementation()
 		UIManager->UpdateVendorWidgetAfterTransaction();
 	}
 }
+
+void UWOGUIManagerComponent::Client_CreateGenericWarningWidget_Implementation(const FString& WarningString)
+{
+	if (UIManager)
+	{
+		UIManager->CreateGenericWarningWidget(WarningString);
+	}
+}
