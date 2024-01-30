@@ -21,7 +21,7 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UProgressBar> HoldProgressBar;
 
-	float MaxHoldTime = 1.5f;
+	float MaxHoldTime = 0.75f;
 
 	UFUNCTION(BlueprintPure)
 	float GetHoldProgress();

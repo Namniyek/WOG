@@ -18,6 +18,8 @@
 
 AWOGRaven::AWOGRaven()
 {
+	PrimaryActorTick.bCanEverTick = false;
+
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
@@ -120,8 +122,8 @@ void AWOGRaven::LookActionPressed(const FInputActionValue& Value)
 	FVector2D LookVector = Value.Get<FVector2D>();
 	if (Controller != nullptr)
 	{
-		AddControllerYawInput(FMath::Clamp(LookVector.X, -0.5f, 0.5f));
-		AddControllerPitchInput(FMath::Clamp(LookVector.Y, -0.5f, 0.5f));
+		AddControllerYawInput(FMath::Clamp(LookVector.X, -1.f, 1.f));
+		AddControllerPitchInput(FMath::Clamp(LookVector.Y, -1.f, 1.f));
 	}
 }
 

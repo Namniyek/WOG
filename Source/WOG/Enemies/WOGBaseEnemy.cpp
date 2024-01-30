@@ -21,7 +21,7 @@
 
 AWOGBaseEnemy::AWOGBaseEnemy()
 {
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 	bReplicates = true;
 
 	CombatManager = CreateDefaultSubobject<UAGR_CombatManager>(TEXT("CombatManager"));
