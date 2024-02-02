@@ -35,9 +35,6 @@ protected:
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly)
 	int32 SquadUnitIndex;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<UStaticMeshComponent> StaticMeshWeapon;
-
 	#pragma region Actor Components
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<UAGR_CombatManager> CombatManager;
@@ -45,6 +42,9 @@ protected:
 	#pragma endregion
 
 	#pragma region Handle Combat
+	UPROPERTY(Replicated, BlueprintReadWrite, VisibleAnywhere)
+	int32 ComboIndex;
+
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	TSubclassOf<UGameplayEffect> DamageEffect;
 
@@ -68,6 +68,9 @@ protected:
 	virtual void ProcessMagicHit(const FHitResult& Hit, const struct FMagicDataTable& MagicData);
 
 	virtual void BroadcastHit_Implementation(AActor* AgressorActor, const FHitResult& Hit, const float& DamageToApply, AActor* InstigatorWeapon);
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnCharacterElimEvent();
 	#pragma endregion
 
 	#pragma region Handle Elim

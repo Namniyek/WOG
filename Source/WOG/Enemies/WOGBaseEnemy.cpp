@@ -40,10 +40,7 @@ AWOGBaseEnemy::AWOGBaseEnemy()
 	BaseDamage = 10.f;
 	DamageEffect = nullptr;
 
-	StaticMeshWeapon = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Weapon Static Mesh"));
-	StaticMeshWeapon->SetIsReplicated(true);
-	StaticMeshWeapon->SetupAttachment(GetMesh(), FName("Hand_R_Sword"));
-	StaticMeshWeapon->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	ComboIndex = 0;
 }
 
 void AWOGBaseEnemy::OnConstruction(const FTransform& Transform)
@@ -66,6 +63,7 @@ void AWOGBaseEnemy::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLif
 	DOREPLIFETIME(AWOGBaseEnemy, CurrentEnemyState);
 	DOREPLIFETIME(AWOGBaseEnemy, AttackRange);
 	DOREPLIFETIME(AWOGBaseEnemy, DefendRange);
+	DOREPLIFETIME(AWOGBaseEnemy, ComboIndex);
 }
 
 void AWOGBaseEnemy::BeginPlay()
@@ -341,10 +339,7 @@ void AWOGBaseEnemy::Elim(bool bPlayerLeftGame)
 		OwnerSquad->DeregisterDeadSquadMember(this);
 	}
 
-	if (StaticMeshWeapon)
-	{
-		StaticMeshWeapon->DestroyComponent();
-	}
+	OnCharacterElimEvent();
 
 	Multicast_StartDissolve();
 
