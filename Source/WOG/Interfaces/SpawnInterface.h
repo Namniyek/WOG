@@ -56,5 +56,15 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	float GetDefendRangeValue();
 
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	int32 GetComboIndex();
 
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void DefineComboIndex();
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	FGameplayTag GetAttackTag();
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void DefineAttackTagIndex();
 };

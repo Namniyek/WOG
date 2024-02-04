@@ -40,7 +40,8 @@ AWOGBaseEnemy::AWOGBaseEnemy()
 	BaseDamage = 10.f;
 	DamageEffect = nullptr;
 
-	ComboIndex = 0;
+	ComboIndex = 1;
+	AttackTagIndex = 0;
 }
 
 void AWOGBaseEnemy::OnConstruction(const FTransform& Transform)
@@ -64,6 +65,7 @@ void AWOGBaseEnemy::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLif
 	DOREPLIFETIME(AWOGBaseEnemy, AttackRange);
 	DOREPLIFETIME(AWOGBaseEnemy, DefendRange);
 	DOREPLIFETIME(AWOGBaseEnemy, ComboIndex);
+	DOREPLIFETIME(AWOGBaseEnemy, AttackTagIndex);
 }
 
 void AWOGBaseEnemy::BeginPlay()
@@ -84,9 +86,23 @@ void AWOGBaseEnemy::Destroyed()
 	Super::Destroyed();
 }
 
+void AWOGBaseEnemy::DefineNextComboIndex()
+{
+	if (!HasAuthority()) return;
+
+	ComboIndex = FMath::RandRange(1, 3);
+}
+
 void AWOGBaseEnemy::OnStartAttack()
 {
 	HitActorsToIgnore.Empty();
+}
+
+void AWOGBaseEnemy::DefineNextAttackTagIndex()
+{
+	if (!HasAuthority()) return;
+
+	AttackTagIndex = FMath::RandRange(0, AttackTagsContainer.Num()-1);
 }
 
 void AWOGBaseEnemy::OnAttackHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh)
@@ -268,6 +284,21 @@ void AWOGBaseEnemy::SetOwnerAttacker(AWOGAttacker* NewOwner)
 	OwnerAttacker = NewOwner;
 }
 
+int32 AWOGBaseEnemy::GetComboIndex_Implementation()
+{
+	return ComboIndex;
+}
+
+FGameplayTag AWOGBaseEnemy::GetAttackTag_Implementation()
+{
+	if(AttackTagsContainer.IsValidIndex(AttackTagIndex))
+	{
+		return AttackTagsContainer.GetByIndex(AttackTagIndex);
+	}
+	
+	return FGameplayTag();
+}
+
 void AWOGBaseEnemy::SetOwnerSquad(AWOGBaseSquad* NewOwnerSquad)
 {
 	if (!HasAuthority()) return;
@@ -278,6 +309,16 @@ void AWOGBaseEnemy::SetOwnerSquad(AWOGBaseSquad* NewOwnerSquad)
 	}
 
 	OwnerSquad = NewOwnerSquad;
+}
+
+void AWOGBaseEnemy::DefineComboIndex_Implementation()
+{
+	DefineNextComboIndex();
+}
+
+void AWOGBaseEnemy::DefineAttackTagIndex_Implementation()
+{
+	DefineNextAttackTagIndex();
 }
 
 void AWOGBaseEnemy::SetSquadUnitIndex(const int32& NewIndex)

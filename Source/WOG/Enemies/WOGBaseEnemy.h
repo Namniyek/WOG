@@ -45,6 +45,18 @@ protected:
 	UPROPERTY(Replicated, BlueprintReadWrite, VisibleAnywhere)
 	int32 ComboIndex;
 
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
+	void DefineNextComboIndex();
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	FGameplayTagContainer AttackTagsContainer;
+
+	UPROPERTY(Replicated, BlueprintReadWrite, VisibleAnywhere)
+	int32 AttackTagIndex;
+
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
+	void DefineNextAttackTagIndex();
+
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	TSubclassOf<UGameplayEffect> DamageEffect;
 
@@ -71,6 +83,8 @@ protected:
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnCharacterElimEvent();
+
+
 	#pragma endregion
 
 	#pragma region Handle Elim
@@ -102,6 +116,10 @@ protected:
 
 	float GetAttackRangeValue_Implementation();
 	float GetDefendRangeValue_Implementation();
+	int32 GetComboIndex_Implementation();
+	void DefineComboIndex_Implementation();
+	FGameplayTag GetAttackTag_Implementation();
+	void DefineAttackTagIndex_Implementation();
 	#pragma endregion
 
 	#pragma region Animation
@@ -153,4 +171,6 @@ public:
 	void SetDamageEffect(const TSubclassOf<UGameplayEffect>& NewDamageEffect);
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE TSubclassOf<UGameplayEffect> GetDamageEffect() const { return DamageEffect; }
+
+	
 };
