@@ -193,6 +193,8 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	FWeaponDataTable WeaponData;
 
+	UPROPERTY()
+	FTimerHandle CatchRangedWeaponTimerHandle;
 	#pragma endregion
 
 	UFUNCTION()
@@ -294,4 +296,6 @@ public:
 	void SetOwnerCharacter(ABasePlayerCharacter* NewOwner);
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE ABasePlayerCharacter* GetOwnerCharacter() const { return OwnerCharacter; }
+
+	void StartCatchRangedWeaponTimer();
 };

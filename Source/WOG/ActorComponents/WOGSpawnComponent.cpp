@@ -257,6 +257,11 @@ void UWOGSpawnComponent::Spawn(FTransform Transform, int32 ID)
 		UE_LOG(WOGLogSpawn, Error, TEXT("Order component invalid"));
 		return;
 	}
+	if (Spawnables[ID]->MinionArray.IsEmpty())
+	{
+		UE_LOG(WOGLogSpawn, Error, TEXT("MinionArray empty"));
+		return;
+	}
 
 	/*
 	*Check how many active squads the attacker has
@@ -291,9 +296,7 @@ void UWOGSpawnComponent::Spawn(FTransform Transform, int32 ID)
 	/*
 	*Handle the actual spawn of the enemies
 	*/
-	//TArray<FVector> Spawns = GetSpawnLocations(Transform.GetLocation(), 150, Spawnables[ID]->AmountUnits);
 
-	//for (auto Spawn : Spawns)
 	for (int32 i = 0; i<Spawnables[ID]->AmountUnits; i++)
 	{
 		Transform.SetLocation(Transform.GetLocation() + FVector((Spawnables[ID]->AmountUnits*150), 0.f, Spawnables[ID]->HeightOffset));
@@ -302,10 +305,12 @@ void UWOGSpawnComponent::Spawn(FTransform Transform, int32 ID)
 		Params.Owner = AttackerCharacter ? AttackerCharacter : nullptr;
 		Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
-		TObjectPtr<AActor> SpawnedActor = GetWorld()->SpawnActor<AActor>(Spawnables[ID]->Actor, Transform, Params);
-		//UE_LOG(LogTemp, Warning, TEXT("Spawned at: %s"), *Spawn.ToString());
+		int32 Index = FMath::RandRange(0, Spawnables[ID]->MinionArray.Num() - 1);
+		TSubclassOf<AWOGBaseEnemy> MinionClass = Spawnables[ID]->MinionArray[Index];
 
-		if (TObjectPtr<AWOGBaseEnemy> SpawnedEnemy = Cast<AWOGBaseEnemy>(SpawnedActor))
+		TObjectPtr<AWOGBaseEnemy> SpawnedEnemy = GetWorld()->SpawnActor<AWOGBaseEnemy>(MinionClass, Transform, Params);
+
+		if (SpawnedEnemy)
 		{
 			//Handle the squad assign logic and init
 			FEnemyCombatSlot Slot;

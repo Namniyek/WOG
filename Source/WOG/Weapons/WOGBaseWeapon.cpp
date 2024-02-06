@@ -609,6 +609,8 @@ void AWOGBaseWeapon::Server_ThrowWeapon_Implementation(bool IsTargetValid, const
 	}
 
 	MeshSecondary->SetVisibility(false);
+
+	StartCatchRangedWeaponTimer();
 }
 
 void AWOGBaseWeapon::Server_SpawnWeaponAOE_Implementation(const FVector_NetQuantize& TargetLocation)
@@ -665,6 +667,11 @@ void AWOGBaseWeapon::CatchWeapon()
 {
 	OwnerCharacter = OwnerCharacter == nullptr ? (TObjectPtr<ABasePlayerCharacter>) Cast<ABasePlayerCharacter>(GetOwner()) : OwnerCharacter;
 	if (!OwnerCharacter) return;
+	if (!OwnerCharacter->HasMatchingGameplayTag(TAG_State_Weapon_Ranged_Throw))
+	{
+		CatchRangedWeaponTimerHandle.Invalidate();
+		return;
+	}
 
 	UAbilitySystemComponent* ASC = OwnerCharacter->GetAbilitySystemComponent();
 	if (ASC)
@@ -697,4 +704,12 @@ void AWOGBaseWeapon::SetOwnerCharacter(ABasePlayerCharacter* NewOwner)
 
 	}
 	UE_LOG(LogTemp, Warning, TEXT("New owner of weapon %s is : %s"), *GetNameSafe(this), *GetNameSafe(OwnerCharacter));
+}
+
+void AWOGBaseWeapon::StartCatchRangedWeaponTimer()
+{
+	if (!HasAuthority()) return;
+
+	float CatchDelay = 5.f;
+	GetWorldTimerManager().SetTimer(CatchRangedWeaponTimerHandle, this, &ThisClass::CatchWeapon, CatchDelay, false);
 }

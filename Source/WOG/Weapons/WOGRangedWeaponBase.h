@@ -27,7 +27,7 @@ protected:
 	virtual void BeginPlay() override;
 
 
-#pragma region WeaponVariables
+	#pragma region WeaponVariables
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	UStaticMeshComponent* Mesh;
@@ -46,24 +46,24 @@ protected:
 
 #pragma endregion
 
-#pragma region ActorComponents
+	#pragma region ActorComponents
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Ranged Weapon Components")
-	TObjectPtr <USceneComponent> Root;
+		UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Ranged Weapon Components")
+		TObjectPtr <USceneComponent> Root;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Ranged Weapon Components")
-	TObjectPtr <URotatingMovementComponent> ThrowRotation;
+		UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Ranged Weapon Components")
+		TObjectPtr <URotatingMovementComponent> ThrowRotation;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Ranged Weapon Components")
-	TObjectPtr <URotatingMovementComponent> RecallRotation;
+		UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Ranged Weapon Components")
+		TObjectPtr <URotatingMovementComponent> RecallRotation;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Ranged Weapon Components")
-	TObjectPtr <UProjectileMovementComponent> ProjectileComponent;
+		UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Ranged Weapon Components")
+		TObjectPtr <UProjectileMovementComponent> ProjectileComponent;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<UAGR_CombatManager> CombatManager;
+		UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+		TObjectPtr<UAGR_CombatManager> CombatManager;
 
-#pragma endregion
+	#pragma endregion
 
 	void InitWeapon();
 
@@ -83,9 +83,6 @@ private:
 	void DropWeapon(const FVector& ImpactNormal);
 
 public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void RecallWeapon();
 

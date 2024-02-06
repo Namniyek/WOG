@@ -152,13 +152,6 @@ void AWOGRangedWeaponBase::DropWeapon(const FVector& ImpactNormal)
 	}
 }
 
-// Called every frame
-void AWOGRangedWeaponBase::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-}
-
 void AWOGRangedWeaponBase::RecallWeapon_Implementation()
 {
 	OwnerCharacter = OwnerCharacter == nullptr ? (TObjectPtr<ABasePlayerCharacter>) Cast<ABasePlayerCharacter>(GetOwner()) : OwnerCharacter;

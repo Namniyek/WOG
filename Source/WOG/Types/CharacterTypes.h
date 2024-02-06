@@ -10,6 +10,7 @@
 
 class UAnimMontage;
 class USoundCue;
+class AWOGBaseEnemy;
 
 USTRUCT(BlueprintType)
 struct FCharacterAbilityData
@@ -121,8 +122,8 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Mesh", MakeStructureDefaultValue = "None"))
 	TObjectPtr<UStaticMesh> Mesh = nullptr;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Actor", MakeStructureDefaultValue = "None"))
-	TObjectPtr<UClass> Actor = nullptr;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Minion Array", MakeStructureDefaultValue = "None"))
+	TArray<TSubclassOf<AWOGBaseEnemy>> MinionArray = {};
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Amount Units", MakeStructureDefaultValue = "1"))
 	int32 AmountUnits = 0;
