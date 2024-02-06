@@ -122,6 +122,10 @@ void AWOGBaseEnemy::ProcessHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh)
 
 	//Get the Damage to apply values:
 	float DamageToApply = BaseDamage;
+	if (HasMatchingGameplayTag(TAG_State_Weapon_AttackHeavy) && HasAuthority())
+	{
+		DamageToApply = BaseDamage * 2;
+	}
 
 	//Check if we hit build and apply build damage
 	IBuildingInterface* BuildInterface = Cast<IBuildingInterface>(Hit.GetActor());

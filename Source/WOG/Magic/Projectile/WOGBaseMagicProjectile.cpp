@@ -11,6 +11,7 @@
 #include "Components/AudioComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/ProjectileMovementComponent.h"
+#include "WOG.h"
 
 
 AWOGBaseMagicProjectile::AWOGBaseMagicProjectile()
@@ -64,6 +65,9 @@ void AWOGBaseMagicProjectile::BeginPlay()
 	OverlapSphere->OnComponentHit.AddDynamic(this, &AWOGBaseMagicProjectile::OnHit);
 	ProjectileSound->SetSound(MagicData.ProjectileSound);
 	ProjectileSound->Play(0.f);
+
+	if (!GetOwner()) return;
+	UE_LOG(WOGLogCombat, Warning, TEXT("Projectile spawned on %s"), *UEnum::GetValueAsString(GetOwner()->GetLocalRole()));
 }
 
 void AWOGBaseMagicProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)

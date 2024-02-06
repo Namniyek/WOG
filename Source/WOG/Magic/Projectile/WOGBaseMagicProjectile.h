@@ -48,6 +48,7 @@ protected:
 	
 
 public:	
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
 	FORCEINLINE void SetMagicData(const FMagicDataTable& NewData) { MagicData = NewData; }
 
 	UFUNCTION(BlueprintPure)

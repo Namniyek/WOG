@@ -1429,7 +1429,7 @@ void ABasePlayerCharacter::BroadcastHit_Implementation(AActor* AgressorActor, co
 	}
 
 	//Handle blocked hits for victim and agressor
-	if (HasMatchingGameplayTag(TAG_State_Weapon_Block) && IsHitFrontal(60.f, this, FVector::Zero(), AgressorActor))
+	if (HasMatchingGameplayTag(TAG_State_Weapon_Block) && IsHitFrontal(60.f, this, FVector::Zero(), AgressorActor) && EquippedWeapon)
 	{
 		if (AgressorCharacter->HasMatchingGameplayTag(TAG_State_Weapon_AttackHeavy))
 		{
@@ -1493,7 +1493,7 @@ void ABasePlayerCharacter::BroadcastHit_Implementation(AActor* AgressorActor, co
 	//Handle unguarded hit to victim
 	if (!HasMatchingGameplayTag(TAG_State_Weapon_Block) && !HasMatchingGameplayTag(TAG_State_Weapon_Parry))
 	{
-		if (IsHitFrontal(60.f, this, FVector::Zero(), InstigatorWeapon) && AgressorCharacter->HasMatchingGameplayTag(TAG_State_Weapon_AttackHeavy))
+		if ((IsHitFrontal(60.f, this, FVector::Zero(), InstigatorWeapon) || IsValid(AgressorEnemy)) && AgressorCharacter->HasMatchingGameplayTag(TAG_State_Weapon_AttackHeavy))
 		{
 			//Send event KO to victim
 			FGameplayEventData EventKOPayload;
