@@ -5,7 +5,7 @@
 #include "Net/UnrealNetwork.h"
 #include "NiagaraComponent.h"
 #include "Components/SphereComponent.h"
-#include "PlayerCharacter/BasePlayerCharacter.h"
+#include "Characters/WOGBaseCharacter.h"
 #include "Sound/SoundCue.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -67,10 +67,9 @@ void AWOGBaseMagicAOE::OnOverlap(UPrimitiveComponent* OverlappedComponent, AActo
 {
 	if (!OtherActor || OtherActor == GetOwner()) return;
 
-	TObjectPtr<ABasePlayerCharacter> HitCharacter = Cast<ABasePlayerCharacter>(OtherActor);
-
-	if (HitCharacter)
+	TObjectPtr<AWOGBaseCharacter> OwnerCharacter = Cast<AWOGBaseCharacter>(GetOwner());
+	if (OwnerCharacter)
 	{
-		HitCharacter->ProcessMagicHit(SweepResult, MagicData);
+		OwnerCharacter->ProcessMagicHit(SweepResult, MagicData);
 	}
 }

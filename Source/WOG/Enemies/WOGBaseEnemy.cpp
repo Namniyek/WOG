@@ -18,6 +18,7 @@
 #include "Interfaces/BuildingInterface.h"
 #include "Interfaces/AttributesInterface.h"
 #include "AbilitySystem/AttributeSets/WOGAttributeSetBase.h"
+#include "Magic/WOGBaseMagic.h"
 
 AWOGBaseEnemy::AWOGBaseEnemy()
 {
@@ -102,7 +103,7 @@ void AWOGBaseEnemy::DefineNextAttackTagIndex()
 {
 	if (!HasAuthority()) return;
 
-	AttackTagIndex = FMath::RandRange(0, AttackTagsContainer.Num()-1);
+	AttackTagIndex = FMath::RandRange(0, AttackTagsMap.Num()-1);
 }
 
 void AWOGBaseEnemy::OnAttackHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh)
@@ -146,6 +147,38 @@ void AWOGBaseEnemy::ProcessHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh)
 		UE_LOG(LogTemp, Warning, TEXT("DamageToApply after DamageReduction of %f : %f"), DamageReduction, DamageToApply);
 
 		AttributesInterface->Execute_BroadcastHit(Hit.GetActor(), this, Hit, DamageToApply, this);
+	}
+}
+
+void AWOGBaseEnemy::ProcessMagicHit(const FHitResult& Hit, const FMagicDataTable& MagicData)
+{
+	if (!Hit.GetActor())
+	{
+		UE_LOG(WOGLogSpawn, Error, TEXT("No Victim actor for WOGBaseEnemy ProcessMagicHit()"));
+		return;
+	}
+
+	//Get the Damage to apply values:
+	float DamageToApply = 0.f;;
+	if (HasAuthority())
+	{
+		DamageToApply = MagicData.Value * MagicData.ValueMultiplier;
+	}
+
+	//Check if we hit build and apply build damage
+	IBuildingInterface* BuildInterface = Cast<IBuildingInterface>(Hit.GetActor());
+	if (BuildInterface && HasAuthority())
+	{
+		BuildInterface->Execute_DealDamage(Hit.GetActor(), DamageToApply, this);
+		UE_LOG(LogTemp, Warning, TEXT("Build damaged with %f"), DamageToApply);
+		return;
+	}
+
+	//Check if we hit other character
+	IAttributesInterface* AttributesInterface = Cast<IAttributesInterface>(Hit.GetActor());
+	if (AttributesInterface)
+	{
+		AttributesInterface->Execute_BroadcastMagicHit(Hit.GetActor(), this, Hit, MagicData);
 	}
 }
 
@@ -246,11 +279,6 @@ void AWOGBaseEnemy::BroadcastHit_Implementation(AActor* AgressorActor, const FHi
 	}
 }
 
-void AWOGBaseEnemy::ProcessMagicHit(const FHitResult& Hit, const FMagicDataTable& MagicData)
-{
-
-}
-
 void AWOGBaseEnemy::HandleStateElimmed(AController* InstigatedBy)
 {
 	Elim(false);
@@ -293,16 +321,6 @@ int32 AWOGBaseEnemy::GetComboIndex_Implementation()
 	return ComboIndex;
 }
 
-FGameplayTag AWOGBaseEnemy::GetAttackTag_Implementation()
-{
-	if(AttackTagsContainer.IsValidIndex(AttackTagIndex))
-	{
-		return AttackTagsContainer.GetByIndex(AttackTagIndex);
-	}
-	
-	return FGameplayTag();
-}
-
 void AWOGBaseEnemy::SetOwnerSquad(AWOGBaseSquad* NewOwnerSquad)
 {
 	if (!HasAuthority()) return;
@@ -318,6 +336,43 @@ void AWOGBaseEnemy::SetOwnerSquad(AWOGBaseSquad* NewOwnerSquad)
 void AWOGBaseEnemy::DefineComboIndex_Implementation()
 {
 	DefineNextComboIndex();
+}
+
+int32 AWOGBaseEnemy::GetAttackIndex_Implementation()
+{
+	return AttackTagIndex;
+}
+
+FGameplayTag AWOGBaseEnemy::GetAttackData_Implementation(int32& TokensNeeded)
+{
+	TokensNeeded = 100;
+	if (AttackTagsMap.IsEmpty()) return FGameplayTag();
+
+	TArray<TPair<FGameplayTag, int32>> Array = AttackTagsMap.Array();
+	if(Array.IsEmpty()) return FGameplayTag();
+
+	for (int32 i = 0; i < Array.Num(); i++)
+	{
+		if (i == AttackTagIndex)
+		{
+			TokensNeeded = Array[i].Value;
+			return Array[i].Key;
+		}
+	}
+
+	return FGameplayTag();
+}
+
+FGameplayTag AWOGBaseEnemy::GetAttackDataAtIndex_Implementation(const int32& Index, int32& TokensNeeded)
+{
+	TokensNeeded = 100;
+	if (AttackTagsMap.IsEmpty()) return FGameplayTag();
+
+	TArray<TPair<FGameplayTag, int32>> Array = AttackTagsMap.Array();
+	if (Array.IsEmpty()) return FGameplayTag();
+
+	TokensNeeded = Array[Index].Value;
+	return Array[Index].Key;
 }
 
 void AWOGBaseEnemy::DefineAttackTagIndex_Implementation()

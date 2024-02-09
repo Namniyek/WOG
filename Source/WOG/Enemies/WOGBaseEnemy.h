@@ -42,14 +42,27 @@ protected:
 	#pragma endregion
 
 	#pragma region Handle Combat
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setup|Combat")
+	FName DefaultProjectileAttack = FName("");
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setup|Combat")
+	FName DefaultAOEAttack = FName("");
+
 	UPROPERTY(Replicated, BlueprintReadWrite, VisibleAnywhere)
 	int32 ComboIndex;
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
 	void DefineNextComboIndex();
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	FGameplayTagContainer AttackTagsContainer;
+
+	/*
+	Map to store attack tags and needed tokens
+	Key -> AttackTag
+	Value -> Needed tokens
+	*/
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setup|Combat")
+	TMap<FGameplayTag, int32> AttackTagsMap;
 
 	UPROPERTY(Replicated, BlueprintReadWrite, VisibleAnywhere)
 	int32 AttackTagIndex;
@@ -76,8 +89,8 @@ protected:
 	UFUNCTION()
 	virtual void OnAttackHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh);
 
-	virtual void ProcessHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh);
-	virtual void ProcessMagicHit(const FHitResult& Hit, const struct FMagicDataTable& MagicData);
+	virtual void ProcessHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh) override;
+	virtual void ProcessMagicHit(const FHitResult& Hit, const struct FMagicDataTable& MagicData) override;
 
 	virtual void BroadcastHit_Implementation(AActor* AgressorActor, const FHitResult& Hit, const float& DamageToApply, AActor* InstigatorWeapon);
 
@@ -118,7 +131,9 @@ protected:
 	float GetDefendRangeValue_Implementation();
 	int32 GetComboIndex_Implementation();
 	void DefineComboIndex_Implementation();
-	FGameplayTag GetAttackTag_Implementation();
+	FGameplayTag GetAttackData_Implementation(int32& TokensNeeded);
+	FGameplayTag GetAttackDataAtIndex_Implementation(const int32& Index, int32& TokensNeeded);
+	int32 GetAttackIndex_Implementation();
 	void DefineAttackTagIndex_Implementation();
 	#pragma endregion
 

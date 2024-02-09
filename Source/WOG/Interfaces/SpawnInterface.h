@@ -63,7 +63,10 @@ public:
 	void DefineComboIndex();
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-	FGameplayTag GetAttackTag();
+	FGameplayTag GetAttackData(int32& TokensNeeded);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	FGameplayTag GetAttackDataAtIndex(const int32& Index, int32& TokensNeeded);
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void DefineAttackTagIndex();

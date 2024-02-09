@@ -247,4 +247,9 @@ public:
 	FORCEINLINE bool GetIsRagdolling() const { return bIsRagdolling; }
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE bool GetIsLayingOnBack() const { return bIsLayingOnBack; }
+
+	#pragma region Handle Combat
+	virtual void ProcessHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh) {/*To be overriden in children*/ };
+	virtual void ProcessMagicHit(const FHitResult& Hit, const struct FMagicDataTable& MagicData) {/*To be overriden in children*/ };
+	#pragma endregion
 };
