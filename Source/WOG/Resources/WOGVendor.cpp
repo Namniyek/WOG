@@ -241,7 +241,7 @@ void AWOGVendor::OnInteractWithVendorComplete(ABasePlayerCharacter* Interactor)
 			CurrentUserPC->SetViewTargetWithBlend(this, 0.5f);
 
 			TObjectPtr<UWOGUIManagerSubsystem> UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(CurrentUserPC->GetLocalPlayer());
-			if (UIManager)
+			if (IsValid(UIManager))
 			{
 				UIManager->RemoveBarsWidget();
 				UIManager->RemoveMinimapWidget();

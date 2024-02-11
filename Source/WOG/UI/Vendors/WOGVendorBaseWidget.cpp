@@ -34,17 +34,24 @@ void UWOGVendorBaseWidget::RefreshVendorItems()
 		return;
 	}
 
-	if (VendorItemsBox)
-	{
-		VendorItemsBox->ClearChildren();
-	}
+	VendorItemsBox->ClearChildren();
+	VendorMagicBox->ClearChildren();
+	VendorWeaponsBox->ClearChildren();
+	VendorMinionsBox->ClearChildren();
 
 	TObjectPtr<UAGR_InventoryManager> Inventory = UAGRLibrary::GetInventory(VendorActor);
 	if (!Inventory) return;
 
 	TArray<AActor*> OutItems = {};
 	int32 Amount = 0;
-	Inventory->GetAllItemsOfTagSlotType(VendorActor->ItemTypeFilter, OutItems, Amount);
+
+	for (FGameplayTag Key : VendorActor->ItemTypeFilter)
+	{
+		TArray<AActor*> Items = {};
+		Inventory->GetAllItemsOfTagSlotType(Key, Items, Amount);
+		OutItems.Append(Items);
+	}
+
 	if (OutItems.IsEmpty())
 	{
 		UE_LOG(WOGLogUI, Error, TEXT("Vendor doesn't have any valid items"));
@@ -53,6 +60,13 @@ void UWOGVendorBaseWidget::RefreshVendorItems()
 
 	for (AActor* Item : OutItems)
 	{
+		UAGR_ItemComponent* ItemComp = UAGRLibrary::GetItemComponent(Item);
+		if (!IsValid(ItemComp))
+		{
+			UE_LOG(WOGLogUI, Error, TEXT("Invalid item component invalid"));
+			return;
+		}
+		
 		if (!IsValid(VendorActor->VendorItemClass))
 		{
 			UE_LOG(WOGLogUI, Error, TEXT("VendorItem widget class invalid"));
@@ -70,13 +84,14 @@ void UWOGVendorBaseWidget::RefreshVendorItems()
 		VendorItem->SetVendorActor(VendorActor);
 
 		//The item is a weapon. Set item data accordingly
-		if (VendorActor->ItemTypeFilter == TAG_Inventory_Weapon)
+		if (ItemComp->ItemTagSlotType.MatchesTag(TAG_Inventory_Weapon))
 		{
 
 			TObjectPtr<AWOGBaseWeapon> Weapon = Cast<AWOGBaseWeapon>(Item);
 			if (Weapon)
 			{
 				VendorItem->SetItemData(Weapon->GetWeaponData().VendorItemData);
+				VendorWeaponsBox->AddChild(VendorItem);
 			}
 			else
 			{
@@ -85,12 +100,13 @@ void UWOGVendorBaseWidget::RefreshVendorItems()
 		}
 
 		//The item is a magic. Set item data accordingly
-		if (VendorActor->ItemTypeFilter == TAG_Inventory_Magic)
+		if (ItemComp->ItemTagSlotType.MatchesTag(TAG_Inventory_Magic))
 		{
 			TObjectPtr<AWOGBaseMagic> Magic = Cast<AWOGBaseMagic>(Item);
 			if (Magic)
 			{
 				VendorItem->SetItemData(Magic->GetMagicData().VendorItemData);
+				VendorMagicBox->AddChild(VendorItem);
 			}
 			else
 			{
@@ -99,12 +115,13 @@ void UWOGVendorBaseWidget::RefreshVendorItems()
 		}
 
 		//The item is an item. Set item data accordingly
-		if (VendorActor->ItemTypeFilter == TAG_Inventory_Consumable)
+		if (ItemComp->ItemTagSlotType.MatchesTag(TAG_Inventory_Consumable))
 		{
 			TObjectPtr<AWOGBaseConsumable> Consumable = Cast<AWOGBaseConsumable>(Item);
 			if (Consumable)
 			{
 				VendorItem->SetItemData(Consumable->GetConsumableData().VendorItemData);
+				VendorItemsBox->AddChild(VendorItem);
 			}
 			else
 			{
@@ -112,6 +129,5 @@ void UWOGVendorBaseWidget::RefreshVendorItems()
 			}
 		}
 
-		VendorItemsBox->AddChild(VendorItem);
 	}
 }

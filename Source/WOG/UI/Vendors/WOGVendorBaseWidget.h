@@ -24,12 +24,21 @@ public:
 	UPROPERTY(meta = (BindWidget), BlueprintReadOnly)
 	TObjectPtr<UCommonTextBlock> VendorName;
 
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	TObjectPtr<UScrollBox> VendorItemsBox;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	TObjectPtr<UScrollBox> VendorWeaponsBox;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	TObjectPtr<UScrollBox> VendorMagicBox;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	TObjectPtr<UScrollBox> VendorMinionsBox;
+
 	void RefreshVendorItems();
 
 private:
-	UPROPERTY(meta = (BindWidget))
-	TObjectPtr<UScrollBox> VendorItemsBox;
-
 	TObjectPtr<AActor> PlayerActor;
 	TObjectPtr<AWOGVendor> VendorActor;
 

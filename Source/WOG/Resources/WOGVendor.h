@@ -124,7 +124,7 @@ private:
 public:	
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Setup)
-	FGameplayTag ItemTypeFilter;
+	FGameplayTagContainer ItemTypeFilter;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Setup)
 	FGameplayTag VendorTypeFilter;

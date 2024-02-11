@@ -356,7 +356,7 @@ void UWOGUIManagerSubsystem::AddMinimapWidget()
 
 void UWOGUIManagerSubsystem::RemoveMinimapWidget()
 {
-	if (MinimapWidget)
+	if (IsValid(MinimapWidget))
 	{
 		MinimapWidget->RemoveFromParent();
 	}
@@ -368,7 +368,7 @@ void UWOGUIManagerSubsystem::CollapseAbilitiesWidget()
 	if (!MatchHUD || !MatchHUD->HUDWidget || !MatchHUD->HUDWidget->GetAbilitiesContainer()) return;
 
 	AbilityContainerWidget = AbilityContainerWidget == nullptr ? (TObjectPtr<UUserWidget>) Cast<UUserWidget>(MatchHUD->HUDWidget->GetAbilitiesContainer()->GetChildAt(0)) : AbilityContainerWidget;
-	if (AbilityContainerWidget && AbilityContainerWidget->GetVisibility() == ESlateVisibility::Visible)
+	if (IsValid(AbilityContainerWidget) && AbilityContainerWidget->GetVisibility() == ESlateVisibility::Visible)
 	{
 		AbilityContainerWidget->SetVisibility(ESlateVisibility::Collapsed);
 	}
