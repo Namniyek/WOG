@@ -330,7 +330,7 @@ void UWOGUIManagerSubsystem::AddBarsWidget()
 
 void UWOGUIManagerSubsystem::RemoveBarsWidget()
 {
-	if (BarsWidget)
+	if (IsValid(BarsWidget))
 	{
 		BarsWidget->RemoveFromParent();
 		UE_LOG(WOGLogUI, Warning, TEXT("BarsWidget Removed"));
@@ -370,7 +370,7 @@ void UWOGUIManagerSubsystem::CollapseAbilitiesWidget()
 	AbilityContainerWidget = AbilityContainerWidget == nullptr ? (TObjectPtr<UUserWidget>) Cast<UUserWidget>(MatchHUD->HUDWidget->GetAbilitiesContainer()->GetChildAt(0)) : AbilityContainerWidget;
 	if (IsValid(AbilityContainerWidget) && AbilityContainerWidget->GetVisibility() == ESlateVisibility::Visible)
 	{
-		AbilityContainerWidget->SetVisibility(ESlateVisibility::Collapsed);
+		AbilityContainerWidget->SetVisibility(ESlateVisibility::Hidden);
 	}
 }
 
@@ -380,7 +380,7 @@ void UWOGUIManagerSubsystem::RestoreAbilitiesWidget()
 	if (!MatchHUD || !MatchHUD->HUDWidget || !MatchHUD->HUDWidget->GetAbilitiesContainer()) return;
 
 	AbilityContainerWidget = AbilityContainerWidget == nullptr ? (TObjectPtr<UUserWidget>) Cast<UUserWidget>(MatchHUD->HUDWidget->GetAbilitiesContainer()->GetChildAt(0)) : AbilityContainerWidget;
-	if (AbilityContainerWidget && AbilityContainerWidget->GetVisibility() == ESlateVisibility::Collapsed)
+	if (IsValid(AbilityContainerWidget) && AbilityContainerWidget->GetVisibility() == ESlateVisibility::Hidden)
 	{
 		AbilityContainerWidget->SetVisibility(ESlateVisibility::Visible);
 	}
@@ -394,7 +394,7 @@ void UWOGUIManagerSubsystem::CollapseTODWidget()
 	TODWidget = TODWidget == nullptr ? (TObjectPtr<UUserWidget>) Cast<UUserWidget>(MatchHUD->HUDWidget->GetTODContainer()->GetChildAt(0)) : TODWidget;
 	if (TODWidget && TODWidget->GetVisibility() == ESlateVisibility::Visible)
 	{
-		TODWidget->SetVisibility(ESlateVisibility::Collapsed);
+		TODWidget->SetVisibility(ESlateVisibility::Hidden);
 	}
 }
 
@@ -404,7 +404,7 @@ void UWOGUIManagerSubsystem::RestoreTODWidget()
 	if (!MatchHUD || !MatchHUD->HUDWidget || !MatchHUD->HUDWidget->GetTODContainer()) return;
 
 	TODWidget = TODWidget == nullptr ? (TObjectPtr<UUserWidget>) Cast<UUserWidget>(MatchHUD->HUDWidget->GetTODContainer()->GetChildAt(0)) : TODWidget;
-	if (TODWidget && TODWidget->GetVisibility() == ESlateVisibility::Collapsed)
+	if (TODWidget && TODWidget->GetVisibility() == ESlateVisibility::Hidden)
 	{
 		TODWidget->SetVisibility(ESlateVisibility::Visible);
 	}
@@ -417,7 +417,7 @@ void UWOGUIManagerSubsystem::CollapseObjectiveWidget()
 
 	if (MatchHUD->HUDWidget->GetObjectiveWidget()->GetVisibility() == ESlateVisibility::Visible)
 	{
-		MatchHUD->HUDWidget->GetObjectiveWidget()->SetVisibility(ESlateVisibility::Collapsed);
+		MatchHUD->HUDWidget->GetObjectiveWidget()->SetVisibility(ESlateVisibility::Hidden);
 	}
 }
 
@@ -426,7 +426,7 @@ void UWOGUIManagerSubsystem::RestoreObjectiveWidget()
 	MatchHUD == nullptr ? (TObjectPtr<AWOGMatchHUD>) Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
 	if (!MatchHUD || !MatchHUD->HUDWidget || !MatchHUD->HUDWidget->GetObjectiveWidget()) return;
 
-	if (MatchHUD->HUDWidget->GetObjectiveWidget()->GetVisibility() == ESlateVisibility::Collapsed)
+	if (MatchHUD->HUDWidget->GetObjectiveWidget()->GetVisibility() == ESlateVisibility::Hidden)
 	{
 		MatchHUD->HUDWidget->GetObjectiveWidget()->SetVisibility(ESlateVisibility::Visible);
 	}
@@ -438,7 +438,7 @@ void UWOGUIManagerSubsystem::AddAvailableResourcesWidget()
 	if (!MatchHUD || !MatchHUD->HUDWidget || !IsValid(MatchHUD->AvailableResourceWidgetClass)) return;
 
 	AvailableResourcesWidget = CreateWidget<UUserWidget>(OwnerPC, MatchHUD->AvailableResourceWidgetClass);
-	if (AvailableResourcesWidget && MatchHUD->HUDWidget->GetAvailableResourceContainer())
+	if (IsValid(AvailableResourcesWidget) && MatchHUD->HUDWidget->GetAvailableResourceContainer())
 	{
 		MatchHUD->HUDWidget->GetAvailableResourceContainer()->ClearChildren();
 		MatchHUD->HUDWidget->GetAvailableResourceContainer()->AddChild(AvailableResourcesWidget);
@@ -447,7 +447,7 @@ void UWOGUIManagerSubsystem::AddAvailableResourcesWidget()
 
 void UWOGUIManagerSubsystem::RemoveAvailableResourcesWidget()
 {
-	if (AvailableResourcesWidget)
+	if (IsValid(AvailableResourcesWidget))
 	{
 		AvailableResourcesWidget->RemoveFromParent();
 	}

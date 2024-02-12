@@ -36,6 +36,9 @@ public:
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	TObjectPtr<UScrollBox> VendorMinionsBox;
 
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	TObjectPtr<UScrollBox> VendorBuildablesBox;
+
 	void RefreshVendorItems();
 
 private:

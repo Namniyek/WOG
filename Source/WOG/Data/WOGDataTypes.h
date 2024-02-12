@@ -35,6 +35,8 @@ enum class EItemType : uint8
 	EIT_Weapon UMETA(DisplayName = "Weapon"),
 	EIT_Magic UMETA(DisplayName = "Magic"),
 	EIT_Consumable UMETA(DisplayName = "Consumable"),
+	EIT_Buildable UMETA(DisplayName = "Buildable"),
+	EIT_Spawnable UMETA(DisplayName = "Spawnable"),
 
 	EIT_MAX UMETA(DisplayName = "DefaultMAX")
 };
@@ -178,6 +180,18 @@ struct FVendorItemData
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Consumable", meta = (EditCondition = "ItemType == EItemType::EIT_Consumable", EditConditionHides))
 	float ConsumableDuration = 0.f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Buildable", meta = (EditCondition = "ItemType == EItemType::EIT_Buildable", EditConditionHides))
+	float BuildHealth = 0.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Buildable", meta = (EditCondition = "ItemType == EItemType::EIT_Buildable", EditConditionHides))
+	FName BuildMaterial = FName("Empty");
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawnable", meta = (EditCondition = "ItemType == EItemType::EIT_Spawnable", EditConditionHides))
+	FName SquadType = FName("Empty");
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spawnable", meta = (EditCondition = "ItemType == EItemType::EIT_Spawnable", EditConditionHides))
+	int32 AmountUnits = 0;
 };
 
 USTRUCT(BlueprintType)

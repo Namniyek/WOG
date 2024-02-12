@@ -12,6 +12,8 @@
 #include "Weapons/WOGBaseWeapon.h"
 #include "Magic/WOGBaseMagic.h"
 #include "Consumables/WOGBaseConsumable.h"
+#include "Buildables/WOGBaseBuildItem.h"
+#include "Enemies/WOGBaseSpawnItem.h"
 
 void UWOGVendorBaseWidget::NativeConstruct()
 {
@@ -38,6 +40,7 @@ void UWOGVendorBaseWidget::RefreshVendorItems()
 	VendorMagicBox->ClearChildren();
 	VendorWeaponsBox->ClearChildren();
 	VendorMinionsBox->ClearChildren();
+	VendorBuildablesBox->ClearChildren();
 
 	TObjectPtr<UAGR_InventoryManager> Inventory = UAGRLibrary::GetInventory(VendorActor);
 	if (!Inventory) return;
@@ -126,6 +129,36 @@ void UWOGVendorBaseWidget::RefreshVendorItems()
 			else
 			{
 				UE_LOG(WOGLogUI, Error, TEXT("Consumable for ItemData invalid"));
+			}
+		}
+
+		//The item is a buildable. Set item data accordingly
+		if (ItemComp->ItemTagSlotType.MatchesTag(TAG_Inventory_Buildable))
+		{
+			TObjectPtr<AWOGBaseBuildItem> Build = Cast<AWOGBaseBuildItem>(Item);
+			if (Build)
+			{
+				VendorItem->SetItemData(Build->GetBuildData().VendorItemData);
+				VendorBuildablesBox->AddChild(VendorItem);
+			}
+			else
+			{
+				UE_LOG(WOGLogUI, Error, TEXT("Build for ItemData invalid"));
+			}
+		}
+
+		//The item is a Spawnable. Set item data accordingly
+		if (ItemComp->ItemTagSlotType.MatchesTag(TAG_Inventory_Spawnable))
+		{
+			TObjectPtr<AWOGBaseSpawnItem> Spawn = Cast<AWOGBaseSpawnItem>(Item);
+			if (Spawn)
+			{
+				VendorItem->SetItemData(Spawn->GetSpawnData().VendorItemData);
+				VendorMinionsBox->AddChild(VendorItem);
+			}
+			else
+			{
+				UE_LOG(WOGLogUI, Error, TEXT("Spawn for ItemData invalid"));
 			}
 		}
 

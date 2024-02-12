@@ -113,43 +113,57 @@ struct FSpawnables : public FTableRowBase
 {
 	GENERATED_BODY()
 public:
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "UI|Name"))
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "1 - Base")
+	EEnemySquadType SquadType = EEnemySquadType::EEST_Melee;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Spawn Name"), Category = "1 - Base")
 	FText Name = FText();
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "UI|Icon"))
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Spawn Icon"), Category = "1 - Base")
 	TObjectPtr<UTexture2D> Icon = nullptr;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Mesh", MakeStructureDefaultValue = "None"))
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Spawn cost amount"), Category = "1 - Base")
+	int32 CostAmount = 0;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Spawn cost tag"), Category = "1 - Base")
+	FGameplayTag CostTag = FGameplayTag();
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Preview Mesh"), Category = "1 - Base")
 	TObjectPtr<UStaticMesh> Mesh = nullptr;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Minion Array", MakeStructureDefaultValue = "None"))
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Minion Array"), Category = "1 - Base")
 	TArray<TSubclassOf<AWOGBaseEnemy>> MinionArray = {};
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Amount Units", MakeStructureDefaultValue = "1"))
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Amount Units"), Category = "1 - Base")
 	int32 AmountUnits = 0;
 
 	/**Capsule half height*/
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "HeightOffset", MakeStructureDefaultValue = "1"))
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Height Offset"), Category = "1 - Base")
 	float HeightOffset = 0.f;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Initial Setup")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "2 - Combat Setup")
 	FCharacterAbilityData DefaultAbilitiesAndEffects;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Initial Setup")
-	EEnemySquadType SquadType = EEnemySquadType::EEST_Melee;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Combat")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "2 - Combat Setup")
 	float BaseDamage = 10.f;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Combat")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "2 - Combat Setup")
 	TObjectPtr<UAnimMontage> AttackMontage = nullptr;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Combat")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "2 - Combat Setup")
 	float AttackRange = 150.f;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Combat")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "2 - Combat Setup")
 	float DefendRange = 400.f;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Combat")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "2 - Combat Setup")
 	TSubclassOf<UGameplayEffect> DamageEffect = nullptr;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Spawn Item Tag"), Category = "3 - Inventory")
+	FGameplayTag ItemTag = FGameplayTag();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "4 - User Interface")
+	FVendorItemData VendorItemData = FVendorItemData();
+
 };

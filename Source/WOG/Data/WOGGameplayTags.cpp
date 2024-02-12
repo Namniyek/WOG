@@ -108,6 +108,12 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Magic_Debuff, "Inventory.Magic.Debuff");
 //Consumable
 UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Consumable, "Inventory.Consumable");
 
+//Buildable
+UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Buildable, "Inventory.Buildable");
+
+//Spawnable
+UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Spawnable, "Inventory.Spawnable");
+
 
 //Pose Tags
 UE_DEFINE_GAMEPLAY_TAG(TAG_Pose_Relax, "Pose.Relax");

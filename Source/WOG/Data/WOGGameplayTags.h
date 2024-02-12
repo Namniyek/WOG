@@ -109,6 +109,12 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Inventory_Magic_Debuff)
 //Consumable
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Inventory_Consumable)
 
+//Buildable
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Inventory_Buildable)
+
+//Spawnable
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Inventory_Spawnable)
+
 //PoseTags
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Pose_Relax)
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Pose_Magic)

@@ -6,6 +6,7 @@
 #include "WOGBaseActorComponent.h"
 #include "Engine/DataTable.h"
 #include "GameplayTagContainer.h"
+#include "Data/WOGDataTypes.h"
 #include "WOGBuildComponent.generated.h"
 
 /**
@@ -18,39 +19,44 @@ struct FBuildables : public FTableRowBase
 {
 	GENERATED_BODY()
 public:
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Mesh", MakeStructureDefaultValue = "None"))
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Preview Mesh", MakeStructureDefaultValue = "None"), Category = "1 - Base")
 	TObjectPtr<UStaticMesh> Mesh = nullptr;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "ExtensionMesh", MakeStructureDefaultValue = "None"))
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Extension Mesh", MakeStructureDefaultValue = "None"), Category = "1 - Base")
 	TObjectPtr<UStaticMesh> ExtensionMesh = nullptr;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "TraceChannel", MakeStructureDefaultValue = "TraceTypeQuery1"))
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "TraceChannel", MakeStructureDefaultValue = "TraceTypeQuery1"), Category = "1 - Base")
 	TEnumAsByte<ETraceTypeQuery> TraceChannel = ETraceTypeQuery::TraceTypeQuery1;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Actor", MakeStructureDefaultValue = "None"))
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Build Actor", MakeStructureDefaultValue = "None"), Category = "1 - Base")
 	TObjectPtr<UClass> Actor = nullptr;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Health", MakeStructureDefaultValue = "0.000000"))
-	double Health = 0.f;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Health", MakeStructureDefaultValue = "0.000000"), Category = "1 - Base")
+	float Health = 0.f;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "MaxHeightOffset", MakeStructureDefaultValue = "0.000000"))
-	double MaxHeightOffset = 0.f;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "MaxHeightOffset", MakeStructureDefaultValue = "0.000000"), Category = "1 - Base")
+	float MaxHeightOffset = 0.f;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "AvoidAddingAsChild", MakeStructureDefaultValue = "False"))
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "AvoidAddingAsChild", MakeStructureDefaultValue = "False"), Category = "1 - Base")
 	bool AvoidAddingAsChild = false;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Name"))
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Build Item Tag"), Category = "2 - Inventory")
+	FGameplayTag ItemTag = FGameplayTag();
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Build Name"), Category = "3 - User Interface")
 	FText Name = FText();
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Icon"))
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Build Icon"), Category = "3 - User Interface")
 	TObjectPtr<UTexture2D> Icon = nullptr;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Cost"), Category = "Cost")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Build cost amount"), Category = "1 - Base")
 	int32 CostAmount = 0;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Cost"), Category = "Cost")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Build cost tag"), Category = "1 - Base")
 	FGameplayTag CostTag = FGameplayTag();
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "3 - User Interface")
+	FVendorItemData VendorItemData = FVendorItemData();
 };
 
 class UCameraComponent;
