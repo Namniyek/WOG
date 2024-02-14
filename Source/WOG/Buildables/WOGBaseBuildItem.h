@@ -6,13 +6,14 @@
 #include "GameFramework/Actor.h"
 #include "Engine/DataTable.h"
 #include "ActorComponents/WOGBuildComponent.h"
+#include "Interfaces/BuildingInterface.h"
 #include "WOGBaseBuildItem.generated.h"
 
 class UAGR_ItemComponent;
 class UAGR_InventoryManager;
 
 UCLASS()
-class WOG_API AWOGBaseBuildItem : public AActor
+class WOG_API AWOGBaseBuildItem : public AActor, public IBuildingInterface
 {
 	GENERATED_BODY()
 	
@@ -56,6 +57,9 @@ protected:
 	UFUNCTION()
 	void OnBuildableDestroyed();
 	#pragma endregion
+
+
+	FBuildables ReturnBuildData_Implementation();
 
 private:
 	virtual void InitBuildableData();

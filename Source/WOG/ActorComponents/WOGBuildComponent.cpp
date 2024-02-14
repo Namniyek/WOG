@@ -15,6 +15,9 @@
 #include "Data/AGRLibrary.h"
 #include "Components/AGR_EquipmentManager.h"
 #include "Resources/WOGCommonInventory.h"
+#include "Data/WOGGameplayTags.h"
+#include "WOG.h"
+#include "Net/UnrealNetwork.h"
 
 UWOGBuildComponent::UWOGBuildComponent()
 {
@@ -28,6 +31,14 @@ UWOGBuildComponent::UWOGBuildComponent()
 	BuildGhost->SetStaticMesh(nullptr);
 }
 
+void UWOGBuildComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(UWOGBuildComponent, Buildables);
+	DOREPLIFETIME(UWOGBuildComponent, BuildID);
+}
+
 void UWOGBuildComponent::BeginPlay()
 {
 	Super::BeginPlay();
@@ -36,12 +47,6 @@ void UWOGBuildComponent::BeginPlay()
 	if (DefenderCharacter)
 	{
 		Camera = DefenderCharacter->GetFollowCamera();
-	}
-
-	if (BuildablesDataTable)
-	{
-		BuildablesDataTable->GetAllRows<FBuildables>(TEXT("Buildables"), Buildables);
-		LastIndexDataTable = Buildables.Num() - 1;
 	}
 }
 
@@ -59,8 +64,23 @@ void UWOGBuildComponent::LaunchBuildMode()
 			}
 		}
 	}
+
 	else
 	{
+		if (!SetBuildables())
+		{
+			StopBuildMode();
+			if (APlayerController* PlayerController = Cast<APlayerController>(DefenderCharacter->GetController()))
+			{
+				if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+				{
+			Subsystem->ClearAllMappings();
+				Subsystem->AddMappingContext(DefenderCharacter->MatchMappingContext, 0);
+				}
+			}
+			return;
+		}
+
 		bIsBuildModeOn = true;
 		HeightOffset = FVector();
 		BuildCycle();
@@ -103,7 +123,7 @@ void UWOGBuildComponent::SpawnBuildGhost()
 {
 	if (BuildGhost)
 	{
-		BuildGhost->SetStaticMesh(Buildables[BuildID]->Mesh);
+		BuildGhost->SetStaticMesh(Buildables[BuildID].Mesh);
 		BuildGhost->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
 }
@@ -122,11 +142,11 @@ void UWOGBuildComponent::GiveBuildColor(bool IsAllowed)
 	BuildGhost->SetWorldTransform(BuildTransform);
 }
 
-void UWOGBuildComponent::ChangeMesh()
+void UWOGBuildComponent::ChangeMesh(int32 ID)
 {
 	if (!BuildGhost) return;
 
-	BuildGhost->SetStaticMesh(Buildables[BuildID]->Mesh);
+	BuildGhost->SetStaticMesh(Buildables[ID].Mesh);
 	HeightOffset = FVector();
 }
 
@@ -143,7 +163,7 @@ void UWOGBuildComponent::BuildCycle()
 	FVector Start = (Camera->GetComponentLocation()) + (ForwardVector*350);
 	FVector End = (Camera->GetComponentLocation()) + (ForwardVector * 1500);
 
-	ECollisionChannel Channel = UEngineTypes::ConvertToCollisionChannel(Buildables[BuildID]->TraceChannel);
+	ECollisionChannel Channel = UEngineTypes::ConvertToCollisionChannel(Buildables[BuildID].TraceChannel);
 	FCollisionQueryParams Params;
 
 	TArray<AActor*> ActorsToIgnore;
@@ -249,7 +269,7 @@ bool UWOGBuildComponent::CheckForOverlap()
 	float _SphereRadius = 0.f;
 	UKismetSystemLibrary::GetComponentBounds(BuildGhost, Origin, _BoxExtents, _SphereRadius);
 
-	FBoxSphereBounds Bounds = Buildables[BuildID]->Mesh->GetBounds();
+	FBoxSphereBounds Bounds = Buildables[BuildID].Mesh->GetBounds();
 	TArray<AActor*> ActorsToIgnore = {};
 	FHitResult HitResult;
 
@@ -278,9 +298,9 @@ bool UWOGBuildComponent::IsBuildFloating()
 	float _SphereRadius = 0.f;
 	UKismetSystemLibrary::GetComponentBounds(BuildGhost, Start, _BoxExtents, _SphereRadius);
 
-	FBoxSphereBounds Bounds = Buildables[BuildID]->Mesh->GetBounds();
+	FBoxSphereBounds Bounds = Buildables[BuildID].Mesh->GetBounds();
 	FVector End = Start;
-	End.Z = End.Z - Buildables[BuildID]->MaxHeightOffset;
+	End.Z = End.Z - Buildables[BuildID].MaxHeightOffset;
 	TArray<AActor*> ActorsToIgnore = {};
 	FHitResult HitResult;
 
@@ -316,7 +336,7 @@ bool UWOGBuildComponent::CheckCost()
 	}
 
 	FText Note;
-	bool bCanAfford = Inventory->HasEnoughItemsWithTagSlotType(Buildables[BuildID]->CostTag, Buildables[BuildID]->CostAmount, Note);
+	bool bCanAfford = Inventory->HasEnoughItemsWithTagSlotType(Buildables[BuildID].CostTag, Buildables[BuildID].CostAmount, Note);
 	UE_LOG(LogTemp, Display, TEXT("%s"), *Note.ToString());
 
 	return bCanAfford;
@@ -338,7 +358,7 @@ void UWOGBuildComponent::DeductCost()
 	}
 
 	FText Note;
-	Inventory->RemoveItemsWithTagSlotType(Buildables[BuildID]->CostTag, Buildables[BuildID]->CostAmount, Note);
+	Inventory->RemoveItemsWithTagSlotType(Buildables[BuildID].CostTag, Buildables[BuildID].CostAmount, Note);
 	UE_LOG(LogTemp, Display, TEXT("%s"), *Note.ToString());
 }
 
@@ -352,15 +372,15 @@ void UWOGBuildComponent::PlaceBuildable()
 
 void UWOGBuildComponent::Server_SpawnBuild_Implementation(FTransform Transform, int32 ID, AActor* Hit, UPrimitiveComponent* HitComponent)
 {
+	BuildID = ID;
 	SpawnBuild(Transform, ID, Hit, HitComponent);
-	DeductCost();
 	HeightOffset = FVector();
 	UE_LOG(LogTemp, Warning, TEXT("SpawnBuild() called"));
 }
 
 void UWOGBuildComponent::SpawnBuild(FTransform Transform, int32 ID, AActor* Hit, UPrimitiveComponent* HitComponent)
 {
-	TObjectPtr<AActor> SpawnedBuild =  GetWorld()->SpawnActor<AActor>(Buildables[ID]->Actor, Transform);
+	TObjectPtr<AActor> SpawnedBuild =  GetWorld()->SpawnActor<AActor>(Buildables[ID].Actor, Transform);
 	HeightOffset = FVector();
 
 	if (!SpawnedBuild)
@@ -371,18 +391,76 @@ void UWOGBuildComponent::SpawnBuild(FTransform Transform, int32 ID, AActor* Hit,
 
 	if (SpawnedBuild->GetClass()->ImplementsInterface(UBuildingInterface::StaticClass()))
 	{
-		IBuildingInterface::Execute_SetProperties(SpawnedBuild, Buildables[ID]->Mesh, Buildables[ID]->ExtensionMesh, Buildables[ID]->Health, Buildables[ID]->MaxHeightOffset);
+		IBuildingInterface::Execute_SetProperties(SpawnedBuild, Buildables[ID].Mesh, Buildables[ID].ExtensionMesh, Buildables[ID].Health, Buildables[ID].MaxHeightOffset);
 	}
 
 	if (Hit && HitComponent && Hit->GetClass()->ImplementsInterface(UBuildingInterface::StaticClass()))
 	{
 		IBuildingInterface::Execute_HandleBuildWalls(Hit, HitComponent->GetName(), SpawnedBuild);
 
-		if (!Buildables[ID]->AvoidAddingAsChild)
+		if (!Buildables[ID].AvoidAddingAsChild)
 		{
 			IBuildingInterface::Execute_AddBuildChild(Hit, SpawnedBuild);
 		}
 	}
+
+	DeductCost();
+}
+
+void UWOGBuildComponent::Server_SetBuildables_Implementation(const TArray<FBuildables>& InBuildables)
+{
+	Buildables = InBuildables;
+}
+
+bool UWOGBuildComponent::SetBuildables()
+{
+	Buildables.Empty();
+	BuildID = 0;
+
+	if (!GetOwner()) return false;
+
+	UAGR_InventoryManager* Inventory = UAGRLibrary::GetInventory(GetOwner());
+	if (!Inventory) return false;
+
+	TArray<AActor*> OutItems;
+	int32 Amount = 0;
+	Inventory->GetAllItemsOfTagSlotType(TAG_Inventory_Buildable, OutItems, Amount);
+
+	if (OutItems.IsEmpty())
+	{
+		UE_LOG(WOGLogBuild, Error, TEXT("No building items in the inventory"));
+		return false;
+	}
+
+	FBuildables TempBuildable;
+
+	for (auto Item : OutItems)
+	{
+		if (!IsValid(Item) || !Item->Implements<UBuildingInterface>())
+		{
+			UE_LOG(WOGLogBuild, Error, TEXT("Item doesn't implement BuildingInterface"));
+			continue;
+		}
+
+		UE_LOG(WOGLogBuild, Display, TEXT("Item name: %s"), *GetNameSafe(Item));
+		Buildables.Add(IBuildingInterface::Execute_ReturnBuildData(Item));
+
+	}
+
+	if (Buildables.IsEmpty())
+	{
+		UE_LOG(WOGLogBuild, Error, TEXT("Inventory loop done, but no results"));
+		return false;
+	}
+	
+	UE_LOG(WOGLogBuild, Display, TEXT("Buildables amount: %d"), Buildables.Num());
+
+	for (auto Buildable : Buildables)
+	{
+		UE_LOG(WOGLogBuild, Display, TEXT("Buildable name: %s"), *Buildable.VendorItemData.DisplayName.ToString());
+	}
+	Server_SetBuildables(Buildables);
+	return true;
 }
 
 void UWOGBuildComponent::HandleBuildHeight(bool bShouldRise)
@@ -410,11 +488,11 @@ void UWOGBuildComponent::HandleBuildRotation(bool bRotateLeft)
 
 	if (bRotateLeft)
 	{
-		NewBuildRotation = BuildTransform.GetRotation().Rotator() - FRotator(0.f, 5.f, 0.f);
+		NewBuildRotation = BuildTransform.GetRotation().Rotator() - FRotator(0.f, 45.f, 0.f);
 	}
 	else
 	{
-		NewBuildRotation = BuildTransform.GetRotation().Rotator() + FRotator(0.f, 5.f, 0.f);
+		NewBuildRotation = BuildTransform.GetRotation().Rotator() + FRotator(0.f, 45.f, 0.f);
 	}
 
 	BuildTransform.SetRotation(FQuat::MakeFromRotator(NewBuildRotation));

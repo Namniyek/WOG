@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
+#include "ActorComponents/WOGBuildComponent.h"
 #include "BuildingInterface.generated.h"
 
 // This class does not need to be modified.
@@ -47,5 +48,8 @@ public:
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void AddBuildParent(const AActor* Parent);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	FBuildables ReturnBuildData();
 
 };

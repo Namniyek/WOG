@@ -6,13 +6,14 @@
 #include "GameFramework/Actor.h"
 #include "Engine/DataTable.h"
 #include "Types/CharacterTypes.h"
+#include "Interfaces/SpawnInterface.h"
 #include "WOGBaseSpawnItem.generated.h"
 
 class UAGR_ItemComponent;
 class UAGR_InventoryManager;
 
 UCLASS()
-class WOG_API AWOGBaseSpawnItem : public AActor
+class WOG_API AWOGBaseSpawnItem : public AActor, public ISpawnInterface
 {
 	GENERATED_BODY()
 	
@@ -55,6 +56,8 @@ protected:
 	UFUNCTION()
 	void OnSpawnableDestroyed();
 	#pragma endregion
+
+	FSpawnables ReturnSpawnData_Implementation();
 
 private:
 	virtual void InitSpawnableData();

@@ -11,10 +11,6 @@
 class UCameraComponent;
 class AWOGBaseSquad;
 
-/**
- * 
- */
-
 UCLASS(meta = (BlueprintSpawnableComponent))
 class WOG_API UWOGSpawnComponent : public UWOGBaseActorComponent
 {
@@ -23,13 +19,12 @@ class WOG_API UWOGSpawnComponent : public UWOGBaseActorComponent
 public:
 	friend class AWOGAttacker;
 	UWOGSpawnComponent();
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 
 private:
 	FTimerHandle SpawnTimerHandle;
 	TObjectPtr<AWOGAttacker> AttackerCharacter;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Building Setting")
-	TObjectPtr<UDataTable> SpawnablesDataTable;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Building Setting")
 	TObjectPtr<UMaterialInstance> AllowedGhostMaterial;
@@ -37,7 +32,8 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Building Setting")
 	TObjectPtr<UMaterialInstance> ForbiddenGhostMaterial;
 
-	TArray<FSpawnables*> Spawnables;
+	UPROPERTY(Replicated)
+	TArray<FSpawnables> Spawnables;
 
 public:
 
@@ -50,7 +46,7 @@ public:
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Default")
 	bool bCanSpawn;
 
-	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "Default")
+	UPROPERTY(Replicated, BlueprintReadWrite, EditDefaultsOnly, Category = "Default")
 	int32 SpawnID;
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Default")
@@ -78,7 +74,7 @@ protected:
 	bool CheckForOverlap();
 
 	UFUNCTION(BlueprintCallable)
-	void ChangeMesh();
+	void ChangeMesh(int32 ID);
 
 	UFUNCTION(Server, reliable)
 	void Server_Spawn(FTransform Transform, int32 ID);
@@ -87,6 +83,14 @@ protected:
 	TArray<FVector> GetSpawnLocations(const FVector& MiddleLocation, float GridSize, int32 Amount);
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<AWOGBaseSquad> SquadClass;
+
+	UFUNCTION(Server, reliable)
+	void Server_SetSpawnables(const TArray<FSpawnables>& InSpawnables);
+
+	bool SetSpawnables();
+
+	bool CheckCost();
+	void DeductCost();
 
 public:
 
@@ -98,5 +102,8 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void HandleSpawnRotation(bool bRotateLeft);
+
+	UFUNCTION(BlueprintPure)
+	FORCEINLINE TArray<FSpawnables> GetSpawnables() const { return Spawnables; }
 
 };

@@ -68,6 +68,11 @@ void AWOGBaseBuildItem::OnBuildableDestroyed()
 {
 }
 
+FBuildables AWOGBaseBuildItem::ReturnBuildData_Implementation()
+{
+	return BuildData;
+}
+
 void AWOGBaseBuildItem::InitBuildableData()
 {
 	const FString BuildTablePath{ TEXT("Engine.DataTable'/Game/Data/Buildables/DT_Buildables.DT_Buildables'") };

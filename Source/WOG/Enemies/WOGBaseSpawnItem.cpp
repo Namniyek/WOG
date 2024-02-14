@@ -68,6 +68,11 @@ void AWOGBaseSpawnItem::OnSpawnableDestroyed()
 {
 }
 
+FSpawnables AWOGBaseSpawnItem::ReturnSpawnData_Implementation()
+{
+	return SpawnData;
+}
+
 void AWOGBaseSpawnItem::InitSpawnableData()
 {
 	const FString SpawnTablePath{ TEXT("Engine.DataTable'/Game/Data/Spawnables/DT_Spawnables.DT_Spawnables'") };

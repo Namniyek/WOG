@@ -15,11 +15,12 @@
 #include "WOG/Interfaces/AttributesInterface.h"
 #include "EnhancedInputSubsystems.h"
 #include "Data/AGRLibrary.h"
-#include "Data/WOGDataTypes.h"
 #include "Components/AGR_EquipmentManager.h"
 #include "AI/Combat/WOGBaseSquad.h"
 #include "Components/BillboardComponent.h"
 #include "ActorComponents/WOGEnemyOrderComponent.h"
+#include "Resources/WOGCommonInventory.h"
+#include "Net/UnrealNetwork.h"
 
 UWOGSpawnComponent::UWOGSpawnComponent()
 {
@@ -32,6 +33,14 @@ UWOGSpawnComponent::UWOGSpawnComponent()
 	SpawnGhost->SetStaticMesh(nullptr);
 }
 
+void UWOGSpawnComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(UWOGSpawnComponent, Spawnables);
+	DOREPLIFETIME(UWOGSpawnComponent, SpawnID);
+}
+
 void UWOGSpawnComponent::BeginPlay()
 {
 	Super::BeginPlay();
@@ -40,14 +49,6 @@ void UWOGSpawnComponent::BeginPlay()
 	if (AttackerCharacter)
 	{
 		Camera = AttackerCharacter->GetFollowCamera();
-	}
-
-	if (SpawnablesDataTable)
-	{
-		{
-			SpawnablesDataTable->GetAllRows<FSpawnables>(TEXT("Spawnables"), Spawnables);
-			LastIndexDataTable = Spawnables.Num() - 1;
-		}
 	}
 }
 
@@ -62,12 +63,26 @@ void UWOGSpawnComponent::LaunchSpawnMode()
 			{
 				Subsystem->ClearAllMappings();
 				Subsystem->AddMappingContext(AttackerCharacter->MatchMappingContext, 0);
-				UE_LOG(LogTemp, Warning, TEXT("DefaultModeMC"));
 			}
 		}
 	}
 	else
 	{
+		if (!SetSpawnables())
+		{
+			StopSpawnMode();
+			if (APlayerController* PlayerController = Cast<APlayerController>(AttackerCharacter->GetController()))
+			{
+				if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+				{
+					Subsystem->ClearAllMappings();
+					Subsystem->AddMappingContext(AttackerCharacter->MatchMappingContext, 0);
+					UE_LOG(LogTemp, Warning, TEXT("DefaultModeMC"));
+				}
+			}
+			return;
+		}
+
 		bIsSpawnModeOn = true;
 		SpawnCycle();
 		if (APlayerController* PlayerController = Cast<APlayerController>(AttackerCharacter->GetController()))
@@ -76,7 +91,6 @@ void UWOGSpawnComponent::LaunchSpawnMode()
 			{
 				Subsystem->ClearAllMappings();
 				Subsystem->AddMappingContext(AttackerCharacter->SpawnModeMappingContext, 0);
-				UE_LOG(LogTemp, Warning, TEXT("SpawnModeMC"));
 			}
 		}
 	}
@@ -152,7 +166,9 @@ void UWOGSpawnComponent::SpawnCycle()
 
 		if (SpawnGhost->GetStaticMesh())
 		{
-			bool bIsAllowed = !CheckForOverlap();
+			UWOGEnemyOrderComponent* OrderComp = AttackerCharacter->GetEnemyOrderComponent();
+
+			bool bIsAllowed = !CheckForOverlap() && CheckCost() && (OrderComp && OrderComp->GetCurrentSquads().Num() < OrderComp->MaxAmountSquads);
 
 			GiveSpawnColor(bIsAllowed);
 			SpawnDelay();
@@ -184,7 +200,7 @@ void UWOGSpawnComponent::SpawnSpawnGhost()
 {
 	if (SpawnGhost)
 	{
-		SpawnGhost->SetStaticMesh(Spawnables[SpawnID]->Mesh);
+		SpawnGhost->SetStaticMesh(Spawnables[SpawnID].Mesh);
 		SpawnGhost->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
 }
@@ -203,11 +219,11 @@ void UWOGSpawnComponent::GiveSpawnColor(bool IsAllowed)
 	SpawnGhost->SetWorldTransform(SpawnTransform);
 }
 
-void UWOGSpawnComponent::ChangeMesh()
+void UWOGSpawnComponent::ChangeMesh(int32 ID)
 {
 	if (!SpawnGhost) return;
 
-	SpawnGhost->SetStaticMesh(Spawnables[SpawnID]->Mesh);
+	SpawnGhost->SetStaticMesh(Spawnables[ID].Mesh);
 }
 
 bool UWOGSpawnComponent::CheckForOverlap()
@@ -219,7 +235,7 @@ bool UWOGSpawnComponent::CheckForOverlap()
 	float _SphereRadius = 0.f;
 	UKismetSystemLibrary::GetComponentBounds(SpawnGhost, Origin, _BoxExtents, _SphereRadius);
 
-	FBoxSphereBounds Bounds = Spawnables[SpawnID]->Mesh->GetBounds();
+	FBoxSphereBounds Bounds = Spawnables[SpawnID].Mesh->GetBounds();
 	TArray<AActor*> ActorsToIgnore = {};
 	FHitResult HitResult;
 
@@ -241,6 +257,7 @@ bool UWOGSpawnComponent::CheckForOverlap()
 
 void UWOGSpawnComponent::Server_Spawn_Implementation(FTransform Transform, int32 ID)
 {
+	SpawnID = ID;
 	Spawn(Transform, ID);
 }
 
@@ -257,7 +274,7 @@ void UWOGSpawnComponent::Spawn(FTransform Transform, int32 ID)
 		UE_LOG(WOGLogSpawn, Error, TEXT("Order component invalid"));
 		return;
 	}
-	if (Spawnables[ID]->MinionArray.IsEmpty())
+	if (Spawnables[ID].MinionArray.IsEmpty())
 	{
 		UE_LOG(WOGLogSpawn, Error, TEXT("MinionArray empty"));
 		return;
@@ -279,7 +296,7 @@ void UWOGSpawnComponent::Spawn(FTransform Transform, int32 ID)
 	SquadParams.Owner = AttackerCharacter ? AttackerCharacter : nullptr;
 	SquadParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
-	FVector SquadLocation = Transform.GetLocation() + FVector(0.f, 0.f, Spawnables[ID]->HeightOffset);
+	FVector SquadLocation = Transform.GetLocation() + FVector(0.f, 0.f, Spawnables[ID].HeightOffset);
 	TObjectPtr<AActor> SpawnedSquadActor = GetWorld()->SpawnActor<AActor>(SquadClass, SquadLocation, Transform.GetRotation().Rotator(), SquadParams);
 	TObjectPtr<AWOGBaseSquad> SpawnedSquad = Cast<AWOGBaseSquad>(SpawnedSquadActor);
 	int32 CurrentSlotIndex = 0;
@@ -297,16 +314,16 @@ void UWOGSpawnComponent::Spawn(FTransform Transform, int32 ID)
 	*Handle the actual spawn of the enemies
 	*/
 
-	for (int32 i = 0; i<Spawnables[ID]->AmountUnits; i++)
+	for (int32 i = 0; i<Spawnables[ID].AmountUnits; i++)
 	{
-		Transform.SetLocation(Transform.GetLocation() + FVector((Spawnables[ID]->AmountUnits*150), 0.f, Spawnables[ID]->HeightOffset));
+		Transform.SetLocation(Transform.GetLocation() + FVector((Spawnables[ID].AmountUnits*150), 0.f, Spawnables[ID].HeightOffset));
 
 		FActorSpawnParameters Params;
 		Params.Owner = AttackerCharacter ? AttackerCharacter : nullptr;
 		Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
-		int32 Index = FMath::RandRange(0, Spawnables[ID]->MinionArray.Num() - 1);
-		TSubclassOf<AWOGBaseEnemy> MinionClass = Spawnables[ID]->MinionArray[Index];
+		int32 Index = FMath::RandRange(0, Spawnables[ID].MinionArray.Num() - 1);
+		TSubclassOf<AWOGBaseEnemy> MinionClass = Spawnables[ID].MinionArray[Index];
 
 		TObjectPtr<AWOGBaseEnemy> SpawnedEnemy = GetWorld()->SpawnActor<AWOGBaseEnemy>(MinionClass, Transform, Params);
 
@@ -324,24 +341,26 @@ void UWOGSpawnComponent::Spawn(FTransform Transform, int32 ID)
 
 			//Handle the spawned enemy logic and init
 			SpawnedEnemy->SetActorTransform(Slot.Location->GetComponentTransform());
-			SpawnedEnemy->SetDefaultAbilitiesAndEffects(Spawnables[ID]->DefaultAbilitiesAndEffects);
+			SpawnedEnemy->SetDefaultAbilitiesAndEffects(Spawnables[ID].DefaultAbilitiesAndEffects);
 			SpawnedEnemy->GiveDefaultAbilities();
 			SpawnedEnemy->ApplyDefaultEffects();
 			SpawnedEnemy->SetOwnerAttacker(AttackerCharacter ? AttackerCharacter : nullptr);
 			SpawnedEnemy->SetOwnerSquad(SpawnedSquad);
 			SpawnedEnemy->SetSquadUnitIndex(Slot.SlotIndex);
-			SpawnedEnemy->SetBaseDamage(Spawnables[ID]->BaseDamage);
-			SpawnedEnemy->SetAttackMontage(Spawnables[ID]->AttackMontage);
-			SpawnedEnemy->SetAttackRange(Spawnables[ID]->AttackRange);
-			SpawnedEnemy->SetDefendRange(Spawnables[ID]->DefendRange);
-			SpawnedEnemy->SetDamageEffect(Spawnables[ID]->DamageEffect);
+			SpawnedEnemy->SetBaseDamage(Spawnables[ID].BaseDamage);
+			SpawnedEnemy->SetAttackMontage(Spawnables[ID].AttackMontage);
+			SpawnedEnemy->SetAttackRange(Spawnables[ID].AttackRange);
+			SpawnedEnemy->SetDefendRange(Spawnables[ID].DefendRange);
+			SpawnedEnemy->SetDamageEffect(Spawnables[ID].DamageEffect);
 		}
 	}
 
-	SpawnedSquad->SetSquadType(Spawnables[ID]->SquadType);
-	SpawnedSquad->SquadIcon = Spawnables[ID]->Icon;
-	SpawnedSquad->SquadName = Spawnables[ID]->Name;
+	SpawnedSquad->SetSquadType(Spawnables[ID].SquadType);
+	SpawnedSquad->SquadIcon = Spawnables[ID].Icon;
+	SpawnedSquad->SquadName = Spawnables[ID].Name;
 	SpawnedSquad->SendOrder(EEnemyOrder::EEO_Hold, SpawnedSquad->GetTransform());
+
+	DeductCost();
 }
 
 TArray<FVector> UWOGSpawnComponent::GetSpawnLocations(const FVector& MiddleLocation, float GridSize, int32 Amount)
@@ -375,6 +394,103 @@ TArray<FVector> UWOGSpawnComponent::GetSpawnLocations(const FVector& MiddleLocat
 	return SpawnLocations;
 }
 
+void UWOGSpawnComponent::Server_SetSpawnables_Implementation(const TArray<FSpawnables>& InSpawnables)
+{
+	Spawnables = InSpawnables;
+}
+
+bool UWOGSpawnComponent::SetSpawnables()
+{
+	Spawnables.Empty();
+	SpawnID = 0;
+
+	if (!GetOwner()) return false;
+
+	UAGR_InventoryManager* Inventory = UAGRLibrary::GetInventory(GetOwner());
+	if (!Inventory) return false;
+
+	TArray<AActor*> OutItems;
+	int32 Amount = 0;
+	Inventory->GetAllItemsOfTagSlotType(TAG_Inventory_Spawnable, OutItems, Amount);
+
+	if (OutItems.IsEmpty())
+	{
+		UE_LOG(WOGLogSpawn, Error, TEXT("No Spawn items in the inventory"));
+		return false;
+	}
+
+	FSpawnables TempSpawnable;
+
+	for (auto Item : OutItems)
+	{
+		if (!IsValid(Item) || !Item->Implements<USpawnInterface>())
+		{
+			UE_LOG(WOGLogSpawn, Error, TEXT("Item doesn't implement SpawnInterface"));
+			continue;
+		}
+
+		UE_LOG(WOGLogSpawn, Display, TEXT("Item name: %s"), *GetNameSafe(Item));
+		Spawnables.Add(ISpawnInterface::Execute_ReturnSpawnData(Item));
+
+	}
+
+	if (Spawnables.IsEmpty())
+	{
+		UE_LOG(WOGLogSpawn, Error, TEXT("Inventory loop done, but no results"));
+		return false;
+	}
+
+	UE_LOG(WOGLogSpawn, Display, TEXT("Spawnables amount: %d"), Spawnables.Num());
+
+	for (auto Spawnable : Spawnables)
+	{
+		UE_LOG(WOGLogSpawn, Display, TEXT("Spawnable name: %s"), *Spawnable.VendorItemData.DisplayName.ToString());
+	}
+
+	Server_SetSpawnables(Spawnables);
+	return true;
+}
+
+bool UWOGSpawnComponent::CheckCost()
+{
+	if (!AttackerCharacter || !AttackerCharacter->GetCommonInventory())
+	{
+		UE_LOG(LogTemp, Error, TEXT("Attacker or CommonInventory actor invalid"));
+		return false;
+	}
+
+	TObjectPtr<UAGR_InventoryManager> Inventory = UAGRLibrary::GetInventory(AttackerCharacter->GetCommonInventory());
+	if (!Inventory)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Failed to get Inventory component from CommonInventory actor"));
+		return false;
+	}
+
+	FText Note;
+	bool bCanAfford = Inventory->HasEnoughItemsWithTagSlotType(Spawnables[SpawnID].CostTag, Spawnables[SpawnID].CostAmount, Note);
+	return bCanAfford;
+}
+
+void UWOGSpawnComponent::DeductCost()
+{
+	if (!AttackerCharacter || !AttackerCharacter->GetCommonInventory())
+	{
+		UE_LOG(LogTemp, Error, TEXT("Attacker or CommonInventory actor invalid"));
+		return;
+	}
+
+	TObjectPtr<UAGR_InventoryManager> Inventory = UAGRLibrary::GetInventory(AttackerCharacter->GetCommonInventory());
+	if (!Inventory)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Failed to get Inventory component from CommonInventory actor"));
+		return;
+	}
+
+	FText Note;
+	Inventory->RemoveItemsWithTagSlotType(Spawnables[SpawnID].CostTag, Spawnables[SpawnID].CostAmount, Note);
+	UE_LOG(LogTemp, Display, TEXT("%s"), *Note.ToString());
+}
+
 void UWOGSpawnComponent::PlaceSpawn()
 {
 	if (bCanSpawn && bIsSpawnModeOn)
@@ -391,11 +507,11 @@ void UWOGSpawnComponent::HandleSpawnRotation(bool bRotateLeft)
 
 	if (bRotateLeft)
 	{
-		NewSpawnRotation = SpawnTransform.GetRotation().Rotator() - FRotator(0.f, 15.f, 0.f);
+		NewSpawnRotation = SpawnTransform.GetRotation().Rotator() - FRotator(0.f, 45.f, 0.f);
 	}
 	else
 	{
-		NewSpawnRotation = SpawnTransform.GetRotation().Rotator() + FRotator(0.f, 15.f, 0.f);
+		NewSpawnRotation = SpawnTransform.GetRotation().Rotator() + FRotator(0.f, 45.f, 0.f);
 	}
 
 	SpawnTransform.SetRotation(FQuat::MakeFromRotator(NewSpawnRotation));

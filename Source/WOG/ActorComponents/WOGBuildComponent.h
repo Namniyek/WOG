@@ -70,27 +70,23 @@ class WOG_API UWOGBuildComponent : public UWOGBaseActorComponent
 public:
 	friend class AWOGDefender;
 	UWOGBuildComponent();
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 private:
 
 	FTimerHandle BuildTimerHandle;
 	TObjectPtr<AWOGDefender> DefenderCharacter;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Building Setting")
-	TObjectPtr<UDataTable> BuildablesDataTable;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Building Setting")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Setup")
 	TObjectPtr<UMaterialInstance> AllowedGhostMaterial;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Building Setting")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Setup")
 	TObjectPtr<UMaterialInstance> ForbiddenGhostMaterial;
 
-	TArray<FBuildables*> Buildables;
+	UPROPERTY(Replicated)
+	TArray<FBuildables> Buildables;
 
 public:
-
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
-	int32 LastIndexDataTable = 0;
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Default")
 	bool bIsBuildModeOn;
@@ -98,7 +94,7 @@ public:
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Default")
 	bool bCanBuild;
 
-	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly, Category = "Default")
+	UPROPERTY(Replicated, BlueprintReadWrite, EditDefaultsOnly, Category = "Default")
 	int32 BuildID;
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Default")
@@ -137,11 +133,15 @@ protected:
 	void DeductCost();
 
 	UFUNCTION(BlueprintCallable)
-	void ChangeMesh();
+	void ChangeMesh(int32 ID);
 
 	UFUNCTION(Server, reliable)
 	void Server_SpawnBuild(FTransform Transform, int32 ID, AActor* Hit, UPrimitiveComponent* HitComponent);
 	void SpawnBuild(FTransform Transform, int32 ID, AActor* Hit, UPrimitiveComponent* HitComponent);
+
+	UFUNCTION(Server, reliable)
+	void Server_SetBuildables(const TArray<FBuildables>& InBuildables);
+	bool SetBuildables();
 
 public:
 
@@ -159,5 +159,8 @@ public:
 
 	UFUNCTION(BlueprintCallable, Server, reliable)
 	void Server_InteractWithBuild(UObject* HitActor);
+
+	UFUNCTION(BlueprintPure)
+	FORCEINLINE TArray<FBuildables> GetBuildables() const { return Buildables; }
 
 };

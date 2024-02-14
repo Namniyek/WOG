@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
 #include "Data/WOGDataTypes.h"
+#include "Types/CharacterTypes.h"
 #include "SpawnInterface.generated.h"
 
 class AWOGBaseSquad;
@@ -70,4 +71,7 @@ public:
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void DefineAttackTagIndex();
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	FSpawnables ReturnSpawnData();
 };
