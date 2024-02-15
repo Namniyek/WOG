@@ -54,6 +54,7 @@ public:
 	void GiveDefaultAbilities();
 	void ApplyDefaultEffects();
 
+	UFUNCTION(BlueprintPure)
 	bool HasMatchingGameplayTag(FGameplayTag TagToCheck) const;
 
 	UFUNCTION(BlueprintPure)
