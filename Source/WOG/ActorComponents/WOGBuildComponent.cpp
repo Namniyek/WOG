@@ -18,6 +18,7 @@
 #include "Data/WOGGameplayTags.h"
 #include "WOG.h"
 #include "Net/UnrealNetwork.h"
+#include "AbilitySystemBlueprintLibrary.h"
 
 UWOGBuildComponent::UWOGBuildComponent()
 {
@@ -366,7 +367,8 @@ void UWOGBuildComponent::PlaceBuildable()
 {
 	if (bCanBuild && bIsBuildModeOn)
 	{
-		Server_SpawnBuild(BuildTransform, BuildID, CurrentHitActor, CurrentHitComponent);
+		FGameplayEventData Payload;
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(GetOwner(), TAG_Event_Summon, Payload);
 	}
 }
 

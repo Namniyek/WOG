@@ -53,6 +53,7 @@ public:
 
 	void GiveDefaultAbilities();
 	void ApplyDefaultEffects();
+	virtual void GrantDefaultInventoryItems();
 
 	UFUNCTION(BlueprintPure)
 	bool HasMatchingGameplayTag(FGameplayTag TagToCheck) const;
@@ -108,6 +109,8 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Setup|Combat")
 	int32 MaxAttackTokens;
+
+
 	#pragma endregion
 
 	#pragma region Actor Components

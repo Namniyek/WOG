@@ -4,14 +4,16 @@
 
 #include "CoreMinimal.h"
 #include "Engine/StaticMeshActor.h"
-#include "WOG/Interfaces/BuildingInterface.h"
+#include "Interfaces/BuildingInterface.h"
+#include "Interfaces/TargetInterface.h"
+#include "AI/Combat/WOGBaseSquad.h"
 #include "WOGBaseBuildable.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class WOG_API AWOGBaseBuildable : public AStaticMeshActor, public IBuildingInterface
+class WOG_API AWOGBaseBuildable : public AStaticMeshActor, public IBuildingInterface, public ITargetInterface
 {
 	GENERATED_BODY()
 
@@ -19,12 +21,18 @@ public:
 	AWOGBaseBuildable();
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
+	UPROPERTY(BlueprintAssignable, BlueprintCallable)
+	FOnTargetDestroyedDelegate OnTargetDestroyedDelegate;
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void BuildExtensions();
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated, Category = "Build Properties")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, ReplicatedUsing = "OnRep_BuildHealth", Category = "Build Properties")
 	float BuildHealth;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated, Category = "Build Properties")
+	float BuildMaxHealth;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated, Category = "Build Properties")
 	float BuildMaxHeightOffset;
@@ -38,30 +46,69 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Build Properties")
 	TArray<TObjectPtr<UStaticMeshComponent>> BuildExtensionsMeshes;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<USceneComponent> TargetWidgetLocation;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Build Properties")
 	float DestroyDelay;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Build Properties")
 	TObjectPtr<UStaticMesh> BuildExtensionMesh;
 
+	UFUNCTION()
+	void OnRep_BuildHealth();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void ShowHealthBar();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void HideHealthBar();
+
+	FTimerHandle HealthBarTimerHandle;
+	void HandleHealthBar(bool NewVisible);
 
 	#pragma region Interface functions
 	virtual TArray<UBoxComponent*> ReturnCollisionBoxes_Implementation() override;
-
 	virtual void SetProperties_Implementation(UStaticMesh* Mesh, UStaticMesh* ExtensionMesh, const float& Health, const float& MaxHeightOffset) override;
-
 	virtual void DealDamage_Implementation(const float& Damage, const AActor* Agressor) override;
-
 	virtual void AddBuildChild_Implementation(AActor* Actor) override;
+	virtual void ReturnBuildHealth_Implementation(float& OutBuildHealth, float& OutMaxBuildHealth) override;
+
+	bool IsTargetable_Implementation(AActor* TargeterActor) const;
+	void GetTargetWidgetAttachmentParent_Implementation(USceneComponent*& OutParentComponent, FName& OutSocketName) const;
+	FVector GetMeleeAttackSlot_Implementation(const int32& SlotIndex) const;
+	FVector GetRangedAttackSlot_Implementation(const int32& SlotIndex) const;
+	bool IsCurrentMeleeSquadSlotAvailable_Implementation() const;
+	bool IsCurrentRangedSquadSlotAvailable_Implementation() const;
+	void FreeCurrentRangedSquadSlot_Implementation();
+	void FreeCurrentMeleeSquadSlot_Implementation();
+	void SetCurrentRangedSquadSlot_Implementation(AWOGBaseSquad* NewSquad);
+	void SetCurrentMeleeSquadSlot_Implementation(AWOGBaseSquad* NewSquad);
 	#pragma endregion
-	
+
+
+
+	bool Trace(const TObjectPtr<UPrimitiveComponent> Component, float& OutDistance);
+
+	UFUNCTION()
+	void HandleDamage(const float& Damage, const AActor* Agressor);
 
 	UFUNCTION(NetMulticast, Reliable)
-	void Multicast_DestroyBuild();
+	void Multicast_DestroyBuild(const AActor* Agressor);
 
 	void DestroyBuild();
 
-	bool Trace(const TObjectPtr<UPrimitiveComponent> Component, float& OutDistance);
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TArray<FVector3DWithWidget> MeleeSlots;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TArray<FVector3DWithWidget> RangedSlots;
+
+	UPROPERTY(Replicated, VisibleAnywhere)
+	TObjectPtr<AWOGBaseSquad> CurrentMeleeSquad;
+
+	UPROPERTY(Replicated, VisibleAnywhere)
+	TObjectPtr<AWOGBaseSquad> CurrentRangedSquad;
 
 public:
 
@@ -70,4 +117,15 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void HandleChaosDestruction();
+
+	UFUNCTION(BlueprintAuthorityOnly, BlueprintCallable)
+	void SetCurrentRangedSquad(AWOGBaseSquad* NewSquad);
+
+	UFUNCTION(BlueprintAuthorityOnly, BlueprintCallable)
+	void SetCurrentMeleeSquad(AWOGBaseSquad* NewSquad);
+
+	UFUNCTION(BlueprintPure)
+	FORCEINLINE AWOGBaseSquad* GetCurrentRangedSquad() const { return CurrentRangedSquad; }
+	UFUNCTION(BlueprintPure)
+	FORCEINLINE AWOGBaseSquad* GetCurrentMeleeSquad() const { return CurrentMeleeSquad; }
 };

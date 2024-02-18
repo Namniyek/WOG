@@ -22,6 +22,8 @@ AWOGBaseTarget::AWOGBaseTarget()
 	RootMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("RootMesh"));
 	RootMesh->SetupAttachment(GetRootComponent());
 	RootMesh->SetIsReplicated(true);
+	TargetWidgetLocation = CreateDefaultSubobject<USceneComponent>(TEXT("TargetWidgetLocation"));
+	TargetWidgetLocation->SetupAttachment(GetRootComponent());
 
 	MaxHealth = 100.f;
 	Health = MaxHealth;
@@ -229,6 +231,12 @@ bool AWOGBaseTarget::IsTargetable_Implementation(AActor* TargeterActor) const
 	return bIsTargeterAttacker;
 }
 
+void AWOGBaseTarget::GetTargetWidgetAttachmentParent_Implementation(USceneComponent*& OutParentComponent, FName& OutSocketName) const
+{
+	OutParentComponent = TargetWidgetLocation;
+	OutSocketName = FName("");
+}
+
 FVector AWOGBaseTarget::GetMeleeAttackSlot_Implementation(const int32& SlotIndex) const
 {
 	if (SlotIndex < MeleeSlots.Num())
@@ -283,6 +291,12 @@ void AWOGBaseTarget::SetCurrentRangedSquadSlot_Implementation(AWOGBaseSquad* New
 void AWOGBaseTarget::SetCurrentMeleeSquadSlot_Implementation(AWOGBaseSquad* NewSquad)
 {
 	SetCurrentMeleeSquad(NewSquad);
+}
+
+void AWOGBaseTarget::ReturnBuildHealth_Implementation(float& OutBuildHealth, float& OutMaxBuildHealth)
+{
+	OutBuildHealth = Health;
+	OutMaxBuildHealth = MaxHealth;
 }
 
 void AWOGBaseTarget::SetCurrentRangedSquad(AWOGBaseSquad* NewSquad)

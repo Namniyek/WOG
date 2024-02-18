@@ -70,6 +70,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Order_Follow, "Event.Order.Follow");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Order_Hold, "Event.Order.Hold");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Order_Attack_Target, "Event.Order.Attack.Target");
 
+UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Summon, "Event.Summon");
 
 //Inventory tags
 

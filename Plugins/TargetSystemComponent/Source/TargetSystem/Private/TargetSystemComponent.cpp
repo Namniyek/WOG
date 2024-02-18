@@ -452,7 +452,6 @@ bool UTargetSystemComponent::TargetIsTargetable(AActor* Actor) const
 	bool bIsImplemented = Actor->GetClass()->ImplementsInterface(UTargetInterface::StaticClass());
 	if (bIsImplemented)
 	{
-
 		return ITargetInterface::Execute_IsTargetable(Actor, GetOwner());
 	}
 	else

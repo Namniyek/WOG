@@ -76,8 +76,10 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void ChangeMesh(int32 ID);
 
-	UFUNCTION(Server, reliable)
+	UFUNCTION(BlueprintCallable, Server, reliable)
 	void Server_Spawn(FTransform Transform, int32 ID);
+
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
 	void Spawn(FTransform Transform, int32 ID);
 
 	TArray<FVector> GetSpawnLocations(const FVector& MiddleLocation, float GridSize, int32 Amount);

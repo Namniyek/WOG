@@ -135,7 +135,7 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void ChangeMesh(int32 ID);
 
-	UFUNCTION(Server, reliable)
+	UFUNCTION(BlueprintCallable, Server, reliable)
 	void Server_SpawnBuild(FTransform Transform, int32 ID, AActor* Hit, UPrimitiveComponent* HitComponent);
 	void SpawnBuild(FTransform Transform, int32 ID, AActor* Hit, UPrimitiveComponent* HitComponent);
 

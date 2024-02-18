@@ -10,6 +10,7 @@
 #include "Interfaces/TargetInterface.h"
 #include "Libraries/WOGBlueprintLibrary.h"
 #include "ActorComponents/WOGUIManagerComponent.h"
+#include "Buildables/WOGBaseBuildable.h"
 
 AWOGBaseSquad::AWOGBaseSquad()
 {
@@ -190,7 +191,7 @@ void AWOGBaseSquad::SendOrder(const EEnemyOrder& NewOrder, const FTransform& Tar
 
 		//Check if TargetActor is a player or a building
 		// Target is a Building
-		if (TargetActor->IsA<AWOGBaseTarget>() && TargetActor->GetClass()->ImplementsInterface(UTargetInterface::StaticClass()))
+		if ((TargetActor->IsA<AWOGBaseTarget>() || TargetActor->IsA<AWOGBaseBuildable>()) && TargetActor->GetClass()->ImplementsInterface(UTargetInterface::StaticClass()))
 		{
 			//Check if target has an availability for squad
 			if (SquadType == EEnemySquadType::EEST_Melee && ITargetInterface::Execute_IsCurrentMeleeSquadSlotAvailable(TargetActor))
@@ -299,9 +300,9 @@ AActor* AWOGBaseSquad::FindRandomTarget()
 	{
 		UE_LOG(WOGLogSpawn, Display, TEXT("%s iterated"), *GetNameSafe(Actor));
 
-		if (!Actor->IsA<AWOGBaseTarget>())
+		if (!Actor->IsA<AWOGBaseTarget>() && !Actor->IsA<AWOGBaseBuildable>())
 		{
-			UE_LOG(WOGLogSpawn, Warning, TEXT("%s is not a WOGBaseTarget"), *GetNameSafe(Actor));
+			UE_LOG(WOGLogSpawn, Warning, TEXT("%s is not a valid target"), *GetNameSafe(Actor));
 			continue;
 		}
 
@@ -375,6 +376,11 @@ void AWOGBaseSquad::SetCurrentTargetActor(AActor* NewTarget)
 		{
 			Target->OnTargetDestroyedDelegate.AddDynamic(this, &ThisClass::OnCurrentTargetDestroyed);
 		}
+		AWOGBaseBuildable* Build = Cast<AWOGBaseBuildable>(CurrentTargetActor);
+		if (Build)
+		{
+			Build->OnTargetDestroyedDelegate.AddDynamic(this, &ThisClass::OnCurrentTargetDestroyed);
+		}
 
 		return;
 	}
@@ -386,17 +392,15 @@ void AWOGBaseSquad::SetCurrentTargetActor(AActor* NewTarget)
 		{
 			Target->OnTargetDestroyedDelegate.Clear();
 		}
+		AWOGBaseBuildable* Build = Cast<AWOGBaseBuildable>(CurrentTargetActor);
+		if (Build)
+		{
+			Build->OnTargetDestroyedDelegate.Clear();
+		}
 
 		CurrentTargetActor = NewTarget;
 		return;
 	}
-
-
-
-
-
-
-
 }
 
 void AWOGBaseSquad::SetCurrentTargetLocation(const FVector_NetQuantize& NewTarget)

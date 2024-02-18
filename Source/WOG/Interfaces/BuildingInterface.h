@@ -52,4 +52,7 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	FBuildables ReturnBuildData();
 
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void ReturnBuildHealth(float& OutBuildHealth, float& OutMaxBuildHealth);
+
 };

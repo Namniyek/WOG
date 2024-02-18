@@ -655,6 +655,7 @@ void ABasePlayerCharacter::SetDefaultAbilitiesAndEffects(bool bIsMale, FName Row
 	DefaultAbilitiesAndEffects.Effects.Append(MeshRow->DefaultAbilitiesAndEffects.Effects);
 	DefaultAbilitiesAndEffects.Weapons.Append(MeshRow->DefaultAbilitiesAndEffects.Weapons);
 	DefaultAbilitiesAndEffects.Magics.Append(MeshRow->DefaultAbilitiesAndEffects.Magics);
+	DefaultAbilitiesAndEffects.DefaultItems.Append(MeshRow->DefaultAbilitiesAndEffects.DefaultItems);
 
 	GiveDefaultAbilities();
 	ApplyDefaultEffects();
@@ -2085,6 +2086,8 @@ void ABasePlayerCharacter::CreateDefaults()
 	{
 		CreateDefaultTools();
 	}
+
+	GrantDefaultInventoryItems();
 }
 
 void ABasePlayerCharacter::CreateDefaultTools()

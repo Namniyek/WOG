@@ -28,6 +28,9 @@ struct FCharacterAbilityData
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Inventory")
 	TArray<TSubclassOf<class AWOGBaseMagic>> Magics = { nullptr };
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Inventory")
+	TArray<TSubclassOf<AActor>> DefaultItems = { nullptr };
 };
 
 USTRUCT(BlueprintType)

@@ -39,6 +39,9 @@ protected:
 	TObjectPtr<UStaticMeshComponent> RootMesh;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<USceneComponent> TargetWidgetLocation;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	float DestroyDelay;
 
 	/** Sets a new Rest Collection. */
@@ -110,6 +113,7 @@ protected:
 
 	#pragma region Interface functions
 	bool IsTargetable_Implementation(AActor* TargeterActor) const;
+	void GetTargetWidgetAttachmentParent_Implementation(USceneComponent*& OutParentComponent, FName& OutSocketName) const;
 	FVector GetMeleeAttackSlot_Implementation(const int32& SlotIndex) const;
 	FVector GetRangedAttackSlot_Implementation(const int32& SlotIndex) const;
 	bool IsCurrentMeleeSquadSlotAvailable_Implementation() const;
@@ -118,6 +122,7 @@ protected:
 	void FreeCurrentMeleeSquadSlot_Implementation();
 	void SetCurrentRangedSquadSlot_Implementation(AWOGBaseSquad* NewSquad);
 	void SetCurrentMeleeSquadSlot_Implementation(AWOGBaseSquad* NewSquad);
+	void ReturnBuildHealth_Implementation(float& OutBuildHealth, float& OutMaxBuildHealth);
 	#pragma endregion
 
 public:	

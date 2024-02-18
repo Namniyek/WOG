@@ -21,6 +21,7 @@
 #include "ActorComponents/WOGEnemyOrderComponent.h"
 #include "Resources/WOGCommonInventory.h"
 #include "Net/UnrealNetwork.h"
+#include "AbilitySystemBlueprintLibrary.h"
 
 UWOGSpawnComponent::UWOGSpawnComponent()
 {
@@ -495,7 +496,8 @@ void UWOGSpawnComponent::PlaceSpawn()
 {
 	if (bCanSpawn && bIsSpawnModeOn)
 	{
-		Server_Spawn(SpawnTransform, SpawnID);
+		FGameplayEventData Payload;
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(GetOwner(), TAG_Event_Summon, Payload);
 	}
 }
 

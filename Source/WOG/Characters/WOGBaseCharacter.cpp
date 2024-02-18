@@ -29,6 +29,7 @@
 #include "Libraries/WOGBlueprintLibrary.h"
 #include "AI/Combat/WOGBaseSquad.h"
 #include "Components/StaticMeshComponent.h"
+#include "Data/AGRLibrary.h"
 
 AWOGBaseCharacter::AWOGBaseCharacter()
 {
@@ -138,6 +139,31 @@ void AWOGBaseCharacter::ApplyDefaultEffects()
 	{
 		ApplyGameplayEffectToSelf(DefaultEffect, EffectContext);
 		UE_LOG(WOGLogSpawn, Display, TEXT("Applied effect: %s on %s"), *GetNameSafe(DefaultEffect), *GetNameSafe(this));
+	}
+}
+
+void AWOGBaseCharacter::GrantDefaultInventoryItems()
+{
+	if (!HasAuthority()) return;
+	if (DefaultAbilitiesAndEffects.DefaultItems.IsEmpty())
+	{
+		UE_LOG(WOGLogInventory, Error, TEXT("DefaultItems array empty"));
+		return;
+	}
+
+	UAGR_InventoryManager* Inventory = UAGRLibrary::GetInventory(this);
+
+	if (!Inventory)
+	{
+		UE_LOG(WOGLogInventory, Error, TEXT("Invalid Inventory"));
+		return;
+	}
+
+	for (auto ItemClass : DefaultAbilitiesAndEffects.DefaultItems)
+	{
+		FText OutNote;
+		Inventory->AddItemsOfClass(ItemClass, 1, OutNote);
+		UE_LOG(WOGLogInventory, Display, TEXT("%s -> %s"),*GetNameSafe(ItemClass), *OutNote.ToString());
 	}
 }
 

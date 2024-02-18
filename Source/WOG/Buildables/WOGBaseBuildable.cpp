@@ -7,6 +7,8 @@
 #include "DrawDebugHelpers.h"
 #include "Components/ArrowComponent.h"
 #include "TargetSystemComponent.h"
+#include "Libraries/WOGBlueprintLibrary.h"
+#include "WOG.h"
 
 AWOGBaseBuildable::AWOGBaseBuildable()
 {
@@ -17,6 +19,9 @@ AWOGBaseBuildable::AWOGBaseBuildable()
 
 	bReplicates = true;
 	SetReplicateMovement(true);
+
+	TargetWidgetLocation = CreateDefaultSubobject<USceneComponent>(TEXT("TargetWidgetLocation"));
+	TargetWidgetLocation->SetupAttachment(GetRootComponent());
 }
 
 void AWOGBaseBuildable::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -24,13 +29,44 @@ void AWOGBaseBuildable::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AWOGBaseBuildable, bIsDead);
 	DOREPLIFETIME(AWOGBaseBuildable, BuildHealth);
+	DOREPLIFETIME(AWOGBaseBuildable, BuildMaxHealth);
 	DOREPLIFETIME(AWOGBaseBuildable, BuildMaxHeightOffset);
 	DOREPLIFETIME(AWOGBaseBuildable, BuildChildren);
+	DOREPLIFETIME(AWOGBaseBuildable, CurrentMeleeSquad);
+	DOREPLIFETIME(AWOGBaseBuildable, CurrentRangedSquad);
+
 }
 
 void AWOGBaseBuildable::BeginPlay()
 {
 	Super::BeginPlay();
+}
+
+void AWOGBaseBuildable::OnRep_BuildHealth()
+{
+	if (BuildHealth <= 0)
+	{
+		HandleHealthBar(false);
+	}
+	else
+	{
+		HandleHealthBar(true);
+	}
+}
+
+void AWOGBaseBuildable::HandleHealthBar(bool NewVisible)
+{
+	GetWorldTimerManager().ClearTimer(HealthBarTimerHandle);
+
+	if (NewVisible)
+	{
+		ShowHealthBar();
+		GetWorldTimerManager().SetTimer(HealthBarTimerHandle, this, &ThisClass::HideHealthBar, 3.f);
+	}
+	else
+	{
+		HideHealthBar();
+	}
 }
 
 TArray<UBoxComponent*> AWOGBaseBuildable::ReturnCollisionBoxes_Implementation()
@@ -43,6 +79,7 @@ TArray<UBoxComponent*> AWOGBaseBuildable::ReturnCollisionBoxes_Implementation()
 void AWOGBaseBuildable::SetProperties_Implementation(UStaticMesh* Mesh, UStaticMesh* ExtensionMesh, const float& Health, const float& MaxHeightOffset)
 {
 	BuildHealth = Health;
+	BuildMaxHealth = Health;
 	BuildMaxHeightOffset = MaxHeightOffset;
 	GetStaticMeshComponent()->SetStaticMesh(Mesh);
 	BuildExtensionMesh = ExtensionMesh;
@@ -55,7 +92,18 @@ void AWOGBaseBuildable::AddBuildChild_Implementation(AActor* Actor)
 
 void AWOGBaseBuildable::DealDamage_Implementation(const float& Damage, const AActor* Agressor)
 {
-	if (Agressor && BuildHealth - Damage <= 0)
+	HandleDamage(Damage, Agressor);
+}
+
+void AWOGBaseBuildable::ReturnBuildHealth_Implementation(float& OutBuildHealth, float& OutMaxBuildHealth)
+{
+	OutBuildHealth = BuildHealth;
+	OutMaxBuildHealth = BuildMaxHealth;
+}
+
+void AWOGBaseBuildable::Multicast_DestroyBuild_Implementation(const AActor* Agressor)
+{
+	if (Agressor)
 	{
 		UTargetSystemComponent* TargetComp = Agressor->GetComponentByClass<UTargetSystemComponent>();
 		if (TargetComp)
@@ -64,20 +112,6 @@ void AWOGBaseBuildable::DealDamage_Implementation(const float& Damage, const AAc
 		}
 	}
 
-	if (bIsDead || !HasAuthority()) return;
-
-	BuildHealth -= Damage;
-	UE_LOG(LogTemp, Display, TEXT("Damage taken: %f, Health Remaining: %f, LocalRole: %s"), Damage, BuildHealth, *UEnum::GetValueAsString(GetLocalRole()));
-
-	if (BuildHealth <= 0)
-	{
-		bIsDead = true;
-		Multicast_DestroyBuild();
-	}
-}
-
-void AWOGBaseBuildable::Multicast_DestroyBuild_Implementation()
-{
 	GetStaticMeshComponent()->SetVisibility(false, true);
 	GetStaticMeshComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
@@ -116,14 +150,27 @@ void AWOGBaseBuildable::Multicast_DestroyBuild_Implementation()
 			Component->DestroyComponent();
 		}
 	}
-
-	FTimerHandle DestroyTimerHandle;
-	GetWorld()->GetTimerManager().SetTimer(DestroyTimerHandle, this, &ThisClass::DestroyBuild, DestroyDelay);
 }
 
 void AWOGBaseBuildable::DestroyBuild()
 {
 	Destroy();
+}
+
+void AWOGBaseBuildable::SetCurrentRangedSquad(AWOGBaseSquad* NewSquad)
+{
+	if (HasAuthority())
+	{
+		CurrentRangedSquad = NewSquad;
+	}
+}
+
+void AWOGBaseBuildable::SetCurrentMeleeSquad(AWOGBaseSquad* NewSquad)
+{
+	if (HasAuthority())
+	{
+		CurrentMeleeSquad = NewSquad;
+	}
 }
 
 bool AWOGBaseBuildable::Trace(const TObjectPtr<UPrimitiveComponent> Component, float& OutDistance)
@@ -146,6 +193,29 @@ bool AWOGBaseBuildable::Trace(const TObjectPtr<UPrimitiveComponent> Component, f
 
 	OutDistance = HitResult.Distance;
 	return HitResult.bBlockingHit;
+}
+
+void AWOGBaseBuildable::HandleDamage(const float& Damage, const AActor* Agressor)
+{
+	if (bIsDead || !HasAuthority()) return;
+
+	if (BuildHealth - Damage <= 0)
+	{
+		BuildHealth = 0;
+		bIsDead = true;
+		HandleHealthBar(false);
+		OnTargetDestroyedDelegate.Broadcast(nullptr);
+
+		FTimerHandle DestroyTimerHandle;
+		GetWorld()->GetTimerManager().SetTimer(DestroyTimerHandle, this, &ThisClass::DestroyBuild, DestroyDelay);
+
+		Multicast_DestroyBuild(Agressor);
+	}
+	else
+	{
+		BuildHealth = BuildHealth - Damage;
+		HandleHealthBar(true);
+	}
 }
 
 void AWOGBaseBuildable::Server_BuildExtensions_Implementation()
@@ -197,4 +267,74 @@ void AWOGBaseBuildable::BuildExtensions()
 			UE_LOG(LogTemp, Warning, TEXT("ExtensionBuilt"));
 		}
 	}
+}
+
+bool AWOGBaseBuildable::IsTargetable_Implementation(AActor* TargeterActor) const
+{
+	//For targets, check if the targeter is attacker and then return true if that is the case.
+	//We only want attackers to be able to target WOGBaseBuildables
+	bool bIsTargeterAttacker = UWOGBlueprintLibrary::GetCharacterData(TargeterActor).bIsAttacker;
+	return bIsTargeterAttacker;
+}
+
+void AWOGBaseBuildable::GetTargetWidgetAttachmentParent_Implementation(USceneComponent*& OutParentComponent, FName& OutSocketName) const
+{
+	OutParentComponent = TargetWidgetLocation;
+	OutSocketName = FName("");
+}
+
+FVector AWOGBaseBuildable::GetMeleeAttackSlot_Implementation(const int32& SlotIndex) const
+{
+	if (SlotIndex < MeleeSlots.Num())
+	{
+		return MeleeSlots[SlotIndex].Vector;
+	}
+	else
+	{
+		UE_LOG(WOGLogCombat, Error, TEXT("No corresponding MeleeAttackSlot on %s that corresponds to the provided index %d"), *GetNameSafe(this), SlotIndex);
+		return FVector();
+	}
+}
+
+FVector AWOGBaseBuildable::GetRangedAttackSlot_Implementation(const int32& SlotIndex) const
+{
+	if (SlotIndex < RangedSlots.Num())
+	{
+		return RangedSlots[SlotIndex].Vector;
+	}
+	else
+	{
+		UE_LOG(WOGLogCombat, Error, TEXT("No corresponding RangedAttackSlot on %s that corresponds to the provided index %d"), *GetNameSafe(this), SlotIndex);
+		return FVector();
+	}
+}
+
+bool AWOGBaseBuildable::IsCurrentMeleeSquadSlotAvailable_Implementation() const
+{
+	return CurrentMeleeSquad == nullptr;
+}
+
+bool AWOGBaseBuildable::IsCurrentRangedSquadSlotAvailable_Implementation() const
+{
+	return CurrentRangedSquad == nullptr;
+}
+
+void AWOGBaseBuildable::FreeCurrentRangedSquadSlot_Implementation()
+{
+	SetCurrentRangedSquad(nullptr);
+}
+
+void AWOGBaseBuildable::FreeCurrentMeleeSquadSlot_Implementation()
+{
+	SetCurrentMeleeSquad(nullptr);
+}
+
+void AWOGBaseBuildable::SetCurrentRangedSquadSlot_Implementation(AWOGBaseSquad* NewSquad)
+{
+	SetCurrentRangedSquad(NewSquad);
+}
+
+void AWOGBaseBuildable::SetCurrentMeleeSquadSlot_Implementation(AWOGBaseSquad* NewSquad)
+{
+	SetCurrentMeleeSquad(NewSquad);
 }
