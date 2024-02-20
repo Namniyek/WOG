@@ -118,7 +118,7 @@ struct FVendorItemData
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "BaseData")
 	FGameplayTag ItemTag = FGameplayTag();
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "BaseData")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "BaseData")
 	UTexture2D* ItemIcon = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BaseData")

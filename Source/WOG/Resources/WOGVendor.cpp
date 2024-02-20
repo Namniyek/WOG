@@ -243,6 +243,7 @@ void AWOGVendor::OnInteractWithVendorComplete(ABasePlayerCharacter* Interactor)
 			TObjectPtr<UWOGUIManagerSubsystem> UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(CurrentUserPC->GetLocalPlayer());
 			if (IsValid(UIManager))
 			{
+				UIManager->RemoveStaminaWidget();
 				UIManager->RemoveBarsWidget();
 				UIManager->RemoveMinimapWidget();
 				UIManager->CollapseAbilitiesWidget();

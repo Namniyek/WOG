@@ -18,7 +18,6 @@ class WOG_API UWOGStashWidget : public UUserWidget
 private:
 	TObjectPtr<AActor> PlayerActor;
 	TObjectPtr<AWOGStashBase> StashActor;
-	
 
 public:
 	UFUNCTION(BlueprintPure)

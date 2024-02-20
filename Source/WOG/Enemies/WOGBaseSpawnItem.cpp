@@ -100,7 +100,7 @@ void AWOGBaseSpawnItem::InitSpawnableData()
 		ItemComponent->CurrentStack = SpawnDataRow->VendorItemData.ItemAmount;
 		ItemComponent->ItemTagSlotType = SpawnDataRow->ItemTag;
 
-		SpawnDataRow->VendorItemData.ItemIcon = SpawnDataRow->Icon;
+		//SpawnDataRow->VendorItemData.ItemIcon = SpawnDataRow->Icon;
 		SpawnDataRow->VendorItemData.ItemTag = SpawnDataRow->ItemTag;
 		SpawnDataRow->VendorItemData.AmountUnits = SpawnDataRow->AmountUnits;
 

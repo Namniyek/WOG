@@ -180,6 +180,19 @@ void UWOGUIManagerSubsystem::AddStaminaWidget()
 	}
 }
 
+void UWOGUIManagerSubsystem::RemoveStaminaWidget()
+{
+	TObjectPtr<ABasePlayerCharacter> BaseCharacter = Cast<ABasePlayerCharacter>(OwnerPC->GetPawn());
+	if (!BaseCharacter || !BaseCharacter->GetStaminaWidgetContainer() || !BaseCharacter->GetStaminaWidgetContainer()->GetContainer()) return;
+	if (!BaseCharacter->GetStaminaWidgetContainer()->GetContainer()->HasAnyChildren()) return;
+
+	UWidget* StaminaBar = BaseCharacter->GetStaminaWidgetContainer()->GetContainer()->GetChildAt(0);
+	if (StaminaBar)
+	{
+		StaminaBar->RemoveFromParent();
+	}
+}
+
 void UWOGUIManagerSubsystem::AddScreenDamageWidget(const int32& DamageThreshold)
 {
 	MatchHUD == nullptr ? (TObjectPtr<AWOGMatchHUD>) Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
@@ -349,17 +362,18 @@ void UWOGUIManagerSubsystem::AddMinimapWidget()
 	MinimapWidget = CreateWidget<UUserWidget>(OwnerPC, MatchHUD->MinimapWidgetClass);
 	if (MinimapWidget && MatchHUD->HUDWidget->GetMinimapContainer())
 	{
-		//MatchHUD->HUDWidget->GetMinimapContainer()->ClearChildren();
+		MatchHUD->HUDWidget->GetMinimapContainer()->ClearChildren();
 		MatchHUD->HUDWidget->GetMinimapContainer()->AddChild(MinimapWidget);
 	}
 }
 
 void UWOGUIManagerSubsystem::RemoveMinimapWidget()
 {
-	if (IsValid(MinimapWidget))
-	{
-		MinimapWidget->RemoveFromParent();
-	}
+	MatchHUD == nullptr ? (TObjectPtr<AWOGMatchHUD>) Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
+	if (!MatchHUD || !MatchHUD->HUDWidget || !MatchHUD->HUDWidget->GetMinimapContainer()) return;
+
+	MatchHUD->HUDWidget->GetMinimapContainer()->ClearChildren();
+	MinimapWidget = nullptr;
 }
 
 void UWOGUIManagerSubsystem::CollapseAbilitiesWidget()
@@ -368,7 +382,7 @@ void UWOGUIManagerSubsystem::CollapseAbilitiesWidget()
 	if (!MatchHUD || !MatchHUD->HUDWidget || !MatchHUD->HUDWidget->GetAbilitiesContainer()) return;
 
 	AbilityContainerWidget = AbilityContainerWidget == nullptr ? (TObjectPtr<UUserWidget>) Cast<UUserWidget>(MatchHUD->HUDWidget->GetAbilitiesContainer()->GetChildAt(0)) : AbilityContainerWidget;
-	if (IsValid(AbilityContainerWidget) && AbilityContainerWidget->GetVisibility() == ESlateVisibility::Visible)
+	if (AbilityContainerWidget != nullptr && AbilityContainerWidget->GetVisibility() == ESlateVisibility::Visible)
 	{
 		AbilityContainerWidget->SetVisibility(ESlateVisibility::Hidden);
 	}

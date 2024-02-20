@@ -81,6 +81,9 @@ public:
 	void AddStaminaWidget();
 
 	UFUNCTION()
+	void RemoveStaminaWidget();
+
+	UFUNCTION()
 	void AddScreenDamageWidget(const int32& DamageThreshold);
 
 	UFUNCTION()
