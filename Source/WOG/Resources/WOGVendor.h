@@ -26,6 +26,7 @@ public:
 	AWOGVendor();
 
 	void Sell(const TArray<FCostMap>& CostMap, TSubclassOf<AActor> ItemClass, const int32& Amount);
+	void UpgradeItem(const TArray<FCostMap>& CostMap, const int32& NewLevel, const FGameplayTag& ItemTag);
 
 	void SetIsBusy(const bool& NewBusy, ABasePlayerCharacter* UserPlayer);
 

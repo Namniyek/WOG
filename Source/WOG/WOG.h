@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 
+#define ECC_DamageTrace ECC_GameTraceChannel6
+
 static FName NAME_WeaponSlot_Primary = FName("Primary");
 static FName NAME_WeaponSlot_BackMain = FName("BackMain");
 static FName NAME_WeaponSlot_BackSecondary = FName("BackSecondary");

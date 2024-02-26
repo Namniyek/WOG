@@ -114,6 +114,7 @@ void AWOGVendor::PopulateInventory()
 void AWOGVendor::Sell(const TArray<FCostMap>& CostMap, TSubclassOf<AActor> ItemClass, const int32& Amount)
 {
 	if (!CommonInventory || !VendorInventory) return;
+	if (!HasAuthority()) return;
 
 	for (FCostMap Cost : CostMap)
 	{
@@ -158,6 +159,51 @@ void AWOGVendor::Sell(const TArray<FCostMap>& CostMap, TSubclassOf<AActor> ItemC
 
 	FTimerHandle DelayTimer;
 	GetWorldTimerManager().SetTimer(DelayTimer, this, &ThisClass::RefreshVendorItems, 0.05f, false);
+}
+
+void AWOGVendor::UpgradeItem(const TArray<FCostMap>& CostMap, const int32& NewLevel, const FGameplayTag& ItemTag)
+{
+	TObjectPtr<UWOGWorldSubsystem> WorldSubsystem = GetWorld()->GetSubsystem<UWOGWorldSubsystem>();
+	if (!CommonInventory || !WorldSubsystem || !VendorInventory) return;
+	if (!HasAuthority()) return;
+
+	//Deduct cost from common inventory
+	for (FCostMap Cost : CostMap)
+	{
+		FText OutNote;
+		CommonInventory->RemoveItemsWithTagSlotType(Cost.CostTag, Cost.CostAmount, OutNote);
+	}
+
+	//Broadcast Item Upgrade
+	WorldSubsystem->OnItemUpgradedDelegate.Broadcast(ItemTag, NewLevel);
+
+	//Update vendor widget
+	FTimerHandle DelayTimer;
+	GetWorldTimerManager().SetTimer(DelayTimer, this, &ThisClass::RefreshVendorItems, 0.05f, false);
+
+	//Remove item from vendor
+	FText OutNote;
+	TArray<AActor*> OutItems;
+	int32 OutAmount = 0;
+	VendorInventory->GetAllItemsOfTagSlotType(ItemTag, OutItems, OutAmount);
+
+	if (OutItems.Num() && OutItems[0])
+	{
+		TObjectPtr<UAGR_ItemComponent> Item = UAGRLibrary::GetItemComponent(OutItems[0]);
+		if (!Item)
+		{
+			return;
+		}
+
+		if (!Item->bStackable)
+		{
+			Item->DropItem();
+		}
+		else
+		{
+			Item->DestroyItem();
+		}
+	}
 }
 
 void AWOGVendor::RefreshVendorItems()

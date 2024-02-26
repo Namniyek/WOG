@@ -5,6 +5,18 @@
 #include "Components/SceneComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 
+AWOGBuildableLadder::AWOGBuildableLadder()
+{
+	FirstAnchor = CreateDefaultSubobject<USceneComponent>(TEXT("FirstAnchor"));
+	FirstAnchor->SetupAttachment(GetRootComponent());
+}
+
+void AWOGBuildableLadder::BeginPlay()
+{
+	Super::BeginPlay();
+	ExtendLadder();
+}
+
 void AWOGBuildableLadder::SetProperties_Implementation(UStaticMesh* Mesh, UStaticMesh* ExtensionMesh, const float& Health, const float& MaxHeightOffset)
 {
 	GetStaticMeshComponent()->SetStaticMesh(Mesh);
@@ -12,8 +24,6 @@ void AWOGBuildableLadder::SetProperties_Implementation(UStaticMesh* Mesh, UStati
 
 void AWOGBuildableLadder::ExtendLadder()
 {
-	TObjectPtr<USceneComponent> FirstAnchor = Cast<USceneComponent>(GetComponentByClass(USceneComponent::StaticClass()));
-
 	if (!FirstAnchor)
 	{
 		UE_LOG(LogTemp, Error, TEXT("FirstAnchor invalid"));

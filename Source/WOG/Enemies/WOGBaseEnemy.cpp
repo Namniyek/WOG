@@ -19,6 +19,8 @@
 #include "Interfaces/AttributesInterface.h"
 #include "AbilitySystem/AttributeSets/WOGAttributeSetBase.h"
 #include "Magic/WOGBaseMagic.h"
+#include "NiagaraFunctionLibrary.h"
+#include "Sound/SoundCue.h"
 
 AWOGBaseEnemy::AWOGBaseEnemy()
 {
@@ -67,6 +69,7 @@ void AWOGBaseEnemy::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLif
 	DOREPLIFETIME(AWOGBaseEnemy, DefendRange);
 	DOREPLIFETIME(AWOGBaseEnemy, ComboIndex);
 	DOREPLIFETIME(AWOGBaseEnemy, AttackTagIndex);
+	DOREPLIFETIME(AWOGBaseEnemy, CosmeticsDataAsset);
 }
 
 void AWOGBaseEnemy::BeginPlay()
@@ -80,6 +83,10 @@ void AWOGBaseEnemy::BeginPlay()
 	{
 		GetMesh()->SetMaterial(0, CharacterMI);
 	}
+
+	FTimerHandle CosmeticTimer;
+	GetWorldTimerManager().SetTimer(CosmeticTimer, this, &ThisClass::HandleSpawnCosmetics, 0.1f);
+	StartDissolve(true);
 }
 
 void AWOGBaseEnemy::Destroyed()
@@ -304,6 +311,45 @@ float AWOGBaseEnemy::GetDefendRangeValue_Implementation()
 	return DefendRange;
 }
 
+void AWOGBaseEnemy::HandleSpawnCosmetics()
+{
+	if (CosmeticsDataAsset && CosmeticsDataAsset->SpawnSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, CosmeticsDataAsset->SpawnSound, GetActorLocation());
+	}
+	if (CosmeticsDataAsset && CosmeticsDataAsset->SpawnParticleSystem)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, CosmeticsDataAsset->SpawnParticleSystem, GetActorLocation(), GetActorRotation());
+	}
+}
+
+void AWOGBaseEnemy::HandleDestroyCosmetics()
+{
+	if (CosmeticsDataAsset && CosmeticsDataAsset->DestroySound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, CosmeticsDataAsset->DestroySound, GetActorLocation());
+	}
+	if (CosmeticsDataAsset && CosmeticsDataAsset->DestroyParticleSystem)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, CosmeticsDataAsset->DestroyParticleSystem, GetActorLocation(), GetActorRotation());
+	}
+}
+
+void AWOGBaseEnemy::ExecuteGameplayCueWithCosmeticsDataAsset(const FGameplayTag& CueTag)
+{
+	if (!HasAuthority())
+	{
+		return;
+	}
+
+	if (AbilitySystemComponent)
+	{
+	FGameplayCueParameters CueParams;
+	CueParams.SourceObject = this;
+	AbilitySystemComponent->ExecuteGameplayCue(CueTag, CueParams);
+	}
+}
+
 void AWOGBaseEnemy::SetOwnerAttacker(AWOGAttacker* NewOwner)
 {
 	if (!HasAuthority()) return;
@@ -440,7 +486,7 @@ void AWOGBaseEnemy::Elim(bool bPlayerLeftGame)
 	}
 
 	OnCharacterElimEvent();
-
+	ExecuteGameplayCueWithCosmeticsDataAsset(TAG_Cue_Minion_Destroy);
 	Multicast_StartDissolve();
 
 	if (GetCharacterMovement())

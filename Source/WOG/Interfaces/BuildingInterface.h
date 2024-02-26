@@ -38,16 +38,10 @@ public:
 	void DealDamage(const float& Damage, const AActor* Agressor);
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-	void AddBuildChild(AActor* Actor);
-
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void HandleBuildWalls(const FString& HitBoxName, const AActor* BuiltWall);
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void HandleDestroyWalls(const AActor* DestroyedWall);
-
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-	void AddBuildParent(const AActor* Parent);
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	FBuildables ReturnBuildData();

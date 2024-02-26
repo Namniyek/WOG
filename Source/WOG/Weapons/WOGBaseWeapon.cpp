@@ -25,15 +25,8 @@
 #include "ActorComponents/WOGUIManagerComponent.h"
 #include "GameplayTagContainer.h"
 
-
-// Sets default values
 AWOGBaseWeapon::AWOGBaseWeapon()
 {
-	PrimaryActorTick.bCanEverTick = false;
-	bReplicates = true;
-	SetReplicateMovement(true);
-	bNetLoadOnClient = false;
-
 	SphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("OverlapSphere"));
 	SetRootComponent(SphereComponent);
 	SphereComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
@@ -52,44 +45,55 @@ AWOGBaseWeapon::AWOGBaseWeapon()
 	MeshSecondary->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	MeshSecondary->SetIsReplicated(true);
 
-	ItemComponent = CreateDefaultSubobject <UAGR_ItemComponent>(TEXT("ItemComponent"));
-	ItemComponent->bStackable = false;
-
 	ComboStreak = 0;
-
-	
 }
 
 void AWOGBaseWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME(AWOGBaseWeapon, OwnerCharacter);
 	DOREPLIFETIME(AWOGBaseWeapon, AbilityKey);
 }
 
-void AWOGBaseWeapon::OnConstruction(const FTransform& Transform)
+void AWOGBaseWeapon::PostInitializeComponents()
 {
-	Super::OnConstruction(Transform);
-	InitWeaponData();
+	Super::PostInitializeComponents();
+
+	if (SphereComponent && HasAuthority())
+	{
+		SphereComponent->OnComponentBeginOverlap.AddDynamic(this, &ThisClass::OnWeaponOverlap);
+	}
+	if (ItemComponent && HasAuthority())
+	{
+		ItemComponent->ItemTagSlotType = WeaponData.WeaponTag;
+	}
 }
 
-void AWOGBaseWeapon::InitWeaponData()
+void AWOGBaseWeapon::BeginPlay()
+{
+	Super::BeginPlay();
+	OwnerCharacter = OwnerCharacter != nullptr ? OwnerCharacter : GetOwner() ? (TObjectPtr<ABasePlayerCharacter>) Cast<ABasePlayerCharacter>(GetOwner()) : nullptr;
+	if (!OwnerCharacter)
+	{
+		UE_LOG(LogTemp, Error, TEXT("NO OWNER CHARACTER AT BEGINPLAY"));
+	}
+
+	InitWeaponDefaults();
+
+}
+
+void AWOGBaseWeapon::InitData()
 {
 	OwnerCharacter = GetOwner() ? Cast<ABasePlayerCharacter>(GetOwner()) : nullptr;
+	if (!ItemDataTable) return;
 
-	const FString WeaponTablePath{ TEXT("Engine.DataTable'/Game/Data/Weapons/DT_Weapons.DT_Weapons'") };
-	UDataTable* WeaponTableObject = Cast<UDataTable>(StaticLoadObject(UDataTable::StaticClass(), nullptr, *WeaponTablePath));
-
-	if (!WeaponTableObject) return;
-
-	TArray<FName> WeaponNamesArray = WeaponTableObject->GetRowNames();
+	TArray<FName> WeaponNamesArray = ItemDataTable->GetRowNames();
 	FWeaponDataTable* WeaponDataRow = nullptr;
 
 	for (auto WeaponRowName : WeaponNamesArray)
 	{
-		if (WeaponRowName == WeaponName)
+		if (WeaponRowName == ItemNames[ItemLevel])
 		{
-			WeaponDataRow = WeaponTableObject->FindRow<FWeaponDataTable>(WeaponName, TEXT(""));
+			WeaponDataRow = ItemDataTable->FindRow<FWeaponDataTable>(ItemNames[ItemLevel], TEXT(""));
 			break;
 		}
 	}
@@ -292,38 +296,6 @@ void AWOGBaseWeapon::RestoreWeapon(ABasePlayerCharacter* NewOwner)
 	}
 }
 
-void AWOGBaseWeapon::PostInitializeComponents()
-{
-	Super::PostInitializeComponents();
-
-	if (SphereComponent && HasAuthority())
-	{
-		SphereComponent->OnComponentBeginOverlap.AddDynamic(this, &ThisClass::OnWeaponOverlap);
-	}
-	if (ItemComponent && HasAuthority())
-	{
-		ItemComponent->ItemName = WeaponName;
-		ItemComponent->ItemTagSlotType = WeaponData.WeaponTag;
-
-		ItemComponent->OnPickup.AddDynamic(this, &ThisClass::OnWeaponPickedUp);
-		ItemComponent->OnEquip.AddDynamic(this, &ThisClass::OnWeaponEquip);
-		ItemComponent->OnUnEquip.AddDynamic(this, &ThisClass::OnWeaponUnequip);
-	}
-}
-
-void AWOGBaseWeapon::BeginPlay()
-{
-	Super::BeginPlay();
-	OwnerCharacter = OwnerCharacter!=nullptr ? OwnerCharacter : GetOwner() ? (TObjectPtr<ABasePlayerCharacter>) Cast<ABasePlayerCharacter>(GetOwner()) : nullptr;
-	if (!OwnerCharacter)
-	{
-		UE_LOG(LogTemp, Error, TEXT("NO OWNER CHARACTER AT BEGINPLAY"));
-	}
-
-	InitWeaponDefaults();
-
-}
-
 void AWOGBaseWeapon::OnWeaponOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (!HasAuthority() || !ItemComponent) return;
@@ -386,14 +358,7 @@ void AWOGBaseWeapon::OnWeaponOverlap(UPrimitiveComponent* OverlappedComponent, A
 	}
 }
 
-void AWOGBaseWeapon::OnWeaponPickedUp(UAGR_InventoryManager* Inventory)
-{
-	/*
-	** BOUND AND KEPT HERE JUST IN CASE
-	*/
-}
-
-void AWOGBaseWeapon::OnWeaponEquip(AActor* User, FName SlotName)
+void AWOGBaseWeapon::OnItemEquipped(AActor* User, FName SlotName)
 {
 	Multicast_OnWeaponEquip(User, SlotName);
 
@@ -405,7 +370,7 @@ void AWOGBaseWeapon::OnWeaponEquip(AActor* User, FName SlotName)
 	{
 		AnimMaster->SetupBasePose(WeaponData.WeaponPoseTag);
 
-		bool Success = GrantWeaponAbilities(User);
+		bool Success = GrantAbilities(User);
 		UE_LOG(WOGLogCombat, Display, TEXT("WeaponGrantedAbilities applied: %d"), Success);
 	}
 	else
@@ -440,14 +405,7 @@ void AWOGBaseWeapon::Multicast_OnWeaponEquip_Implementation(AActor* User, FName 
 	}
 }
 
-void AWOGBaseWeapon::OnWeaponUnequip(AActor* User, FName SlotName)
-{
-	/*
-	** BOUND AND KEPT HERE JUST IN CASE
-	*/
-}
-
-bool AWOGBaseWeapon::GrantWeaponAbilities(AActor* User)
+bool AWOGBaseWeapon::GrantAbilities(AActor* User)
 {
 	if (!HasAuthority() || WeaponData.Abilities.IsEmpty()) return false;
 	UAbilitySystemComponent* ASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(User);
@@ -496,26 +454,6 @@ void AWOGBaseWeapon::AttachToBack()
 
 	MeshMain->AttachToComponent(OwnerCharacter->GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponData.BackMainSocket);
 	MeshSecondary->AttachToComponent(OwnerCharacter->GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponData.BackSecondarySocket);
-}
-
-void AWOGBaseWeapon::AttackLight()
-{
-	// Kept here just in case...
-}
-
-void AWOGBaseWeapon::AttackHeavy()
-{
-	// Kept here just in case...	
-}
-
-void AWOGBaseWeapon::Block()
-{
-	//Here just in case
-}
-
-void AWOGBaseWeapon::StopBlocking()
-{
-	// Kept here just in case...
 }
 
 void AWOGBaseWeapon::SetTraceMeshes(const FName& Slot, AActor* OwnerActor)
@@ -693,17 +631,6 @@ void AWOGBaseWeapon::CatchWeapon()
 		UE_LOG(LogTemp, Error, TEXT("Failed to destroy ranged weapon"));
 	}
 
-}
-
-void AWOGBaseWeapon::SetOwnerCharacter(ABasePlayerCharacter* NewOwner)
-{
-	if (NewOwner)
-	{
-		OwnerCharacter = NewOwner;
-
-
-	}
-	UE_LOG(LogTemp, Warning, TEXT("New owner of weapon %s is : %s"), *GetNameSafe(this), *GetNameSafe(OwnerCharacter));
 }
 
 void AWOGBaseWeapon::StartCatchRangedWeaponTimer()

@@ -37,6 +37,7 @@ enum class EItemType : uint8
 	EIT_Consumable UMETA(DisplayName = "Consumable"),
 	EIT_Buildable UMETA(DisplayName = "Buildable"),
 	EIT_Spawnable UMETA(DisplayName = "Spawnable"),
+	EIT_Upgrade UMETA(DIsplayName = "Upgrade"),
 
 	EIT_MAX UMETA(DisplayName = "DefaultMAX")
 };
@@ -192,6 +193,9 @@ struct FVendorItemData
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spawnable", meta = (EditCondition = "ItemType == EItemType::EIT_Spawnable", EditConditionHides))
 	int32 AmountUnits = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Upgrade", meta = (EditCondition = "ItemType == EItemType::EIT_Upgrade", EditConditionHides))
+	int32 NewLevel = 0;
 };
 
 USTRUCT(BlueprintType)

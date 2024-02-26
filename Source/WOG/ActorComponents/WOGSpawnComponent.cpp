@@ -22,6 +22,7 @@
 #include "Resources/WOGCommonInventory.h"
 #include "Net/UnrealNetwork.h"
 #include "AbilitySystemBlueprintLibrary.h"
+#include "TargetSystemComponent.h"
 
 UWOGSpawnComponent::UWOGSpawnComponent()
 {
@@ -55,6 +56,8 @@ void UWOGSpawnComponent::BeginPlay()
 
 void UWOGSpawnComponent::LaunchSpawnMode()
 {
+	if (!AttackerCharacter) return;
+
 	if (bIsSpawnModeOn)
 	{
 		StopSpawnMode();
@@ -83,6 +86,8 @@ void UWOGSpawnComponent::LaunchSpawnMode()
 			}
 			return;
 		}
+
+		AttackerCharacter->GetTargetComponent()->TargetLockOff();
 
 		bIsSpawnModeOn = true;
 		SpawnCycle();
@@ -320,7 +325,7 @@ void UWOGSpawnComponent::Spawn(FTransform Transform, int32 ID)
 		Transform.SetLocation(Transform.GetLocation() + FVector((Spawnables[ID].AmountUnits*150), 0.f, Spawnables[ID].HeightOffset));
 
 		FActorSpawnParameters Params;
-		Params.Owner = AttackerCharacter ? AttackerCharacter : nullptr;
+		Params.Owner = AttackerCharacter ? AttackerCharacter : GetOwner();
 		Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
 		int32 Index = FMath::RandRange(0, Spawnables[ID].MinionArray.Num() - 1);
@@ -353,6 +358,7 @@ void UWOGSpawnComponent::Spawn(FTransform Transform, int32 ID)
 			SpawnedEnemy->SetAttackRange(Spawnables[ID].AttackRange);
 			SpawnedEnemy->SetDefendRange(Spawnables[ID].DefendRange);
 			SpawnedEnemy->SetDamageEffect(Spawnables[ID].DamageEffect);
+			SpawnedEnemy->SetCosmeticsDataAsset(Spawnables[ID].CosmeticsDataAsset);
 		}
 	}
 

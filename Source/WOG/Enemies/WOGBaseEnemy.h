@@ -9,6 +9,7 @@
 
 class AWOGAttacker;
 class AWOGBaseSquad;
+class UWOGSpawnCosmetics;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnEnemyStateChanged);
 
@@ -142,7 +143,16 @@ protected:
 	TObjectPtr<UAnimMontage> AttackMontage;
 	#pragma endregion
 
+	UPROPERTY(Replicated)
+	TObjectPtr<UWOGSpawnCosmetics> CosmeticsDataAsset;
+
+
+	void HandleDestroyCosmetics();
+	void ExecuteGameplayCueWithCosmeticsDataAsset(const FGameplayTag& CueTag);
+
 public:
+	void HandleSpawnCosmetics();
+
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
 	void SetOwnerAttacker(AWOGAttacker* NewOwner);
 
@@ -186,6 +196,10 @@ public:
 	void SetDamageEffect(const TSubclassOf<UGameplayEffect>& NewDamageEffect);
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE TSubclassOf<UGameplayEffect> GetDamageEffect() const { return DamageEffect; }
+
+	UFUNCTION(BlueprintPure)
+	FORCEINLINE UWOGSpawnCosmetics* GetCosmeticsDataAsset() const { return CosmeticsDataAsset; }
+	FORCEINLINE void SetCosmeticsDataAsset(UWOGSpawnCosmetics* NewAsset) { CosmeticsDataAsset = NewAsset; }
 
 	
 };

@@ -8,7 +8,14 @@
 #include "Components/ArrowComponent.h"
 #include "TargetSystemComponent.h"
 #include "Libraries/WOGBlueprintLibrary.h"
+#include "AbilitySystemBlueprintLibrary.h"
+#include "AbilitySystemComponent.h"
+#include "Data/WOGGameplayTags.h"
 #include "WOG.h"
+#include "Data/DataAssets/WOGSpawnCosmetics.h"
+#include "Kismet/GameplayStatics.h"
+#include "Sound/SoundCue.h"
+#include "NiagaraFunctionLibrary.h"
 
 AWOGBaseBuildable::AWOGBaseBuildable()
 {
@@ -22,6 +29,8 @@ AWOGBaseBuildable::AWOGBaseBuildable()
 
 	TargetWidgetLocation = CreateDefaultSubobject<USceneComponent>(TEXT("TargetWidgetLocation"));
 	TargetWidgetLocation->SetupAttachment(GetRootComponent());
+
+	CosmeticsDataAsset = nullptr;
 }
 
 void AWOGBaseBuildable::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -31,15 +40,17 @@ void AWOGBaseBuildable::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	DOREPLIFETIME(AWOGBaseBuildable, BuildHealth);
 	DOREPLIFETIME(AWOGBaseBuildable, BuildMaxHealth);
 	DOREPLIFETIME(AWOGBaseBuildable, BuildMaxHeightOffset);
-	DOREPLIFETIME(AWOGBaseBuildable, BuildChildren);
 	DOREPLIFETIME(AWOGBaseBuildable, CurrentMeleeSquad);
 	DOREPLIFETIME(AWOGBaseBuildable, CurrentRangedSquad);
-
+	DOREPLIFETIME(AWOGBaseBuildable, CosmeticsDataAsset);
 }
 
 void AWOGBaseBuildable::BeginPlay()
 {
 	Super::BeginPlay();
+
+	FTimerHandle CosmeticTimer;
+	GetWorldTimerManager().SetTimer(CosmeticTimer, this, &ThisClass::HandleSpawnCosmetics, 0.1f);
 }
 
 void AWOGBaseBuildable::OnRep_BuildHealth()
@@ -85,11 +96,6 @@ void AWOGBaseBuildable::SetProperties_Implementation(UStaticMesh* Mesh, UStaticM
 	BuildExtensionMesh = ExtensionMesh;
 }
 
-void AWOGBaseBuildable::AddBuildChild_Implementation(AActor* Actor)
-{
-	BuildChildren.AddUnique(Actor);
-}
-
 void AWOGBaseBuildable::DealDamage_Implementation(const float& Damage, const AActor* Agressor)
 {
 	HandleDamage(Damage, Agressor);
@@ -112,6 +118,8 @@ void AWOGBaseBuildable::Multicast_DestroyBuild_Implementation(const AActor* Agre
 		}
 	}
 
+	HandleDestroyCosmetics();
+
 	GetStaticMeshComponent()->SetVisibility(false, true);
 	GetStaticMeshComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
@@ -120,21 +128,6 @@ void AWOGBaseBuildable::Multicast_DestroyBuild_Implementation(const AActor* Agre
 		if (Extension)
 		{
 			Extension->DestroyComponent();
-		}
-	}
-
-	for (auto Child : BuildChildren)
-	{
-		if (Child)
-		{
-			if (Child->GetClass()->ImplementsInterface(UBuildingInterface::StaticClass()))
-			{
-				IBuildingInterface::Execute_DealDamage(Child, 9999999.f, nullptr);
-			}
-			else
-			{
-				UE_LOG(LogTemp, Error, TEXT("Interface call SetProperties() failed"));
-			}
 		}
 	}
 
@@ -155,6 +148,46 @@ void AWOGBaseBuildable::Multicast_DestroyBuild_Implementation(const AActor* Agre
 void AWOGBaseBuildable::DestroyBuild()
 {
 	Destroy();
+}
+
+void AWOGBaseBuildable::HandleSpawnCosmetics()
+{
+	if (CosmeticsDataAsset && CosmeticsDataAsset->SpawnSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, CosmeticsDataAsset->SpawnSound, GetActorLocation());
+	}
+	if (CosmeticsDataAsset && CosmeticsDataAsset->SpawnParticleSystem)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, CosmeticsDataAsset->SpawnParticleSystem, GetActorLocation(), GetActorRotation());
+	}
+}
+
+void AWOGBaseBuildable::HandleDestroyCosmetics()
+{
+	if (CosmeticsDataAsset->DestroySound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, CosmeticsDataAsset->DestroySound, GetActorLocation());
+	}
+	if (CosmeticsDataAsset->DestroyParticleSystem)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, CosmeticsDataAsset->DestroyParticleSystem, GetActorLocation(), GetActorRotation());
+	}
+}
+
+void AWOGBaseBuildable::ExecuteGameplayCueWithCosmeticsDataAsset(const FGameplayTag& CueTag)
+{
+	if (!HasAuthority() || !GetOwner())
+	{
+		return;
+	}
+
+	UAbilitySystemComponent* ASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetOwner());
+	if (ASC)
+	{
+		FGameplayCueParameters CueParams;
+		CueParams.SourceObject = this;
+		ASC->ExecuteGameplayCue(CueTag, CueParams);
+	}
 }
 
 void AWOGBaseBuildable::SetCurrentRangedSquad(AWOGBaseSquad* NewSquad)
@@ -204,6 +237,7 @@ void AWOGBaseBuildable::HandleDamage(const float& Damage, const AActor* Agressor
 		BuildHealth = 0;
 		bIsDead = true;
 		HandleHealthBar(false);
+		DestroyChildren();
 		OnTargetDestroyedDelegate.Broadcast(nullptr);
 
 		FTimerHandle DestroyTimerHandle;
@@ -264,7 +298,28 @@ void AWOGBaseBuildable::BuildExtensions()
 			BuildExtensionsMeshes.AddUnique(Extension);
 			Extension->SetStaticMesh(BuildExtensionMesh);
 			Extension->SetIsReplicated(true);
+			Extension->SetCollisionResponseToChannel(ECC_DamageTrace, ECollisionResponse::ECR_Block);
 			UE_LOG(LogTemp, Warning, TEXT("ExtensionBuilt"));
+		}
+	}
+}
+
+void AWOGBaseBuildable::DestroyChildren()
+{
+	if (ChildrenBuilds.IsEmpty()) return;
+	if (!HasAuthority()) return;
+
+	TArray<AActor*> OutItems;
+	ChildrenBuilds.GetKeys(OutItems);
+	if (OutItems.IsEmpty()) return;
+
+	for (auto Child : OutItems)
+	{
+		if (!Child) continue;
+
+		if (Child->Implements<UBuildingInterface>())
+		{
+			IBuildingInterface::Execute_DealDamage(Child, 9999999.f, nullptr);
 		}
 	}
 }

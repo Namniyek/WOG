@@ -9,6 +9,8 @@
 #include "Data/WOGDataTypes.h"
 #include "WOGBuildComponent.generated.h"
 
+class UWOGSpawnCosmetics;
+
 /**
  * 
  */
@@ -37,9 +39,6 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "MaxHeightOffset", MakeStructureDefaultValue = "0.000000"), Category = "1 - Base")
 	float MaxHeightOffset = 0.f;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "AvoidAddingAsChild", MakeStructureDefaultValue = "False"), Category = "1 - Base")
-	bool AvoidAddingAsChild = false;
-
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Build Item Tag"), Category = "2 - Inventory")
 	FGameplayTag ItemTag = FGameplayTag();
 
@@ -57,6 +56,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "3 - User Interface")
 	FVendorItemData VendorItemData = FVendorItemData();
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "4 - Cosmetics")
+	TObjectPtr<UWOGSpawnCosmetics> CosmeticsDataAsset = nullptr;
 };
 
 class UCameraComponent;

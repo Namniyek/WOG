@@ -27,11 +27,6 @@
 
 AWOGBaseMagic::AWOGBaseMagic()
 {
-	PrimaryActorTick.bCanEverTick = false;
-	bReplicates = true;
-	SetReplicateMovement(true);
-	bNetLoadOnClient = false;
-
 	SphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("OverlapSphere"));
 	SetRootComponent(SphereComponent);
 	SphereComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
@@ -41,41 +36,29 @@ AWOGBaseMagic::AWOGBaseMagic()
 	SphereComponent->SetGenerateOverlapEvents(true);
 	SphereComponent->bHiddenInGame = false;
 
-	ItemComponent = CreateDefaultSubobject <UAGR_ItemComponent>(TEXT("ItemComponent"));
-
 	StandbyEffect = CreateDefaultSubobject<UNiagaraComponent>(TEXT("Standby Effect"));
 	StandbyEffect->SetupAttachment(GetRootComponent());
 	StandbyEffect->bAutoActivate = true;
 	StandbyEffect->SetIsReplicated(true);
 }
 
-void AWOGBaseMagic::OnConstruction(const FTransform& Transform)
-{
-	Super::OnConstruction(Transform);
-	InitMagicData();
-}
-
-void AWOGBaseMagic::InitMagicData()
+void AWOGBaseMagic::InitData()
 {
 	OwnerCharacter = GetOwner() ? Cast<ABasePlayerCharacter>(GetOwner()) : nullptr;
-
-	const FString MagicTablePath{ TEXT("Engine.DataTable'/Game/Data/Magic/DT_Magic.DT_Magic'") };
-	UDataTable* MagicTableObject = Cast<UDataTable>(StaticLoadObject(UDataTable::StaticClass(), nullptr, *MagicTablePath));
-
-	if (!MagicTableObject)
+	if (!ItemDataTable)
 	{
 		UE_LOG(LogTemp, Error, TEXT("Invalid magic DataTable"));
 		return;
 	}
 
-	TArray<FName> MagicNamesArray = MagicTableObject->GetRowNames();
+	TArray<FName> MagicNamesArray = ItemDataTable->GetRowNames();
 	FMagicDataTable* MagicDataRow = nullptr;
 
 	for (auto WeaponRowName : MagicNamesArray)
 	{
-		if (WeaponRowName == MagicName)
+		if (WeaponRowName == ItemNames[ItemLevel])
 		{
-			MagicDataRow = MagicTableObject->FindRow<FMagicDataTable>(MagicName, TEXT(""));
+			MagicDataRow = ItemDataTable->FindRow<FMagicDataTable>(ItemNames[ItemLevel], TEXT(""));
 			break;
 		}
 	}
@@ -167,26 +150,14 @@ void AWOGBaseMagic::PostInitializeComponents()
 
 	if (ItemComponent && HasAuthority())
 	{
-		ItemComponent->ItemName = MagicName;
 		ItemComponent->ItemTagSlotType = MagicData.MagicTag;
-
-		ItemComponent->OnPickup.AddDynamic(this, &ThisClass::OnMagicPickedUp);
-		ItemComponent->OnEquip.AddDynamic(this, &ThisClass::OnMagicEquip);
-		ItemComponent->OnUnEquip.AddDynamic(this, &ThisClass::OnMagicUnequip);
 	}
 }
 
 void AWOGBaseMagic::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME(AWOGBaseMagic, OwnerCharacter);
 	DOREPLIFETIME(AWOGBaseMagic, AbilityKey);
-}
-
-void AWOGBaseMagic::BeginPlay()
-{
-	Super::BeginPlay();
-	OwnerCharacter = OwnerCharacter != nullptr ? OwnerCharacter : GetOwner() ? (TObjectPtr<ABasePlayerCharacter>) Cast<ABasePlayerCharacter>(GetOwner()) : nullptr;
 }
 
 void AWOGBaseMagic::OnMagicOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -273,12 +244,7 @@ void AWOGBaseMagic::AddAbilityWidget(const int32& Key)
 	OwnerCharacter->GetOwnerPC()->GetUIManagerComponent()->Client_AddAbilityWidget(AbilityKey, MagicData.AbilityWidgetClass, MagicData.AbilityIcon, MagicData.Cooldown, MagicData.CooldownTag);
 }
 
-void AWOGBaseMagic::OnMagicPickedUp(UAGR_InventoryManager* Inventory)
-{
-	//Bound and kept just in case
-}
-
-void AWOGBaseMagic::OnMagicEquip(AActor* User, FName SlotName)
+void AWOGBaseMagic::OnItemEquipped(AActor* User, FName SlotName)
 {
 	if (!User) return;
 
@@ -293,7 +259,7 @@ void AWOGBaseMagic::OnMagicEquip(AActor* User, FName SlotName)
 
 		FLatentActionInfo LatentActionInfo;
 		LatentActionInfo.CallbackTarget = this;
-		LatentActionInfo.ExecutionFunction = "GrantMagicAbilities";
+		LatentActionInfo.ExecutionFunction = "GrantAbilities";
 		LatentActionInfo.UUID = 123;
 		LatentActionInfo.Linkage = 0;
 
@@ -327,17 +293,12 @@ void AWOGBaseMagic::OnMagicEquip(AActor* User, FName SlotName)
 	}
 }
 
-void AWOGBaseMagic::OnMagicUnequip(AActor* User, FName SlotName)
-{
-	//Bound and kept just in case
-}
-
 void AWOGBaseMagic::Multicast_OnMagicEquip_Implementation(AActor* User, FName SlotName)
 {
 	AttachToActor(User, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 }
 
-bool AWOGBaseMagic::GrantMagicAbilities()
+bool AWOGBaseMagic::GrantAbilities(AActor* User)
 {
 	if (!HasAuthority() || MagicData.AbilitiesToGrant.IsEmpty()) return false;
 	UAbilitySystemComponent* ASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(OwnerCharacter);
@@ -683,13 +644,3 @@ void AWOGBaseMagic::GetBeamEndLocation(const FVector& StartLocation, FHitResult&
 		OutHitResult.Location = OutBeamLocation;
 	}
 }
-
-void AWOGBaseMagic::SetOwnerCharacter(ABasePlayerCharacter* NewOwner)
-{
-	if (NewOwner)
-	{
-		OwnerCharacter = NewOwner;
-	}
-	UE_LOG(WOGLogInventory, Warning, TEXT("New owner of magic %s is : %s"), *GetNameSafe(this), *GetNameSafe(OwnerCharacter));
-}
-

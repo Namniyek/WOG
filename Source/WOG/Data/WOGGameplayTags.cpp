@@ -156,6 +156,11 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Cue_Vocal_Hurt_Death, "GameplayCue.Vocal.Hurt.Death")
 UE_DEFINE_GAMEPLAY_TAG(TAG_Cue_Vocal_Hurt_PainShort, "GameplayCue.Vocal.Hurt.PainShort");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Cue_Vocal_Hurt_PainLong, "GameplayCue.Vocal.Hurt.PainLong");
 
+UE_DEFINE_GAMEPLAY_TAG(TAG_Cue_Build_Spawn, "GameplayCue.Build.Spawn");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Cue_Build_Destroy, "GameplayCue.Build.Destroy");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Cue_Minion_Spawn, "GameplayCue.Minion.Spawn");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Cue_Minion_Destroy, "GameplayCue.Minion.Destroy");
+
 //Cooldown tags
 UE_DEFINE_GAMEPLAY_TAG(TAG_Cooldown_Input, "Cooldown.Input");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Cooldown_Input_AbilitySwitch, "Cooldown.Input.AbilitySwitch");

@@ -14,7 +14,15 @@ class WOG_API AWOGBuildableLadder : public AWOGBaseBuildable
 {
 	GENERATED_BODY()
 
+public:
+	AWOGBuildableLadder();
+
 protected:
+
+	virtual void BeginPlay() override;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<USceneComponent> FirstAnchor;
 
 	virtual void SetProperties_Implementation(UStaticMesh* Mesh, UStaticMesh* ExtensionMesh, const float& Health, const float& MaxHeightOffset) override;
 

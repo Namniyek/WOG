@@ -6,6 +6,7 @@
 #include "Data/WOGGameplayTags.h"
 #include "Engine/DataTable.h"
 #include "Data/WOGDataTypes.h"
+#include "Data/DataAssets/WOGSpawnCosmetics.h"
 #include "CharacterTypes.generated.h"
 
 class UAnimMontage;
@@ -168,5 +169,8 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "4 - User Interface")
 	FVendorItemData VendorItemData = FVendorItemData();
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "5 - Cosmetics")
+	TObjectPtr<UWOGSpawnCosmetics> CosmeticsDataAsset = nullptr;
 
 };

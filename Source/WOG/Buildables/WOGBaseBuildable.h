@@ -9,6 +9,8 @@
 #include "AI/Combat/WOGBaseSquad.h"
 #include "WOGBaseBuildable.generated.h"
 
+class UWOGSpawnCosmetics;
+
 /**
  * 
  */
@@ -23,10 +25,14 @@ public:
 
 	UPROPERTY(BlueprintAssignable, BlueprintCallable)
 	FOnTargetDestroyedDelegate OnTargetDestroyedDelegate;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Build Properties")
+	TMap<AActor*, int32> ChildrenBuilds;
 
 protected:
 	virtual void BeginPlay() override;
 	virtual void BuildExtensions();
+	virtual void DestroyChildren();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, ReplicatedUsing = "OnRep_BuildHealth", Category = "Build Properties")
 	float BuildHealth;
@@ -39,9 +45,6 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated, Category = "Build Properties")
 	bool bIsDead;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated, Category = "Build Properties")
-	TArray <TObjectPtr<AActor>> BuildChildren;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Build Properties")
 	TArray<TObjectPtr<UStaticMeshComponent>> BuildExtensionsMeshes;
@@ -71,7 +74,6 @@ protected:
 	virtual TArray<UBoxComponent*> ReturnCollisionBoxes_Implementation() override;
 	virtual void SetProperties_Implementation(UStaticMesh* Mesh, UStaticMesh* ExtensionMesh, const float& Health, const float& MaxHeightOffset) override;
 	virtual void DealDamage_Implementation(const float& Damage, const AActor* Agressor) override;
-	virtual void AddBuildChild_Implementation(AActor* Actor) override;
 	virtual void ReturnBuildHealth_Implementation(float& OutBuildHealth, float& OutMaxBuildHealth) override;
 
 	bool IsTargetable_Implementation(AActor* TargeterActor) const;
@@ -85,8 +87,6 @@ protected:
 	void SetCurrentRangedSquadSlot_Implementation(AWOGBaseSquad* NewSquad);
 	void SetCurrentMeleeSquadSlot_Implementation(AWOGBaseSquad* NewSquad);
 	#pragma endregion
-
-
 
 	bool Trace(const TObjectPtr<UPrimitiveComponent> Component, float& OutDistance);
 
@@ -110,6 +110,13 @@ protected:
 	UPROPERTY(Replicated, VisibleAnywhere)
 	TObjectPtr<AWOGBaseSquad> CurrentRangedSquad;
 
+	UPROPERTY(Replicated)
+	TObjectPtr<UWOGSpawnCosmetics> CosmeticsDataAsset;
+
+	void HandleSpawnCosmetics();
+	void HandleDestroyCosmetics();
+	void ExecuteGameplayCueWithCosmeticsDataAsset(const FGameplayTag& CueTag);
+
 public:
 
 	UFUNCTION(BlueprintCallable, Server, reliable)
@@ -128,4 +135,8 @@ public:
 	FORCEINLINE AWOGBaseSquad* GetCurrentRangedSquad() const { return CurrentRangedSquad; }
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE AWOGBaseSquad* GetCurrentMeleeSquad() const { return CurrentMeleeSquad; }
+
+	UFUNCTION(BlueprintPure)
+	FORCEINLINE UWOGSpawnCosmetics* GetCosmeticsDataAsset() const { return CosmeticsDataAsset; }
+	FORCEINLINE void SetCosmeticsDataAsset(UWOGSpawnCosmetics* NewAsset) { CosmeticsDataAsset = NewAsset; }
 };

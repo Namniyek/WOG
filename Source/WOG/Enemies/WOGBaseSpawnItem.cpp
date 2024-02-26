@@ -4,25 +4,7 @@
 #include "Enemies/WOGBaseSpawnItem.h"
 #include "Data/AGRLibrary.h"
 #include "WOG.h"
-
-AWOGBaseSpawnItem::AWOGBaseSpawnItem()
-{
-	PrimaryActorTick.bCanEverTick = false;
-
-	bReplicates = true;
-	SetReplicateMovement(true);
-	bNetLoadOnClient = false;
-
-	ItemComponent = CreateDefaultSubobject <UAGR_ItemComponent>(TEXT("ItemComponent"));
-	ItemComponent->bStackable = false;
-	ItemComponent->MaxStack = 1;
-}
-
-void AWOGBaseSpawnItem::OnConstruction(const FTransform& Transform)
-{
-	Super::OnConstruction(Transform);
-	InitSpawnableData();
-}
+#include "Net/UnrealNetwork.h"
 
 void AWOGBaseSpawnItem::PostInitializeComponents()
 {
@@ -30,42 +12,14 @@ void AWOGBaseSpawnItem::PostInitializeComponents()
 
 	if (ItemComponent && HasAuthority())
 	{
-		ItemComponent->ItemName = SpawnName;
 		ItemComponent->ItemTagSlotType = SpawnData.ItemTag;
-
-		ItemComponent->OnPickup.AddDynamic(this, &ThisClass::OnSpawnablePickedUp);
-		ItemComponent->OnItemUsed.AddDynamic(this, &ThisClass::OnSpawnableUsed);
-		ItemComponent->OnDestroy.AddDynamic(this, &ThisClass::OnSpawnableDestroyed);
-		ItemComponent->OnItemDropped.AddDynamic(this, &ThisClass::OnSpawnableDestroyed);
-		ItemComponent->OnEquip.AddDynamic(this, &ThisClass::OnSpawnableEquipped);
-		ItemComponent->OnUnEquip.AddDynamic(this, &ThisClass::OnSpawnableUnequipped);
 	}
 }
 
-void AWOGBaseSpawnItem::BeginPlay()
+void AWOGBaseSpawnItem::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
-	Super::BeginPlay();
-	
-}
-
-void AWOGBaseSpawnItem::OnSpawnablePickedUp(UAGR_InventoryManager* Inventory)
-{
-}
-
-void AWOGBaseSpawnItem::OnSpawnableEquipped(AActor* User, FName SlotName)
-{
-}
-
-void AWOGBaseSpawnItem::OnSpawnableUnequipped(AActor* User, FName SlotName)
-{
-}
-
-void AWOGBaseSpawnItem::OnSpawnableUsed(AActor* User, FGameplayTag GameplayTag)
-{
-}
-
-void AWOGBaseSpawnItem::OnSpawnableDestroyed()
-{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AWOGBaseSpawnItem, SpawnData);
 }
 
 FSpawnables AWOGBaseSpawnItem::ReturnSpawnData_Implementation()
@@ -73,25 +27,27 @@ FSpawnables AWOGBaseSpawnItem::ReturnSpawnData_Implementation()
 	return SpawnData;
 }
 
-void AWOGBaseSpawnItem::InitSpawnableData()
+void AWOGBaseSpawnItem::InitData()
 {
-	const FString SpawnTablePath{ TEXT("Engine.DataTable'/Game/Data/Spawnables/DT_Spawnables.DT_Spawnables'") };
-	UDataTable* SpawnTableObject = Cast<UDataTable>(StaticLoadObject(UDataTable::StaticClass(), nullptr, *SpawnTablePath));
-
-	if (!SpawnTableObject)
+	if (!ItemDataTable)
 	{
 		UE_LOG(WOGLogSpawn, Error, TEXT("Invalid Spawn DataTable"));
 		return;
 	}
 
-	TArray<FName> SpawnNamesArray = SpawnTableObject->GetRowNames();
+	if (ItemLevel >= ItemNames.Num())
+	{
+		return;
+	}
+
+	TArray<FName> SpawnNamesArray = ItemDataTable->GetRowNames();
 	FSpawnables* SpawnDataRow = nullptr;
 
 	for (auto SpawnRowName : SpawnNamesArray)
 	{
-		if (SpawnRowName == SpawnName)
+		if (SpawnRowName == ItemNames[ItemLevel])
 		{
-			SpawnDataRow = SpawnTableObject->FindRow<FSpawnables>(SpawnName, TEXT(""));
+			SpawnDataRow = ItemDataTable->FindRow<FSpawnables>(ItemNames[ItemLevel], TEXT(""));
 			break;
 		}
 	}

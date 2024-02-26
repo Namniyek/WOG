@@ -3,7 +3,7 @@
 #include "Consumables/WOGBaseConsumable.h"
 #include "WOG.h"
 #include "Net/UnrealNetwork.h"
-#include "WOG/PlayerCharacter/BasePlayerCharacter.h"
+#include "PlayerCharacter/BasePlayerCharacter.h"
 #include "Components/SphereComponent.h"
 #include "Data/AGRLibrary.h"
 #include "AbilitySystemBlueprintLibrary.h"
@@ -19,11 +19,6 @@
 
 AWOGBaseConsumable::AWOGBaseConsumable()
 {
-	PrimaryActorTick.bCanEverTick = false;
-	bReplicates = true;
-	SetReplicateMovement(true);
-	bNetLoadOnClient = false;
-
 	SphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("OverlapSphere"));
 	SetRootComponent(SphereComponent);
 	SphereComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
@@ -33,7 +28,6 @@ AWOGBaseConsumable::AWOGBaseConsumable()
 	SphereComponent->SetGenerateOverlapEvents(true);
 	SphereComponent->bHiddenInGame = false;
 
-	ItemComponent = CreateDefaultSubobject <UAGR_ItemComponent>(TEXT("ItemComponent"));
 	ItemComponent->bStackable = true;
 	ItemComponent->MaxStack = 100;
 
@@ -43,33 +37,29 @@ AWOGBaseConsumable::AWOGBaseConsumable()
 	Mesh->SetIsReplicated(true);
 }
 
-void AWOGBaseConsumable::OnConstruction(const FTransform& Transform)
+void AWOGBaseConsumable::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
-	Super::OnConstruction(Transform);
-	InitConsumableData();
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AWOGBaseConsumable, AbilityKey);
 }
 
-void AWOGBaseConsumable::InitConsumableData()
+void AWOGBaseConsumable::InitData()
 {
 	OwnerCharacter = GetOwner() ? Cast<ABasePlayerCharacter>(GetOwner()) : nullptr;
-
-	const FString ConsumableTablePath{ TEXT("Engine.DataTable'/Game/Data/Consumables/DT_Consumables.DT_Consumables'") };
-	UDataTable* ConsumableTableObject = Cast<UDataTable>(StaticLoadObject(UDataTable::StaticClass(), nullptr, *ConsumableTablePath));
-
-	if (!ConsumableTableObject)
+	if (!ItemDataTable)
 	{
 		UE_LOG(LogTemp, Error, TEXT("Invalid Consumable DataTable"));
 		return;
 	}
 
-	TArray<FName> ConsumableNamesArray = ConsumableTableObject->GetRowNames();
+	TArray<FName> ConsumableNamesArray = ItemDataTable->GetRowNames();
 	FConsumableDataTable* ConsumableDataRow = nullptr;
 
 	for (auto ConsumableRowName : ConsumableNamesArray)
 	{
-		if (ConsumableRowName == ConsumableName)
+		if (ConsumableRowName == ItemNames[ItemLevel])
 		{
-			ConsumableDataRow = ConsumableTableObject->FindRow<FConsumableDataTable>(ConsumableName, TEXT(""));
+			ConsumableDataRow = ItemDataTable->FindRow<FConsumableDataTable>(ItemNames[ItemLevel], TEXT(""));
 			break;
 		}
 	}
@@ -111,30 +101,8 @@ void AWOGBaseConsumable::PostInitializeComponents()
 
 	if (ItemComponent && HasAuthority())
 	{
-		ItemComponent->ItemName = ConsumableName;
 		ItemComponent->ItemTagSlotType = ConsumableData.ConsumableTag;
-
-		ItemComponent->OnPickup.AddDynamic(this, &ThisClass::OnConsumablePickedUp);
-		ItemComponent->OnItemUsed.AddDynamic(this, &ThisClass::OnConsumableUsed);
-		ItemComponent->OnDestroy.AddDynamic(this, &ThisClass::OnConsumableDestroyed);
-		ItemComponent->OnItemDropped.AddDynamic(this, &ThisClass::OnConsumableDestroyed);
-		ItemComponent->OnEquip.AddDynamic(this, &ThisClass::OnConsumableEquipped);
-		ItemComponent->OnUnEquip.AddDynamic(this, &ThisClass::OnConsumableUnequipped);
 	}
-}
-
-void AWOGBaseConsumable::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME(AWOGBaseConsumable, OwnerCharacter);
-	DOREPLIFETIME(AWOGBaseConsumable, AbilityKey);
-}
-
-void AWOGBaseConsumable::BeginPlay()
-{
-	Super::BeginPlay();
-	OwnerCharacter = OwnerCharacter != nullptr ? OwnerCharacter : GetOwner() ? (TObjectPtr<ABasePlayerCharacter>) Cast<ABasePlayerCharacter>(GetOwner()) : nullptr;
-
 }
 
 void AWOGBaseConsumable::OnConsumableOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -176,12 +144,7 @@ void AWOGBaseConsumable::OnConsumableOverlap(UPrimitiveComponent* OverlappedComp
 	ItemComponent->PickUpItem(Inventory);
 }
 
-void AWOGBaseConsumable::OnConsumablePickedUp(UAGR_InventoryManager* Inventory)
-{
-
-}
-
-void AWOGBaseConsumable::OnConsumableEquipped(AActor* User, FName SlotName)
+void AWOGBaseConsumable::OnItemEquipped(AActor* User, FName SlotName)
 {
 	ABasePlayerCharacter* NewOwnerCharacter = Cast<ABasePlayerCharacter>(User);
 	if (NewOwnerCharacter)
@@ -192,7 +155,7 @@ void AWOGBaseConsumable::OnConsumableEquipped(AActor* User, FName SlotName)
 	if (OwnerCharacter)
 	{
 		AddAbilityWidget(4);
-		GrantAbilities();
+		GrantAbilities(nullptr);
 
 		AttachToActor(OwnerCharacter, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 		SetActorHiddenInGame(true);
@@ -206,14 +169,14 @@ void AWOGBaseConsumable::OnConsumableEquipped(AActor* User, FName SlotName)
 	}
 }
 
-void AWOGBaseConsumable::OnConsumableUnequipped(AActor* User, FName SlotName)
+void AWOGBaseConsumable::OnItemUnequipped(AActor* User, FName SlotName)
 {
 	if (!OwnerCharacter || !OwnerCharacter->GetOwnerPC() || !OwnerCharacter->GetOwnerPC()->GetUIManagerComponent()) return;
 	RemoveGrantedAbilities(OwnerCharacter);
 	OwnerCharacter->GetOwnerPC()->GetUIManagerComponent()->Client_RemoveAbilityWidget(4);
 }
 
-void AWOGBaseConsumable::OnConsumableUsed(AActor* User, FGameplayTag GameplayTag)
+void AWOGBaseConsumable::OnItemUsed(AActor* User, FGameplayTag GameplayTag)
 {
 	if (!ItemComponent || !HasAuthority() || !OwnerCharacter) return;
 
@@ -231,15 +194,7 @@ void AWOGBaseConsumable::OnConsumableUsed(AActor* User, FGameplayTag GameplayTag
 	UE_LOG(WOGLogInventory, Display, TEXT("Current stack: %d"), ItemComponent->CurrentStack);
 }
 
-void AWOGBaseConsumable::OnConsumableDestroyed()
-{
-	/*UE_LOG(WOGLogInventory, Display, TEXT("Consumable destroyed"));
-	if (!OwnerCharacter || !OwnerCharacter->GetOwnerPC() || !OwnerCharacter->GetOwnerPC()->GetUIManagerComponent()) return;
-	RemoveGrantedAbilities(OwnerCharacter);
-	OwnerCharacter->GetOwnerPC()->GetUIManagerComponent()->Client_RemoveAbilityWidget(4);*/
-}
-
-bool AWOGBaseConsumable::GrantAbilities()
+bool AWOGBaseConsumable::GrantAbilities(AActor* User)
 {
 	if (!HasAuthority() || ConsumableData.AbilitiesToGrant.IsEmpty()) return false;
 	UAbilitySystemComponent* ASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(OwnerCharacter);
@@ -284,13 +239,5 @@ void AWOGBaseConsumable::AddAbilityWidget(const int32& Key)
 	AbilityKey = Key;
 
 	OwnerCharacter->GetOwnerPC()->GetUIManagerComponent()->Client_AddAbilityWidget(AbilityKey, ConsumableData.AbilityWidgetClass, ConsumableData.AbilityIcon, ConsumableData.Cooldown, ConsumableData.CooldownTag);
-}
-
-void AWOGBaseConsumable::SetOwnerCharacter(ABasePlayerCharacter* NewOwner)
-{
-	if (NewOwner)
-	{
-		OwnerCharacter = NewOwner;
-	}
 }
 

@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
+#include "Inventory/WOGBaseInventoryItem.h"
 #include "Engine/DataTable.h"
 #include "Types/CharacterTypes.h"
 #include "Interfaces/SpawnInterface.h"
@@ -13,54 +13,24 @@ class UAGR_ItemComponent;
 class UAGR_InventoryManager;
 
 UCLASS()
-class WOG_API AWOGBaseSpawnItem : public AActor, public ISpawnInterface
+class WOG_API AWOGBaseSpawnItem : public AWOGBaseInventoryItem, public ISpawnInterface
 {
 	GENERATED_BODY()
 	
 public:	
-	AWOGBaseSpawnItem();
-	virtual void OnConstruction(const FTransform& Transform) override;
 	virtual void PostInitializeComponents();
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 protected:
-	virtual void BeginPlay() override;
-
-	#pragma region ActorComponents
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<UAGR_ItemComponent> ItemComponent;
-
-	#pragma endregion
-
 	#pragma region Spawn Variables
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setup")
-	FName SpawnName;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated)
 	FSpawnables SpawnData;
-	#pragma endregion
-
-	#pragma region Item Functions
-	UFUNCTION()
-	void OnSpawnablePickedUp(UAGR_InventoryManager* Inventory);
-
-	UFUNCTION()
-	void OnSpawnableEquipped(AActor* User, FName SlotName);
-
-	UFUNCTION()
-	void OnSpawnableUnequipped(AActor* User, FName SlotName);
-
-	UFUNCTION()
-	void OnSpawnableUsed(AActor* User, FGameplayTag GameplayTag);
-
-	UFUNCTION()
-	void OnSpawnableDestroyed();
 	#pragma endregion
 
 	FSpawnables ReturnSpawnData_Implementation();
 
 private:
-	virtual void InitSpawnableData();
+	virtual void InitData() override;
 
 public:	
 	UFUNCTION(BlueprintPure)

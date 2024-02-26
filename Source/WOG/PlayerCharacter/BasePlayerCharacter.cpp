@@ -695,14 +695,28 @@ void ABasePlayerCharacter::Server_CollectResource_Implementation(UAGR_ItemCompon
 	ItemToCollect->GetOwner()->Destroy();
 }
 
-void ABasePlayerCharacter::BuyItem_Implementation(const TArray<FCostMap>& CostMap, AWOGVendor* VendorActor, TSubclassOf<AActor> ItemClass, const int32& Amount)
+void ABasePlayerCharacter::BuyItem_Implementation(const TArray<FCostMap>& CostMap, AWOGVendor* VendorActor,	TSubclassOf<AActor> ItemClass, const int32& Amount,	bool bIsUpgrade, const int32& NewLevel,	const FGameplayTag& ItemTag)
 {
-	Server_BuyItem(CostMap, VendorActor, ItemClass, Amount);
+	Server_BuyItem(CostMap, VendorActor, ItemClass, Amount, bIsUpgrade, NewLevel, ItemTag);
 }
 
-void ABasePlayerCharacter::Server_BuyItem_Implementation(const TArray<FCostMap>& CostMap, AWOGVendor* VendorActor, TSubclassOf<AActor> ItemClass, const int32& Amount)
+void ABasePlayerCharacter::Server_BuyItem_Implementation(
+	const TArray<FCostMap>& CostMap, 
+	AWOGVendor* VendorActor, 
+	TSubclassOf<AActor> ItemClass, 
+	const int32& Amount, 
+	bool bIsUpgrade,
+	const int32& NewLevel, 
+	const FGameplayTag& ItemTag)
 {
 	if (!VendorActor) return;
+	
+	if (bIsUpgrade)
+	{
+		VendorActor->UpgradeItem(CostMap, NewLevel, ItemTag);
+		return;
+	}
+
 	VendorActor->Sell(CostMap, ItemClass, Amount);
 }
 
@@ -910,7 +924,7 @@ void ABasePlayerCharacter::OnConsumablePickedUp(AActor* Item)
 	TObjectPtr<AWOGBaseConsumable> Consumable = Cast<AWOGBaseConsumable>(Item);
 	if (Consumable && InventoryManager)
 	{
-		Consumable->OnConsumablePickedUp(InventoryManager);
+		Consumable->OnItemPickedUp(InventoryManager);
 	}
 }
 

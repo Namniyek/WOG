@@ -19,6 +19,8 @@
 #include "WOG.h"
 #include "Net/UnrealNetwork.h"
 #include "AbilitySystemBlueprintLibrary.h"
+#include "TargetSystemComponent.h"
+#include "Buildables/WOGBaseBuildable.h"
 
 UWOGBuildComponent::UWOGBuildComponent()
 {
@@ -53,6 +55,8 @@ void UWOGBuildComponent::BeginPlay()
 
 void UWOGBuildComponent::LaunchBuildMode()
 {
+	if (!DefenderCharacter) return;
+
 	if (bIsBuildModeOn)
 	{
 		StopBuildMode();
@@ -82,9 +86,12 @@ void UWOGBuildComponent::LaunchBuildMode()
 			return;
 		}
 
+		DefenderCharacter->GetTargetComponent()->TargetLockOff();
+
 		bIsBuildModeOn = true;
 		HeightOffset = FVector();
 		BuildCycle();
+
 		if (APlayerController* PlayerController = Cast<APlayerController>(DefenderCharacter->GetController()))
 		{
 			if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
@@ -161,8 +168,8 @@ void UWOGBuildComponent::BuildCycle()
 
 	FHitResult HitResult;
 	FVector ForwardVector = Camera->GetForwardVector();
-	FVector Start = (Camera->GetComponentLocation()) + (ForwardVector*350);
-	FVector End = (Camera->GetComponentLocation()) + (ForwardVector * 1500);
+	FVector Start = (Camera->GetComponentLocation()) + (ForwardVector * 500);
+	FVector End = (Camera->GetComponentLocation()) + (ForwardVector * 3000);
 
 	ECollisionChannel Channel = UEngineTypes::ConvertToCollisionChannel(Buildables[BuildID].TraceChannel);
 	FCollisionQueryParams Params;
@@ -382,7 +389,9 @@ void UWOGBuildComponent::Server_SpawnBuild_Implementation(FTransform Transform, 
 
 void UWOGBuildComponent::SpawnBuild(FTransform Transform, int32 ID, AActor* Hit, UPrimitiveComponent* HitComponent)
 {
-	TObjectPtr<AActor> SpawnedBuild =  GetWorld()->SpawnActor<AActor>(Buildables[ID].Actor, Transform);
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.Owner = GetOwner();
+	TObjectPtr<AWOGBaseBuildable> SpawnedBuild = Cast<AWOGBaseBuildable>(GetWorld()->SpawnActor<AActor>(Buildables[ID].Actor, Transform, SpawnParams));
 	HeightOffset = FVector();
 
 	if (!SpawnedBuild)
@@ -399,12 +408,9 @@ void UWOGBuildComponent::SpawnBuild(FTransform Transform, int32 ID, AActor* Hit,
 	if (Hit && HitComponent && Hit->GetClass()->ImplementsInterface(UBuildingInterface::StaticClass()))
 	{
 		IBuildingInterface::Execute_HandleBuildWalls(Hit, HitComponent->GetName(), SpawnedBuild);
-
-		if (!Buildables[ID].AvoidAddingAsChild)
-		{
-			IBuildingInterface::Execute_AddBuildChild(Hit, SpawnedBuild);
-		}
 	}
+
+	SpawnedBuild->SetCosmeticsDataAsset(Buildables[ID].CosmeticsDataAsset);
 
 	DeductCost();
 }
@@ -478,7 +484,7 @@ void UWOGBuildComponent::HandleBuildHeight(bool bShouldRise)
 		Increment = HeightOffset - FVector(0.f, 0.f, 100.f);
 	}
 
-	Increment.Z = FMath::Clamp(Increment.Z, -600.f, 600.f);
+	Increment.Z = FMath::Clamp(Increment.Z, -400.f, 400.f);
 	HeightOffset = FVector(0.f, 0.f, Increment.Z);
 }
 

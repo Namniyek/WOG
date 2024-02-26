@@ -5,12 +5,15 @@
 #include "CoreMinimal.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "DayNightCycle/TimeOfDay.h"
+#include "GameplayTags.h"
 #include "WOGWorldSubsystem.generated.h"
 
 
 /**
  * 
  */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnItemUpgradedDelegate, FGameplayTag, ItemTag, int32, NewLevel);
+
 UCLASS()
 class WOG_API UWOGWorldSubsystem : public UWorldSubsystem
 {
@@ -40,4 +43,7 @@ public:
 	FOnKeyTimeHit OnKeyTimeHitDelegate;
 
 	ETimeOfDay CurrentTOD;
+
+	UPROPERTY(BlueprintAssignable, BlueprintCallable)
+	FOnItemUpgradedDelegate OnItemUpgradedDelegate;
 };

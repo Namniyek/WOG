@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Inventory/WOGBaseInventoryItem.h"
 #include "GameFramework/Actor.h"
 #include "Engine/DataTable.h"
 #include "Data/WOGDataTypes.h"
@@ -154,27 +155,23 @@ struct FWeaponDataTable : public FTableRowBase
 };
 
 UCLASS()
-class WOG_API AWOGBaseWeapon : public AActor
+class WOG_API AWOGBaseWeapon : public AWOGBaseInventoryItem
 {
 	GENERATED_BODY()
-	
-public:	
-
 	friend class ABasePlayerCharacter;
 
+public:	
+
 	AWOGBaseWeapon();
-	virtual void OnConstruction(const FTransform& Transform) override;
 	virtual void PostInitializeComponents();
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void InitData() override;
+	void UpdateVendorData(FWeaponDataTable* Row);
 
 	#pragma region ActorComponents
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	UAGR_ItemComponent* ItemComponent;
-
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	USphereComponent* SphereComponent;
 	#pragma endregion
@@ -187,9 +184,6 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	UStaticMeshComponent* MeshSecondary;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	FName WeaponName;
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	FWeaponDataTable WeaponData;
 
@@ -199,25 +193,13 @@ protected:
 
 	UFUNCTION()
 	void OnWeaponOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-	UFUNCTION()
-	void OnWeaponPickedUp(UAGR_InventoryManager* Inventory);
+	void OnItemEquipped(AActor* User, FName SlotName) override;
 
-	UFUNCTION()
-	void OnWeaponEquip(AActor* User, FName SlotName);
 	UFUNCTION(NetMulticast, reliable)
 	void Multicast_OnWeaponEquip(AActor* User, FName SlotName);
 
-	UFUNCTION()
-	void OnWeaponUnequip(AActor* User, FName SlotName);
-
-	bool GrantWeaponAbilities(AActor* User);
-	bool RemoveGrantedAbilities(AActor* User);
-
-	UPROPERTY(VisibleAnywhere)
-	TArray<FGameplayAbilitySpecHandle> GrantedAbilities;
-
-	virtual void InitWeaponData();
-	void UpdateVendorData(FWeaponDataTable* Row);
+	virtual bool GrantAbilities(AActor* User) override;
+	virtual bool RemoveGrantedAbilities(AActor* User) override;
 
 	virtual void StoreWeapon(const FName& Key);
 	virtual void RestoreWeapon(ABasePlayerCharacter* NewOwner);
@@ -235,16 +217,6 @@ protected:
 
 private:
 	float TimeSinceBlockStarted;
-
-	UFUNCTION(BlueprintCallable)
-	void AttackLight();
-	UFUNCTION(BlueprintCallable)
-	void AttackHeavy();
-	UFUNCTION(BlueprintCallable)
-	void Block();
-	UFUNCTION(BlueprintCallable)
-	void StopBlocking();
-
 	void SetTraceMeshes(const FName& Slot, AActor* OwnerActor);
 
 	UPROPERTY(VisibleAnywhere)
@@ -283,19 +255,11 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
 	void CatchWeapon();
 
-	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite)
-	TObjectPtr<ABasePlayerCharacter> OwnerCharacter;
-
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE FWeaponDataTable GetWeaponData() const { return WeaponData; }
 
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE int32 GetComboStreak() const { return ComboStreak; }
-
-	UFUNCTION(BlueprintCallable)
-	void SetOwnerCharacter(ABasePlayerCharacter* NewOwner);
-	UFUNCTION(BlueprintPure)
-	FORCEINLINE ABasePlayerCharacter* GetOwnerCharacter() const { return OwnerCharacter; }
 
 	void StartCatchRangedWeaponTimer();
 };

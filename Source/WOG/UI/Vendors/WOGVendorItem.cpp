@@ -49,10 +49,14 @@ void UWOGVendorItem::AttemptPurchase()
 	if (CheckCost(ItemData.CostMap))
 	{
 		//Can afford
+
+		//Check if this is an upgrade
+		bool bIsUpgrade = ItemData.ItemType == EItemType::EIT_Upgrade;
+
 		IInventoryInterface* Interface = Cast<IInventoryInterface>(BuyerActor);
 		if (Interface)
 		{
-			Interface->Execute_BuyItem(BuyerActor, ItemData.CostMap, Vendor, ItemData.ItemClass, ItemData.ItemAmount);
+			Interface->Execute_BuyItem(BuyerActor, ItemData.CostMap, Vendor, ItemData.ItemClass, ItemData.ItemAmount, bIsUpgrade, ItemData.NewLevel, ItemData.ItemTag);
 		}
 		else
 		{

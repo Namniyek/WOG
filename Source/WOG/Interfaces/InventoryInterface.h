@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
 #include "Types/CharacterTypes.h"
+#include "GameplayTags.h"
 #include "InventoryInterface.generated.h"
 
 class AWOGVendor;
@@ -36,7 +37,7 @@ public:
 	void TransactionComplete();
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-	void BuyItem(const TArray<FCostMap>& CostMap, AWOGVendor* VendorActor, TSubclassOf<AActor> ItemClass, const int32& Amount);
+	void BuyItem(const TArray<FCostMap>& CostMap, AWOGVendor* VendorActor, TSubclassOf<AActor> ItemClass, const int32& Amount, bool bIsUpgrade, const int32& NewLevel, const FGameplayTag& ItemTag);
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void BackFromWidget(AActor* Actor);

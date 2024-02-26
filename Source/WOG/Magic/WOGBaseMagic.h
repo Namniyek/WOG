@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
+#include "Inventory/WOGBaseInventoryItem.h"
 #include "GameplayTagContainer.h"
 #include "Engine/DataTable.h"
 #include "GameplayAbilitySpec.h"
@@ -12,10 +12,7 @@
 
 class UAnimMontage;
 class USoundCue;
-class ABasePlayerCharacter;
 class UGameplayEffect;
-class UAGR_ItemComponent;
-class UAGR_InventoryManager;
 class USphereComponent;
 class UNiagaraSystem;
 class UNiagaraComponent;
@@ -144,26 +141,21 @@ struct FMagicDataTable : public FTableRowBase
 };
 
 UCLASS()
-class WOG_API AWOGBaseMagic : public AActor
+class WOG_API AWOGBaseMagic : public AWOGBaseInventoryItem
 {
 	GENERATED_BODY()
+	friend class ABasePlayerCharacter;
 	
 public:	
-
-	friend class ABasePlayerCharacter;
-
 	AWOGBaseMagic();
-	virtual void OnConstruction(const FTransform& Transform) override;
 	virtual void PostInitializeComponents();
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 protected:
-	virtual void BeginPlay() override;
+	virtual void InitData() override;
+	void UpdateVendorData(FMagicDataTable* Row);
 
 	#pragma region ActorComponents
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	UAGR_ItemComponent* ItemComponent;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	USphereComponent* SphereComponent;
@@ -173,9 +165,6 @@ protected:
 	#pragma endregion
 
 	#pragma region MagicVariables
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	FName MagicName;
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	FMagicDataTable MagicData;
 	#pragma endregion
@@ -183,26 +172,16 @@ protected:
 	#pragma region Item Functions
 	UFUNCTION()
 	void OnMagicOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-	
-	UFUNCTION()
-	void OnMagicPickedUp(UAGR_InventoryManager* Inventory);
 
-	UFUNCTION()
-	void OnMagicEquip(AActor* User, FName SlotName);
-
-	UFUNCTION()
-	void OnMagicUnequip(AActor* User, FName SlotName);
+	virtual void OnItemEquipped (AActor* User, FName SlotName) override;
 
 	UFUNCTION(NetMulticast, reliable)
 	void Multicast_OnMagicEquip(AActor* User, FName SlotName);
 	#pragma endregion
 
 	#pragma region GAS
-	UFUNCTION(BlueprintCallable)
-	bool GrantMagicAbilities();
-	bool RemoveGrantedAbilities(AActor* User);
-
-	TArray<FGameplayAbilitySpecHandle> GrantedAbilities;
+	bool GrantAbilities(AActor* User) override;
+	bool RemoveGrantedAbilities(AActor* User) override;
 	#pragma endregion
 
 	virtual void StoreMagic(const FName& Key);
@@ -226,17 +205,11 @@ protected:
 	UFUNCTION(Server, Reliable, BlueprintCallable)
 	void Server_SpawnAOE(const FVector_NetQuantize& TargetLocation);
 
-	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite)
-	TObjectPtr<ABasePlayerCharacter> OwnerCharacter;
-
 	//Line trace for item under the crosshairs
 	bool TraceUnderCrosshairs(FHitResult& OutHitResult, FVector& OutHitLocation);
 	void GetBeamEndLocation(const FVector& StartLocation, FHitResult& OutHitResult);
 
 private:
-	virtual void InitMagicData();
-	void UpdateVendorData(FMagicDataTable* Row);
-
 	void SpawnIdleClass();
 	TObjectPtr<AWOGBaseIdleMagic> IdleActor;
 
@@ -244,16 +217,8 @@ private:
 	UPROPERTY(Replicated)
 	int32 AbilityKey = 1;
 
-
-
 public:	
 
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE FMagicDataTable GetMagicData() const { return MagicData; }
-
-	UFUNCTION(BlueprintCallable)
-	void SetOwnerCharacter(ABasePlayerCharacter* NewOwner);
-	UFUNCTION(BlueprintPure)
-	FORCEINLINE ABasePlayerCharacter* GetOwnerCharacter() const { return OwnerCharacter; }
-
 };

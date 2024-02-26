@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
+#include "Inventory/WOGBaseInventoryItem.h"
 #include "Engine/DataTable.h"
 #include "GameplayAbilitySpec.h"
 #include "Types/CharacterTypes.h"
@@ -15,9 +15,6 @@ class UWOGGameplayAbilityBase;
 class UAnimMontage;
 class USoundCue;
 class UNiagaraSystem;
-class ABasePlayerCharacter;
-class UAGR_ItemComponent;
-class UAGR_InventoryManager;
 class USphereComponent;
 
 USTRUCT(BlueprintType)
@@ -87,26 +84,22 @@ struct FConsumableDataTable : public FTableRowBase
 };
 
 UCLASS()
-class WOG_API AWOGBaseConsumable : public AActor
+class WOG_API AWOGBaseConsumable : public AWOGBaseInventoryItem
 {
 	GENERATED_BODY()
+	friend class ABasePlayerCharacter;
 	
 public:	
 
-	friend class ABasePlayerCharacter;
 	AWOGBaseConsumable();
-	virtual void OnConstruction(const FTransform& Transform) override;
 	virtual void PostInitializeComponents();
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 protected:
-	virtual void BeginPlay() override;
+	virtual void InitData() override;
+	void UpdateVendorData(FConsumableDataTable* Row);
 
 	#pragma region ActorComponents
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<UAGR_ItemComponent> ItemComponent;
-
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<USphereComponent> SphereComponent;
 
@@ -115,49 +108,25 @@ protected:
 	#pragma endregion
 
 	#pragma region ConsumableVariables
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	FName ConsumableName;
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	FConsumableDataTable ConsumableData;
+	#pragma endregion
+
+	#pragma region GAS
+	virtual bool GrantAbilities(AActor* User) override;
+	virtual bool RemoveGrantedAbilities(AActor* User) override;
 	#pragma endregion
 
 	#pragma region Item Functions
 	UFUNCTION()
 	void OnConsumableOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
-	UFUNCTION(BlueprintCallable)
-	void OnConsumablePickedUp(UAGR_InventoryManager* Inventory);
-
-	UFUNCTION()
-	void OnConsumableEquipped(AActor* User, FName SlotName);
-
-	UFUNCTION()
-	void OnConsumableUnequipped(AActor* User, FName SlotName);
-
-	UFUNCTION()
-	void OnConsumableUsed(AActor* User, FGameplayTag GameplayTag);
-
-	UFUNCTION()
-	void OnConsumableDestroyed();
+	virtual void OnItemEquipped(AActor* User, FName SlotName) override;
+	virtual void OnItemUnequipped(AActor* User, FName SlotName) override;
+	virtual void OnItemUsed(AActor* User, FGameplayTag GameplayTag) override;
 	#pragma endregion
-
-	#pragma region GAS
-	UFUNCTION(BlueprintCallable)
-	bool GrantAbilities();
-	bool RemoveGrantedAbilities(AActor* User);
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-	TArray<FGameplayAbilitySpecHandle> GrantedAbilities;
-	#pragma endregion
-
-	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite)
-	TObjectPtr<ABasePlayerCharacter> OwnerCharacter;
 
 private:
-	virtual void InitConsumableData();
-	void UpdateVendorData(FConsumableDataTable* Row);
-
 	void AddAbilityWidget(const int32& Key);
 	UPROPERTY(Replicated)
 	int32 AbilityKey = 1;
@@ -165,9 +134,4 @@ private:
 public:	
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE FConsumableDataTable GetConsumableData() const { return ConsumableData; }
-
-	UFUNCTION(BlueprintCallable)
-	void SetOwnerCharacter(ABasePlayerCharacter* NewOwner);
-	UFUNCTION(BlueprintPure)
-	FORCEINLINE ABasePlayerCharacter* GetOwnerCharacter() const { return OwnerCharacter; }
 };

@@ -225,7 +225,7 @@ public:
 	UPROPERTY(BlueprintReadWrite)
 	bool bSecondaryButtonPressed = false;
 
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly)
 	bool bIsAlternativeModeEnabled = false;
 
 	UPROPERTY(BlueprintAssignable, BlueprintCallable)
@@ -475,12 +475,12 @@ public:
 	#pragma endregion
 
 	#pragma region Vendors
-	void BuyItem_Implementation(const TArray<FCostMap>& CostMap, AWOGVendor* VendorActor, TSubclassOf<AActor> ItemClass, const int32& Amount);
+	void BuyItem_Implementation(const TArray<FCostMap>& CostMap, AWOGVendor* VendorActor, TSubclassOf<AActor> ItemClass, const int32& Amount, bool bIsUpgrade, const int32& NewLevel, const FGameplayTag& ItemTag);
 
 	void TransactionComplete_Implementation();
 
 	UFUNCTION(Server, reliable)
-	void Server_BuyItem(const TArray<FCostMap>& CostMap, AWOGVendor* VendorActor, TSubclassOf<AActor> ItemClass, const int32& Amount);
+	void Server_BuyItem(const TArray<FCostMap>& CostMap, AWOGVendor* VendorActor, TSubclassOf<AActor> ItemClass, const int32& Amount, bool bIsUpgrade, const int32& NewLevel, const FGameplayTag& ItemTag);
 
 	UFUNCTION(Server, reliable)
 	void Server_SetVendorBusy(bool bNewBusy, ABasePlayerCharacter* UserPlayer, AWOGVendor* Vendor);
