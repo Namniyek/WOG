@@ -128,6 +128,9 @@ struct FWeaponDataTable : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "4 - Stats")
 	float Cooldown = 0.f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "4 - Stats")
+	TEnumAsByte<ETraceTypeQuery> TraceChannel = ETraceTypeQuery::TraceTypeQuery6;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "5 - Cosmetic")
 	USoundCue* SwingSound = nullptr;
 

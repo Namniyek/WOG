@@ -28,6 +28,11 @@ void AWOGBaseBuildItem::InitData()
 		return;
 	}
 
+	if (ItemLevel >= ItemNames.Num())
+	{
+		return;
+	}
+
 	TArray<FName> BuildNamesArray = ItemDataTable->GetRowNames();
 	FBuildables* BuildDataRow = nullptr;
 

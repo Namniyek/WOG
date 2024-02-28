@@ -173,6 +173,8 @@ void AWOGStashBase::SwitchStashedItems(const bool& bToCommon, AActor* ItemToSwit
 	TObjectPtr<UAGR_ItemComponent> Item = UAGRLibrary::GetItemComponent(ItemToSwitch);
 	if (!Item) return;
 
+	bool bIsSpawnMenuSwitch = (Item->ItemTagSlotType.MatchesTag(TAG_Inventory_Buildable) || Item->ItemTagSlotType.MatchesTag(TAG_Inventory_Spawnable));
+
 	TObjectPtr<UAGR_InventoryManager> Recipient = bToCommon ? CommonInventory : (TObjectPtr<UAGR_InventoryManager>) UAGRLibrary::GetInventory(PlayerUsingStash);
 	if (!Recipient) return;
 
@@ -185,9 +187,12 @@ void AWOGStashBase::SwitchStashedItems(const bool& bToCommon, AActor* ItemToSwit
 		TObjectPtr<UAGR_ItemComponent> SwitchItem = UAGRLibrary::GetItemComponent(PreviousItem);
 		if (SwitchItem && !SwitchItem->bStackable)
 		{
-			SwitchItem->DropItem();
-			SwitchItem->PickUpItem(Giver);
-			SwitchItem->ItemAuxTag = AuxTagsContainer.First();
+			if (!bIsSpawnMenuSwitch || Recipient ==CommonInventory)
+			{
+				SwitchItem->DropItem();
+				SwitchItem->PickUpItem(Giver);
+				SwitchItem->ItemAuxTag = AuxTagsContainer.First();
+			}
 		}
 		if (SwitchItem && SwitchItem->bStackable)
 		{
@@ -203,18 +208,35 @@ void AWOGStashBase::SwitchStashedItems(const bool& bToCommon, AActor* ItemToSwit
 
 	if (!Item->bStackable)
 	{
+		if (bIsSpawnMenuSwitch && Giver == CommonInventory)
+		{
+			FText OutNote;
+			Recipient->AddItemsOfClass(ItemClass, 1, OutNote);
+			return;
+		}
+		if (bIsSpawnMenuSwitch && Recipient == CommonInventory)
+		{
+			Item->DropItem();
+			Item->GetOwner()->Destroy();
+			return;
+		}
+
 		Item->DropItem();
 		Item->PickUpItem(Recipient);
 		Item->ItemAuxTag = AuxTagsContainer.First();
 		Item->PreviousOwnerIndex = -1;
+
 	}
 	if (Item->bStackable && Giver)
 	{
 		FText OutNote;
 		int32 AmountToModify = Item->CurrentStack < Amount ? Item->CurrentStack : Amount;
-		Giver->RemoveItemsOfClass(ItemClass, AmountToModify, OutNote);
+
 		Recipient->AddItemsOfClass(ItemClass, AmountToModify, OutNote);
 
+		if (bIsSpawnMenuSwitch && Giver == CommonInventory) return;
+
+		Giver->RemoveItemsOfClass(ItemClass, AmountToModify, OutNote);
 		UE_LOG(WOGLogInventory, Display, TEXT("%d of %s sent from %s to %s - NO SWITCH"), AmountToModify, *GetNameSafe(ItemClass), *GetNameSafe(Giver), *GetNameSafe(Recipient));
 	}
 

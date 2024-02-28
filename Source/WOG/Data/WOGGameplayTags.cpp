@@ -80,6 +80,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Resource_Iron, "Inventory.Resource.Iron");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Resource_ChaosEssence, "Inventory.Resource.ChaosEssence");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Resource_Souls, "Inventory.Resource.Souls");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Resource_Wood, "Inventory.Resource.Wood");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Resource_Stone, "Inventory.Resource.Stone");
 
 //Weapons
 UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Weapon_Shield, "Inventory.Weapon.Shield");

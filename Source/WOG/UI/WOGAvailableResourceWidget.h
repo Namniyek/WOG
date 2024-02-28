@@ -26,6 +26,9 @@ public:
 
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UHorizontalBox> WoodContainer;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UHorizontalBox> SpecResourceContainer;
 	
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UImage> SpecResourceIcon;

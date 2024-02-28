@@ -468,10 +468,12 @@ void AWOGBaseWeapon::SetTraceMeshes(const FName& Slot, AActor* OwnerActor)
 		if (MeshMain)
 		{
 			CombatManager->AddTraceMesh(MeshMain, EAGR_CombatColliderType::ComplexBoxTrace);
+			CombatManager->TraceChannel = WeaponData.TraceChannel;
 		}
 		if (MeshSecondary)
 		{
 			CombatManager->AddTraceMesh(MeshSecondary, EAGR_CombatColliderType::ComplexBoxTrace);
+			CombatManager->TraceChannel = WeaponData.TraceChannel;
 		}
 	}
 	else

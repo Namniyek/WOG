@@ -68,4 +68,3 @@ void AWOGBaseSpawnItem::InitData()
 		UE_LOG(WOGLogSpawn, Error, TEXT("Invalid SpawnDataRow"));
 	}
 }
-

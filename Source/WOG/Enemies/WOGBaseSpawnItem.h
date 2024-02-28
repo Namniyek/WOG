@@ -29,7 +29,6 @@ protected:
 
 	FSpawnables ReturnSpawnData_Implementation();
 
-private:
 	virtual void InitData() override;
 
 public:	
