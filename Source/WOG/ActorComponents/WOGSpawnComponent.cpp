@@ -66,7 +66,7 @@ void UWOGSpawnComponent::LaunchSpawnMode()
 			if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
 			{
 				Subsystem->ClearAllMappings();
-				Subsystem->AddMappingContext(AttackerCharacter->MatchMappingContext, 0);
+				Subsystem->AddMappingContext(AttackerCharacter->MainMappingContext, 0);
 			}
 		}
 	}
@@ -80,7 +80,7 @@ void UWOGSpawnComponent::LaunchSpawnMode()
 				if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
 				{
 					Subsystem->ClearAllMappings();
-					Subsystem->AddMappingContext(AttackerCharacter->MatchMappingContext, 0);
+					Subsystem->AddMappingContext(AttackerCharacter->MainMappingContext, 0);
 					UE_LOG(LogTemp, Warning, TEXT("DefaultModeMC"));
 				}
 			}

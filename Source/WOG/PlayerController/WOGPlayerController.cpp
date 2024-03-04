@@ -15,6 +15,7 @@
 #include "AbilitySystemComponent.h"
 #include "ActorComponents/WOGUIManagerComponent.h"
 #include "Subsystems/WOGUIManagerSubsystem.h"
+#include "Enemies/WOGPossessableEnemy.h"
 
 AWOGPlayerController::AWOGPlayerController()
 {
@@ -107,20 +108,20 @@ void AWOGPlayerController::Server_PossessMinion_Implementation(AActor* ActorToPo
 
 	if (!ActorToPossess)
 	{
-		UE_LOG(LogTemp, Error, TEXT("ActorToPossess invalid"));
+		UE_LOG(WOGLogSpawn, Error, TEXT("ActorToPossess invalid"));
 		return;
 	}
 
-	TObjectPtr<APawn> PawnToPossess = Cast<APawn>(ActorToPossess);
+	TObjectPtr<AWOGBaseCharacter> PawnToPossess = Cast<AWOGBaseCharacter>(ActorToPossess);
 	if (!PawnToPossess)
 	{
-		UE_LOG(LogTemp, Error, TEXT("PawnToPossess invalid"));
+		UE_LOG(WOGLogSpawn, Error, TEXT("PawnToPossess invalid"));
 		return;
 	}
 
 	if (PawnToPossess->IsPlayerControlled())
 	{
-		UE_LOG(LogTemp, Error, TEXT("ALREADY CONTROLLED BY ANOTHER PLAYER"));
+		UE_LOG(WOGLogSpawn, Error, TEXT("ALREADY CONTROLLED BY ANOTHER PLAYER"));
 		return;
 	}
 
@@ -131,6 +132,8 @@ void AWOGPlayerController::Server_PossessMinion_Implementation(AActor* ActorToPo
 	GetWorldTimerManager().SetTimer(BlendTimer, BlendDelegate, BlendTime, false);
 
 	SetViewTargetWithBlend(ActorToPossess, BlendTime);
+
+	PawnToPossess->SetOwnerPC(this);
 
 	UIManagerComponent->Client_RemoveBarsWidget();
 	UIManagerComponent->Client_CollapseAbilitiesWidget();
@@ -166,10 +169,6 @@ void AWOGPlayerController::Server_SetPlayerIndex_Implementation(int32 NewIndex)
 
 void AWOGPlayerController::FinishUnPossess(APawn* PawnToPossess, APawn* AIPawnLeft)
 { 
-	UnPossess();
-	Possess(PawnToPossess);
-	AIPawnLeft->SpawnDefaultController();
-
 	TObjectPtr<AWOGAttacker> Attacker = Cast<AWOGAttacker>(PawnToPossess);
 	if (Attacker)
 	{
@@ -179,6 +178,10 @@ void AWOGPlayerController::FinishUnPossess(APawn* PawnToPossess, APawn* AIPawnLe
 	{
 		UE_LOG(LogTemp, Error, TEXT("Invalid attacker for resetting CurrentExternalMinion"));
 	}
+
+	UnPossess();
+	Possess(PawnToPossess);
+	AIPawnLeft->SpawnDefaultController();
 
 	UIManagerComponent->Client_ResetHUD();
 }

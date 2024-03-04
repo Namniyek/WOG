@@ -426,6 +426,22 @@ void AWOGBaseEnemy::DefineAttackTagIndex_Implementation()
 	DefineNextAttackTagIndex();
 }
 
+void AWOGBaseEnemy::IncreaseComboIndex_Implementation()
+{
+	if (!HasAuthority()) return;
+	
+	ComboIndex++;
+	bComboWindowOpen = true; 
+}
+
+void AWOGBaseEnemy::ResetComboIndex_Implementation()
+{
+	if (!HasAuthority()) return;
+
+	ComboIndex = 1;
+	bComboWindowOpen = false;
+}
+
 void AWOGBaseEnemy::SetSquadUnitIndex(const int32& NewIndex)
 {
 	if (!HasAuthority()) return;

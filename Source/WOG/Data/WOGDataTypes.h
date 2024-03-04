@@ -81,6 +81,9 @@ enum class EWOGAbilityInputID : uint8
 	WeaponUnequip	UMETA(DisplayName = "WeaponUnequip"),
 	AttackLight		UMETA(DisplayName = "AttackLight"),
 	AttackHeavy		UMETA(DisplayName = "AttackHeavy"),
+	AttackClose		UMETA(DisplayName = "AttackClose"),
+	AttackAltMain	UMETA(DisplayName = "AttackAlternativeMain"),
+	AttackAltSec	UMETA(DisplayName = "AttackAlternativeSecondary"),
 	Block			UMETA(DisplayName = "Block"),
 	Ranged			UMETA(DisplayName = "Ranged"),
 
@@ -258,6 +261,7 @@ enum class EEnemySquadType : uint8
 	EEST_None UMETA(DisplayName = "None"),
 	EEST_Melee UMETA(DisplayName = "Melee"),
 	EEST_Ranged UMETA(DisplayName = "Ranged"),
+	EEST_Epic UMETA(DisplayName = "Epic"),
 
 	EEST_MAX UMETA(DisplayName = "DefaultMAX")
 };

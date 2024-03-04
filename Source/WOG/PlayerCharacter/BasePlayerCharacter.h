@@ -157,9 +157,6 @@ public:
 	** MappingContexts
 	*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Mapping Contexts", meta = (AllowPrivateAccess = "true"))
-	class UInputMappingContext* MatchMappingContext;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Mapping Contexts", meta = (AllowPrivateAccess = "true"))
 	UInputMappingContext* SpawnModeMappingContext;
 
 	/*
@@ -456,6 +453,8 @@ public:
 	virtual void OnAttackHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh);
 
 	virtual void BroadcastHit_Implementation(AActor* AgressorActor, const FHitResult& Hit, const float& DamageToApply, AActor* InstigatorWeapon);
+	void HandleHitFromPlayerCharacter(AActor* AgressorActor, const FHitResult& Hit, const float& DamageToApply, AActor* InstigatorWeapon);
+	void HandleHitFromEnemyCharacter(AActor* AgressorActor, const FHitResult& Hit, const float& DamageToApply, AActor* InstigatorWeapon);
 	virtual void BroadcastMagicHit_Implementation(AActor* AgressorActor, const FHitResult& Hit, const struct FMagicDataTable& AgressorMagicData);
 
 	virtual void ProcessHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh) override;
@@ -544,16 +543,11 @@ public:
 	TObjectPtr<AActor> CurrentTarget = nullptr;
 	#pragma endregion
 
-	UPROPERTY(BlueprintReadOnly, Replicated, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<AWOGPlayerController> OwnerPC = nullptr;
-
 public:
 	//public Getters and Setters 
 	FORCEINLINE USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 	FORCEINLINE UTargetSystemComponent* GetTargetComponent() const { return TargetComponent; }
-	FORCEINLINE void SetOwnerPC(AWOGPlayerController* NewPC) { OwnerPC = NewPC; }
-	FORCEINLINE TObjectPtr<AWOGPlayerController> GetOwnerPC() { return OwnerPC; }
 	FORCEINLINE TObjectPtr<AActor>GetCurrentTarget() { return CurrentTarget; }
 	FORCEINLINE FPlayerData GetPlayerProfile() const { return PlayerProfile; }
 	UFUNCTION(BlueprintPure)

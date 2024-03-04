@@ -13,6 +13,8 @@
 #include "AbilitySystemComponent.h"
 #include "Data/WOGGameplayTags.h"
 #include "Subsystems/WOGWorldSubsystem.h"
+#include "AbilitySystemBlueprintLibrary.h"
+#include "PlayerController/WOGPlayerController.h"
 
 AWOGPossessableEnemy::AWOGPossessableEnemy()
 {
@@ -54,15 +56,6 @@ void AWOGPossessableEnemy::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
-	{
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
-		{
-			Subsystem->ClearAllMappings();
-			Subsystem->AddMappingContext(MinionMappingContext, 0);
-		}
-	}
-
 	TObjectPtr<UWOGWorldSubsystem> WorldSubsystem = GetWorld()->GetSubsystem<UWOGWorldSubsystem>();
 	if (WorldSubsystem)
 	{
@@ -75,6 +68,7 @@ void AWOGPossessableEnemy::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 {
 	check(PlayerInputComponent);
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
+	UE_LOG(WOGLogSpawn, Display, TEXT("SetupPlayerInputComponent() called"));
 
 	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent))
 	{
@@ -84,10 +78,20 @@ void AWOGPossessableEnemy::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ThisClass::LookActionPressed);
 		//Jump:
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &ThisClass::JumpActionPressed);
-		//Primary
-		EnhancedInputComponent->BindAction(PrimaryLightAction, ETriggerEvent::Triggered, this, &ThisClass::PrimaryLightButtonPressed);
-		//Secondary
-		EnhancedInputComponent->BindAction(SecondaryAction, ETriggerEvent::Triggered, this, &ThisClass::SecondaryLightButtonPressed);
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
+		//Sprint:
+		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Triggered, this, &ThisClass::SprintActionPressed);
+		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &ThisClass::StopSprinting);
+		//Unpossess:
+		EnhancedInputComponent->BindAction(UnpossessAction, ETriggerEvent::Triggered, this, &ThisClass::UnpossessActionPressed);
+
+		//Attacks
+		EnhancedInputComponent->BindAction(PrimaryAttackAction, ETriggerEvent::Triggered, this, &ThisClass::PrimaryAttackActionPressed);
+		EnhancedInputComponent->BindAction(MainAltAttackAction, ETriggerEvent::Triggered, this, &ThisClass::MainAltAttackActionPressed);
+		EnhancedInputComponent->BindAction(SecondaryAltAttackAction, ETriggerEvent::Triggered, this, &ThisClass::SecondaryAltAttackActionPressed);
+		EnhancedInputComponent->BindAction(RangedAttackAction, ETriggerEvent::Triggered, this, &ThisClass::RangedAttackActionPressed);
+		EnhancedInputComponent->BindAction(CloseAttackAction, ETriggerEvent::Triggered, this, &ThisClass::CloseAttackActionPressed);
+		EnhancedInputComponent->BindAction(BlockAction, ETriggerEvent::Triggered, this, &ThisClass::BlockActionPressed);
 	}
 }
 
@@ -128,28 +132,65 @@ void AWOGPossessableEnemy::LookActionPressed(const FInputActionValue& Value)
 void AWOGPossessableEnemy::JumpActionPressed(const FInputActionValue& Value)
 {
 	SendAbilityLocalInput(EWOGAbilityInputID::Jump);
-	UE_LOG(LogTemp, Warning, TEXT("JUMPY JUMP"));
 }
 
-void AWOGPossessableEnemy::PrimaryLightButtonPressed(const FInputActionValue& Value)
+void AWOGPossessableEnemy::PrimaryAttackActionPressed(const FInputActionValue& Value)
 {
 	SendAbilityLocalInput(EWOGAbilityInputID::AttackLight);
 	UE_LOG(WOGLogSpawn, Display, TEXT("Primary Light button pressed"));
 }
 
-void AWOGPossessableEnemy::SecondaryLightButtonPressed(const FInputActionValue& Value)
+void AWOGPossessableEnemy::MainAltAttackActionPressed(const FInputActionValue& Value)
+{
+	SendAbilityLocalInput(EWOGAbilityInputID::AttackAltMain);
+	UE_LOG(WOGLogSpawn, Display, TEXT("Main Alt Attack button pressed"));
+}
+
+void AWOGPossessableEnemy::SecondaryAltAttackActionPressed(const FInputActionValue& Value)
+{
+	SendAbilityLocalInput(EWOGAbilityInputID::AttackAltSec);
+	UE_LOG(WOGLogSpawn, Display, TEXT("Secondary Alt Attack button pressed"));
+}
+
+void AWOGPossessableEnemy::RangedAttackActionPressed(const FInputActionValue& Value)
+{
+	SendAbilityLocalInput(EWOGAbilityInputID::Ranged);
+	UE_LOG(WOGLogSpawn, Display, TEXT("Ranged Attack button pressed"));
+}
+
+void AWOGPossessableEnemy::CloseAttackActionPressed(const FInputActionValue& Value)
+{
+	SendAbilityLocalInput(EWOGAbilityInputID::AttackClose);
+	UE_LOG(WOGLogSpawn, Display, TEXT("Close Attack button pressed"));
+}
+
+void AWOGPossessableEnemy::BlockActionPressed(const FInputActionValue& Value)
 {
 	SendAbilityLocalInput(EWOGAbilityInputID::Block);
-	UE_LOG(WOGLogSpawn, Display, TEXT("Secondary Light button pressed"));
+	UE_LOG(WOGLogSpawn, Display, TEXT("Block button pressed"));
+}
+
+void AWOGPossessableEnemy::UnpossessActionPressed(const FInputActionValue& Value)
+{
+	Server_UnpossessMinion();
+}
+
+void AWOGPossessableEnemy::SprintActionPressed(const FInputActionValue& Value)
+{
+	SendAbilityLocalInput(EWOGAbilityInputID::Sprint);
+	UE_LOG(WOGLogSpawn, Display, TEXT("Sprint button pressed"));
+}
+
+void AWOGPossessableEnemy::StopSprinting()
+{
+	FGameplayEventData EventPayload;
+	EventPayload.EventTag = TAG_Event_Movement_Sprint_Stop;
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Movement_Sprint_Stop, EventPayload);
 }
 
 void AWOGPossessableEnemy::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
-
-	/*
-	** TO-DO add logic to handle possession here
-	*/
 }
 
 void AWOGPossessableEnemy::Elim(bool bPlayerLeftGame)
@@ -196,6 +237,8 @@ void AWOGPossessableEnemy::Server_UnpossessMinion_Implementation()
 		{
 			PlayerController->Server_UnpossessMinion(this);
 		}	
+
+		OwnerPC = nullptr;
 
 		SpawnDefaultController();
 	}

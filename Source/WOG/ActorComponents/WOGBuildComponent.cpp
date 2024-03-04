@@ -65,7 +65,7 @@ void UWOGBuildComponent::LaunchBuildMode()
 			if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
 			{
 				Subsystem->ClearAllMappings();
-				Subsystem->AddMappingContext(DefenderCharacter->MatchMappingContext, 0);
+				Subsystem->AddMappingContext(DefenderCharacter->MainMappingContext, 0);
 			}
 		}
 	}
@@ -80,7 +80,7 @@ void UWOGBuildComponent::LaunchBuildMode()
 				if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
 				{
 			Subsystem->ClearAllMappings();
-				Subsystem->AddMappingContext(DefenderCharacter->MatchMappingContext, 0);
+				Subsystem->AddMappingContext(DefenderCharacter->MainMappingContext, 0);
 				}
 			}
 			return;

@@ -30,6 +30,8 @@
 #include "AI/Combat/WOGBaseSquad.h"
 #include "Components/StaticMeshComponent.h"
 #include "Data/AGRLibrary.h"
+#include "EnhancedInputSubsystems.h"
+#include "EnhancedInputComponent.h"
 
 AWOGBaseCharacter::AWOGBaseCharacter()
 {
@@ -65,6 +67,8 @@ AWOGBaseCharacter::AWOGBaseCharacter()
 
 	MaxAttackTokens = 1;
 	AvailableAttackTokens = MaxAttackTokens;
+
+	bComboWindowOpen = false;
 }
 
 void AWOGBaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -74,6 +78,8 @@ void AWOGBaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	DOREPLIFETIME(AWOGBaseCharacter, bIsRagdolling);
 	DOREPLIFETIME(AWOGBaseCharacter, CurrentTOD);
 	DOREPLIFETIME(AWOGBaseCharacter, AvailableAttackTokens);
+	DOREPLIFETIME(AWOGBaseCharacter, OwnerPC);
+	DOREPLIFETIME(AWOGBaseCharacter, bComboWindowOpen);
 }
 
 void AWOGBaseCharacter::PossessedBy(AController* NewController)
@@ -87,6 +93,31 @@ void AWOGBaseCharacter::PossessedBy(AController* NewController)
 
 	// ASC MixedMode replication requires that the ASC Owner's Owner be the Controller.
 	SetOwner(NewController);
+
+	OwnerPC = Cast<AWOGPlayerController>(NewController);
+
+	Multicast_OnPossessed();
+}
+
+void AWOGBaseCharacter::Multicast_OnPossessed_Implementation()
+{
+	ReplicatedOnPossessEvent();
+}
+
+void AWOGBaseCharacter::ReplicatedOnPossessEvent()
+{
+	SetupMappingContext();
+}
+
+void AWOGBaseCharacter::SetupMappingContext()
+{
+	if (!OwnerPC || !MainMappingContext) return;
+
+	if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(OwnerPC->GetLocalPlayer()))
+	{
+		Subsystem->ClearAllMappings();
+		Subsystem->AddMappingContext(MainMappingContext, 0);
+	}
 }
 
 void AWOGBaseCharacter::BeginPlay()
@@ -259,7 +290,6 @@ void AWOGBaseCharacter::OnStaminaAttributeChanged(const FOnAttributeChangeData& 
 	//Add the round stamina widget
 	if (Data.NewValue < Data.OldValue && !UKismetMathLibrary::NearlyEqual_FloatFloat(Data.NewValue, AttributeSet->GetMaxStamina(), 1.f))
 	{
-		TObjectPtr<AWOGPlayerController> OwnerPC = Cast<AWOGPlayerController>(Controller);
 		if (!OwnerPC || !OwnerPC->IsLocalController())
 		{
 			return;

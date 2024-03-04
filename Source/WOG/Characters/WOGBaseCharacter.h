@@ -28,6 +28,8 @@ class UWOGHoldProgressBar;
 class UWidgetComponent;
 class UWOGCharacterWidgetContainer;
 class UAnimMontage;
+class AWOGPlayerController;
+class UInputMappingContext;
 
 UCLASS()
 class WOG_API AWOGBaseCharacter : public ACharacter, public IAttributesInterface, public IAbilitySystemInterface, public ITargetInterface
@@ -46,6 +48,9 @@ protected:
 
 	UPROPERTY()
 	TObjectPtr<AWOGGameMode> WOGGameMode;
+
+	UPROPERTY(Replicated)
+	TObjectPtr<AWOGPlayerController> OwnerPC = nullptr;
 
 	#pragma region GAS functions
 public:
@@ -95,6 +100,9 @@ protected:
 	#pragma endregion
 
 	#pragma region Setup
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Mapping Contexts", meta = (AllowPrivateAccess = "true"))
+	UInputMappingContext* MainMappingContext;
+
 	UPROPERTY(EditDefaultsOnly, Category = "Setup|Abilities and Effects")
 	FCharacterAbilityData DefaultAbilitiesAndEffects;
 
@@ -110,7 +118,11 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Setup|Combat")
 	int32 MaxAttackTokens;
 
+	UFUNCTION(NetMulticast, reliable)
+	void Multicast_OnPossessed();
 
+	virtual void ReplicatedOnPossessEvent();
+	void SetupMappingContext();
 	#pragma endregion
 
 	#pragma region Actor Components
@@ -252,8 +264,15 @@ public:
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE bool GetIsLayingOnBack() const { return bIsLayingOnBack; }
 
+	FORCEINLINE void SetOwnerPC(AWOGPlayerController* NewPC) { OwnerPC = NewPC; }
+	UFUNCTION(BlueprintPure)
+	FORCEINLINE AWOGPlayerController* GetOwnerPC() { return OwnerPC; }
+
 	#pragma region Handle Combat
 	virtual void ProcessHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh) {/*To be overriden in children*/ };
 	virtual void ProcessMagicHit(const FHitResult& Hit, const struct FMagicDataTable& MagicData) {/*To be overriden in children*/ };
+
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly)
+	bool bComboWindowOpen;
 	#pragma endregion
 };

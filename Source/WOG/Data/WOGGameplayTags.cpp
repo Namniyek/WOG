@@ -28,6 +28,10 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_State_Magic_AOE, "State.Magic.AOE");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Magic_Projectile, "State.Magic.Projectile");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Magic_Instant, "State.Magic.Instant");
 
+UE_DEFINE_GAMEPLAY_TAG(TAG_State_Minion_Melee_Light, "State.Minion.Melee.Light");
+UE_DEFINE_GAMEPLAY_TAG(TAG_State_Minion_Melee_Heavy, "State.Minion.Melee.Heavy");
+UE_DEFINE_GAMEPLAY_TAG(TAG_State_Minion_Melee_Stun, "State.Minion.Melee.Stun");
+
 
 //Event tags
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Elim, "Event.Elim");

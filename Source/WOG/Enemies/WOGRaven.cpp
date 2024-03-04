@@ -2,7 +2,7 @@
 
 #include "Enemies/WOGRaven.h"
 #include "WOG.h"
-#include "WOG/PlayerController/WOGPlayerController.h"
+#include "PlayerController/WOGPlayerController.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
@@ -131,7 +131,6 @@ void AWOGRaven::PrimaryActionTriggered(const FInputActionValue& Value)
 {
 	if (SpawnedMarkers.Num() > 2)
 	{
-		TObjectPtr<AWOGPlayerController> OwnerPC = Cast<AWOGPlayerController>(GetController());
 		if (OwnerPC)
 		{
 			TObjectPtr<UWOGUIManagerSubsystem> UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(OwnerPC->GetLocalPlayer());

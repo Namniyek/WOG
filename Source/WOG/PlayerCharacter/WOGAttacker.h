@@ -37,10 +37,6 @@ public:
 	TObjectPtr<USceneComponent> SquadSlot_2;
 	#pragma region Player Input Variables
 	/*
-	** MappingContexts
-	**/
-
-	/*
 	** Input actions
 	**/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Base Match", meta = (AllowPrivateAccess = "true"))

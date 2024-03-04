@@ -17,13 +17,12 @@ class WOG_API AWOGPossessableEnemy : public AWOGBaseEnemy
 public:
 	AWOGPossessableEnemy();
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	void SetupMinionMappingContexts();
 
 	#pragma region Player Input Variables
 	/*
 	** MappingContexts
 	**/
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Mapping Contexts")
-	TObjectPtr<class UInputMappingContext> MinionMappingContext;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Base Match")
 	class UInputAction* MoveAction;
@@ -32,16 +31,31 @@ public:
 	UInputAction* LookAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Base Match")
-	UInputAction* PrimaryLightAction;
+	UInputAction* PrimaryAttackAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Base Match")
-	UInputAction* PrimaryHeavyAction;
+	UInputAction* MainAltAttackAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Base Match")
-	UInputAction* SecondaryAction;
+	UInputAction* SecondaryAltAttackAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Base Match")
+	UInputAction* BlockAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Base Match")
 	UInputAction* JumpAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Base Match")
+	UInputAction* UnpossessAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Base Match")
+	UInputAction* SprintAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Base Match")
+	UInputAction* RangedAttackAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Base Match")
+	UInputAction* CloseAttackAction;
 	#pragma endregion
 
 protected:
@@ -72,11 +86,17 @@ protected:
 	/** Called for jumping input */
 	void JumpActionPressed(const FInputActionValue& Value);
 
-	UFUNCTION()
-	void PrimaryLightButtonPressed(const FInputActionValue& Value);
+	void PrimaryAttackActionPressed(const FInputActionValue& Value);
+	void MainAltAttackActionPressed(const FInputActionValue& Value);
+	void SecondaryAltAttackActionPressed(const FInputActionValue& Value);
+	void RangedAttackActionPressed(const FInputActionValue& Value);
+	void CloseAttackActionPressed(const FInputActionValue& Value);
+	void BlockActionPressed(const FInputActionValue& Value);
+	
+	void UnpossessActionPressed(const FInputActionValue& Value);
+	void SprintActionPressed(const FInputActionValue& Value);
+	void StopSprinting();
 
-	UFUNCTION()
-	void SecondaryLightButtonPressed(const FInputActionValue& Value);
 
 	#pragma endregion
 

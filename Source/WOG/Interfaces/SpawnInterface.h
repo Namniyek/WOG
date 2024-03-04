@@ -74,4 +74,10 @@ public:
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	FSpawnables ReturnSpawnData();
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void ResetComboIndex();
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void IncreaseComboIndex();
 };

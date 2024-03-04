@@ -74,7 +74,7 @@ protected:
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	TSubclassOf<UGameplayEffect> DamageEffect;
 
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
 	float BaseDamage = 10.f;
 
 	UPROPERTY(Replicated, VisibleAnywhere)
@@ -136,6 +136,8 @@ protected:
 	FGameplayTag GetAttackDataAtIndex_Implementation(const int32& Index, int32& TokensNeeded);
 	int32 GetAttackIndex_Implementation();
 	void DefineAttackTagIndex_Implementation();
+	void IncreaseComboIndex_Implementation();
+	void ResetComboIndex_Implementation();
 	#pragma endregion
 
 	#pragma region Animation
@@ -177,6 +179,7 @@ public:
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE EEnemyState GetCurrentEnemyState() const { return CurrentEnemyState; }
 
+	UFUNCTION(BlueprintCallable)
 	void SetBaseDamage(const float& NewDamage);
 	void SetAttackMontage(UAnimMontage* NewMontage);
 
@@ -192,7 +195,7 @@ public:
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE float GetDefendRange() const { return DefendRange; }
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	void SetDamageEffect(const TSubclassOf<UGameplayEffect>& NewDamageEffect);
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE TSubclassOf<UGameplayEffect> GetDamageEffect() const { return DamageEffect; }
