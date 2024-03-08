@@ -42,6 +42,7 @@ void AWOGBaseTarget::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 	DOREPLIFETIME(AWOGBaseTarget, Health);
 	DOREPLIFETIME(AWOGBaseTarget, CurrentMeleeSquad);
 	DOREPLIFETIME(AWOGBaseTarget, CurrentRangedSquad);
+	DOREPLIFETIME(AWOGBaseTarget, CurrentEpicSquad);
 }
 
 void AWOGBaseTarget::BeginPlay()
@@ -293,6 +294,39 @@ void AWOGBaseTarget::SetCurrentMeleeSquadSlot_Implementation(AWOGBaseSquad* NewS
 	SetCurrentMeleeSquad(NewSquad);
 }
 
+AWOGBaseSquad* AWOGBaseTarget::GetCurrentRangedSquadSlot_Implementation() const
+{
+	return CurrentRangedSquad;
+}
+
+AWOGBaseSquad* AWOGBaseTarget::GetCurrentMeleeSquadSlot_Implementation() const
+{
+	return CurrentMeleeSquad;
+}
+
+void AWOGBaseTarget::SetCurrentEpicSquadSlot_Implementation(AWOGBaseSquad* NewSquad)
+{
+	if (HasAuthority())
+	{
+		CurrentEpicSquad = NewSquad;
+	}
+}
+
+void AWOGBaseTarget::FreeCurrentEpicSquadSlot_Implementation()
+{
+	SetCurrentEpicSquad(nullptr);
+}
+
+bool AWOGBaseTarget::IsCurrentEpicSquadSlotAvailable_Implementation() const
+{
+	return CurrentEpicSquad == nullptr;
+}
+
+AWOGBaseSquad* AWOGBaseTarget::GetCurrentEpicSquadSlot_Implementation() const
+{
+	return CurrentEpicSquad;
+}
+
 void AWOGBaseTarget::ReturnBuildHealth_Implementation(float& OutBuildHealth, float& OutMaxBuildHealth)
 {
 	OutBuildHealth = Health;
@@ -312,6 +346,14 @@ void AWOGBaseTarget::SetCurrentMeleeSquad(AWOGBaseSquad* NewSquad)
 	if (HasAuthority())
 	{
 		CurrentMeleeSquad = NewSquad;
+	}
+}
+
+void AWOGBaseTarget::SetCurrentEpicSquad(AWOGBaseSquad* NewSquad)
+{
+	if (HasAuthority())
+	{
+		CurrentEpicSquad = NewSquad;
 	}
 }
 

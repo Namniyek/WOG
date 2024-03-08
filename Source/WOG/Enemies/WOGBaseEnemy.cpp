@@ -192,7 +192,7 @@ void AWOGBaseEnemy::ProcessMagicHit(const FHitResult& Hit, const FMagicDataTable
 void AWOGBaseEnemy::BroadcastHit_Implementation(AActor* AgressorActor, const FHitResult& Hit, const float& DamageToApply, AActor* InstigatorWeapon)
 {
 	if (HasMatchingGameplayTag(TAG_State_Dead)) return;
-	if (HasMatchingGameplayTag(TAG_State_Dodging)) return;
+	if (HasMatchingGameplayTag(TAG_State_Minion_Dodging)) return;
 
 	AWOGBaseCharacter* AgressorCharacter = Cast<AWOGBaseCharacter>(AgressorActor);
 	AWOGBaseWeapon* AgressorWeapon = Cast<AWOGBaseWeapon>(InstigatorWeapon);
@@ -251,6 +251,29 @@ void AWOGBaseEnemy::BroadcastHit_Implementation(AActor* AgressorActor, const FHi
 			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, AgressorWeapon->GetWeaponData().RangedTag, EventPayload);
 			UE_LOG(WOGLogCombat, Warning, TEXT("Weapon AOE hit and applied: %s"), *AgressorWeapon->GetWeaponData().RangedTag.ToString());
 		}
+	}
+
+	//Handle blocked hits for victim and agressor
+	if (HasMatchingGameplayTag(TAG_State_Minion_Blocking) && IsHitFrontal(60.f, this, FVector::Zero(), AgressorActor))
+	{
+		if (AgressorCharacter->HasMatchingGameplayTag(TAG_State_Weapon_AttackHeavy))
+		{
+			//Attacker used heavy attack on victim while guarding:
+			//Handle stun on victim
+			FGameplayEventData EventStunPayload;
+			EventStunPayload.EventTag = TAG_Event_Debuff_Stun;
+			EventStunPayload.EventMagnitude = 5.f;
+			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Debuff_Stun, EventStunPayload);
+			UE_LOG(WOGLogCombat, Warning, TEXT("Applied stun on victim"));
+			return;
+		}
+
+
+		FGameplayEventData EventVictimPayload;
+		EventVictimPayload.EventTag = TAG_Event_Debuff_Stagger;
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(AgressorCharacter, TAG_Event_Debuff_Stagger, EventVictimPayload);
+		UE_LOG(WOGLogCombat, Warning, TEXT("Agressor stagger"));
+		return;
 	}
 
 	//Apply HitReact or KO to character

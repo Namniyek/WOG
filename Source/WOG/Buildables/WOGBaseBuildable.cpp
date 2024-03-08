@@ -42,6 +42,7 @@ void AWOGBaseBuildable::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	DOREPLIFETIME(AWOGBaseBuildable, BuildMaxHeightOffset);
 	DOREPLIFETIME(AWOGBaseBuildable, CurrentMeleeSquad);
 	DOREPLIFETIME(AWOGBaseBuildable, CurrentRangedSquad);
+	DOREPLIFETIME(AWOGBaseBuildable, CurrentEpicSquad);
 	DOREPLIFETIME(AWOGBaseBuildable, CosmeticsDataAsset);
 }
 
@@ -203,6 +204,14 @@ void AWOGBaseBuildable::SetCurrentMeleeSquad(AWOGBaseSquad* NewSquad)
 	if (HasAuthority())
 	{
 		CurrentMeleeSquad = NewSquad;
+	}
+}
+
+void AWOGBaseBuildable::SetCurrentEpicSquad(AWOGBaseSquad* NewSquad)
+{
+	if (HasAuthority())
+	{
+		CurrentEpicSquad = NewSquad;
 	}
 }
 
@@ -392,4 +401,34 @@ void AWOGBaseBuildable::SetCurrentRangedSquadSlot_Implementation(AWOGBaseSquad* 
 void AWOGBaseBuildable::SetCurrentMeleeSquadSlot_Implementation(AWOGBaseSquad* NewSquad)
 {
 	SetCurrentMeleeSquad(NewSquad);
+}
+
+AWOGBaseSquad* AWOGBaseBuildable::GetCurrentRangedSquadSlot_Implementation() const
+{
+	return CurrentRangedSquad;
+}
+
+AWOGBaseSquad* AWOGBaseBuildable::GetCurrentMeleeSquadSlot_Implementation() const
+{
+	return CurrentMeleeSquad;
+}
+
+void AWOGBaseBuildable::SetCurrentEpicSquadSlot_Implementation(AWOGBaseSquad* NewSquad)
+{
+	SetCurrentEpicSquad(NewSquad);
+}
+
+void AWOGBaseBuildable::FreeCurrentEpicSquadSlot_Implementation()
+{
+	SetCurrentEpicSquad(nullptr);
+}
+
+bool AWOGBaseBuildable::IsCurrentEpicSquadSlotAvailable_Implementation() const
+{
+	return CurrentEpicSquad == nullptr;
+}
+
+AWOGBaseSquad* AWOGBaseBuildable::GetCurrentEpicSquadSlot_Implementation() const
+{
+	return CurrentEpicSquad;
 }

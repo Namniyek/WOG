@@ -56,6 +56,15 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Base Match")
 	UInputAction* CloseAttackAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Base Match")
+	UInputAction* TargetAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Base Match")
+	UInputAction* CycleTargetAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Base Match")
+	UInputAction* DodgeAction;
 	#pragma endregion
 
 protected:
@@ -69,6 +78,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* FollowCamera;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	class UTargetSystemComponent* TargetComponent;
 
 	#pragma endregion
 
@@ -92,11 +104,18 @@ protected:
 	void RangedAttackActionPressed(const FInputActionValue& Value);
 	void CloseAttackActionPressed(const FInputActionValue& Value);
 	void BlockActionPressed(const FInputActionValue& Value);
+	void BlockActionReleased(const FInputActionValue& Value);
 	
 	void UnpossessActionPressed(const FInputActionValue& Value);
 	void SprintActionPressed(const FInputActionValue& Value);
 	void StopSprinting();
 
+	/**Called for Target input*/
+	void TargetActionPressed(const FInputActionValue& Value);
+	void CycleTargetActionPressed(const FInputActionValue& Value);
+
+	/**Called for dodge input*/
+	void DodgeActionPressed(const FInputActionValue& Value);
 
 	#pragma endregion
 
@@ -110,6 +129,22 @@ protected:
 	#pragma region Handle Elim
 	virtual void Elim(bool bPlayerLeftGame) override;
 	#pragma endregion
+
+	#pragma region Targeting
+	UFUNCTION()
+	void TargetLocked(AActor* NewTarget);
+
+	UFUNCTION()
+	void TargetUnlocked(AActor* OldTarget);
+
+	UFUNCTION(Server, reliable)
+	void Server_SetCurrentTarget(AActor* NewTarget = nullptr);
+
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Replicated)
+	TObjectPtr<AActor> CurrentTarget = nullptr;
+
+	virtual void ToggleStrafeMovement(bool bIsStrafe) override;
+#pragma endregion
 
 public:
 	UFUNCTION(Server, reliable, BlueprintCallable)

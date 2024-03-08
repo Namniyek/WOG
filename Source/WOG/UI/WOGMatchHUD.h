@@ -83,6 +83,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Setup | WidgetClasses")
 	TSubclassOf<UUserWidget> SquadOrderWidgetClass;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Setup | WidgetClasses")
+	TSubclassOf<UUserWidget> CrosshairWidgetClass;
+
 	#pragma endregion
 
 	#pragma region Widget References

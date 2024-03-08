@@ -549,3 +549,27 @@ void UWOGUIManagerSubsystem::RemoveSquadOrderWidget()
 		UE_LOG(WOGLogUI, Error, TEXT("SquadOrderWidget NOT removed from subsystem"));
 	}
 }
+
+void UWOGUIManagerSubsystem::AddCrosshairWidget()
+{
+	if (!OwnerPC) return;
+	MatchHUD == nullptr ? (TObjectPtr<AWOGMatchHUD>) Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
+	if (!MatchHUD || !IsValid(MatchHUD->CrosshairWidgetClass)) return;
+	if (CrosshairWidget) return;
+
+	CrosshairWidget = CreateWidget<UUserWidget>(OwnerPC, MatchHUD->CrosshairWidgetClass);
+	if (CrosshairWidget)
+	{
+		CrosshairWidget->AddToViewport();
+	}
+}
+
+void UWOGUIManagerSubsystem::RemoveCrosshairWidget()
+{
+	if (CrosshairWidget)
+	{
+		CrosshairWidget->RemoveFromParent();
+	}
+
+	CrosshairWidget = nullptr;
+}

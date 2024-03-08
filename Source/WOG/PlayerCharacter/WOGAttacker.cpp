@@ -115,6 +115,12 @@ void AWOGAttacker::PossessMinion()
 	OwnerPC->Server_PossessMinion(CurrentTarget);
 	TargetComponent->TargetLockOff();
 
+	TObjectPtr<UWOGUIManagerSubsystem> UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(OwnerPC->GetLocalPlayer());
+	if (UIManager)
+	{
+		UIManager->RemoveCrosshairWidget();
+	}
+
 }
 
 void AWOGAttacker::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

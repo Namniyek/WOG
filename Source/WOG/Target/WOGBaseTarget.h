@@ -111,6 +111,9 @@ protected:
 	UPROPERTY(Replicated, VisibleAnywhere)
 	TObjectPtr<AWOGBaseSquad> CurrentRangedSquad;
 
+	UPROPERTY(Replicated, VisibleAnywhere)
+	TObjectPtr<AWOGBaseSquad> CurrentEpicSquad;
+
 	#pragma region Interface functions
 	bool IsTargetable_Implementation(AActor* TargeterActor) const;
 	void GetTargetWidgetAttachmentParent_Implementation(USceneComponent*& OutParentComponent, FName& OutSocketName) const;
@@ -122,6 +125,12 @@ protected:
 	void FreeCurrentMeleeSquadSlot_Implementation();
 	void SetCurrentRangedSquadSlot_Implementation(AWOGBaseSquad* NewSquad);
 	void SetCurrentMeleeSquadSlot_Implementation(AWOGBaseSquad* NewSquad);
+	AWOGBaseSquad* GetCurrentRangedSquadSlot_Implementation() const;
+	AWOGBaseSquad* GetCurrentMeleeSquadSlot_Implementation() const;
+	void SetCurrentEpicSquadSlot_Implementation(AWOGBaseSquad* NewSquad);
+	void FreeCurrentEpicSquadSlot_Implementation();
+	bool IsCurrentEpicSquadSlotAvailable_Implementation() const;
+	AWOGBaseSquad* GetCurrentEpicSquadSlot_Implementation() const;
 	void ReturnBuildHealth_Implementation(float& OutBuildHealth, float& OutMaxBuildHealth);
 	#pragma endregion
 
@@ -135,6 +144,9 @@ public:
 
 	UFUNCTION(BlueprintAuthorityOnly, BlueprintCallable)
 	void SetCurrentMeleeSquad(AWOGBaseSquad* NewSquad);
+
+	UFUNCTION(BlueprintAuthorityOnly, BlueprintCallable)
+	void SetCurrentEpicSquad(AWOGBaseSquad* NewSquad);
 
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE AWOGBaseSquad* GetCurrentRangedSquad() const { return CurrentRangedSquad; }

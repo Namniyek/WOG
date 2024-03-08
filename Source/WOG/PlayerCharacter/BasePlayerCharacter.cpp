@@ -48,6 +48,7 @@
 #include "Components/WidgetComponent.h"
 #include "UI/WOGCharacterWidgetContainer.h"
 #include "Enemies/WOGBaseEnemy.h"
+#include "AI/Combat/WOGBaseSquad.h"
 
 
 void ABasePlayerCharacter::OnConstruction(const FTransform& Transform)
@@ -144,6 +145,7 @@ void ABasePlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 	DOREPLIFETIME(ABasePlayerCharacter, PreviousMagic);
 	DOREPLIFETIME(ABasePlayerCharacter, PreviousWeapon);
 	DOREPLIFETIME(ABasePlayerCharacter, CommonInventory);
+	DOREPLIFETIME(ABasePlayerCharacter, CurrentEpicSquad);
 }
 
 void ABasePlayerCharacter::PossessedBy(AController* NewController)
@@ -161,6 +163,12 @@ void ABasePlayerCharacter::BeginPlay()
 		{
 			Subsystem->ClearAllMappings();
 			Subsystem->AddMappingContext(MainMappingContext, 0);
+		}
+
+		TObjectPtr<UWOGUIManagerSubsystem> UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(PlayerController->GetLocalPlayer());
+		if (UIManager && IsLocallyControlled())
+		{
+			UIManager->AddCrosshairWidget();
 		}
 	}
 
@@ -493,7 +501,6 @@ void ABasePlayerCharacter::SecondaryButtonReleased(const FInputActionValue& Valu
 
 	FGameplayEventData EventPayload;
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Weapon_Block_Stop, EventPayload);
-	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Purple, FString("StopBlocking"));
 
 	bSecondaryButtonPressed = false;
 }
@@ -1822,6 +1829,26 @@ void ABasePlayerCharacter::BroadcastMagicHit_Implementation(AActor* AgressorActo
 	}
 }
 
+void ABasePlayerCharacter::SetCurrentEpicSquadSlot_Implementation(AWOGBaseSquad* NewSquad)
+{
+	SetCurrentEpicSquad(NewSquad);
+}
+
+void ABasePlayerCharacter::FreeCurrentEpicSquadSlot_Implementation()
+{
+	SetCurrentEpicSquad(nullptr);
+}
+
+bool ABasePlayerCharacter::IsCurrentEpicSquadSlotAvailable_Implementation() const
+{
+	return CurrentEpicSquad == nullptr;
+}
+
+AWOGBaseSquad* ABasePlayerCharacter::GetCurrentEpicSquadSlot_Implementation() const
+{
+	return CurrentEpicSquad;
+}
+
 void ABasePlayerCharacter::Server_SetVendorBusy_Implementation(bool bNewBusy, ABasePlayerCharacter* UserPlayer, AWOGVendor* Vendor)
 {
 	if (!Vendor) return;
@@ -1929,6 +1956,12 @@ void ABasePlayerCharacter::TargetLocked(AActor* NewTarget)
 	Server_SetCurrentTarget(NewTarget);
 
 	ToggleStrafeMovement(true);
+
+	TObjectPtr<UWOGUIManagerSubsystem> UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(OwnerPC->GetLocalPlayer());
+	if (UIManager)
+	{
+		UIManager->RemoveCrosshairWidget();
+	}
 }
 
 void ABasePlayerCharacter::TargetUnlocked(AActor* OldTarget)
@@ -1936,6 +1969,12 @@ void ABasePlayerCharacter::TargetUnlocked(AActor* OldTarget)
 	Server_SetCurrentTarget();
 
 	ToggleStrafeMovement(false);
+
+	TObjectPtr<UWOGUIManagerSubsystem> UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(OwnerPC->GetLocalPlayer());
+	if (UIManager)
+	{
+		UIManager->AddCrosshairWidget();
+	}
 }
 
 UWOGCharacterWidgetContainer* ABasePlayerCharacter::GetStaminaWidgetContainer() const
@@ -2470,4 +2509,12 @@ void ABasePlayerCharacter::RestoreEquipmentFromCommonInventory()
 	}
 
 	RestoreEquipment();
+}
+
+void ABasePlayerCharacter::SetCurrentEpicSquad(AWOGBaseSquad* NewSquad)
+{
+	if (HasAuthority())
+	{
+		CurrentEpicSquad = NewSquad;
+	}
 }

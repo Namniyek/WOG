@@ -89,6 +89,7 @@ void AWOGBaseSquad::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLif
 	DOREPLIFETIME(AWOGBaseSquad, SquadSlots);
 	DOREPLIFETIME(AWOGBaseSquad, CurrentTargetLocation);
 	DOREPLIFETIME(AWOGBaseSquad, CurrentTargetActor);
+	DOREPLIFETIME(AWOGBaseSquad, TargetActorsArray);
 	DOREPLIFETIME(AWOGBaseSquad, SquadType);
 	DOREPLIFETIME(AWOGBaseSquad, SquadName);
 	DOREPLIFETIME(AWOGBaseSquad, SquadIcon);
@@ -212,6 +213,26 @@ void AWOGBaseSquad::SendOrder(const EEnemyOrder& NewOrder, const FTransform& Tar
 				return;
 			}
 
+			if (SquadType == EEnemySquadType::EEST_Epic && ITargetInterface::Execute_IsCurrentEpicSquadSlotAvailable(TargetActor))
+			{
+				ITargetInterface::Execute_SetCurrentEpicSquadSlot(TargetActor, this);
+				SetCurrentTargetActor(TargetActor);
+				SetEnemyStateOnSquad(EEnemyState::EES_AtTargetSlot);
+				SetCurrentSquadOrder(NewOrder);
+
+				AWOGBaseSquad* CurrentMeleeSquad = ITargetInterface::Execute_GetCurrentMeleeSquadSlot(TargetActor);
+				if (CurrentMeleeSquad)
+				{
+					CurrentMeleeSquad->SendOrder(EEnemyOrder::EEO_Follow);
+				}
+				AWOGBaseSquad* CurrentRangedSquad = ITargetInterface::Execute_GetCurrentRangedSquadSlot(TargetActor);
+				if (CurrentRangedSquad)
+				{
+					CurrentRangedSquad->SendOrder(EEnemyOrder::EEO_Follow);
+				}
+				return;
+			}
+
 			// if not, default to Follow order
 			SendOrder(EEnemyOrder::EEO_Follow);
 			if (UIManager)
@@ -222,7 +243,7 @@ void AWOGBaseSquad::SendOrder(const EEnemyOrder& NewOrder, const FTransform& Tar
 		}
 
 		//Target is a player
-		if (TargetActor->IsA<AWOGDefender>() && TargetActor->GetClass()->ImplementsInterface(UTargetInterface::StaticClass()))
+		if (TargetActor->IsA<ABasePlayerCharacter>() && TargetActor->GetClass()->ImplementsInterface(UTargetInterface::StaticClass()))
 		{
 			//Check if target has an availability for squad
 			if (SquadType == EEnemySquadType::EEST_Melee && ITargetInterface::Execute_IsCurrentMeleeSquadSlotAvailable(TargetActor))
@@ -240,6 +261,26 @@ void AWOGBaseSquad::SendOrder(const EEnemyOrder& NewOrder, const FTransform& Tar
 				SetCurrentTargetActor(TargetActor);
 				SetEnemyStateOnSquad(EEnemyState::EES_AtTargetPlayer);
 				SetCurrentSquadOrder(NewOrder);
+				return;
+			}
+
+			if (SquadType == EEnemySquadType::EEST_Epic && ITargetInterface::Execute_IsCurrentEpicSquadSlotAvailable(TargetActor))
+			{
+				ITargetInterface::Execute_SetCurrentEpicSquadSlot(TargetActor, this);
+				SetCurrentTargetActor(TargetActor);
+				SetEnemyStateOnSquad(EEnemyState::EES_AtTargetPlayer);
+				SetCurrentSquadOrder(NewOrder);
+
+				AWOGBaseSquad* CurrentMeleeSquad = ITargetInterface::Execute_GetCurrentMeleeSquadSlot(TargetActor);
+				if (CurrentMeleeSquad)
+				{
+					CurrentMeleeSquad->SendOrder(EEnemyOrder::EEO_Follow);
+				}
+				AWOGBaseSquad* CurrentRangedSquad = ITargetInterface::Execute_GetCurrentRangedSquadSlot(TargetActor);
+				if (CurrentRangedSquad)
+				{
+					CurrentRangedSquad->SendOrder(EEnemyOrder::EEO_Follow);
+				}
 				return;
 			}
 
@@ -366,7 +407,7 @@ void AWOGBaseSquad::SetCurrentSquadOrder(const EEnemyOrder& NewOrder)
 
 void AWOGBaseSquad::SetCurrentTargetActor(AActor* NewTarget)
 {
-	if (!HasAuthority()) return;
+	if (!GetOwner() || !GetOwner()->HasAuthority()) return;
 
 	if (NewTarget != nullptr)
 	{
@@ -401,6 +442,22 @@ void AWOGBaseSquad::SetCurrentTargetActor(AActor* NewTarget)
 		CurrentTargetActor = NewTarget;
 		return;
 	}
+}
+
+void AWOGBaseSquad::AddTargetActor(AActor* NewTarget)
+{
+	if (!GetOwner() || !GetOwner()->HasAuthority() || !NewTarget) return;
+	if (TargetActorsArray.Contains(NewTarget)) return;
+
+	TargetActorsArray.Add(NewTarget);
+}
+
+void AWOGBaseSquad::RemoveTargetActor(AActor* ActorToRemove)
+{
+	if (!GetOwner() || !GetOwner()->HasAuthority() || !ActorToRemove) return;
+	if (!TargetActorsArray.Contains(ActorToRemove)) return;
+
+	TargetActorsArray.Remove(ActorToRemove);
 }
 
 void AWOGBaseSquad::SetCurrentTargetLocation(const FVector_NetQuantize& NewTarget)

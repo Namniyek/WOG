@@ -15,6 +15,7 @@
 #include "Subsystems/WOGUIManagerSubsystem.h"
 #include "WOG/PlayerController/WOGPlayerController.h"
 #include "Net/UnrealNetwork.h"
+#include "AI/Combat/WOGBaseSquad.h"
 
 AWOGDefender::AWOGDefender()
 {
@@ -247,6 +248,16 @@ void AWOGDefender::SetCurrentRangedSquadSlot_Implementation(AWOGBaseSquad* NewSq
 void AWOGDefender::SetCurrentMeleeSquadSlot_Implementation(AWOGBaseSquad* NewSquad)
 {
 	SetCurrentMeleeSquad(NewSquad);
+}
+
+AWOGBaseSquad* AWOGDefender::GetCurrentRangedSquadSlot_Implementation() const
+{
+	return CurrentRangedSquad;
+}
+
+AWOGBaseSquad* AWOGDefender::GetCurrentMeleeSquadSlot_Implementation() const
+{
+	return CurrentMeleeSquad;
 }
 
 bool AWOGDefender::ReserveAttackTokens_Implementation(const int32& AmountToReserve)

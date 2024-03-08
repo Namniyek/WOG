@@ -10,12 +10,16 @@
 #include "WOG/FunctionLibrary/MeshMergeFunctionLibrary.h"
 #include "Types/CharacterTypes.h"
 #include "Interfaces/InventoryInterface.h"
+#include "Interfaces/TargetInterface.h"
 #include "BasePlayerCharacter.generated.h"
+
 
 class AWOGCommonInventory;
 class AWOGVendor;
 class AWOGStashBase;
 class AWOGPlayerController;
+class UTargetSystemComponent;
+class AWOGBaseSquad;
 
 USTRUCT(BlueprintType)
 struct FMeshDataTables 
@@ -219,9 +223,6 @@ public:
 	/*
 	** Other variables
 	*/
-	UPROPERTY(BlueprintReadWrite)
-	bool bSecondaryButtonPressed = false;
-
 	UPROPERTY(BlueprintReadOnly)
 	bool bIsAlternativeModeEnabled = false;
 
@@ -430,7 +431,7 @@ public:
 
 	#pragma region Actor Components
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	class UTargetSystemComponent* TargetComponent;
+	UTargetSystemComponent* TargetComponent;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<class UAGR_EquipmentManager> EquipmentManager;
@@ -449,6 +450,9 @@ public:
 	virtual void OnStartAttack();
 	TArray<TObjectPtr<AActor>> HitActorsToIgnore;
 
+	UPROPERTY(Replicated, VisibleAnywhere)
+	TObjectPtr<AWOGBaseSquad> CurrentEpicSquad;
+
 	UFUNCTION()
 	virtual void OnAttackHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh);
 
@@ -456,6 +460,10 @@ public:
 	void HandleHitFromPlayerCharacter(AActor* AgressorActor, const FHitResult& Hit, const float& DamageToApply, AActor* InstigatorWeapon);
 	void HandleHitFromEnemyCharacter(AActor* AgressorActor, const FHitResult& Hit, const float& DamageToApply, AActor* InstigatorWeapon);
 	virtual void BroadcastMagicHit_Implementation(AActor* AgressorActor, const FHitResult& Hit, const struct FMagicDataTable& AgressorMagicData);
+	void SetCurrentEpicSquadSlot_Implementation(AWOGBaseSquad* NewSquad);
+	void FreeCurrentEpicSquadSlot_Implementation();
+	bool IsCurrentEpicSquadSlotAvailable_Implementation() const;
+	AWOGBaseSquad* GetCurrentEpicSquadSlot_Implementation() const;
 
 	virtual void ProcessHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh) override;
 	virtual void ProcessMagicHit(const FHitResult& Hit, const struct FMagicDataTable& MagicData) override;
@@ -556,5 +564,8 @@ public:
 
 	//Can return nullptr
 	UWOGCharacterWidgetContainer* GetStaminaWidgetContainer() const;
+
+	UFUNCTION(BlueprintAuthorityOnly, BlueprintCallable)
+	void SetCurrentEpicSquad(AWOGBaseSquad* NewSquad);
 
 };

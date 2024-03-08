@@ -44,14 +44,32 @@ public:
 	bool IsCurrentRangedSquadSlotAvailable() const;
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Combat")
+	bool IsCurrentEpicSquadSlotAvailable() const;
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Combat")
 	void FreeCurrentRangedSquadSlot();
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Combat")
 	void FreeCurrentMeleeSquadSlot();
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Combat")
+	void FreeCurrentEpicSquadSlot();
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Combat")
 	void SetCurrentRangedSquadSlot(AWOGBaseSquad* NewSquad);
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Combat")
 	void SetCurrentMeleeSquadSlot(AWOGBaseSquad* NewSquad);
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Combat")
+	void SetCurrentEpicSquadSlot(AWOGBaseSquad* NewSquad);
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Combat")
+	AWOGBaseSquad* GetCurrentRangedSquadSlot() const;
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Combat")
+	AWOGBaseSquad* GetCurrentMeleeSquadSlot() const;
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Combat")
+	AWOGBaseSquad* GetCurrentEpicSquadSlot() const;
 };

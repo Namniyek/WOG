@@ -15,6 +15,8 @@
 #include "Subsystems/WOGWorldSubsystem.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "PlayerController/WOGPlayerController.h"
+#include "TargetSystemComponent.h"
+#include "Subsystems/WOGUIManagerSubsystem.h"
 
 AWOGPossessableEnemy::AWOGPossessableEnemy()
 {
@@ -45,6 +47,13 @@ AWOGPossessableEnemy::AWOGPossessableEnemy()
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
+
+	TargetComponent = CreateDefaultSubobject<UTargetSystemComponent>(TEXT("TargetComponent"));
+	if (TargetComponent)
+	{
+		TargetComponent->OnTargetLockedOn.AddDynamic(this, &ThisClass::TargetLocked);
+		TargetComponent->OnTargetLockedOff.AddDynamic(this, &ThisClass::TargetUnlocked);
+	}
 }
 
 void AWOGPossessableEnemy::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -60,7 +69,6 @@ void AWOGPossessableEnemy::BeginPlay()
 	if (WorldSubsystem)
 	{
 		WorldSubsystem->OnKeyTimeHitDelegate.AddDynamic(this, &ThisClass::KeyTimeHit);
-		UE_LOG(WOGLogSpawn, Display, TEXT("Delegates bound -> PossessableCharacter"));
 	}
 }
 
@@ -84,14 +92,19 @@ void AWOGPossessableEnemy::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &ThisClass::StopSprinting);
 		//Unpossess:
 		EnhancedInputComponent->BindAction(UnpossessAction, ETriggerEvent::Triggered, this, &ThisClass::UnpossessActionPressed);
-
+		//Target
+		EnhancedInputComponent->BindAction(TargetAction, ETriggerEvent::Completed, this, &ThisClass::TargetActionPressed);
+		EnhancedInputComponent->BindAction(CycleTargetAction, ETriggerEvent::Triggered, this, &ThisClass::CycleTargetActionPressed);
 		//Attacks
 		EnhancedInputComponent->BindAction(PrimaryAttackAction, ETriggerEvent::Triggered, this, &ThisClass::PrimaryAttackActionPressed);
 		EnhancedInputComponent->BindAction(MainAltAttackAction, ETriggerEvent::Triggered, this, &ThisClass::MainAltAttackActionPressed);
 		EnhancedInputComponent->BindAction(SecondaryAltAttackAction, ETriggerEvent::Triggered, this, &ThisClass::SecondaryAltAttackActionPressed);
 		EnhancedInputComponent->BindAction(RangedAttackAction, ETriggerEvent::Triggered, this, &ThisClass::RangedAttackActionPressed);
 		EnhancedInputComponent->BindAction(CloseAttackAction, ETriggerEvent::Triggered, this, &ThisClass::CloseAttackActionPressed);
-		EnhancedInputComponent->BindAction(BlockAction, ETriggerEvent::Triggered, this, &ThisClass::BlockActionPressed);
+		EnhancedInputComponent->BindAction(BlockAction, ETriggerEvent::Started, this, &ThisClass::BlockActionPressed);
+		EnhancedInputComponent->BindAction(BlockAction, ETriggerEvent::Triggered, this, &ThisClass::BlockActionReleased);
+		//Dodge
+		EnhancedInputComponent->BindAction(DodgeAction, ETriggerEvent::Triggered, this, &ThisClass::DodgeActionPressed);
 	}
 }
 
@@ -168,10 +181,23 @@ void AWOGPossessableEnemy::BlockActionPressed(const FInputActionValue& Value)
 {
 	SendAbilityLocalInput(EWOGAbilityInputID::Block);
 	UE_LOG(WOGLogSpawn, Display, TEXT("Block button pressed"));
+	bSecondaryButtonPressed = true;
+}
+
+void AWOGPossessableEnemy::BlockActionReleased(const FInputActionValue& Value)
+{
+	FGameplayEventData EventPayload;
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Weapon_Block_Stop, EventPayload);
+	bSecondaryButtonPressed = false;
 }
 
 void AWOGPossessableEnemy::UnpossessActionPressed(const FInputActionValue& Value)
 {
+	TObjectPtr<UWOGUIManagerSubsystem> UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(OwnerPC->GetLocalPlayer());
+	if (UIManager)
+	{
+		UIManager->RemoveCrosshairWidget();
+	}
 	Server_UnpossessMinion();
 }
 
@@ -188,6 +214,31 @@ void AWOGPossessableEnemy::StopSprinting()
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Movement_Sprint_Stop, EventPayload);
 }
 
+void AWOGPossessableEnemy::TargetActionPressed(const FInputActionValue& Value)
+{
+	if (HasMatchingGameplayTag(TAG_State_Dead)) return;
+	if (HasMatchingGameplayTag(TAG_State_Dodging)) return;
+	if (!TargetComponent) return;
+
+	TargetComponent->TargetActor();
+}
+
+void AWOGPossessableEnemy::CycleTargetActionPressed(const FInputActionValue& Value)
+{
+	if (HasMatchingGameplayTag(TAG_State_Dead)) return;
+
+	if (!TargetComponent) return;
+	float CycleFloat = Value.Get<float>();
+
+	TargetComponent->TargetActorWithAxisInput(CycleFloat);
+}
+
+void AWOGPossessableEnemy::DodgeActionPressed(const FInputActionValue& Value)
+{
+	SendAbilityLocalInput(EWOGAbilityInputID::Dodge);
+	UE_LOG(WOGLogSpawn, Display, TEXT("Dodge button pressed"));
+}
+
 void AWOGPossessableEnemy::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
@@ -195,6 +246,7 @@ void AWOGPossessableEnemy::PossessedBy(AController* NewController)
 
 void AWOGPossessableEnemy::Elim(bool bPlayerLeftGame)
 {
+	UE_LOG(WOGLogCombat, Display, TEXT("Elim() called from PossessableEnemy"))
 	Server_UnpossessMinion();
 	Super::Elim(bPlayerLeftGame);
 }
@@ -242,6 +294,70 @@ void AWOGPossessableEnemy::Server_UnpossessMinion_Implementation()
 
 		SpawnDefaultController();
 	}
+
 }
 
+void AWOGPossessableEnemy::TargetLocked(AActor* NewTarget)
+{
+	if (!NewTarget)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 4.f, FColor::Red, FString::Printf(TEXT("Target invalid")));
+		return;
+	}
 
+	Server_SetCurrentTarget(NewTarget);
+
+	ToggleStrafeMovement(true);
+
+	TObjectPtr<UWOGUIManagerSubsystem> UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(OwnerPC->GetLocalPlayer());
+	if (UIManager)
+	{
+		UIManager->RemoveCrosshairWidget();
+	}
+}
+
+void AWOGPossessableEnemy::TargetUnlocked(AActor* OldTarget)
+{
+	Server_SetCurrentTarget();
+
+	ToggleStrafeMovement(false);
+
+	TObjectPtr<UWOGUIManagerSubsystem> UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(OwnerPC->GetLocalPlayer());
+	if (UIManager)
+	{
+		UIManager->AddCrosshairWidget();
+	}
+}
+
+void AWOGPossessableEnemy::ToggleStrafeMovement(bool bIsStrafe)
+{
+	if (!AnimManager) return;
+	if (bIsStrafe)
+	{
+		//Start strafe movement
+		AnimManager->SetupRotation(EAGR_RotationMethod::DesiredAtAngle, 150.f, 75.f, 5.f);
+		GetCharacterMovement()->MaxWalkSpeed = 150.f;
+	}
+	else
+	{
+		//Stop strafe movement
+		AnimManager->SetupRotation(EAGR_RotationMethod::RotateToVelocity, 300.f, 75.f, 5.f);
+		GetCharacterMovement()->MaxWalkSpeed = 400.f;
+	}
+}
+
+void AWOGPossessableEnemy::Server_SetCurrentTarget_Implementation(AActor* NewTarget)
+{
+	CurrentTarget = NewTarget;
+
+	if (NewTarget)
+	{
+		GetCharacterMovement()->MaxWalkSpeed = 150.f;
+	}
+	else
+	{
+		GetCharacterMovement()->MaxWalkSpeed = 400.f;
+	}
+}
+
+	

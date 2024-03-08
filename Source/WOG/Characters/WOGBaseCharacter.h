@@ -52,6 +52,9 @@ protected:
 	UPROPERTY(Replicated)
 	TObjectPtr<AWOGPlayerController> OwnerPC = nullptr;
 
+	UPROPERTY(BlueprintReadWrite)
+	bool bSecondaryButtonPressed = false;
+
 	#pragma region GAS functions
 public:
 	bool ApplyGameplayEffectToSelf(TSubclassOf<UGameplayEffect> Effect, FGameplayEffectContextHandle InEffectContext, float Duration = 1.f);

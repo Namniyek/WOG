@@ -74,9 +74,12 @@ protected:
 	void FreeCurrentMeleeSquadSlot_Implementation();
 	void SetCurrentRangedSquadSlot_Implementation(AWOGBaseSquad* NewSquad);
 	void SetCurrentMeleeSquadSlot_Implementation(AWOGBaseSquad* NewSquad);
+	AWOGBaseSquad* GetCurrentRangedSquadSlot_Implementation() const;
+	AWOGBaseSquad* GetCurrentMeleeSquadSlot_Implementation() const;
 	bool ReserveAttackTokens_Implementation(const int32& AmountToReserve);
 	void RestoreAttackTokens_Implementation(const int32& AmountToRestore);
 	int32 GetAvailableAttackTokens_Implementation();
+
 	#pragma endregion
 
 	UPROPERTY(Replicated, VisibleAnywhere)

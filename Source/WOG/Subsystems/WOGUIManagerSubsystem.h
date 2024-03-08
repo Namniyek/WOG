@@ -46,6 +46,7 @@ private:
 	TObjectPtr<UUserWidget> AbilityContainerWidget;
 	TObjectPtr<UUserWidget> AvailableResourcesWidget;
 	TObjectPtr<UUserWidget> SquadOrderWidget;
+	TObjectPtr<UUserWidget> CrosshairWidget;
 
 	UPROPERTY()
 	TObjectPtr<UWOGHoldProgressBar> HoldProgressBarWidget = nullptr;
@@ -154,4 +155,9 @@ public:
 	void AddSquadOrderWidget();
 	UFUNCTION(BlueprintCallable)
 	void RemoveSquadOrderWidget();
+
+	UFUNCTION()
+	void AddCrosshairWidget();
+	UFUNCTION()
+	void RemoveCrosshairWidget();
 };

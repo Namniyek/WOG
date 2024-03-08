@@ -25,8 +25,11 @@ protected:
 	UPROPERTY(Replicated, BlueprintReadOnly, VisibleAnywhere)
 	EEnemyOrder CurrentSquadOrder;
 
-	UPROPERTY(Replicated, BlueprintReadOnly, VisibleAnywhere)
+	UPROPERTY(Replicated, VisibleAnywhere)
 	TObjectPtr<AActor> CurrentTargetActor;
+
+	UPROPERTY(Replicated, VisibleAnywhere)
+	TArray<TObjectPtr<AActor>> TargetActorsArray;
 
 	UPROPERTY(Replicated, BlueprintReadOnly, VisibleAnywhere)
 	FVector_NetQuantize CurrentTargetLocation;
@@ -102,6 +105,15 @@ public:
 
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE AActor* GetCurrentTargetActor() const { return CurrentTargetActor; }
+
+	UFUNCTION(BlueprintPure)
+	FORCEINLINE TArray<AActor*> GetTargetActorsArray() const { return TargetActorsArray; }
+
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
+	void AddTargetActor(AActor* NewTarget);
+
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
+	void RemoveTargetActor(AActor* ActorToRemove);
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
 	void SetCurrentTargetLocation(const FVector_NetQuantize& NewTarget);
