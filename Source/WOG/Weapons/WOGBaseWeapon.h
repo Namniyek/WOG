@@ -246,11 +246,11 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void ResetCombo();
 
-	UFUNCTION(Server, reliable, BlueprintCallable)
-	void Server_ThrowWeapon(bool IsTargetValid, const FVector_NetQuantize& TargetLocation);
+	UFUNCTION(BlueprintCallable)
+	void SpawnThrowWeapon(bool IsTargetValid, const FVector_NetQuantize& TargetLocation);
 
-	UFUNCTION(Server, reliable, BlueprintCallable)
-	void Server_SpawnWeaponAOE(const FVector_NetQuantize& TargetLocation);
+	UFUNCTION(BlueprintCallable)
+	void SpawnWeaponAOE(const FVector_NetQuantize& TargetLocation);
 
 	UFUNCTION(BlueprintCallable)
 	void RecallWeapon();

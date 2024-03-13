@@ -85,6 +85,8 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
 	void SendOrder(const EEnemyOrder& NewOrder, const FTransform& TargetTansform = FTransform(), AActor* TargetActor = nullptr);
 
+	void ReleasePreviousSquad();
+
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
 	FORCEINLINE void SetSquadType(EEnemySquadType& NewType) { SquadType = NewType; };
 

@@ -197,13 +197,13 @@ protected:
 	#pragma endregion
 
 	UFUNCTION(BlueprintCallable)
-	void SpawnProjectile();
+	void PrepareProjectileSpawn();
 
 	UFUNCTION(Server, Reliable)
 	void Server_SpawnProjectile(const FTransform& SpawnTransform);
 
-	UFUNCTION(Server, Reliable, BlueprintCallable)
-	void Server_SpawnAOE(const FVector_NetQuantize& TargetLocation);
+	UFUNCTION(BlueprintCallable)
+	void SpawnAOE(const FVector_NetQuantize& TargetLocation);
 
 	//Line trace for item under the crosshairs
 	bool TraceUnderCrosshairs(FHitResult& OutHitResult, FVector& OutHitLocation);

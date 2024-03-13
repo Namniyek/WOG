@@ -67,7 +67,6 @@ void AWOGBaseMagicProjectile::BeginPlay()
 	ProjectileSound->Play(0.f);
 
 	if (!GetOwner()) return;
-	UE_LOG(WOGLogCombat, Warning, TEXT("Projectile spawned on %s"), *UEnum::GetValueAsString(GetOwner()->GetLocalRole()));
 }
 
 void AWOGBaseMagicProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)

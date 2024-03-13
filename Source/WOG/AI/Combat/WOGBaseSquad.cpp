@@ -129,10 +129,7 @@ void AWOGBaseSquad::SendOrder(const EEnemyOrder& NewOrder, const FTransform& Tar
 
 		//Check if the Current target actor is valid and implements the Target Interface
 		// if so, free the squad slot on the previous target
-		if (CurrentTargetActor && CurrentTargetActor->GetClass()->ImplementsInterface(UTargetInterface::StaticClass()))
-		{
-			ITargetInterface::Execute_FreeCurrentMeleeSquadSlot(CurrentTargetActor);
-		}
+		ReleasePreviousSquad();
 
 		/*
 		*Squad should hold at the established position
@@ -149,10 +146,7 @@ void AWOGBaseSquad::SendOrder(const EEnemyOrder& NewOrder, const FTransform& Tar
 	case EEnemyOrder::EEO_Follow:
 		//Check if the Current target actor is valid and implements the Target Interface
 		// if so, free the squad slot on the previous target
-		if (CurrentTargetActor && CurrentTargetActor->GetClass()->ImplementsInterface(UTargetInterface::StaticClass()))
-		{
-			ITargetInterface::Execute_FreeCurrentMeleeSquadSlot(CurrentTargetActor);
-		}
+		ReleasePreviousSquad();
 
 		/*
 		*Squad should follow the owner around
@@ -168,6 +162,9 @@ void AWOGBaseSquad::SendOrder(const EEnemyOrder& NewOrder, const FTransform& Tar
 		break;
 
 	case EEnemyOrder::EEO_AttackTarget:
+		//Check if the Current target actor is valid and implements the Target Interface
+		// if so, free the squad slot on the previous target
+		ReleasePreviousSquad();
 
 		/*
 		*Squad will attack a specific target
@@ -195,7 +192,7 @@ void AWOGBaseSquad::SendOrder(const EEnemyOrder& NewOrder, const FTransform& Tar
 		if ((TargetActor->IsA<AWOGBaseTarget>() || TargetActor->IsA<AWOGBaseBuildable>()) && TargetActor->GetClass()->ImplementsInterface(UTargetInterface::StaticClass()))
 		{
 			//Check if target has an availability for squad
-			if (SquadType == EEnemySquadType::EEST_Melee && ITargetInterface::Execute_IsCurrentMeleeSquadSlotAvailable(TargetActor))
+			if (SquadType == EEnemySquadType::EEST_Melee && ITargetInterface::Execute_IsCurrentMeleeSquadSlotAvailable(TargetActor) && ITargetInterface::Execute_IsCurrentEpicSquadSlotAvailable(TargetActor))
 			{
 				ITargetInterface::Execute_SetCurrentMeleeSquadSlot(TargetActor, this);
 				SetCurrentTargetActor(TargetActor);
@@ -204,7 +201,7 @@ void AWOGBaseSquad::SendOrder(const EEnemyOrder& NewOrder, const FTransform& Tar
 				return;
 			}
 
-			if (SquadType == EEnemySquadType::EEST_Ranged && ITargetInterface::Execute_IsCurrentRangedSquadSlotAvailable(TargetActor))
+			if (SquadType == EEnemySquadType::EEST_Ranged && ITargetInterface::Execute_IsCurrentRangedSquadSlotAvailable(TargetActor) && ITargetInterface::Execute_IsCurrentEpicSquadSlotAvailable(TargetActor))
 			{
 				ITargetInterface::Execute_SetCurrentRangedSquadSlot(TargetActor, this);
 				SetCurrentTargetActor(TargetActor);
@@ -215,11 +212,6 @@ void AWOGBaseSquad::SendOrder(const EEnemyOrder& NewOrder, const FTransform& Tar
 
 			if (SquadType == EEnemySquadType::EEST_Epic && ITargetInterface::Execute_IsCurrentEpicSquadSlotAvailable(TargetActor))
 			{
-				ITargetInterface::Execute_SetCurrentEpicSquadSlot(TargetActor, this);
-				SetCurrentTargetActor(TargetActor);
-				SetEnemyStateOnSquad(EEnemyState::EES_AtTargetSlot);
-				SetCurrentSquadOrder(NewOrder);
-
 				AWOGBaseSquad* CurrentMeleeSquad = ITargetInterface::Execute_GetCurrentMeleeSquadSlot(TargetActor);
 				if (CurrentMeleeSquad)
 				{
@@ -230,6 +222,11 @@ void AWOGBaseSquad::SendOrder(const EEnemyOrder& NewOrder, const FTransform& Tar
 				{
 					CurrentRangedSquad->SendOrder(EEnemyOrder::EEO_Follow);
 				}
+
+				ITargetInterface::Execute_SetCurrentEpicSquadSlot(TargetActor, this);
+				SetCurrentTargetActor(TargetActor);
+				SetEnemyStateOnSquad(EEnemyState::EES_AtTargetSlot);
+				SetCurrentSquadOrder(NewOrder);
 				return;
 			}
 
@@ -246,7 +243,7 @@ void AWOGBaseSquad::SendOrder(const EEnemyOrder& NewOrder, const FTransform& Tar
 		if (TargetActor->IsA<ABasePlayerCharacter>() && TargetActor->GetClass()->ImplementsInterface(UTargetInterface::StaticClass()))
 		{
 			//Check if target has an availability for squad
-			if (SquadType == EEnemySquadType::EEST_Melee && ITargetInterface::Execute_IsCurrentMeleeSquadSlotAvailable(TargetActor))
+			if (SquadType == EEnemySquadType::EEST_Melee && ITargetInterface::Execute_IsCurrentMeleeSquadSlotAvailable(TargetActor) && ITargetInterface::Execute_IsCurrentEpicSquadSlotAvailable(TargetActor))
 			{
 				ITargetInterface::Execute_SetCurrentMeleeSquadSlot(TargetActor, this);
 				SetCurrentTargetActor(TargetActor);
@@ -255,7 +252,7 @@ void AWOGBaseSquad::SendOrder(const EEnemyOrder& NewOrder, const FTransform& Tar
 				return;
 			}
 
-			if (SquadType == EEnemySquadType::EEST_Ranged && ITargetInterface::Execute_IsCurrentRangedSquadSlotAvailable(TargetActor))
+			if (SquadType == EEnemySquadType::EEST_Ranged && ITargetInterface::Execute_IsCurrentRangedSquadSlotAvailable(TargetActor) && ITargetInterface::Execute_IsCurrentEpicSquadSlotAvailable(TargetActor))
 			{
 				ITargetInterface::Execute_SetCurrentRangedSquadSlot(TargetActor, this);
 				SetCurrentTargetActor(TargetActor);
@@ -266,11 +263,6 @@ void AWOGBaseSquad::SendOrder(const EEnemyOrder& NewOrder, const FTransform& Tar
 
 			if (SquadType == EEnemySquadType::EEST_Epic && ITargetInterface::Execute_IsCurrentEpicSquadSlotAvailable(TargetActor))
 			{
-				ITargetInterface::Execute_SetCurrentEpicSquadSlot(TargetActor, this);
-				SetCurrentTargetActor(TargetActor);
-				SetEnemyStateOnSquad(EEnemyState::EES_AtTargetPlayer);
-				SetCurrentSquadOrder(NewOrder);
-
 				AWOGBaseSquad* CurrentMeleeSquad = ITargetInterface::Execute_GetCurrentMeleeSquadSlot(TargetActor);
 				if (CurrentMeleeSquad)
 				{
@@ -281,6 +273,11 @@ void AWOGBaseSquad::SendOrder(const EEnemyOrder& NewOrder, const FTransform& Tar
 				{
 					CurrentRangedSquad->SendOrder(EEnemyOrder::EEO_Follow);
 				}
+
+				ITargetInterface::Execute_SetCurrentEpicSquadSlot(TargetActor, this);
+				SetCurrentTargetActor(TargetActor);
+				SetEnemyStateOnSquad(EEnemyState::EES_AtTargetPlayer);
+				SetCurrentSquadOrder(NewOrder);
 				return;
 			}
 
@@ -316,6 +313,25 @@ void AWOGBaseSquad::SendOrder(const EEnemyOrder& NewOrder, const FTransform& Tar
 		break;
 	default:
 		break;
+	}
+}
+
+void AWOGBaseSquad::ReleasePreviousSquad()
+{
+	if (CurrentTargetActor && CurrentTargetActor->GetClass()->ImplementsInterface(UTargetInterface::StaticClass()))
+	{
+		if (SquadType == EEnemySquadType::EEST_Melee)
+		{
+			ITargetInterface::Execute_FreeCurrentMeleeSquadSlot(CurrentTargetActor);
+		}
+		if (SquadType == EEnemySquadType::EEST_Ranged)
+		{
+			ITargetInterface::Execute_FreeCurrentRangedSquadSlot(CurrentTargetActor);
+		}
+		if (SquadType == EEnemySquadType::EEST_Epic)
+		{
+			ITargetInterface::Execute_FreeCurrentEpicSquadSlot(CurrentTargetActor);
+		}
 	}
 }
 
@@ -355,6 +371,13 @@ AActor* AWOGBaseSquad::FindRandomTarget()
 		}
 
 		if (SquadType == EEnemySquadType::EEST_Ranged && ITargetInterface::Execute_IsCurrentRangedSquadSlotAvailable(Actor))
+		{
+			ReturnActors.AddUnique(Actor);
+			UE_LOG(WOGLogSpawn, Display, TEXT("%s added to ReturnActors"), *GetNameSafe(Actor));
+			continue;
+		}
+
+		if (SquadType == EEnemySquadType::EEST_Epic && ITargetInterface::Execute_IsCurrentEpicSquadSlotAvailable(Actor))
 		{
 			ReturnActors.AddUnique(Actor);
 			UE_LOG(WOGLogSpawn, Display, TEXT("%s added to ReturnActors"), *GetNameSafe(Actor));

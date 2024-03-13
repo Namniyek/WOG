@@ -324,6 +324,11 @@ int32 AWOGBaseEnemy::GetEnemySquadUnitIndex_Implementation()
 	return SquadUnitIndex;
 }
 
+AActor* AWOGBaseEnemy::GetSquadCurrentTargetActor_Implementation()
+{
+	return OwnerSquad->GetCurrentTargetActor();
+}
+
 float AWOGBaseEnemy::GetAttackRangeValue_Implementation()
 {
 	return AttackRange;

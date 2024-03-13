@@ -46,6 +46,9 @@ public:
 	AWOGBaseSquad* GetEnemyOwnerSquad();
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	AActor* GetSquadCurrentTargetActor();
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	int32 GetEnemySquadUnitIndex();
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
@@ -67,6 +70,12 @@ public:
 	FGameplayTag GetAttackData(int32& TokensNeeded);
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	FGameplayTag GetRangedAttackData(int32& TokensNeeded);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	FGameplayTag GetCloseAttackData(int32& TokensNeeded);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	FGameplayTag GetAttackDataAtIndex(const int32& Index, int32& TokensNeeded);
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
@@ -80,4 +89,7 @@ public:
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void IncreaseComboIndex();
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void GetAttackRangeDistances(float& OutCloseRange, float& OutMidRange, float& OutLongRange);
 };

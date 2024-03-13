@@ -179,6 +179,12 @@ void AWOGStashBase::SwitchStashedItems(const bool& bToCommon, AActor* ItemToSwit
 	if (!Recipient) return;
 
 	TObjectPtr<UAGR_InventoryManager> Giver = bToCommon ? (TObjectPtr<UAGR_InventoryManager>) UAGRLibrary::GetInventory(PlayerUsingStash) : CommonInventory;
+	
+	if (Item->InventoryId == Recipient->InventoryId)
+	{
+		UE_LOG(WOGLogInventory, Error, TEXT("Trying to move item into the same inventory. Returning"));
+		return;
+	}
 
 	if (bIsSwitch && Giver)
 	{
@@ -187,7 +193,7 @@ void AWOGStashBase::SwitchStashedItems(const bool& bToCommon, AActor* ItemToSwit
 		TObjectPtr<UAGR_ItemComponent> SwitchItem = UAGRLibrary::GetItemComponent(PreviousItem);
 		if (SwitchItem && !SwitchItem->bStackable)
 		{
-			if (!bIsSpawnMenuSwitch || Recipient ==CommonInventory)
+			if (!bIsSpawnMenuSwitch || Recipient == CommonInventory)
 			{
 				SwitchItem->DropItem();
 				SwitchItem->PickUpItem(Giver);
@@ -200,9 +206,6 @@ void AWOGStashBase::SwitchStashedItems(const bool& bToCommon, AActor* ItemToSwit
 			int32 AmountToModify = SwitchItem->CurrentStack < Amount ? SwitchItem->CurrentStack : Amount;
 			Giver->AddItemsOfClass(PreviousItem->GetClass(), SwitchItem->CurrentStack, OutNote);
 			Recipient->RemoveItemsWithTagSlotType(SwitchItem->ItemTagSlotType, SwitchItem->CurrentStack, OutNote);
-
-			UE_LOG(WOGLogInventory, Warning, TEXT("PreviousItem class: %s"), *GetNameSafe(PreviousItem->GetClass()));
-			UE_LOG(WOGLogInventory, Warning, TEXT("%d of %s sent from %s to %s - SWITCHED"), AmountToModify, *GetNameSafe(PreviousItem), *GetNameSafe(Recipient), *GetNameSafe(Giver));
 		}
 	}
 
@@ -214,7 +217,7 @@ void AWOGStashBase::SwitchStashedItems(const bool& bToCommon, AActor* ItemToSwit
 			Recipient->AddItemsOfClass(ItemClass, 1, OutNote);
 			return;
 		}
-		if (bIsSpawnMenuSwitch && Recipient == CommonInventory)
+		if (bIsSpawnMenuSwitch && Recipient == CommonInventory && Giver != CommonInventory)
 		{
 			Item->DropItem();
 			Item->GetOwner()->Destroy();

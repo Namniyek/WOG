@@ -125,8 +125,8 @@ protected:
 	#pragma region Interface functions
 
 	AWOGBaseSquad* GetEnemyOwnerSquad_Implementation();
-
 	int32 GetEnemySquadUnitIndex_Implementation();
+	AActor* GetSquadCurrentTargetActor_Implementation();
 
 	float GetAttackRangeValue_Implementation();
 	float GetDefendRangeValue_Implementation();

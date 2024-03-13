@@ -39,7 +39,7 @@ AWOGBaseCharacter::AWOGBaseCharacter()
 
 	AbilitySystemComponent = CreateDefaultSubobject<UWOGAbilitySystemComponent>(TEXT("Ability System Component"));
 	AbilitySystemComponent->SetIsReplicated(true);
-	AbilitySystemComponent->ReplicationMode = EGameplayEffectReplicationMode::Full;
+	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
 
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetHealthAttribute()).AddUObject(this, &ThisClass::OnHealthAttributeChanged);
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetStaminaAttribute()).AddUObject(this, &ThisClass::OnStaminaAttributeChanged);
@@ -86,13 +86,14 @@ void AWOGBaseCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
 
+	// ASC MixedMode replication requires that the ASC Owner's Owner be the Controller.
+	SetOwner(NewController);
+
 	if (AbilitySystemComponent)
 	{
 		AbilitySystemComponent->InitAbilityActorInfo(this, this);
+		UE_LOG(WOGLogSpawn, Display, TEXT("New owner of %s is %s"), *GetNameSafe(AbilitySystemComponent), *GetNameSafe(GetOwner()));
 	}
-
-	// ASC MixedMode replication requires that the ASC Owner's Owner be the Controller.
-	SetOwner(NewController);
 
 	OwnerPC = Cast<AWOGPlayerController>(NewController);
 
@@ -101,6 +102,8 @@ void AWOGBaseCharacter::PossessedBy(AController* NewController)
 
 void AWOGBaseCharacter::Multicast_OnPossessed_Implementation()
 {
+	//if (!IsLocallyControlled()) return;
+
 	ReplicatedOnPossessEvent();
 }
 
@@ -117,6 +120,7 @@ void AWOGBaseCharacter::SetupMappingContext()
 	{
 		Subsystem->ClearAllMappings();
 		Subsystem->AddMappingContext(MainMappingContext, 0);
+		UE_LOG(WOGLogSpawn, Display, TEXT("MainMappingContext for %s added on %s"), *GetNameSafe(this), *UEnum::GetValueAsString(GetLocalRole()));
 	}
 }
 
@@ -245,11 +249,14 @@ void AWOGBaseCharacter::OnHealthAttributeChanged(const FOnAttributeChangeData& D
 			else if (EffectContext.GetInstigator()->IsA<AWOGBaseEnemy>())
 			{
 				AWOGBaseEnemy* InstigatorEnemy = Cast<AWOGBaseEnemy>(EffectContext.GetInstigator());
-				if (InstigatorEnemy && InstigatorEnemy->GetOwnerAttacker() && InstigatorEnemy->GetOwnerAttacker()->GetController())
+				if (!InstigatorEnemy || !InstigatorEnemy->GetOwnerAttacker()) return;
+
+				AController* InstigatorController = InstigatorEnemy->IsPlayerControlled() ? InstigatorEnemy->GetOwnerPC() : InstigatorEnemy->GetOwnerAttacker()->GetController();
+				if(InstigatorController)
 				{
 					FGameplayEventData EventPayload;
 					EventPayload.EventTag = TAG_Event_Elim;
-					EventPayload.Instigator = InstigatorEnemy->GetOwnerAttacker()->GetController();
+					EventPayload.Instigator = InstigatorController;
 					EventPayload.OptionalObject = EffectContext.GetInstigator();
 					UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Elim, EventPayload);
 					UE_LOG(WOGLogCombat, Error, TEXT("Killed by Enemy"));

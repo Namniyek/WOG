@@ -36,7 +36,7 @@ protected:
 	TObjectPtr<UNiagaraComponent> ProjectileEffect;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<UAudioComponent > ProjectileSound;
+	TObjectPtr<UAudioComponent> ProjectileSound;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<UProjectileMovementComponent> ProjectileMovement;
@@ -53,5 +53,8 @@ public:
 
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE FMagicDataTable GetMagicData() const { return MagicData; }
+
+	UPROPERTY(BlueprintReadWrite, meta = (ExposeOnSpawn = "true"))
+	TObjectPtr<AActor> Target = nullptr;
 
 };

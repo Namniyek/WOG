@@ -17,9 +17,14 @@
 #include "PlayerController/WOGPlayerController.h"
 #include "TargetSystemComponent.h"
 #include "Subsystems/WOGUIManagerSubsystem.h"
+#include "AbilitySystemComponent.h"
+#include "ActorComponents/WOGAbilitySystemComponent.h"
 
 AWOGPossessableEnemy::AWOGPossessableEnemy()
 {
+	AbilitySystemComponent->SetIsReplicated(true);
+	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
+
 	// Don't rotate when the controller rotates. Let that just affect the camera.
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
@@ -59,6 +64,15 @@ AWOGPossessableEnemy::AWOGPossessableEnemy()
 void AWOGPossessableEnemy::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AWOGPossessableEnemy, CurrentTarget);
+}
+
+void AWOGPossessableEnemy::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+
+	ToggleStrafeMovement(true);
 }
 
 void AWOGPossessableEnemy::BeginPlay()
@@ -82,6 +96,8 @@ void AWOGPossessableEnemy::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 	{
 		//Move:
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ThisClass::MoveActionPressed);
+		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Completed, this, &ThisClass::MoveActionReleased);
+		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Canceled, this, &ThisClass::MoveActionReleased);
 		//Look:
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ThisClass::LookActionPressed);
 		//Jump:
@@ -127,6 +143,19 @@ void AWOGPossessableEnemy::MoveActionPressed(const FInputActionValue& Value)
 		// add movement 
 		AddMovementInput(ForwardDirection, MovementVector.Y);
 		AddMovementInput(RightDirection, MovementVector.X);
+		
+		if (!bIsTargeting)
+		{
+			ToggleStrafeMovement(false);
+		}
+	}
+}
+
+void AWOGPossessableEnemy::MoveActionReleased()
+{
+	if (!bIsTargeting)
+	{
+		ToggleStrafeMovement(true);
 	}
 }
 
@@ -239,11 +268,6 @@ void AWOGPossessableEnemy::DodgeActionPressed(const FInputActionValue& Value)
 	UE_LOG(WOGLogSpawn, Display, TEXT("Dodge button pressed"));
 }
 
-void AWOGPossessableEnemy::PossessedBy(AController* NewController)
-{
-	Super::PossessedBy(NewController);
-}
-
 void AWOGPossessableEnemy::Elim(bool bPlayerLeftGame)
 {
 	UE_LOG(WOGLogCombat, Display, TEXT("Elim() called from PossessableEnemy"))
@@ -254,6 +278,51 @@ void AWOGPossessableEnemy::Elim(bool bPlayerLeftGame)
 void AWOGPossessableEnemy::UnpossessMinion_Implementation()
 {
 	Server_UnpossessMinion();
+}
+
+FGameplayTag AWOGPossessableEnemy::GetRangedAttackData_Implementation(int32& TokensNeeded)
+{
+	TokensNeeded = 100;
+	if (RangedAttackTagsMap.IsEmpty()) return FGameplayTag();
+
+	TArray<TPair<FGameplayTag, int32>> Array = RangedAttackTagsMap.Array();
+	if (Array.IsEmpty()) return FGameplayTag();
+
+	for (int32 i = 0; i < Array.Num(); i++)
+	{
+		if (i == AttackTagIndex)
+		{
+			TokensNeeded = Array[i].Value;
+			return Array[i].Key;
+		}
+	}
+
+	return FGameplayTag();
+}
+
+FGameplayTag AWOGPossessableEnemy::GetCloseAttackData_Implementation(int32& TokensNeeded)
+{
+	TokensNeeded = 100;
+	if (CloseAttackTagsMap.IsEmpty()) return FGameplayTag();
+
+	TArray<TPair<FGameplayTag, int32>> Array = CloseAttackTagsMap.Array();
+	if (Array.IsEmpty()) return FGameplayTag();
+
+	for (int32 i = 0; i < Array.Num(); i++)
+	{
+		if (i == AttackTagIndex)
+		{
+			TokensNeeded = Array[i].Value;
+			return Array[i].Key;
+		}
+	}
+
+	return FGameplayTag();
+}
+
+void AWOGPossessableEnemy::ReplicatedOnPossessEvent()
+{
+	Super::ReplicatedOnPossessEvent();
 }
 
 void AWOGPossessableEnemy::HandleTODChange()
@@ -305,9 +374,11 @@ void AWOGPossessableEnemy::TargetLocked(AActor* NewTarget)
 		return;
 	}
 
+	bIsTargeting = true;
 	Server_SetCurrentTarget(NewTarget);
 
 	ToggleStrafeMovement(true);
+	ISpawnInterface::Execute_SetMovementSpeed(this, ECharacterMovementSpeed::ECMS_Walking);
 
 	TObjectPtr<UWOGUIManagerSubsystem> UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(OwnerPC->GetLocalPlayer());
 	if (UIManager)
@@ -318,9 +389,11 @@ void AWOGPossessableEnemy::TargetLocked(AActor* NewTarget)
 
 void AWOGPossessableEnemy::TargetUnlocked(AActor* OldTarget)
 {
+	bIsTargeting = false;
 	Server_SetCurrentTarget();
 
 	ToggleStrafeMovement(false);
+	ISpawnInterface::Execute_SetMovementSpeed(this, ECharacterMovementSpeed::ECMS_Running);
 
 	TObjectPtr<UWOGUIManagerSubsystem> UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(OwnerPC->GetLocalPlayer());
 	if (UIManager)
@@ -336,13 +409,19 @@ void AWOGPossessableEnemy::ToggleStrafeMovement(bool bIsStrafe)
 	{
 		//Start strafe movement
 		AnimManager->SetupRotation(EAGR_RotationMethod::DesiredAtAngle, 150.f, 75.f, 5.f);
-		GetCharacterMovement()->MaxWalkSpeed = 150.f;
 	}
 	else
 	{
-		//Stop strafe movement
-		AnimManager->SetupRotation(EAGR_RotationMethod::RotateToVelocity, 300.f, 75.f, 5.f);
-		GetCharacterMovement()->MaxWalkSpeed = 400.f;
+		if (UKismetMathLibrary::NearlyEqual_FloatFloat(GetCharacterMovement()->Velocity.Length(), 0, 5.f)) //character idle
+		{
+			//Stop strafe movement while idle
+			AnimManager->SetupRotation(EAGR_RotationMethod::DesiredAtAngle, 150.f, 75.f, 5.f);
+		}
+		else //character moving
+		{
+			//Stop strafe movement while moving
+			AnimManager->SetupRotation(EAGR_RotationMethod::RotateToVelocity, 300.f, 75.f, 5.f);
+		}
 	}
 }
 
@@ -350,14 +429,12 @@ void AWOGPossessableEnemy::Server_SetCurrentTarget_Implementation(AActor* NewTar
 {
 	CurrentTarget = NewTarget;
 
-	if (NewTarget)
+	if (CurrentTarget)
 	{
-		GetCharacterMovement()->MaxWalkSpeed = 150.f;
+		ISpawnInterface::Execute_SetMovementSpeed(this, ECharacterMovementSpeed::ECMS_Walking);
 	}
 	else
 	{
-		GetCharacterMovement()->MaxWalkSpeed = 400.f;
+		ISpawnInterface::Execute_SetMovementSpeed(this, ECharacterMovementSpeed::ECMS_Running);
 	}
 }
-
-	

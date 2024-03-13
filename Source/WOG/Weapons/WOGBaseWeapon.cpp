@@ -492,10 +492,10 @@ void AWOGBaseWeapon::ResetCombo()
 	ComboStreak = 0;
 }
 
-void AWOGBaseWeapon::Server_ThrowWeapon_Implementation(bool IsTargetValid, const FVector_NetQuantize& TargetLocation)
+void AWOGBaseWeapon::SpawnThrowWeapon(bool IsTargetValid, const FVector_NetQuantize& TargetLocation)
 {
 	OwnerCharacter = OwnerCharacter == nullptr ? (TObjectPtr<ABasePlayerCharacter>) Cast<ABasePlayerCharacter>(GetOwner()) : OwnerCharacter;
-	if (!OwnerCharacter) return;
+	if (!OwnerCharacter || !OwnerCharacter->HasAuthority()) return;
 
 	//Spawn throwable weapon actor
 	if (UKismetSystemLibrary::IsValidClass(WeaponData.RangedClass))
@@ -553,10 +553,10 @@ void AWOGBaseWeapon::Server_ThrowWeapon_Implementation(bool IsTargetValid, const
 	StartCatchRangedWeaponTimer();
 }
 
-void AWOGBaseWeapon::Server_SpawnWeaponAOE_Implementation(const FVector_NetQuantize& TargetLocation)
+void AWOGBaseWeapon::SpawnWeaponAOE(const FVector_NetQuantize& TargetLocation)
 {
 	OwnerCharacter = OwnerCharacter == nullptr ? (TObjectPtr<ABasePlayerCharacter>) Cast<ABasePlayerCharacter>(GetOwner()) : OwnerCharacter;
-	if (!OwnerCharacter) return;
+	if (!OwnerCharacter || !OwnerCharacter->HasAuthority()) return;
 
 	//Spawn AOE weapon actor
 	if (UKismetSystemLibrary::IsValidClass(WeaponData.RangedClass))

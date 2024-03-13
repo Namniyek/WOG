@@ -72,6 +72,17 @@ protected:
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void UnpossessMinion_Implementation();
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setup|Combat")
+	TMap<FGameplayTag, int32> RangedAttackTagsMap;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setup|Combat")
+	TMap<FGameplayTag, int32> CloseAttackTagsMap;
+
+	FGameplayTag GetRangedAttackData_Implementation(int32& TokensNeeded);
+	FGameplayTag GetCloseAttackData_Implementation(int32& TokensNeeded);
+
+	virtual void ReplicatedOnPossessEvent() override;
+
 	#pragma region Components variables
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class USpringArmComponent* CameraBoom;
@@ -91,6 +102,7 @@ protected:
 
 	/** Called for movement input */
 	void MoveActionPressed(const FInputActionValue& Value);
+	void MoveActionReleased();
 
 	/** Called for looking input */
 	void LookActionPressed(const FInputActionValue& Value);
@@ -143,8 +155,10 @@ protected:
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Replicated)
 	TObjectPtr<AActor> CurrentTarget = nullptr;
 
+	bool bIsTargeting = false;
+
 	virtual void ToggleStrafeMovement(bool bIsStrafe) override;
-#pragma endregion
+	#pragma endregion
 
 public:
 	UFUNCTION(Server, reliable, BlueprintCallable)

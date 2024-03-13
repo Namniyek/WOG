@@ -502,7 +502,7 @@ void AWOGBaseMagic::Multicast_HandleStandbyCosmetics_Implementation(bool NewEnab
 	}
 }
 
-void AWOGBaseMagic::SpawnProjectile()
+void AWOGBaseMagic::PrepareProjectileSpawn()
 {
 	if (!OwnerCharacter || !OwnerCharacter->IsLocallyControlled()) return;
 	if (MagicData.AbilityType != EAbilityType::EAT_Projectile) return;
@@ -528,7 +528,6 @@ void AWOGBaseMagic::SpawnProjectile()
 	SpawnTransform.SetRotation(FQuat::MakeFromRotator(StartRotation));
 	SpawnTransform.SetLocation(StartLocation);
 
-
 	Server_SpawnProjectile(SpawnTransform);
 }
 
@@ -546,7 +545,7 @@ void AWOGBaseMagic::Server_SpawnProjectile_Implementation(const FTransform& Spaw
 	}
 }
 
-void AWOGBaseMagic::Server_SpawnAOE_Implementation(const FVector_NetQuantize& TargetLocation)
+void AWOGBaseMagic::SpawnAOE(const FVector_NetQuantize& TargetLocation)
 {
 	OwnerCharacter = OwnerCharacter == nullptr ? (TObjectPtr<ABasePlayerCharacter>) Cast<ABasePlayerCharacter>(GetOwner()) : OwnerCharacter;
 	if (!OwnerCharacter) return;
