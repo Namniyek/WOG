@@ -62,6 +62,9 @@ private:
 	UPROPERTY(meta = (BindWidget))
 	USizeBox* SquadOrderContainer;
 
+	UPROPERTY(meta = (BindWidget))
+	UVerticalBox* HuntProgressBarContainer;
+
 public:
 	UFUNCTION(BlueprintPure)
 	float GetHealthPercent();
@@ -78,6 +81,7 @@ public:
 	UWOGAbilityContainerWidget* GetAbilityContainer();
 
 	FORCEINLINE UVerticalBox* GetWarningContainer() const { return WarningContainer; }
+	FORCEINLINE UVerticalBox* GetHuntProgressBarContainer() const { return HuntProgressBarContainer; }
 	FORCEINLINE UWOGObjectiveWidget* GetObjectiveWidget() const { return ObjectiveWidget; }
 	FORCEINLINE USizeBox* GetHoldBarContainer() const { return HoldBarContainer; }
 	FORCEINLINE USizeBox* GetBarsContainer() const { return BarsContainer; }

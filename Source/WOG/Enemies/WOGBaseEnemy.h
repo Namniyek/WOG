@@ -65,13 +65,19 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setup|Combat")
 	TMap<FGameplayTag, int32> AttackTagsMap;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setup|Combat")
+	TMap<FGameplayTag, int32> RangedAttackTagsMap;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setup|Combat")
+	TMap<FGameplayTag, int32> CloseAttackTagsMap;
+
 	UPROPERTY(Replicated, BlueprintReadWrite, VisibleAnywhere)
 	int32 AttackTagIndex;
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
 	void DefineNextAttackTagIndex();
 
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Setup|Combat")
 	TSubclassOf<UGameplayEffect> DamageEffect;
 
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
@@ -133,11 +139,14 @@ protected:
 	int32 GetComboIndex_Implementation();
 	void DefineComboIndex_Implementation();
 	FGameplayTag GetAttackData_Implementation(int32& TokensNeeded);
+	FGameplayTag GetRangedAttackData_Implementation(int32& TokensNeeded);
+	FGameplayTag GetCloseAttackData_Implementation(int32& TokensNeeded);
 	FGameplayTag GetAttackDataAtIndex_Implementation(const int32& Index, int32& TokensNeeded);
 	int32 GetAttackIndex_Implementation();
 	void DefineAttackTagIndex_Implementation();
 	void IncreaseComboIndex_Implementation();
 	void ResetComboIndex_Implementation();
+
 	#pragma endregion
 
 	#pragma region Animation
@@ -153,6 +162,9 @@ protected:
 	void ExecuteGameplayCueWithCosmeticsDataAsset(const FGameplayTag& CueTag);
 
 public:
+	UPROPERTY(Replicated, BlueprintReadOnly, VisibleAnywhere, Category = "Setup")
+	FText MinionName = FText();
+
 	void HandleSpawnCosmetics();
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
@@ -195,7 +207,7 @@ public:
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE float GetDefendRange() const { return DefendRange; }
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
 	void SetDamageEffect(const TSubclassOf<UGameplayEffect>& NewDamageEffect);
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE TSubclassOf<UGameplayEffect> GetDamageEffect() const { return DamageEffect; }

@@ -8,6 +8,7 @@
 void UWOGAnimNotifyMinionAttack::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration, const FAnimNotifyEventReference& EventReference)
 {
 	Super::NotifyBegin(MeshComp, Animation, TotalDuration, EventReference);
+	GEngine->AddOnScreenDebugMessage(1, 2, FColor::Emerald, FString("NotifyBegin() called"));
 
 	if (!MeshComp || !MeshComp->GetOwner()) return;
 
@@ -15,6 +16,7 @@ void UWOGAnimNotifyMinionAttack::NotifyBegin(USkeletalMeshComponent* MeshComp, U
 	if (!Minion) return;
 
 	StartTrace(Minion);
+
 }
 
 void UWOGAnimNotifyMinionAttack::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)

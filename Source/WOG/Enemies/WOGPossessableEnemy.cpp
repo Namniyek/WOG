@@ -72,6 +72,7 @@ void AWOGPossessableEnemy::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
 
+	SetOwner(NewController);
 	ToggleStrafeMovement(true);
 }
 
@@ -280,49 +281,9 @@ void AWOGPossessableEnemy::UnpossessMinion_Implementation()
 	Server_UnpossessMinion();
 }
 
-FGameplayTag AWOGPossessableEnemy::GetRangedAttackData_Implementation(int32& TokensNeeded)
+bool AWOGPossessableEnemy::CanBePossessed_Implementation() const
 {
-	TokensNeeded = 100;
-	if (RangedAttackTagsMap.IsEmpty()) return FGameplayTag();
-
-	TArray<TPair<FGameplayTag, int32>> Array = RangedAttackTagsMap.Array();
-	if (Array.IsEmpty()) return FGameplayTag();
-
-	for (int32 i = 0; i < Array.Num(); i++)
-	{
-		if (i == AttackTagIndex)
-		{
-			TokensNeeded = Array[i].Value;
-			return Array[i].Key;
-		}
-	}
-
-	return FGameplayTag();
-}
-
-FGameplayTag AWOGPossessableEnemy::GetCloseAttackData_Implementation(int32& TokensNeeded)
-{
-	TokensNeeded = 100;
-	if (CloseAttackTagsMap.IsEmpty()) return FGameplayTag();
-
-	TArray<TPair<FGameplayTag, int32>> Array = CloseAttackTagsMap.Array();
-	if (Array.IsEmpty()) return FGameplayTag();
-
-	for (int32 i = 0; i < Array.Num(); i++)
-	{
-		if (i == AttackTagIndex)
-		{
-			TokensNeeded = Array[i].Value;
-			return Array[i].Key;
-		}
-	}
-
-	return FGameplayTag();
-}
-
-void AWOGPossessableEnemy::ReplicatedOnPossessEvent()
-{
-	Super::ReplicatedOnPossessEvent();
+	return true;
 }
 
 void AWOGPossessableEnemy::HandleTODChange()

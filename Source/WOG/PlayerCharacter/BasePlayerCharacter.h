@@ -467,7 +467,6 @@ public:
 
 	virtual void ProcessHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh) override;
 	virtual void ProcessMagicHit(const FHitResult& Hit, const struct FMagicDataTable& MagicData) override;
-
 	#pragma endregion
 
 	#pragma region Handle Resources 
@@ -551,6 +550,12 @@ public:
 	TObjectPtr<AActor> CurrentTarget = nullptr;
 	#pragma endregion
 
+	#pragma region Interface functions
+	int32 GetAvailableAttackTokens_Implementation();
+	bool ReserveAttackTokens_Implementation(const int32& AmountToReserve);
+	void RestoreAttackTokens_Implementation(const int32& AmountToRestore);
+	#pragma endregion
+
 public:
 	//public Getters and Setters 
 	FORCEINLINE USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
@@ -567,5 +572,8 @@ public:
 
 	UFUNCTION(BlueprintAuthorityOnly, BlueprintCallable)
 	void SetCurrentEpicSquad(AWOGBaseSquad* NewSquad);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_TargetLockOff();
 
 };

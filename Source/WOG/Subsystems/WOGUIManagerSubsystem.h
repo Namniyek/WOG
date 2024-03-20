@@ -16,6 +16,7 @@ class UWOGRavenMarkerWidget;
 class UWOGAbilityWidget;
 class AWOGVendor;
 class AWOGStashBase;
+class UWOGHuntProgressBar;
 
 /**
  * 
@@ -47,6 +48,7 @@ private:
 	TObjectPtr<UUserWidget> AvailableResourcesWidget;
 	TObjectPtr<UUserWidget> SquadOrderWidget;
 	TObjectPtr<UUserWidget> CrosshairWidget;
+	TObjectPtr<UWOGHuntProgressBar> HuntWidget;
 
 	UPROPERTY()
 	TObjectPtr<UWOGHoldProgressBar> HoldProgressBarWidget = nullptr;
@@ -160,4 +162,9 @@ public:
 	void AddCrosshairWidget();
 	UFUNCTION()
 	void RemoveCrosshairWidget();
+
+	UFUNCTION()
+	void AddHuntWidget(AWOGHuntEnemy* HuntEnemy);
+	UFUNCTION()
+	void RemoveHuntWidget();
 };

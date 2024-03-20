@@ -17,7 +17,6 @@ class WOG_API AWOGPossessableEnemy : public AWOGBaseEnemy
 public:
 	AWOGPossessableEnemy();
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	void SetupMinionMappingContexts();
 
 	#pragma region Player Input Variables
 	/*
@@ -71,17 +70,6 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void UnpossessMinion_Implementation();
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setup|Combat")
-	TMap<FGameplayTag, int32> RangedAttackTagsMap;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setup|Combat")
-	TMap<FGameplayTag, int32> CloseAttackTagsMap;
-
-	FGameplayTag GetRangedAttackData_Implementation(int32& TokensNeeded);
-	FGameplayTag GetCloseAttackData_Implementation(int32& TokensNeeded);
-
-	virtual void ReplicatedOnPossessEvent() override;
 
 	#pragma region Components variables
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
@@ -158,6 +146,10 @@ protected:
 	bool bIsTargeting = false;
 
 	virtual void ToggleStrafeMovement(bool bIsStrafe) override;
+	#pragma endregion
+
+	#pragma region Interface functions
+	bool CanBePossessed_Implementation() const;
 	#pragma endregion
 
 public:

@@ -92,4 +92,10 @@ public:
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void GetAttackRangeDistances(float& OutCloseRange, float& OutMidRange, float& OutLongRange);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void SetCurrentTarget(AActor* NewTarget);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	AActor* FindClosestPlayerTarget();
 };

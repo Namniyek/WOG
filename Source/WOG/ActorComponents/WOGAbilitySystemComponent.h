@@ -23,5 +23,6 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "GameplayCue", Meta = (AutoCreateRefTerm = "GameplayCueParameters", GameplayTagFilter = "GameplayCue"))
 	void RemoveGameplayCueLocal(const FGameplayTag GameplayCueTag, const FGameplayCueParameters& GameplayCueParameters);
-	
+
+	const UAttributeSet* GetOrCreateWOGAttributeSubobject(TSubclassOf<UAttributeSet> AttributeClass);
 };

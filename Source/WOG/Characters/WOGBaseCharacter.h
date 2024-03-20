@@ -31,6 +31,8 @@ class UAnimMontage;
 class AWOGPlayerController;
 class UInputMappingContext;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnAttributeChangedDelegate, FGameplayAttribute, ChangedAttribute, float, NewValue, float, MaxValue);
+
 UCLASS()
 class WOG_API AWOGBaseCharacter : public ACharacter, public IAttributesInterface, public IAbilitySystemInterface, public ITargetInterface
 {
@@ -41,6 +43,7 @@ public:
 
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void Tick(float DeltaTime) override;
+	UFUNCTION(BlueprintCallable)
 	virtual void Elim(bool bPlayerLeftGame) { /*To be overriden in Children*/ };
 
 protected:
@@ -68,6 +71,13 @@ public:
 
 	UFUNCTION(BlueprintPure)
 	UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnAttributeChangedDelegate OnAttributeChangedDelegate;
+
+	//TO-DO find another way to pass data to abilities. I don't like this
+	UPROPERTY(BlueprintReadOnly)
+	FGameplayEventData AbilityActivationPayload;
 
 protected:
 	void SendAbilityLocalInput(const EWOGAbilityInputID InInputID);
@@ -132,7 +142,7 @@ protected:
 	UPROPERTY()
 	TObjectPtr<UWOGAbilitySystemComponent> AbilitySystemComponent;
 
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UWOGAttributeSetBase> AttributeSet;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
@@ -151,6 +161,8 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 	virtual void HandleStateElimmed(AController* InstigatedBy = nullptr) { /*TO-BE OVERRIDEN IN CHILDREN*/ };
+
+	void SetCapsulePawnCollision(const bool& bEnable);
 
 	#pragma endregion
 
@@ -254,12 +266,14 @@ protected:
 	#pragma region Interface Functions
 
 	bool IsTargetable_Implementation(AActor* TargeterActor) const;
+	bool CanBePossessed_Implementation() const;
 
 	#pragma endregion
 
 public:	
 	FORCEINLINE UWOGAttributeSetBase* GetAttributeSetBase() const { return AttributeSet; }
 	FORCEINLINE void SetDefaultAbilitiesAndEffects(const FCharacterAbilityData& Data) { DefaultAbilitiesAndEffects = Data; }
+	UFUNCTION(BlueprintPure)
 	FORCEINLINE FCharacterData GetCharacterData() const { return CharacterData; }
 	FORCEINLINE TObjectPtr<UMotionWarpingComponent> GetMotionWarpingComponent() const { return MotionWarping; }
 	UFUNCTION(BlueprintPure)

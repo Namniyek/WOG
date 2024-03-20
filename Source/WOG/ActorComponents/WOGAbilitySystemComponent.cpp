@@ -21,3 +21,8 @@ void UWOGAbilitySystemComponent::RemoveGameplayCueLocal(const FGameplayTag Gamep
 {
 	UAbilitySystemGlobals::Get().GetGameplayCueManager()->HandleGameplayCue(GetOwner(), GameplayCueTag, EGameplayCueEvent::Type::Removed, GameplayCueParameters);
 }
+
+const UAttributeSet* UWOGAbilitySystemComponent::GetOrCreateWOGAttributeSubobject(TSubclassOf<UAttributeSet> AttributeClass)
+{
+	return GetOrCreateAttributeSubobject(AttributeClass);
+}

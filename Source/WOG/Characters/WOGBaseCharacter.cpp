@@ -32,6 +32,7 @@
 #include "Data/AGRLibrary.h"
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
+#include "Enemies/WOGHuntEnemy.h"
 
 AWOGBaseCharacter::AWOGBaseCharacter()
 {
@@ -69,6 +70,9 @@ AWOGBaseCharacter::AWOGBaseCharacter()
 	AvailableAttackTokens = MaxAttackTokens;
 
 	bComboWindowOpen = false;
+	bAlwaysRelevant = true;
+
+	GetMesh()->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
 }
 
 void AWOGBaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -89,12 +93,6 @@ void AWOGBaseCharacter::PossessedBy(AController* NewController)
 	// ASC MixedMode replication requires that the ASC Owner's Owner be the Controller.
 	SetOwner(NewController);
 
-	if (AbilitySystemComponent)
-	{
-		AbilitySystemComponent->InitAbilityActorInfo(this, this);
-		UE_LOG(WOGLogSpawn, Display, TEXT("New owner of %s is %s"), *GetNameSafe(AbilitySystemComponent), *GetNameSafe(GetOwner()));
-	}
-
 	OwnerPC = Cast<AWOGPlayerController>(NewController);
 
 	Multicast_OnPossessed();
@@ -102,8 +100,6 @@ void AWOGBaseCharacter::PossessedBy(AController* NewController)
 
 void AWOGBaseCharacter::Multicast_OnPossessed_Implementation()
 {
-	//if (!IsLocallyControlled()) return;
-
 	ReplicatedOnPossessEvent();
 }
 
@@ -129,6 +125,11 @@ void AWOGBaseCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	InitPhysics();
+
+	if (AbilitySystemComponent)
+	{
+		AbilitySystemComponent->InitAbilityActorInfo(this, this);
+	}
 
 	if (HasAuthority())
 	{
@@ -157,15 +158,22 @@ void AWOGBaseCharacter::SendAbilityLocalInput(const EWOGAbilityInputID InInputID
 void AWOGBaseCharacter::GiveDefaultAbilities()
 {
 	if (!HasAuthority() || DefaultAbilitiesAndEffects.Abilities.IsEmpty() || !AbilitySystemComponent.Get()) return;
+
 	for (auto DefaultAbility : DefaultAbilitiesAndEffects.Abilities)
 	{
-		AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(DefaultAbility, 1, static_cast<int32>(DefaultAbility.GetDefaultObject()->AbilityInputID), this));
+		FGameplayAbilitySpec AbilitySpec = FGameplayAbilitySpec(DefaultAbility, 1, static_cast<int32>(DefaultAbility.GetDefaultObject()->AbilityInputID), this);
+
+		AbilitySystemComponent->GiveAbility(AbilitySpec);
 	}
 }
 
 void AWOGBaseCharacter::ApplyDefaultEffects()
 {
-	if (!HasAuthority() || DefaultAbilitiesAndEffects.Effects.IsEmpty() || !AbilitySystemComponent.Get()) return;
+	if (!HasAuthority() || DefaultAbilitiesAndEffects.Effects.IsEmpty() || !AbilitySystemComponent.Get())
+	{
+		UE_LOG(WOGLogSpawn, Error, TEXT("ApplyDefaultEffects() failed on %s on %s"), *GetNameSafe(this), *UEnum::GetValueAsString(GetLocalRole()));
+		return;
+	}
 
 	FGameplayEffectContextHandle EffectContext = AbilitySystemComponent.Get()->MakeEffectContext();
 	EffectContext.AddSourceObject(this);
@@ -173,7 +181,6 @@ void AWOGBaseCharacter::ApplyDefaultEffects()
 	for (auto DefaultEffect : DefaultAbilitiesAndEffects.Effects)
 	{
 		ApplyGameplayEffectToSelf(DefaultEffect, EffectContext);
-		UE_LOG(WOGLogSpawn, Display, TEXT("Applied effect: %s on %s"), *GetNameSafe(DefaultEffect), *GetNameSafe(this));
 	}
 }
 
@@ -219,6 +226,14 @@ bool AWOGBaseCharacter::ApplyGameplayEffectToSelf(TSubclassOf<UGameplayEffect> E
 void AWOGBaseCharacter::OnHealthAttributeChanged(const FOnAttributeChangeData& Data)
 {
 	UE_LOG(WOGLogCombat, Display, TEXT("%s Damaged: new health: %f"), *GetNameSafe(this), Data.NewValue);
+	
+	if (AbilitySystemComponent && AttributeSet)
+	{
+		bool bFound = false;
+		float MaxHealth = AbilitySystemComponent->GetGameplayAttributeValue(AttributeSet->GetMaxHealthAttribute(), bFound);
+
+		OnAttributeChangedDelegate.Broadcast(AttributeSet->GetHealthAttribute(), Data.NewValue, MaxHealth);
+	}
 
 	if (Data.NewValue <= 0 && Data.OldValue >= 0 && HasAuthority())
 	{
@@ -238,14 +253,29 @@ void AWOGBaseCharacter::OnHealthAttributeChanged(const FOnAttributeChangeData& D
 					UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Elim, EventPayload);
 					UE_LOG(WOGLogCombat, Error, TEXT("Killed by Character"));
 
-					if (InstigatorCharacter->GetTargetComponent())
-					{
-						InstigatorCharacter->GetTargetComponent()->TargetLockOff();
-					}
+					InstigatorCharacter->Multicast_TargetLockOff();
 				}
 
 				GiveDeathResources(EffectContext.GetInstigator());
+
+				return;
 			}
+
+			else if (EffectContext.GetInstigator()->IsA<AWOGHuntEnemy>())
+			{
+				AWOGHuntEnemy* InstigatorEnemy = Cast<AWOGHuntEnemy>(EffectContext.GetInstigator());
+				if (!InstigatorEnemy || !InstigatorEnemy->GetController()) return;
+
+				FGameplayEventData EventPayload;
+				EventPayload.EventTag = TAG_Event_Elim;
+				EventPayload.Instigator = InstigatorEnemy->GetController();
+				EventPayload.OptionalObject = EffectContext.GetInstigator();
+				UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Elim, EventPayload);
+				UE_LOG(WOGLogCombat, Error, TEXT("Killed by Hunt Enemy"));
+
+				return;
+			}
+
 			else if (EffectContext.GetInstigator()->IsA<AWOGBaseEnemy>())
 			{
 				AWOGBaseEnemy* InstigatorEnemy = Cast<AWOGBaseEnemy>(EffectContext.GetInstigator());
@@ -268,6 +298,8 @@ void AWOGBaseCharacter::OnHealthAttributeChanged(const FOnAttributeChangeData& D
 				}
 
 				GiveDeathResources(InstigatorEnemy->GetOwnerAttacker());
+
+				return;
 			}
 		}
 	}
@@ -466,6 +498,11 @@ bool AWOGBaseCharacter::IsTargetable_Implementation(AActor* TargeterActor) const
 	return bIsTargeterAttacker != GetCharacterData().bIsAttacker; 
 }
 
+bool AWOGBaseCharacter::CanBePossessed_Implementation() const
+{
+	return false;
+}
+
 void AWOGBaseCharacter::Server_ToRagdoll_Implementation(const float& Radius, const float& Strength, const FVector_NetQuantize& Origin)
 {
 	bIsRagdolling = true;
@@ -623,6 +660,7 @@ void AWOGBaseCharacter::StartDissolve(bool bIsReversed)
 	if (!bIsReversed)
 	{
 		DissolveTimeline->PlayFromStart();
+		SetCapsulePawnCollision(false);
 	}
 	else
 	{
@@ -641,6 +679,17 @@ void AWOGBaseCharacter::StartDissolve(bool bIsReversed)
 	if (CharacterMI)
 	{
 		CharacterMI->SetVectorParameterValue(TEXT("Color_Appearance"), DissolveColor);
+	}
+}
+
+void AWOGBaseCharacter::SetCapsulePawnCollision(const bool& bEnable)
+{
+	if (!GetCapsuleComponent()) return;
+
+	if (!bEnable)
+	{
+		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 	}
 }
 

@@ -248,6 +248,7 @@ enum class EEnemyState : uint8
 	EES_None UMETA(DisplayName = "None"),
 	EES_Dead UMETA(DisplayName = "Dead"),
 	EES_Incapacitated UMETA(DisplayName = "Incapacitated"),
+	EES_Idle UMETA(DisplayName = "Idle"),
 	EES_AtSquadSlot UMETA(DisplayName = "At Squad Slot"),
 	EES_AtTargetSlot UMETA(DisplayName = "At Target Slot"),
 	EES_AtTargetPlayer UMETA(DisplayName = "At Target Player"),

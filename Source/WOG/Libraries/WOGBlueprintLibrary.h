@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "Types/CharacterTypes.h"
+#include "Abilities/GameplayAbilityTypes.h"
 #include "WOGBlueprintLibrary.generated.h"
 
 /**
@@ -14,6 +15,7 @@ class AWOGBaseWeapon;
 class AWOGBaseMagic;
 class AWOGBaseConsumable;
 class UWOGUIManagerComponent;
+class UAbilitySystemComponent;
 
 UCLASS()
 class WOG_API UWOGBlueprintLibrary : public UBlueprintFunctionLibrary
@@ -30,6 +32,8 @@ public:
 	static FCharacterData GetCharacterData(AActor* Owner);
 
 	static UWOGUIManagerComponent* GetUIManagerComponent(AController* Owner);
+
+	static bool TryActivateAbilityByTagWithData(AActor* Target, const FGameplayTag& ActivationTag, FGameplayEventData AbilityData);
 
 private:
 	//Can return nullptr 
@@ -65,6 +69,13 @@ private:
 	static UWOGUIManagerComponent* K2_UIManagerComponent(AController* Owner)
 	{
 		return GetUIManagerComponent(Owner);
+	};
+
+	//Tries to activate an ability by a tag passing custom data into the ability
+	UFUNCTION(BlueprintCallable, BlueprintPure, DisplayName = "Try Activate Ability by Tag with Data", Category = "WOG Library")
+		static bool K2_UTryActivateAbilityByTagWithData(AActor* Target, const FGameplayTag& ActivationTag, FGameplayEventData AbilityData)
+	{
+		return TryActivateAbilityByTagWithData(Target, ActivationTag, AbilityData);
 	};
 
 };

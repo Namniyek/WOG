@@ -183,3 +183,19 @@ void UWOGUIManagerComponent::Client_CreateGenericWarningWidget_Implementation(co
 		UIManager->CreateGenericWarningWidget(WarningString);
 	}
 }
+
+void UWOGUIManagerComponent::Client_AddHuntWidget_Implementation(AWOGHuntEnemy* HuntEnemy)
+{
+	if (UIManager)
+	{
+		UIManager->AddHuntWidget(HuntEnemy);
+	}
+}
+
+void UWOGUIManagerComponent::Client_RemoveHuntWidget_Implementation()
+{
+	if (UIManager)
+	{
+		UIManager->RemoveHuntWidget();
+	}
+}

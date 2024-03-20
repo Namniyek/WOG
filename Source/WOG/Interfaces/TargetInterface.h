@@ -72,4 +72,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Combat")
 	AWOGBaseSquad* GetCurrentEpicSquadSlot() const;
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Combat")
+	bool CanBePossessed() const;
 };

@@ -4,6 +4,7 @@
 
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "GameFramework/Character.h"
 
 UAGR_CombatManager::UAGR_CombatManager()
 {
@@ -28,7 +29,15 @@ void UAGR_CombatManager::StartTrace()
 {
     RefreshIgnoredActors();
 
+    //Set the VisibilityBasedAnimTickOption to refresh bone transforms before the trace
+    ACharacter* CharOwner = Cast<ACharacter>(GetOwner());
+    if (CharOwner)
+    {
+        CharOwner->GetMesh()->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
+    }
+
     bTracing = true;
+
 
     // Entry sockets location
     PreviousStarts.SetNum(TrackedMeshes.Num());
@@ -60,6 +69,13 @@ void UAGR_CombatManager::StartTrace()
 
 void UAGR_CombatManager::EndTrace()
 {
+    //Reset the VisibilityBasedAnimTickOption to not refresh bone transforms after the trace to save performance
+    ACharacter* CharOwner = Cast<ACharacter>(GetOwner());
+    if (CharOwner)
+    {
+        CharOwner->GetMesh()->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPose;
+    }
+
     bTracing = false;
 
     // Clear unimportant variables
@@ -132,7 +148,6 @@ void UAGR_CombatManager::TraceTick()
     {
         UPrimitiveComponent* Mesh = Entry.Key;
         const EAGR_CombatColliderType CollisionHandling = Entry.Value;
-
         // Config selector
         switch(CollisionHandling)
         {
@@ -201,6 +216,8 @@ void UAGR_CombatManager::HandleOnAttackHitEvent(
     const TArray<FHitResult>& HitResults,
     UPrimitiveComponent* Mesh) const
 {
+
+
     if(!bHit)
     {
         return;
@@ -245,7 +262,7 @@ void UAGR_CombatManager::DoCollisionTest_SimpleBoxTrace(UPrimitiveComponent* Mes
 
     const FVector HalfSize = FVector(TraceSize);
     const FRotator Orientation = UKismetMathLibrary::FindLookAtRotation(Start, End);
-    const bool bHit = UKismetSystemLibrary::BoxTraceMulti(
+   const bool bHit = UKismetSystemLibrary::BoxTraceMulti(
         this,
         Start,
         End,

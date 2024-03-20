@@ -260,36 +260,6 @@ AWOGBaseSquad* AWOGDefender::GetCurrentMeleeSquadSlot_Implementation() const
 	return CurrentMeleeSquad;
 }
 
-bool AWOGDefender::ReserveAttackTokens_Implementation(const int32& AmountToReserve)
-{
-	if (!HasAuthority()) return false;
-
-	if (AvailableAttackTokens < AmountToReserve)
-	{
-		return false;
-	}
-
-	AvailableAttackTokens = FMath::Clamp(AvailableAttackTokens - AmountToReserve, 0, MaxAttackTokens);
-	return true;
-}
-
-void AWOGDefender::RestoreAttackTokens_Implementation(const int32& AmountToRestore)
-{
-	if (!HasAuthority())
-	{
-		UE_LOG(WOGLogCombat, Error, TEXT("No authority when attempting to restore attack tokens"));
-		return;
-	}
-
-	AvailableAttackTokens = FMath::Clamp(AvailableAttackTokens + AmountToRestore, 0, MaxAttackTokens);
-	UE_LOG(WOGLogCombat, Display, TEXT("Tokens restored: %d, now AvailableTokens: %d"), AmountToRestore, AvailableAttackTokens);
-}
-
-int32 AWOGDefender::GetAvailableAttackTokens_Implementation()
-{
-	return AvailableAttackTokens;
-}
-
 void AWOGDefender::SetCurrentRangedSquad(AWOGBaseSquad* NewSquad)
 {
 	if (HasAuthority())

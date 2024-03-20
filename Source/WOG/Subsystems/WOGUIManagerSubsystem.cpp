@@ -27,6 +27,8 @@
 #include "UI/WOGAvailableResourceWidget.h"
 #include "PlayerCharacter/BasePlayerCharacter.h"
 #include "UI/Stash/WOGStashWidget.h"
+#include "UI/WOGHuntProgressBar.h"
+#include "Enemies/WOGHuntEnemy.h"
 
 void UWOGUIManagerSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -572,4 +574,30 @@ void UWOGUIManagerSubsystem::RemoveCrosshairWidget()
 	}
 
 	CrosshairWidget = nullptr;
+}
+
+void UWOGUIManagerSubsystem::AddHuntWidget(AWOGHuntEnemy* HuntEnemy)
+{
+	if (!OwnerPC) return;
+	MatchHUD == nullptr ? (TObjectPtr<AWOGMatchHUD>) Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
+	if (!MatchHUD || !IsValid(MatchHUD->HuntWidgetClass)) return;
+	if (HuntWidget) return;
+
+	HuntWidget = CreateWidget<UWOGHuntProgressBar>(OwnerPC, MatchHUD->HuntWidgetClass);
+	if (HuntWidget && MatchHUD->HUDWidget->GetHuntProgressBarContainer())
+	{
+		HuntWidget->HuntCharacter = HuntEnemy;
+		MatchHUD->HUDWidget->GetHuntProgressBarContainer()->ClearChildren();
+		MatchHUD->HUDWidget->GetHuntProgressBarContainer()->AddChild(HuntWidget);
+	}
+}
+
+void UWOGUIManagerSubsystem::RemoveHuntWidget()
+{
+	if (HuntWidget)
+	{
+		HuntWidget->RemoveFromParent();
+	}
+
+	HuntWidget = nullptr;
 }

@@ -20,7 +20,10 @@ class WOG_API UWOGGameplayAbilityBase : public UGameplayAbility
 	GENERATED_BODY()
 
 public:
-	UWOGGameplayAbilityBase();
+	UWOGGameplayAbilityBase(const FObjectInitializer& ObjectInitializer);
+
+	UPROPERTY(BlueprintReadOnly, Category = "Ability")
+	FGameplayEventData ActivationDataByTag;
 
 	// Abilities with this set will automatically activate when the input is pressed
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Ability")
@@ -47,6 +50,7 @@ public:
 	virtual bool CheckCost(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, OUT FGameplayTagContainer* OptionalRelevantTags = nullptr) const override;
 
 protected:
+	bool bHasBlueprintActivateByTag;
 
 	//Effects that are apllied at start of the ability and removed at the end
 	UPROPERTY(EditDefaultsOnly, Category = "Effects")
@@ -57,6 +61,8 @@ protected:
 	TArray <TSubclassOf<UGameplayEffect>> EffectsToJustApplyOnStart;
 
 	TArray<FActiveGameplayEffectHandle> RemoveOnEndEffectHandles;
+	UPROPERTY(BlueprintReadOnly)
+	TArray<FActiveGameplayEffectHandle> ActiveEffectHandles;
 
 	UFUNCTION(BlueprintPure)
 	class AWOGBaseCharacter* GetCharacterFromActorInfo() const;
@@ -75,4 +81,7 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 	void RemoveGameplayCueLocal(FGameplayTag CueTag, const FGameplayCueParameters& Parameters = FGameplayCueParameters());
+
+	UFUNCTION(BlueprintImplementableEvent, Category = Ability, DisplayName = "ActivateAbilityByTag", meta = (ScriptName = "ActivateAbilityByTag"))
+	void K2_ActivateAbilityByTag(const FGameplayEventData& EventData);
 };

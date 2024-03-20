@@ -49,6 +49,8 @@ AWOGRaven::AWOGRaven()
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
+
+	CharacterData.bIsAttacker = true;
 }
 
 void AWOGRaven::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -194,6 +196,11 @@ void AWOGRaven::UnpossessMinion_Implementation()
 	{
 		UIManager->RemoveRavenMarkerWidget();
 	}
+}
+
+bool AWOGRaven::CanBePossessed_Implementation() const
+{
+	return true;
 }
 
 void AWOGRaven::TODChanged(ETimeOfDay TOD)

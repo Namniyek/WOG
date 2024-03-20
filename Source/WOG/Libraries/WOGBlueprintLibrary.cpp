@@ -10,6 +10,10 @@
 #include "Data/WOGGameplayTags.h"
 #include "Consumables/WOGBaseConsumable.h"
 #include "PlayerController/WOGPlayerController.h"
+#include "AbilitySystemComponent.h"
+#include "GameplayTagContainer.h"
+#include "AbilitySystem/Abilities/WOGGameplayAbilityBase.h"
+#include "AbilitySystemBlueprintLibrary.h"
 
 AWOGBaseWeapon* UWOGBlueprintLibrary::GetEquippedWeapon(const AActor* Owner)
 {
@@ -81,4 +85,19 @@ UWOGUIManagerComponent* UWOGBlueprintLibrary::GetUIManagerComponent(AController*
 	if(!OwnerPC) return nullptr;
 
 	return OwnerPC->GetUIManagerComponent();
+}
+
+bool UWOGBlueprintLibrary::TryActivateAbilityByTagWithData(AActor* Target, const FGameplayTag& ActivationTag, FGameplayEventData AbilityData)
+{
+	if (!Target) return false;
+	UAbilitySystemComponent* ASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Target);
+	if (!ASC) return false;
+
+	FGameplayTagContainer ActivationTags = FGameplayTagContainer(ActivationTag);
+	TArray<FGameplayAbilitySpec*> OutArray;
+	ASC->GetActivatableGameplayAbilitySpecsByAllMatchingTags(ActivationTags, OutArray);
+
+	if (OutArray.IsEmpty()) return false;
+
+	return ASC->TryActivateAbility(OutArray[0]->Handle);
 }

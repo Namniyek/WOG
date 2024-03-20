@@ -8,6 +8,7 @@
 
 
 class UWOGUIManagerSubsystem;
+class AWOGHuntEnemy;
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class WOG_API UWOGUIManagerComponent : public UActorComponent
@@ -79,4 +80,9 @@ public:
 
 	UFUNCTION(Client, Reliable, BlueprintCallable)
 	void Client_CreateGenericWarningWidget(const FString& WarningString);
+
+	UFUNCTION(Client, Reliable, BlueprintCallable)
+	void Client_AddHuntWidget(AWOGHuntEnemy* HuntEnemy);
+	UFUNCTION(Client, Reliable, BlueprintCallable)
+	void Client_RemoveHuntWidget();
 };

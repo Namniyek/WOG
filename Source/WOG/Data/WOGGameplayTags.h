@@ -2,6 +2,13 @@
 
 #include "NativeGameplayTags.h"
 
+//AbilityTags
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Ability_Debuff_Stun)
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Ability_Debuff_Knockback)
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Ability_Debuff_KO)
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Ability_Debuff_HitReact)
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Ability_Debuff_Stagger)
+
 //State tags
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_State_Dead)
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_State_Dodging)

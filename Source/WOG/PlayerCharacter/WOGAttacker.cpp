@@ -102,13 +102,20 @@ void AWOGAttacker::PossessMinion()
 	OwnerPC = OwnerPC == nullptr ? (TObjectPtr<AWOGPlayerController>) Cast<AWOGPlayerController>(GetController()) : OwnerPC;
 	if (!OwnerPC)
 	{
-		UE_LOG(LogTemp, Error, TEXT("invalid OwnerPC"));
+		UE_LOG(WOGLogSpawn, Error, TEXT("invalid OwnerPC"));
 		return;
 	}
 
-	if (!CurrentTarget)
+	if (!CurrentTarget || !CurrentTarget->Implements<UTargetInterface>())
 	{
-		UE_LOG(LogTemp, Error, TEXT("invalid CurrentTargetActor"));
+		UE_LOG(WOGLogSpawn, Error, TEXT("invalid CurrentTargetActor"));
+		return;
+	}
+
+	bool bCanBePossessed = ITargetInterface::Execute_CanBePossessed(CurrentTarget);
+	if(!bCanBePossessed)
+	{
+		UE_LOG(WOGLogSpawn, Error, TEXT("Target cannot be possessed"));
 		return;
 	}
 

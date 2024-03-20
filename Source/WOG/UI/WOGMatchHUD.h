@@ -19,6 +19,7 @@ class URestartWidget;
 class UWOGAvailableResourceWidget;
 class UWOGVendorBaseWidget;
 class UWOGStashWidget;
+class UWOGHuntProgressBar;
 
 UCLASS()
 class WOG_API AWOGMatchHUD : public AHUD
@@ -85,6 +86,9 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Setup | WidgetClasses")
 	TSubclassOf<UUserWidget> CrosshairWidgetClass;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Setup | WidgetClasses")
+	TSubclassOf<UWOGHuntProgressBar> HuntWidgetClass;
 
 	#pragma endregion
 

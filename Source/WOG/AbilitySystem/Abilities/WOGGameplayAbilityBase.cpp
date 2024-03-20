@@ -13,7 +13,8 @@
 #include "ActorComponents/WOGAbilitySystemComponent.h"
 #include "Subsystems/WOGUIManagerSubsystem.h"
 
-UWOGGameplayAbilityBase::UWOGGameplayAbilityBase()
+UWOGGameplayAbilityBase::UWOGGameplayAbilityBase(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
 {
 	// Default to Instance Per Actor
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
@@ -29,6 +30,17 @@ UWOGGameplayAbilityBase::UWOGGameplayAbilityBase()
 
 
 	OnCostCheckedDelegate.AddDynamic(this, &ThisClass::OnCostChecked);
+
+	auto ImplementedInBlueprint = [](const UFunction* Func) -> bool
+	{
+		return Func && ensure(Func->GetOuter())
+			&& Func->GetOuter()->IsA(UBlueprintGeneratedClass::StaticClass());
+	};
+	{
+		static FName FuncName = FName(TEXT("K2_ActivateAbilityByTag"));
+		UFunction* ActivateFunction = GetClass()->FindFunctionByName(FuncName);
+		bHasBlueprintActivateByTag = ImplementedInBlueprint(ActivateFunction);
+	}
 }
 
 void UWOGGameplayAbilityBase::OnAvatarSet(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec)
@@ -43,8 +55,6 @@ void UWOGGameplayAbilityBase::OnAvatarSet(const FGameplayAbilityActorInfo* Actor
 
 void UWOGGameplayAbilityBase::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
-	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
-
 	UAbilitySystemComponent* AbilitySystemComponent = ActorInfo->AbilitySystemComponent.Get();
 	if (!AbilitySystemComponent) return;
 
@@ -57,9 +67,9 @@ void UWOGGameplayAbilityBase::ActivateAbility(const FGameplayAbilitySpecHandle H
 		if (SpecHandle.IsValid())
 		{
 			FActiveGameplayEffectHandle ActiveGEHandle = AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
-			if (!ActiveGEHandle.WasSuccessfullyApplied())
+			if (ActiveGEHandle.WasSuccessfullyApplied())
 			{
-				UE_LOG(LogTemp, Error, TEXT("failed to apply startup effect! %s"), *GetNameSafe(GameplayEffect));
+				ActiveEffectHandles.Add(ActiveGEHandle);
 			}
 		}
 	}
@@ -75,9 +85,17 @@ void UWOGGameplayAbilityBase::ActivateAbility(const FGameplayAbilitySpecHandle H
 				if (ActiveGEHandle.WasSuccessfullyApplied())
 				{
 					RemoveOnEndEffectHandles.Add(ActiveGEHandle);
+					ActiveEffectHandles.Add(ActiveGEHandle);
 				}
 			}
 		}
+	}
+
+	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
+
+	if (bHasBlueprintActivateByTag && GetCharacterFromActorInfo())
+	{
+		K2_ActivateAbilityByTag(GetCharacterFromActorInfo()->AbilityActivationPayload);
 	}
 }
 
@@ -94,6 +112,8 @@ void UWOGGameplayAbilityBase::EndAbility(const FGameplayAbilitySpecHandle Handle
 		}
 		RemoveOnEndEffectHandles.Empty();
 	}
+
+	ActiveEffectHandles.Empty();
 
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
