@@ -98,4 +98,7 @@ public:
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	AActor* FindClosestPlayerTarget();
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	AActor* GetIdleSpotLocation();
 };

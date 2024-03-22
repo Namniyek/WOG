@@ -119,7 +119,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Setup|Abilities and Effects")
 	FCharacterAbilityData DefaultAbilitiesAndEffects;
 
-	UPROPERTY(VisibleAnywhere, Category = "Setup|Character Data")
+	UPROPERTY(Replicated, VisibleAnywhere, Category = "Setup|Character Data")
 	FCharacterData CharacterData;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Setup|Character Data")
@@ -239,9 +239,6 @@ protected:
 
 	#pragma region Animation
 	virtual void ToggleStrafeMovement(bool bIsStrafe);
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setup|Animations")
-	TObjectPtr<UAnimMontage> UnarmedHurtMontage;
 	#pragma endregion
 
 	#pragma region Cosmetic Hits
@@ -275,6 +272,7 @@ public:
 	FORCEINLINE void SetDefaultAbilitiesAndEffects(const FCharacterAbilityData& Data) { DefaultAbilitiesAndEffects = Data; }
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE FCharacterData GetCharacterData() const { return CharacterData; }
+	FORCEINLINE void SetCharacterData(const FCharacterData& NewCharacterData) { CharacterData = NewCharacterData; }
 	FORCEINLINE TObjectPtr<UMotionWarpingComponent> GetMotionWarpingComponent() const { return MotionWarping; }
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE bool GetIsRagdolling() const { return bIsRagdolling; }

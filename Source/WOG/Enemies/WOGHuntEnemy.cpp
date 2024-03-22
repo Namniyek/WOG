@@ -87,6 +87,8 @@ void AWOGHuntEnemy::BeginPlay()
 		ApplyDefaultEffects();
 		GiveDefaultAbilities();
 	}
+
+	CurrentEnemyState = EEnemyState::EES_Idle;
 }
 
 AActor* AWOGHuntEnemy::GetSquadCurrentTargetActor_Implementation()
@@ -130,14 +132,11 @@ void AWOGHuntEnemy::InitData()
 	{
 		SetDefaultAbilitiesAndEffects(SpawnDataRow->DefaultAbilitiesAndEffects);
 		SetBaseDamage(SpawnDataRow->BaseDamage);
-		SetAttackMontage(SpawnDataRow->AttackMontage);
 		SetAttackRange(SpawnDataRow->AttackRange);
 		SetDefendRange(SpawnDataRow->DefendRange);
 		SetDamageEffect(SpawnDataRow->DamageEffect);
 		SetCosmeticsDataAsset(SpawnDataRow->CosmeticsDataAsset);
-		MinionName = FText::FromName(SpawnDataRow->VendorItemData.DisplayName);
-
-		UE_LOG(WOGLogSpawn, Display, TEXT("SpawnData Updated"));
+		SetCharacterData(SpawnDataRow->CharacterData);
 	}
 	else
 	{
@@ -155,6 +154,11 @@ AActor* AWOGHuntEnemy::FindClosestPlayerTarget_Implementation()
 	}
 
 	return CurrentTarget;
+}
+
+AActor* AWOGHuntEnemy::GetIdleSpotLocation_Implementation()
+{
+	return IdleSpotLocation;
 }
 
 AActor* AWOGHuntEnemy::FindRandomClosestPlayer()

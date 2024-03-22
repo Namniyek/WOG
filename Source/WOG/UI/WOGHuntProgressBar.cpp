@@ -15,7 +15,7 @@ void UWOGHuntProgressBar::NativeConstruct()
 
 	if (!HuntCharacter) return;
 
-	HuntEnemyName->SetText(HuntCharacter->MinionName);
+	HuntEnemyName->SetText(HuntCharacter->GetCharacterData().CharacterName);
 	HuntCharacter->OnAttributeChangedDelegate.AddDynamic(this, &ThisClass::AttributeChangedCallback);
 
 	if (HuntCharacter->GetAttributeSetBase())

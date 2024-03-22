@@ -84,6 +84,7 @@ void AWOGBaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	DOREPLIFETIME(AWOGBaseCharacter, AvailableAttackTokens);
 	DOREPLIFETIME(AWOGBaseCharacter, OwnerPC);
 	DOREPLIFETIME(AWOGBaseCharacter, bComboWindowOpen);
+	DOREPLIFETIME(AWOGBaseCharacter, CharacterData);
 }
 
 void AWOGBaseCharacter::PossessedBy(AController* NewController)

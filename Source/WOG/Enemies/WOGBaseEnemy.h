@@ -149,22 +149,15 @@ protected:
 
 	#pragma endregion
 
-	#pragma region Animation
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setup|Animations")
-	TObjectPtr<UAnimMontage> AttackMontage;
-	#pragma endregion
-
+	#pragma region Cosmetics
 	UPROPERTY(Replicated)
 	TObjectPtr<UWOGSpawnCosmetics> CosmeticsDataAsset;
 
-
 	void HandleDestroyCosmetics();
 	void ExecuteGameplayCueWithCosmeticsDataAsset(const FGameplayTag& CueTag);
+	#pragma endregion
 
 public:
-	UPROPERTY(Replicated, BlueprintReadOnly, VisibleAnywhere, Category = "Setup")
-	FText MinionName = FText();
-
 	void HandleSpawnCosmetics();
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
@@ -193,7 +186,6 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void SetBaseDamage(const float& NewDamage);
-	void SetAttackMontage(UAnimMontage* NewMontage);
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
 	void SetAttackRange(const float& NewRadius);

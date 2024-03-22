@@ -75,7 +75,6 @@ void AWOGBaseEnemy::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLif
 	DOREPLIFETIME(AWOGBaseEnemy, ComboIndex);
 	DOREPLIFETIME(AWOGBaseEnemy, AttackTagIndex);
 	DOREPLIFETIME(AWOGBaseEnemy, CosmeticsDataAsset);
-	DOREPLIFETIME(AWOGBaseEnemy, MinionName);
 }
 
 void AWOGBaseEnemy::BeginPlay()
@@ -583,12 +582,6 @@ void AWOGBaseEnemy::SetBaseDamage(const float& NewDamage)
 {
 	if (!HasAuthority()) return;
 	BaseDamage = NewDamage;
-}
-
-void AWOGBaseEnemy::SetAttackMontage(UAnimMontage* NewMontage)
-{
-	if (!HasAuthority() || !NewMontage) return;
-	AttackMontage = NewMontage;
 }
 
 void AWOGBaseEnemy::SetAttackRange(const float& NewRadius)

@@ -55,6 +55,7 @@ protected:
 	AActor* GetSquadCurrentTargetActor_Implementation();
 	void SetCurrentTarget_Implementation(AActor* NewTarget);
 	AActor* FindClosestPlayerTarget_Implementation();
+	AActor* GetIdleSpotLocation_Implementation();
 	#pragma endregion
 
 	UFUNCTION()
@@ -73,4 +74,7 @@ public:
 	void SetMinionLevel(const int32& NewLevel);
 
 	void FindNewTarget(AActor* OldTarget);
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TObjectPtr<AActor> IdleSpotLocation;
 };

@@ -103,12 +103,6 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Animations")
 	TSubclassOf<UAnimInstance> AnimBPLobby = nullptr;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Animations")
-	UAnimMontage* RaiseHandMontage = nullptr;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Animations")
-	UAnimMontage* UnarmedHurtMontage = nullptr;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Animations")
-	UAnimMontage* DodgeMontage = nullptr;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Animations")
 	USkeleton* Skeleton = nullptr;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Animations")
 	UPhysicsAsset* PhysicsAsset = nullptr;
@@ -513,9 +507,6 @@ public:
 	#pragma region Animation
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setup|Animations")
 	float SpeedRequiredForLeap;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setup|Animations")
-	TObjectPtr<class UAnimMontage> DodgeMontage;
 	#pragma endregion
 
 	#pragma region UI

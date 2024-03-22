@@ -45,6 +45,9 @@ struct FCharacterData
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Base Data")
 	bool bIsMale = false;
 
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Base Data")
+	FText CharacterName = FText();
+
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "GAS")
 	TSubclassOf<UGameplayEffect> SwitchAbilityCooldownEffect = nullptr;
 
@@ -100,7 +103,16 @@ struct FCharacterData
 	TObjectPtr<USoundCue> EffortLongSound = nullptr;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Animations")
-	UAnimMontage* ActionsMontage = nullptr;
+	TObjectPtr<UAnimMontage> ActionsMontage = nullptr;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Animations")
+	TObjectPtr<UAnimMontage> UnarmedHurtMontage = nullptr;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Animations")
+	TObjectPtr<UAnimMontage> AttackMontage = nullptr;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Animations")
+	TObjectPtr<UAnimMontage> DodgeMontage = nullptr;
 };
 
 USTRUCT(BlueprintType)
@@ -121,11 +133,14 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "1 - Base")
 	EEnemySquadType SquadType = EEnemySquadType::EEST_Melee;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Spawn Name"), Category = "1 - Base")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "1 - Base")
 	FText Name = FText();
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Spawn Icon"), Category = "1 - Base")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "1 - Base")
 	TObjectPtr<UTexture2D> Icon = nullptr;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "1 - Base")
+	FCharacterData CharacterData = FCharacterData();
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Spawn cost amount"), Category = "1 - Base")
 	int32 CostAmount = 0;
@@ -133,17 +148,17 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Spawn cost tag"), Category = "1 - Base")
 	FGameplayTag CostTag = FGameplayTag();
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Preview Mesh"), Category = "1 - Base")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "1 - Base")
 	TObjectPtr<UStaticMesh> Mesh = nullptr;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Minion Array"), Category = "1 - Base")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "1 - Base")
 	TArray<TSubclassOf<AWOGBaseEnemy>> MinionArray = {};
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Amount Units"), Category = "1 - Base")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "1 - Base")
 	int32 AmountUnits = 0;
 
 	/**Capsule half height*/
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Height Offset"), Category = "1 - Base")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "1 - Base")
 	float HeightOffset = 0.f;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "2 - Combat Setup")
@@ -154,6 +169,9 @@ public:
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "2 - Combat Setup")
 	TObjectPtr<UAnimMontage> AttackMontage = nullptr;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "2 - Combat Setup")
+	TObjectPtr<UAnimMontage> ActionsMontage = nullptr;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "2 - Combat Setup")
 	float AttackRange = 150.f;

@@ -636,9 +636,6 @@ void ABasePlayerCharacter::SetMeshesAndAnimations(bool bIsMale, FName RowName)
 		GetMesh()->SetAnimClass(MeshRow->AnimBP);
 		GetMesh()->SetPhysicsAsset(MeshRow->PhysicsAsset);
 	}
-
-	UnarmedHurtMontage = MeshRow->UnarmedHurtMontage;
-	DodgeMontage = MeshRow->DodgeMontage;
 }
 
 void ABasePlayerCharacter::SetDefaultAbilitiesAndEffects(bool bIsMale, FName RowName)
@@ -670,6 +667,7 @@ void ABasePlayerCharacter::SetDefaultAbilitiesAndEffects(bool bIsMale, FName Row
 
 	CharacterData = MeshRow->CharacterData;
 	CharacterData.bIsMale = bIsMale;
+	CharacterData.CharacterName = FText::FromString(PlayerProfile.PlayerName);
 
 	FindCommonInventory();
 }
