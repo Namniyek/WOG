@@ -45,7 +45,9 @@ AWOGBaseEnemy::AWOGBaseEnemy()
 	DamageEffect = nullptr;
 
 	ComboIndex = 1;
-	AttackTagIndex = 0;
+	MidAttackTagIndex = 0;
+	CloseAttackTagIndex = 0;
+	RangedAttackTagIndex = 0;
 
 	CharacterData.bIsAttacker = true;
 
@@ -73,7 +75,9 @@ void AWOGBaseEnemy::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLif
 	DOREPLIFETIME(AWOGBaseEnemy, AttackRange);
 	DOREPLIFETIME(AWOGBaseEnemy, DefendRange);
 	DOREPLIFETIME(AWOGBaseEnemy, ComboIndex);
-	DOREPLIFETIME(AWOGBaseEnemy, AttackTagIndex);
+	DOREPLIFETIME(AWOGBaseEnemy, MidAttackTagIndex);
+	DOREPLIFETIME(AWOGBaseEnemy, CloseAttackTagIndex);
+	DOREPLIFETIME(AWOGBaseEnemy, RangedAttackTagIndex);
 	DOREPLIFETIME(AWOGBaseEnemy, CosmeticsDataAsset);
 }
 
@@ -118,7 +122,9 @@ void AWOGBaseEnemy::DefineNextAttackTagIndex()
 {
 	if (!HasAuthority()) return;
 
-	AttackTagIndex = FMath::RandRange(0, AttackTagsMap.Num()-1);
+	MidAttackTagIndex = FMath::RandRange(0, AttackTagsMap.Num()-1);
+	CloseAttackTagIndex = FMath::RandRange(0, CloseAttackTagsMap.Num() - 1);
+	RangedAttackTagIndex = FMath::RandRange(0, RangedAttackTagsMap.Num() - 1);
 }
 
 void AWOGBaseEnemy::OnAttackHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh)
@@ -206,6 +212,7 @@ void AWOGBaseEnemy::BroadcastHit_Implementation(AActor* AgressorActor, const FHi
 {
 	if (HasMatchingGameplayTag(TAG_State_Dead)) return;
 	if (HasMatchingGameplayTag(TAG_State_Minion_Dodging)) return;
+	if (!AbilitySystemComponent.Get()) return;
 
 	AWOGBaseCharacter* AgressorCharacter = Cast<AWOGBaseCharacter>(AgressorActor);
 	AWOGBaseWeapon* AgressorWeapon = Cast<AWOGBaseWeapon>(InstigatorWeapon);
@@ -339,7 +346,7 @@ void AWOGBaseEnemy::BroadcastHit_Implementation(AActor* AgressorActor, const FHi
 	}
 
 	//Apply damage to character if authority
-	if (HasAuthority() && AgressorCharacter && AbilitySystemComponent.Get() && AgressorWeapon && AgressorWeapon->GetWeaponData().WeaponDamageEffect)
+	if (HasAuthority() && AgressorCharacter && AgressorWeapon && AgressorWeapon->GetWeaponData().WeaponDamageEffect)
 	{
 		FGameplayEffectContextHandle DamageContext = AbilitySystemComponent.Get()->MakeEffectContext();
 		DamageContext.AddInstigator(AgressorCharacter, AgressorWeapon);
@@ -356,7 +363,6 @@ void AWOGBaseEnemy::BroadcastHit_Implementation(AActor* AgressorActor, const FHi
 		{
 			UE_LOG(WOGLogCombat, Error, TEXT("Damage to %s not applied"), *GetNameSafe(this));
 		}
-
 	}
 }
 
@@ -465,7 +471,7 @@ void AWOGBaseEnemy::DefineComboIndex_Implementation()
 
 int32 AWOGBaseEnemy::GetAttackIndex_Implementation()
 {
-	return AttackTagIndex;
+	return MidAttackTagIndex;
 }
 
 FGameplayTag AWOGBaseEnemy::GetAttackData_Implementation(int32& TokensNeeded)
@@ -478,7 +484,7 @@ FGameplayTag AWOGBaseEnemy::GetAttackData_Implementation(int32& TokensNeeded)
 
 	for (int32 i = 0; i < Array.Num(); i++)
 	{
-		if (i == AttackTagIndex)
+		if (i == MidAttackTagIndex)
 		{
 			TokensNeeded = Array[i].Value;
 			return Array[i].Key;
@@ -498,7 +504,7 @@ FGameplayTag AWOGBaseEnemy::GetRangedAttackData_Implementation(int32& TokensNeed
 
 	for (int32 i = 0; i < Array.Num(); i++)
 	{
-		if (i == 0)
+		if (i == RangedAttackTagIndex)
 		{
 			TokensNeeded = Array[i].Value;
 			return Array[i].Key;
@@ -518,7 +524,7 @@ FGameplayTag AWOGBaseEnemy::GetCloseAttackData_Implementation(int32& TokensNeede
 
 	for (int32 i = 0; i < Array.Num(); i++)
 	{
-		if (i == 0)
+		if (i == CloseAttackTagIndex)
 		{
 			TokensNeeded = Array[i].Value;
 			return Array[i].Key;
@@ -600,6 +606,12 @@ void AWOGBaseEnemy::SetDamageEffect(const TSubclassOf<UGameplayEffect>& NewDamag
 {
 	if (!HasAuthority()) return;
 	DamageEffect = NewDamageEffect;
+}
+
+void AWOGBaseEnemy::SetSecondaryDamageEffect(const TSubclassOf<UGameplayEffect>& NewDamageEffect)
+{
+	if (!HasAuthority()) return;
+	SecondaryDamageEffect = NewDamageEffect;
 }
 
 void AWOGBaseEnemy::Elim(bool bPlayerLeftGame)

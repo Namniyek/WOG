@@ -55,30 +55,36 @@ protected:
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
 	void DefineNextComboIndex();
 
-
 	/*
 	Map to store attack tags and needed tokens
 	Key -> AttackTag
 	Value -> Needed tokens
 	*/
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setup|Combat")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Combat")
 	TMap<FGameplayTag, int32> AttackTagsMap;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setup|Combat")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Combat")
 	TMap<FGameplayTag, int32> RangedAttackTagsMap;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setup|Combat")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Combat")
 	TMap<FGameplayTag, int32> CloseAttackTagsMap;
 
 	UPROPERTY(Replicated, BlueprintReadWrite, VisibleAnywhere)
-	int32 AttackTagIndex;
+	int32 MidAttackTagIndex;
+	UPROPERTY(Replicated, BlueprintReadWrite, VisibleAnywhere)
+	int32 CloseAttackTagIndex;
+	UPROPERTY(Replicated, BlueprintReadWrite, VisibleAnywhere)
+	int32 RangedAttackTagIndex;
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
 	void DefineNextAttackTagIndex();
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Setup|Combat")
 	TSubclassOf<UGameplayEffect> DamageEffect;
+
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Setup|Combat")
+	TSubclassOf<UGameplayEffect> SecondaryDamageEffect;
 
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
 	float BaseDamage = 10.f;
@@ -201,12 +207,18 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
 	void SetDamageEffect(const TSubclassOf<UGameplayEffect>& NewDamageEffect);
+
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
+	void SetSecondaryDamageEffect(const TSubclassOf<UGameplayEffect>& NewDamageEffect);
+
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE TSubclassOf<UGameplayEffect> GetDamageEffect() const { return DamageEffect; }
 
 	UFUNCTION(BlueprintPure)
+	FORCEINLINE TSubclassOf<UGameplayEffect> GetSecondaryDamageEffect() const { return SecondaryDamageEffect; }
+
+	UFUNCTION(BlueprintPure)
 	FORCEINLINE UWOGSpawnCosmetics* GetCosmeticsDataAsset() const { return CosmeticsDataAsset; }
 	FORCEINLINE void SetCosmeticsDataAsset(UWOGSpawnCosmetics* NewAsset) { CosmeticsDataAsset = NewAsset; }
-
 	
 };

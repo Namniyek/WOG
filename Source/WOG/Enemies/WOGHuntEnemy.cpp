@@ -68,6 +68,8 @@ void AWOGHuntEnemy::BeginPlay()
 {
 	Super::BeginPlay();
 
+	MinionLevel = 0;
+
 	InitData();
 
 	if (AgroSphere && HasAuthority())
@@ -89,6 +91,8 @@ void AWOGHuntEnemy::BeginPlay()
 	}
 
 	CurrentEnemyState = EEnemyState::EES_Idle;
+
+	OnAttributeChangedDelegate.AddDynamic(this, &ThisClass::OnAttributeChangedCallback);
 }
 
 AActor* AWOGHuntEnemy::GetSquadCurrentTargetActor_Implementation()
@@ -135,6 +139,7 @@ void AWOGHuntEnemy::InitData()
 		SetAttackRange(SpawnDataRow->AttackRange);
 		SetDefendRange(SpawnDataRow->DefendRange);
 		SetDamageEffect(SpawnDataRow->DamageEffect);
+		SetSecondaryDamageEffect(SpawnDataRow->SecondaryDamageEffect);
 		SetCosmeticsDataAsset(SpawnDataRow->CosmeticsDataAsset);
 		SetCharacterData(SpawnDataRow->CharacterData);
 	}
@@ -250,7 +255,7 @@ void AWOGHuntEnemy::OnAgroEndOverlap(UPrimitiveComponent* OverlappedComponent, A
 
 	if (OtherActor == CurrentTarget)
 	{
-		FindNewTarget(OtherActor);
+		FindNewTarget();
 	}
 	
 	if (CurrentTargetArray.Contains(OtherActor))
@@ -278,16 +283,57 @@ void AWOGHuntEnemy::OnAgroEndOverlap(UPrimitiveComponent* OverlappedComponent, A
 	}
 }
 
+void AWOGHuntEnemy::OnAttributeChangedCallback(FGameplayAttribute ChangedAttribute, float NewValue, float MaxValue)
+{
+	if (!HasAuthority()) return;
+	if (MinionLevel != 0) return;
+	if (ChangedAttribute == GetAttributeSetBase()->GetHealthAttribute() && (NewValue/MaxValue <= 0.5f))
+	{
+		SetCurrentEnemyState(EEnemyState::EES_LevelUp);
+	}
+}
+
+void AWOGHuntEnemy::OnRep_MinionLevel(const int32& OldLevel)
+{
+	GEngine->AddOnScreenDebugMessage(INDEX_NONE, 5, FColor::Green, (FString("HuntEnemy leveled up on:") + UEnum::GetValueAsString(GetLocalRole())));
+}
+
 void AWOGHuntEnemy::SetMinionLevel(const int32& NewLevel)
 {
 	if (!HasAuthority()) return;
 
 	MinionLevel = NewLevel > MinionLevel ? NewLevel : MinionLevel;
-	UE_LOG(WOGLogInventory, Display, TEXT("HuntMinion: %s upgraded to level: %d"), *GetNameSafe(this), MinionLevel);
+	ClearAbilties();
 	InitData();
+	MergeAttackTagMaps();
+	GiveDefaultAbilities();
+	
+	//Updates current target and enemy state
+	CurrentTarget = FindRandomClosestPlayer();
+	if (CurrentTarget)
+	{
+		SetCurrentEnemyState(EEnemyState::EES_AtTargetPlayer);
+	}
+	else
+	{
+		SetCurrentEnemyState(EEnemyState::EES_Idle);
+	}
 }
 
-void AWOGHuntEnemy::FindNewTarget(AActor* OldTarget)
+void AWOGHuntEnemy::ClearAbilties()
+{
+	if (!HasAuthority() || !AbilitySystemComponent) return;
+
+	for (auto Spec : AbilitySystemComponent->GetActivatableAbilities())
+	{
+		if (Spec.Handle.IsValid())
+		{
+			AbilitySystemComponent->ClearAbility(Spec.Handle);
+		}
+	}
+}
+
+void AWOGHuntEnemy::FindNewTarget()
 {
 	if (!HasAuthority()) return;
 
@@ -303,6 +349,7 @@ void AWOGHuntEnemy::FindNewTarget(AActor* OldTarget)
 		if (Target && Target != CurrentTarget)
 		{
 			CurrentTarget = Target;
+			SetCurrentEnemyState(EEnemyState::EES_AtTargetPlayer);
 			UE_LOG(WOGLogSpawn, Display, TEXT("CurrentTarget changed. New CurrentTarget is %s"), *GetNameSafe(Target));
 			return;
 		}
@@ -311,4 +358,21 @@ void AWOGHuntEnemy::FindNewTarget(AActor* OldTarget)
 	//No matching target found
 	CurrentTarget = nullptr;
 	SetCurrentEnemyState(EEnemyState::EES_Idle);
+}
+
+void AWOGHuntEnemy::MergeAttackTagMaps()
+{
+	if (!AdditionalCloseAttackTagsMap.IsEmpty())
+	{
+		//CloseAttackTagsMap.Empty();
+		CloseAttackTagsMap.Append(AdditionalCloseAttackTagsMap);
+	}
+	if (!AdditionalMidAttackTagsMap.IsEmpty())
+	{
+		AttackTagsMap.Append(AdditionalMidAttackTagsMap);
+	}
+	if (!AdditionalRangedAttackTagsMap.IsEmpty())
+	{
+		RangedAttackTagsMap.Append(AdditionalRangedAttackTagsMap);
+	}
 }

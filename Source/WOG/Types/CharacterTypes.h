@@ -168,12 +168,6 @@ public:
 	float BaseDamage = 10.f;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "2 - Combat Setup")
-	TObjectPtr<UAnimMontage> AttackMontage = nullptr;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "2 - Combat Setup")
-	TObjectPtr<UAnimMontage> ActionsMontage = nullptr;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "2 - Combat Setup")
 	float AttackRange = 150.f;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "2 - Combat Setup")
@@ -181,6 +175,9 @@ public:
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "2 - Combat Setup")
 	TSubclassOf<UGameplayEffect> DamageEffect = nullptr;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "2 - Combat Setup")
+	TSubclassOf<UGameplayEffect> SecondaryDamageEffect = nullptr;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Spawn Item Tag"), Category = "3 - Inventory")
 	FGameplayTag ItemTag = FGameplayTag();

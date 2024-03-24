@@ -1,6 +1,6 @@
 #include "WOGGameplayTags.h"
 
-//State tags
+//Ability tags
 UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Debuff_Stun, "Ability.Debuff.Stun");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Debuff_Knockback, "Ability.Debuff.Knockback");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Debuff_KO, "Ability.Debuff.KO");
@@ -38,6 +38,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_State_Magic_Instant, "State.Magic.Instant");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Minion_Melee_Light, "State.Minion.Melee.Light");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Minion_Melee_Heavy, "State.Minion.Melee.Heavy");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Minion_Melee_Stun, "State.Minion.Melee.Stun");
+UE_DEFINE_GAMEPLAY_TAG(TAG_State_Minion_Melee_Knockback, "State.Minion.Melee.Knockback");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Minion_Dodging, "State.Minion.Dodging");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Minion_Blocking, "State.Minion.Blocking");
 

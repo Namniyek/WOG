@@ -34,7 +34,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setup")
 	TArray<FName> MinionNames;
 
-	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly)
+	UPROPERTY(ReplicatedUsing = OnRep_MinionLevel, VisibleAnywhere, BlueprintReadOnly)
 	int32 MinionLevel;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setup")
@@ -48,6 +48,21 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Replicated)
 	TArray<TObjectPtr<AActor>> CurrentTargetArray = {};
+
+	/*
+	Map to store attack tags and needed tokens
+	Key -> AttackTag
+	Value -> Needed tokens
+	*/
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setup|Combat")
+	TMap<FGameplayTag, int32> AdditionalMidAttackTagsMap;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setup|Combat")
+	TMap<FGameplayTag, int32> AdditionalRangedAttackTagsMap;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setup|Combat")
+	TMap<FGameplayTag, int32> AdditionalCloseAttackTagsMap;
 
 	#pragma endregion
 
@@ -63,6 +78,12 @@ protected:
 	UFUNCTION()
 	void OnAgroEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
+	UFUNCTION()
+	void OnAttributeChangedCallback(FGameplayAttribute ChangedAttribute, float NewValue, float MaxValue);
+
+	UFUNCTION()
+	void OnRep_MinionLevel(const int32& OldLevel);
+
 private:
 	virtual void InitData();
 
@@ -73,8 +94,12 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
 	void SetMinionLevel(const int32& NewLevel);
 
-	void FindNewTarget(AActor* OldTarget);
+	void ClearAbilties();
+
+	void FindNewTarget();
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TObjectPtr<AActor> IdleSpotLocation;
+
+	void MergeAttackTagMaps();
 };

@@ -357,6 +357,7 @@ void UWOGSpawnComponent::Spawn(FTransform Transform, int32 ID)
 			SpawnedEnemy->SetAttackRange(Spawnables[ID].AttackRange);
 			SpawnedEnemy->SetDefendRange(Spawnables[ID].DefendRange);
 			SpawnedEnemy->SetDamageEffect(Spawnables[ID].DamageEffect);
+			SpawnedEnemy->SetSecondaryDamageEffect(Spawnables[ID].SecondaryDamageEffect);
 			SpawnedEnemy->SetCosmeticsDataAsset(Spawnables[ID].CosmeticsDataAsset);
 			SpawnedEnemy->SetCharacterData(Spawnables[ID].CharacterData);
 		}

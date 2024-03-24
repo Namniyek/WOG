@@ -1640,11 +1640,22 @@ void ABasePlayerCharacter::HandleHitFromEnemyCharacter(AActor* AgressorActor, co
 	LastHitResult = Hit;
 	float LocalDamageToApply = DamageToApply;
 
-	//Handle stun attacks from agressor -> Apply stun to self
-	if (AgressorEnemy->HasMatchingGameplayTag(TAG_State_Minion_Melee_Stun) && !HasMatchingGameplayTag(TAG_State_Weapon_Block))
+	//Handle knockback from agressor -> Apply knockback if not blocking or if hit is not frontal
+	if (AgressorEnemy->HasMatchingGameplayTag(TAG_State_Minion_Melee_Knockback) && (!HasMatchingGameplayTag(TAG_State_Weapon_Block) || !IsHitFrontal(60.f, this, FVector::Zero(), AgressorActor)))
 	{
 		AbilityActivationPayload = FGameplayEventData();
-		AbilityActivationPayload.EventMagnitude = 3.f;
+
+		bool bSuccess = UWOGBlueprintLibrary::TryActivateAbilityByTagWithData(
+			this,
+			TAG_Ability_Debuff_Knockback,
+			AbilityActivationPayload);
+	}
+
+	//Handle stun attacks from agressor -> Apply stun to self
+	if (AgressorEnemy->HasMatchingGameplayTag(TAG_State_Minion_Melee_Stun) && (!HasMatchingGameplayTag(TAG_State_Weapon_Block) || !IsHitFrontal(60.f, this, FVector::Zero(), AgressorActor)))
+	{
+		AbilityActivationPayload = FGameplayEventData();
+		AbilityActivationPayload.EventMagnitude = 4.f;
 
 		bool bSuccess = UWOGBlueprintLibrary::TryActivateAbilityByTagWithData(
 			this,
@@ -1695,9 +1706,9 @@ void ABasePlayerCharacter::HandleHitFromEnemyCharacter(AActor* AgressorActor, co
 
 			UE_LOG(WOGLogCombat, Display, TEXT("HEAVY Impact applied: %s"), bSuccess ? *FString("True") : *FString("False"));
 			return;
-		}
-
-		if (AgressorEnemy->HasMatchingGameplayTag(TAG_State_Minion_Melee_Light))
+		}	
+		//if (AgressorEnemy->HasMatchingGameplayTag(TAG_State_Minion_Melee_Light))
+		else
 		{
 			//Attacker used light attack on victim while guarding:
 			//Regular impact on the victim 
@@ -1809,6 +1820,14 @@ void ABasePlayerCharacter::HandleHitFromEnemyCharacter(AActor* AgressorActor, co
 		UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(OutSpec, FGameplayTag::RequestGameplayTag(TEXT("Damage.Attribute.Health")), -LocalDamageToApply);
 		AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*OutSpec.Data);
 		UE_LOG(WOGLogCombat, Display, TEXT("Damage applied to %s : %f"), *GetNameSafe(this), LocalDamageToApply);
+
+		if (AgressorEnemy->GetSecondaryDamageEffect())
+		{
+			FGameplayEffectContextHandle SecondaryContext = AbilitySystemComponent.Get()->MakeEffectContext();
+			SecondaryContext.AddInstigator(AgressorEnemy, AgressorEnemy);
+			ApplyGameplayEffectToSelf(AgressorEnemy->GetSecondaryDamageEffect(), SecondaryContext, 5.f);
+			UE_LOG(WOGLogCombat, Display, TEXT("SecondaryDamageEffect applied to %s"), *GetNameSafe(this));
+		}
 	}
 }
 
