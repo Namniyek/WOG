@@ -9,7 +9,7 @@ UWOGUIManagerComponent::UWOGUIManagerComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
 
-	SetIsReplicated(true);
+	SetIsReplicatedByDefault(true);
 }
 
 void UWOGUIManagerComponent::BeginPlay()

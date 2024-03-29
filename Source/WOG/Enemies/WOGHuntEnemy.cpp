@@ -216,15 +216,13 @@ AActor* AWOGHuntEnemy::GetClosestActor(TArray<AActor*> InArray)
 
 void AWOGHuntEnemy::OnAgroOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	UE_LOG(WOGLogSpawn, Display, TEXT("OnAgroOverlap() called"));
-
 	if (!HasAuthority()) return;
 	if (!OtherActor) return;
 
 	if (!CurrentTargetArray.Contains(OtherActor) && OtherActor->IsA<ABasePlayerCharacter>() && GetCharacterData().bIsAttacker != UWOGBlueprintLibrary::GetCharacterData(OtherActor).bIsAttacker)
 	{
 		CurrentTargetArray.AddUnique(OtherActor);
-		UE_LOG(WOGLogSpawn, Display, TEXT("%s added to CurrentTargetArray"), *GetNameSafe(OtherActor));
+		OnPlayerEnteredAgroSphere(OtherActor);
 
 		APawn* Pawn = Cast<APawn>(OtherActor);
 		if (Pawn && Pawn->GetController())
@@ -242,14 +240,11 @@ void AWOGHuntEnemy::OnAgroOverlap(UPrimitiveComponent* OverlappedComponent, AAct
 	{
 		CurrentTarget = OtherActor;
 		SetCurrentEnemyState(EEnemyState::EES_AtTargetPlayer);
-		UE_LOG(WOGLogSpawn, Display, TEXT("New CurrentTarget is %s"), *GetNameSafe(OtherActor));
 	}
 }
 
 void AWOGHuntEnemy::OnAgroEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	UE_LOG(WOGLogSpawn, Display, TEXT("OnAgroEndOverlap() called"));
-
 	if (!HasAuthority()) return;
 	if (!OtherActor) return;
 
@@ -261,7 +256,7 @@ void AWOGHuntEnemy::OnAgroEndOverlap(UPrimitiveComponent* OverlappedComponent, A
 	if (CurrentTargetArray.Contains(OtherActor))
 	{
 		int32 Amount = CurrentTargetArray.Remove(OtherActor);
-		UE_LOG(WOGLogSpawn, Display, TEXT("%s removed from CurrentTargetArray: %d"), *GetNameSafe(OtherActor), Amount);
+		OnPlayerExitedAgroSphere(OtherActor);
 
 		APawn* Pawn = Cast<APawn>(OtherActor);
 		if (Pawn && Pawn->GetController())
@@ -376,3 +371,4 @@ void AWOGHuntEnemy::MergeAttackTagMaps()
 		RangedAttackTagsMap.Append(AdditionalRangedAttackTagsMap);
 	}
 }
+

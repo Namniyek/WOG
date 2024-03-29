@@ -57,4 +57,7 @@ public:
 	UPROPERTY(BlueprintReadWrite, meta = (ExposeOnSpawn = "true"))
 	TObjectPtr<AActor> Target = nullptr;
 
+	UFUNCTION(BlueprintPure)
+	FORCEINLINE UProjectileMovementComponent* GetProjectileMovementComponent() const { return ProjectileMovement; }
+
 };

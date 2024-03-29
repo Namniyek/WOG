@@ -12,7 +12,7 @@
 AWOGBaseIdleMagic::AWOGBaseIdleMagic()
 {
 	PrimaryActorTick.bCanEverTick = false;
-	SetReplicates(true);
+	bReplicates = true;
 	bNetLoadOnClient = false;
 
 	SceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));

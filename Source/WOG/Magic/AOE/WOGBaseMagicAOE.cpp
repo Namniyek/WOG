@@ -14,7 +14,7 @@ AWOGBaseMagicAOE::AWOGBaseMagicAOE()
 {
 	PrimaryActorTick.bCanEverTick = false;
 	InitialLifeSpan = 3.f;
-	SetReplicates(true);
+	bReplicates = true;
 	bNetLoadOnClient = false;
 	InitDelay = 1.f;
 

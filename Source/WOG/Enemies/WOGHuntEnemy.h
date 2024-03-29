@@ -10,6 +10,7 @@
  * 
  */
 class USphereComponent;
+class AWOGBaseMagicProjectile;
 
 UCLASS()
 class WOG_API AWOGHuntEnemy : public AWOGBaseEnemy
@@ -102,4 +103,10 @@ public:
 	TObjectPtr<AActor> IdleSpotLocation;
 
 	void MergeAttackTagMaps();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnPlayerEnteredAgroSphere(AActor* NewPLayer);
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnPlayerExitedAgroSphere(AActor* LeavingPLayer);
 };

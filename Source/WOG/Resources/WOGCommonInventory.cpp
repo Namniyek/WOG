@@ -7,7 +7,7 @@
 AWOGCommonInventory::AWOGCommonInventory()
 {
 	PrimaryActorTick.bCanEverTick = false;
-	SetReplicates(true);
+	bReplicates = true;
 
 	Inventory = CreateDefaultSubobject<UAGR_InventoryManager>(TEXT("Inventory"));
 }

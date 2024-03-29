@@ -8,7 +8,7 @@
 
 UWOGEnemyOrderComponent::UWOGEnemyOrderComponent()
 {
-	SetIsReplicated(true);
+	SetIsReplicatedByDefault(true);
 
 	MaxAmountSquads = 3;
 }

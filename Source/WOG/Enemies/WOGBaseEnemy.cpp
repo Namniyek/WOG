@@ -22,6 +22,8 @@
 #include "NiagaraFunctionLibrary.h"
 #include "Sound/SoundCue.h"
 #include "Libraries/WOGBlueprintLibrary.h"
+#include "Magic/Projectile/WOGBaseMagicProjectile.h"
+#include "GameFramework/ProjectileMovementComponent.h"
 
 AWOGBaseEnemy::AWOGBaseEnemy()
 {
@@ -661,5 +663,44 @@ void AWOGBaseEnemy::ElimTimerFinished()
 {
 	Multicast_Elim(false);
 	Destroy();
+}
+
+void AWOGBaseEnemy::Multicast_SpawnProjectile_Implementation(const FMagicDataTable& MagicData, const FName& SpawnSocket, const FRotator& SpawnRotation, bool bIsHoming)
+{
+	SpawnProjectile(MagicData, SpawnSocket, SpawnRotation, bIsHoming);
+}
+
+void AWOGBaseEnemy::SpawnProjectile(const FMagicDataTable& MagicData, const FName& SpawnSocket, const FRotator& SpawnRotation, bool bIsHoming)
+{
+	if (!IsValid(MagicData.ProjectileClass)) return;
+
+	FTransform SpawnTransform;
+	SpawnTransform.SetLocation(GetMesh()->GetSocketLocation(SpawnSocket));
+
+	AActor* CurrentTarget = ISpawnInterface::Execute_GetSquadCurrentTargetActor(this);
+	SpawnTransform.SetRotation(SpawnRotation.Quaternion());
+	SpawnTransform.SetScale3D(FVector(1.f));
+
+
+	TObjectPtr<AWOGBaseMagicProjectile> Projectile = GetWorld()->SpawnActorDeferred<AWOGBaseMagicProjectile>(
+		MagicData.ProjectileClass,
+		SpawnTransform,
+		this,
+		this,
+		ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn);
+
+	if (Projectile)
+	{
+		Projectile->SetMagicData(MagicData);
+		
+		if (bIsHoming)
+		{
+			Projectile->Target = CurrentTarget;
+			Projectile->GetProjectileMovementComponent()->HomingTargetComponent = CurrentTarget->GetRootComponent();
+		}
+
+		Projectile->GetProjectileMovementComponent()->bIsHomingProjectile = bIsHoming;
+		Projectile->FinishSpawning(SpawnTransform);
+	}
 }
 
