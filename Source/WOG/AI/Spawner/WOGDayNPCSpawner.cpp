@@ -13,6 +13,7 @@ AWOGDayNPCSpawner::AWOGDayNPCSpawner()
 	PrimaryActorTick.bCanEverTick = false;
 	bIsSpawnerActive = true;
 
+	CurrentTOD = ETimeOfDay::TOD_Start;
 }
 
 void AWOGDayNPCSpawner::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

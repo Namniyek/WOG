@@ -2,27 +2,23 @@
 
 
 #include "WOGSpawnComponent.h"
-#include "WOG.h"
-#include "WOG/PlayerCharacter/WOGAttacker.h"
-#include "Engine/World.h"
-#include "Engine/EngineTypes.h"
-#include "Camera/CameraComponent.h"
-#include "WOG/Weapons/WOGBaseWeapon.h"
-#include "Kismet/KismetSystemLibrary.h"
-#include "Components/BoxComponent.h"
-#include "TimerManager.h"
-#include "WOG/Enemies/WOGBaseEnemy.h"
-#include "WOG/Interfaces/AttributesInterface.h"
-#include "EnhancedInputSubsystems.h"
-#include "Data/AGRLibrary.h"
-#include "Components/AGR_EquipmentManager.h"
-#include "AI/Combat/WOGBaseSquad.h"
-#include "Components/BillboardComponent.h"
-#include "ActorComponents/WOGEnemyOrderComponent.h"
-#include "Resources/WOGCommonInventory.h"
-#include "Net/UnrealNetwork.h"
 #include "AbilitySystemBlueprintLibrary.h"
+#include "EnhancedInputSubsystems.h"
 #include "TargetSystemComponent.h"
+#include "TimerManager.h"
+#include "WOG.h"
+#include "ActorComponents/WOGEnemyOrderComponent.h"
+#include "AI/Combat/WOGBaseSquad.h"
+#include "Camera/CameraComponent.h"
+#include "Components/AGR_EquipmentManager.h"
+#include "Data/AGRLibrary.h"
+#include "Engine/EngineTypes.h"
+#include "Engine/World.h"
+#include "Kismet/KismetSystemLibrary.h"
+#include "Net/UnrealNetwork.h"
+#include "Resources/WOGCommonInventory.h"
+#include "WOG/Enemies/WOGBaseEnemy.h"
+#include "WOG/PlayerCharacter/WOGAttacker.h"
 
 UWOGSpawnComponent::UWOGSpawnComponent()
 {
@@ -499,16 +495,16 @@ void UWOGSpawnComponent::DeductCost()
 	UE_LOG(LogTemp, Display, TEXT("%s"), *Note.ToString());
 }
 
-void UWOGSpawnComponent::PlaceSpawn()
+void UWOGSpawnComponent::PlaceSpawn() const
 {
 	if (bCanSpawn && bIsSpawnModeOn)
 	{
-		FGameplayEventData Payload;
+		const FGameplayEventData Payload;
 		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(GetOwner(), TAG_Event_Summon, Payload);
 	}
 }
 
-void UWOGSpawnComponent::HandleSpawnRotation(bool bRotateLeft)
+void UWOGSpawnComponent::HandleSpawnRotation(const bool bRotateLeft)
 {
 	if (!bIsSpawnModeOn || !SpawnGhost->GetStaticMesh()) return;
 

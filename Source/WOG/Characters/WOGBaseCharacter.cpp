@@ -25,13 +25,11 @@
 #include "Subsystems/WOGUIManagerSubsystem.h"
 #include "Resources/WOGCommonInventory.h"
 #include "Subsystems/WOGWorldSubsystem.h"
-#include "TargetSystemComponent.h"
 #include "Libraries/WOGBlueprintLibrary.h"
 #include "AI/Combat/WOGBaseSquad.h"
 #include "Components/StaticMeshComponent.h"
 #include "Data/AGRLibrary.h"
 #include "EnhancedInputSubsystems.h"
-#include "EnhancedInputComponent.h"
 #include "Enemies/WOGHuntEnemy.h"
 
 AWOGBaseCharacter::AWOGBaseCharacter()
@@ -109,7 +107,7 @@ void AWOGBaseCharacter::ReplicatedOnPossessEvent()
 	SetupMappingContext();
 }
 
-void AWOGBaseCharacter::SetupMappingContext()
+void AWOGBaseCharacter::SetupMappingContext() const
 {
 	if (!OwnerPC || !MainMappingContext) return;
 
@@ -145,7 +143,7 @@ void AWOGBaseCharacter::BeginPlay()
 	}
 }
 
-void AWOGBaseCharacter::SendAbilityLocalInput(const EWOGAbilityInputID InInputID)
+void AWOGBaseCharacter::SendAbilityLocalInput(const EWOGAbilityInputID InInputID) const
 {
 	if (!AbilitySystemComponent.Get())
 	{
@@ -210,7 +208,7 @@ void AWOGBaseCharacter::GrantDefaultInventoryItems()
 	}
 }
 
-bool AWOGBaseCharacter::ApplyGameplayEffectToSelf(TSubclassOf<UGameplayEffect> Effect, FGameplayEffectContextHandle InEffectContext, float Duration)
+bool AWOGBaseCharacter::ApplyGameplayEffectToSelf(TSubclassOf<UGameplayEffect> Effect, const FGameplayEffectContextHandle& InEffectContext, float Duration) const
 {
 	if (!Effect.Get()) return false;
 
@@ -381,7 +379,7 @@ void AWOGBaseCharacter::SetCharacterFrozen_Implementation(bool bIsFrozen)
 	if (bIsFrozen)
 	{
 		//Character is freezing
-		//Pause animations and stop movemement
+		//Pause animations and stop movement
 		if (GetMesh())
 		{
 			GetMesh()->bPauseAnims = true;
@@ -397,7 +395,7 @@ void AWOGBaseCharacter::SetCharacterFrozen_Implementation(bool bIsFrozen)
 		TObjectPtr<ABasePlayerCharacter> PlayerCharacter = Cast<ABasePlayerCharacter>(this);
 		if (PlayerCharacter && PlayerCharacter->GetMesh())
 		{
-			int32 MatNum = PlayerCharacter->GetMesh()->GetSkeletalMeshAsset()->GetNumMaterials();
+			const int32 MatNum = PlayerCharacter->GetMesh()->GetSkeletalMeshAsset()->GetNumMaterials();
 			for (int32 i = 0; i < MatNum; i++)
 			{
 				PlayerCharacter->GetMesh()->SetMaterial(i, PlayerCharacter->CharacterMI);
@@ -436,12 +434,12 @@ void AWOGBaseCharacter::ToggleStrafeMovement(bool bIsStrafe)
 	}
 }
 
-bool AWOGBaseCharacter::IsHitFrontal(const float& AngleTolerance, const AActor* Victim, const FVector& Location, const AActor* Agressor)
+bool AWOGBaseCharacter::IsHitFrontal(const float& AngleTolerance, const AActor* Victim, const FVector& Location, const AActor* Aggressor) const
 {
-	//We check first if the Agressor actor is valid.
+	//We check first if the Aggressor actor is valid.
 	//If it is we use it, if it's not, we use the vector param.
-	FRotator LookAtRotation = Agressor != nullptr ?
-		UKismetMathLibrary::FindLookAtRotation(Victim->GetActorLocation(), Agressor->GetActorLocation()) :
+	FRotator LookAtRotation = Aggressor != nullptr ?
+		UKismetMathLibrary::FindLookAtRotation(Victim->GetActorLocation(), Aggressor->GetActorLocation()) :
 		UKismetMathLibrary::FindLookAtRotation(Victim->GetActorLocation(), Location);
 
 	FRotator DeltaRotator = UKismetMathLibrary::NormalizedDeltaRotator(GetActorRotation(), LookAtRotation);
@@ -495,7 +493,7 @@ FName AWOGBaseCharacter::CalculateHitDirection(const FVector& WeaponLocation)
 bool AWOGBaseCharacter::IsTargetable_Implementation(AActor* TargeterActor) const
 {
 	//For characters, check if the targeter is attacker and then return true if targeter and the target are not the same
-	bool bIsTargeterAttacker = UWOGBlueprintLibrary::GetCharacterData(TargeterActor).bIsAttacker;
+	const bool bIsTargeterAttacker = UWOGBlueprintLibrary::GetCharacterData(TargeterActor).bIsAttacker;
 	return bIsTargeterAttacker != GetCharacterData().bIsAttacker; 
 }
 
@@ -575,7 +573,7 @@ void AWOGBaseCharacter::ToAnimationThirdStage()
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 }
 
-void AWOGBaseCharacter::ToAnimationFinal()
+void AWOGBaseCharacter::ToAnimationFinal() const
 {
 	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking, 0);
 }
@@ -588,12 +586,12 @@ void AWOGBaseCharacter::FindCharacterOrientation()
 	bIsLayingOnBack = RotationRightVector.Z < 0.f;
 }
 
-void AWOGBaseCharacter::SetCapsuleOrientation()
+void AWOGBaseCharacter::SetCapsuleOrientation() const
 {
-	FVector NeckLocation = GetMesh()->GetSocketLocation(FName("neck_01"));
-	FVector PelvisLocation = GetMesh()->GetSocketLocation(FName("Pelvis"));
+	const FVector NeckLocation = GetMesh()->GetSocketLocation(FName("neck_01"));
+	const FVector PelvisLocation = GetMesh()->GetSocketLocation(FName("Pelvis"));
 
-	FVector Orientation = bIsLayingOnBack ? ((NeckLocation-PelvisLocation) * -1) : (NeckLocation - PelvisLocation);
+	const FVector Orientation = bIsLayingOnBack ? ((NeckLocation-PelvisLocation) * -1) : (NeckLocation - PelvisLocation);
 
 	FRotator NewRotation = UKismetMathLibrary::MakeRotFromXZ(Orientation, FVector::UpVector);
 }
@@ -683,7 +681,7 @@ void AWOGBaseCharacter::StartDissolve(bool bIsReversed)
 	}
 }
 
-void AWOGBaseCharacter::SetCapsulePawnCollision(const bool& bEnable)
+void AWOGBaseCharacter::SetCapsulePawnCollision(const bool& bEnable) const
 {
 	if (!GetCapsuleComponent()) return;
 

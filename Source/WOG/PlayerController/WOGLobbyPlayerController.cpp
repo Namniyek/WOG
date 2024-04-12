@@ -14,6 +14,11 @@ AWOGLobbyPlayerController::AWOGLobbyPlayerController()
 {
 	bReplicates = true;
 	bAlwaysRelevant = true;
+	
+	bIsAttacker = false;
+	bIsPlayerReady = false;
+	LobbyAvatar = nullptr;
+	LobbyPlayerSpot = nullptr;
 }
 
 void AWOGLobbyPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

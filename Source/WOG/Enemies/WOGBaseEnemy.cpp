@@ -83,6 +83,11 @@ void AWOGBaseEnemy::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLif
 	DOREPLIFETIME(AWOGBaseEnemy, CosmeticsDataAsset);
 }
 
+float AWOGBaseEnemy::DoStuff_Implementation_Implementation(const float& NewParam) const
+{
+	return 0.f;
+}
+
 void AWOGBaseEnemy::BeginPlay()
 {
 	Super::BeginPlay();
@@ -210,13 +215,13 @@ void AWOGBaseEnemy::ProcessMagicHit(const FHitResult& Hit, const FMagicDataTable
 	}
 }
 
-void AWOGBaseEnemy::BroadcastHit_Implementation(AActor* AgressorActor, const FHitResult& Hit, const float& DamageToApply, AActor* InstigatorWeapon)
+void AWOGBaseEnemy::BroadcastHit_Implementation(AActor* AggressorActor, const FHitResult& Hit, const float& DamageToApply, AActor* InstigatorWeapon)
 {
 	if (HasMatchingGameplayTag(TAG_State_Dead)) return;
 	if (HasMatchingGameplayTag(TAG_State_Minion_Dodging)) return;
 	if (!AbilitySystemComponent.Get()) return;
 
-	AWOGBaseCharacter* AgressorCharacter = Cast<AWOGBaseCharacter>(AgressorActor);
+	AWOGBaseCharacter* AgressorCharacter = Cast<AWOGBaseCharacter>(AggressorActor);
 	AWOGBaseWeapon* AgressorWeapon = Cast<AWOGBaseWeapon>(InstigatorWeapon);
 
 	if (!AgressorCharacter)
@@ -286,7 +291,7 @@ void AWOGBaseEnemy::BroadcastHit_Implementation(AActor* AgressorActor, const FHi
 	}
 
 	//Handle blocked hits for victim and agressor
-	if (HasMatchingGameplayTag(TAG_State_Minion_Blocking) && IsHitFrontal(60.f, this, FVector::Zero(), AgressorActor))
+	if (HasMatchingGameplayTag(TAG_State_Minion_Blocking) && IsHitFrontal(60.f, this, FVector::Zero(), AggressorActor))
 	{
 		if (AgressorCharacter->HasMatchingGameplayTag(TAG_State_Weapon_AttackHeavy))
 		{

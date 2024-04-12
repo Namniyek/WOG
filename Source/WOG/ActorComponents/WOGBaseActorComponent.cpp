@@ -7,7 +7,7 @@
 UWOGBaseActorComponent::UWOGBaseActorComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
-
+	OwnerPC = nullptr;
 }
 
 void UWOGBaseActorComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

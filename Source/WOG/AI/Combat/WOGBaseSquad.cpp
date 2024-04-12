@@ -89,7 +89,6 @@ void AWOGBaseSquad::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLif
 	DOREPLIFETIME(AWOGBaseSquad, SquadSlots);
 	DOREPLIFETIME(AWOGBaseSquad, CurrentTargetLocation);
 	DOREPLIFETIME(AWOGBaseSquad, CurrentTargetActor);
-	DOREPLIFETIME(AWOGBaseSquad, TargetActorsArray);
 	DOREPLIFETIME(AWOGBaseSquad, SquadType);
 	DOREPLIFETIME(AWOGBaseSquad, SquadName);
 	DOREPLIFETIME(AWOGBaseSquad, SquadIcon);
@@ -100,7 +99,7 @@ void AWOGBaseSquad::BeginPlay()
 	Super::BeginPlay();
 }
 
-void AWOGBaseSquad::SendOrder(const EEnemyOrder& NewOrder, const FTransform& TargetTansform, AActor* TargetActor)
+void AWOGBaseSquad::SendOrder(const EEnemyOrder& NewOrder, const FTransform& TargetTransform, AActor* TargetActor)
 {
 	/*
 	*
@@ -136,7 +135,7 @@ void AWOGBaseSquad::SendOrder(const EEnemyOrder& NewOrder, const FTransform& Tar
 		*/
 
 		DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-		SetActorTransform(TargetTansform);
+		SetActorTransform(TargetTransform);
 		SetEnemyStateOnSquad(EEnemyState::EES_AtSquadSlot);
 		SetCurrentTargetActor(nullptr);
 
@@ -316,7 +315,7 @@ void AWOGBaseSquad::SendOrder(const EEnemyOrder& NewOrder, const FTransform& Tar
 	}
 }
 
-void AWOGBaseSquad::ReleasePreviousSquad()
+void AWOGBaseSquad::ReleasePreviousSquad() const
 {
 	if (CurrentTargetActor && CurrentTargetActor->GetClass()->ImplementsInterface(UTargetInterface::StaticClass()))
 	{
@@ -395,7 +394,7 @@ AActor* AWOGBaseSquad::FindRandomTarget()
 	return ClosestTarget;
 }
 
-AActor* AWOGBaseSquad::GetClosestActor(TArray<AActor*> InArray)
+AActor* AWOGBaseSquad::GetClosestActor(TArray<AActor*> InArray) const
 {
 	AActor* ClosestActor = nullptr;
 	float ClosestDistance = 1000000000.f;
@@ -465,22 +464,6 @@ void AWOGBaseSquad::SetCurrentTargetActor(AActor* NewTarget)
 		CurrentTargetActor = NewTarget;
 		return;
 	}
-}
-
-void AWOGBaseSquad::AddTargetActor(AActor* NewTarget)
-{
-	if (!GetOwner() || !GetOwner()->HasAuthority() || !NewTarget) return;
-	if (TargetActorsArray.Contains(NewTarget)) return;
-
-	TargetActorsArray.Add(NewTarget);
-}
-
-void AWOGBaseSquad::RemoveTargetActor(AActor* ActorToRemove)
-{
-	if (!GetOwner() || !GetOwner()->HasAuthority() || !ActorToRemove) return;
-	if (!TargetActorsArray.Contains(ActorToRemove)) return;
-
-	TargetActorsArray.Remove(ActorToRemove);
 }
 
 void AWOGBaseSquad::SetCurrentTargetLocation(const FVector_NetQuantize& NewTarget)

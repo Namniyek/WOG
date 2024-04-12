@@ -2,8 +2,6 @@
 
 
 #include "WOGAnimNotifyAttackSwing.h"
-#include "WOG.h"
-#include "WOG/PlayerCharacter/BasePlayerCharacter.h"
 #include "Characters//WOGBaseCharacter.h"
 #include "WOG/Weapons/WOGBaseWeapon.h"
 #include "Kismet/GameplayStatics.h"
@@ -11,7 +9,6 @@
 #include "Libraries/WOGBlueprintLibrary.h"
 #include "Data/AGRLibrary.h"
 #include "AbilitySystemComponent.h"
-#include "Data/WOGGameplayTags.h"
 #include "GameplayEffect.h"
 
 void UWOGAnimNotifyAttackSwing::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, float TotalDuration, const FAnimNotifyEventReference& EventReference)

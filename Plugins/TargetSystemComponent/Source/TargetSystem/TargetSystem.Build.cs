@@ -1,8 +1,10 @@
 // Copyright 2018-2019 Mickael Daniel. All Rights Reserved.
 
+using System.Diagnostics.CodeAnalysis;
 using UnrealBuildTool;
 using System.IO;
 
+[SuppressMessage("ReSharper", "InconsistentNaming")]
 public class TargetSystem : ModuleRules
 {
 	public TargetSystem(ReadOnlyTargetRules Target) : base(Target)

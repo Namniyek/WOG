@@ -3,17 +3,16 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Character.h"
-#include "Types/CharacterTypes.h"
-#include "Data/WOGDataTypes.h"
-#include "Interfaces/AttributesInterface.h"
-#include "Abilities/GameplayAbility.h"
 #include "AbilitySystemInterface.h"
+#include "Abilities/GameplayAbility.h"
+#include "Components/TimelineComponent.h"
 #include "Data/AGRLibrary.h"
+#include "Data/WOGDataTypes.h"
+#include "GameFramework/Character.h"
+#include "Interfaces/AttributesInterface.h"
 #include "Interfaces/TargetInterface.h"
 #include "Kismet/KismetMathLibrary.h"
-#include "Blueprint/UserWidget.h"
-#include "Components/TimelineComponent.h"
+#include "Types/CharacterTypes.h"
 #include "WOGBaseCharacter.generated.h"
 
 class UWOGAbilitySystemComponent;
@@ -60,7 +59,7 @@ protected:
 
 	#pragma region GAS functions
 public:
-	bool ApplyGameplayEffectToSelf(TSubclassOf<UGameplayEffect> Effect, FGameplayEffectContextHandle InEffectContext, float Duration = 1.f);
+	bool ApplyGameplayEffectToSelf(TSubclassOf<UGameplayEffect> Effect, const FGameplayEffectContextHandle& InEffectContext, float Duration = 1.f) const;
 
 	void GiveDefaultAbilities();
 	void ApplyDefaultEffects();
@@ -70,7 +69,7 @@ public:
 	bool HasMatchingGameplayTag(FGameplayTag TagToCheck) const;
 
 	UFUNCTION(BlueprintPure)
-	UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
 	UPROPERTY(BlueprintAssignable)
 	FOnAttributeChangedDelegate OnAttributeChangedDelegate;
@@ -80,7 +79,7 @@ public:
 	FGameplayEventData AbilityActivationPayload;
 
 protected:
-	void SendAbilityLocalInput(const EWOGAbilityInputID InInputID);
+	void SendAbilityLocalInput(const EWOGAbilityInputID InInputID) const;
 	virtual void OnHealthAttributeChanged(const FOnAttributeChangeData& Data);
 	void GiveDeathResources(AActor* InActor);
 	virtual void OnStaminaAttributeChanged(const FOnAttributeChangeData& Data);
@@ -135,7 +134,7 @@ protected:
 	void Multicast_OnPossessed();
 
 	virtual void ReplicatedOnPossessEvent();
-	void SetupMappingContext();
+	void SetupMappingContext() const;
 	#pragma endregion
 
 	#pragma region Actor Components
@@ -162,7 +161,7 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	virtual void HandleStateElimmed(AController* InstigatedBy = nullptr) { /*TO-BE OVERRIDEN IN CHILDREN*/ };
 
-	void SetCapsulePawnCollision(const bool& bEnable);
+	void SetCapsulePawnCollision(const bool& bEnable) const;
 
 	#pragma endregion
 
@@ -186,10 +185,10 @@ protected:
 	void ToAnimationThirdStage();
 
 	UFUNCTION(BlueprintCallable)
-	void ToAnimationFinal();
+	void ToAnimationFinal() const;
 
 	void FindCharacterOrientation();
-	void SetCapsuleOrientation();
+	void SetCapsuleOrientation() const;
 	void UpdateCapsuleLocation();
 
 	void InitPhysics();
@@ -244,13 +243,13 @@ protected:
 	#pragma region Cosmetic Hits
 	/*
 	**Calculate if the hit is frontal
-	**Will check Agressor param first, and if not valid will fallback to vector
+	**Will check Aggressor param first, and if not valid will fall back to vector
 	*/
 	UFUNCTION(BlueprintPure)
-	bool IsHitFrontal(const float& AngleTolerance, const AActor* Victim, const FVector& Location, const AActor* Agressor = nullptr);
+	bool IsHitFrontal(const float& AngleTolerance, const AActor* Victim, const FVector& Location, const AActor* Aggressor = nullptr) const;
 
 	/*
-	**Calcualate Hit direction. Returns name of the direction
+	**Calculate Hit direction. Returns name of the direction
 	*/
 	UFUNCTION(BlueprintPure)
 	FName CalculateHitDirection(const FVector& WeaponLocation);
@@ -262,8 +261,8 @@ protected:
 
 	#pragma region Interface Functions
 
-	bool IsTargetable_Implementation(AActor* TargeterActor) const;
-	bool CanBePossessed_Implementation() const;
+	virtual bool IsTargetable_Implementation(AActor* TargeterActor) const override;
+	virtual bool CanBePossessed_Implementation() const override;
 
 	#pragma endregion
 
@@ -281,7 +280,7 @@ public:
 
 	FORCEINLINE void SetOwnerPC(AWOGPlayerController* NewPC) { OwnerPC = NewPC; }
 	UFUNCTION(BlueprintPure)
-	FORCEINLINE AWOGPlayerController* GetOwnerPC() { return OwnerPC; }
+	FORCEINLINE AWOGPlayerController* GetOwnerPC() const { return OwnerPC; }
 
 	#pragma region Handle Combat
 	virtual void ProcessHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh) {/*To be overriden in children*/ };

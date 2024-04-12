@@ -6,6 +6,7 @@
 #include "GameFramework/GameMode.h"
 #include "WOGGameMode.generated.h"
 
+class ABasePlayerCharacter;
 /**
  * 
  */

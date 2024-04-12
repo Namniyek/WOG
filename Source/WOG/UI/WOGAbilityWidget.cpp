@@ -4,7 +4,6 @@
 #include "UI/WOGAbilityWidget.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
-#include "Animation/WidgetAnimation.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Internationalization/Text.h"

@@ -22,9 +22,12 @@ public:
 	AWOGBaseEnemy();
 	virtual void OnConstruction(const FTransform& Transform) override;
 
-	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 protected:
+	UFUNCTION(BlueprintNativeEvent)
+	float DoStuff_Implementation(const float& NewParam) const;
+	
 	virtual void BeginPlay() override;
 
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly)
@@ -105,7 +108,7 @@ protected:
 	virtual void ProcessHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh) override;
 	virtual void ProcessMagicHit(const FHitResult& Hit, const struct FMagicDataTable& MagicData) override;
 
-	virtual void BroadcastHit_Implementation(AActor* AgressorActor, const FHitResult& Hit, const float& DamageToApply, AActor* InstigatorWeapon);
+	virtual void BroadcastHit_Implementation(AActor* AggressorActor, const FHitResult& Hit, const float& DamageToApply, AActor* InstigatorWeapon) override;
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnCharacterElimEvent();
@@ -132,6 +135,11 @@ protected:
 	virtual void Destroyed() override;
 	#pragma endregion
 
+	#pragma region
+	
+	#pragma endregion 
+	
+
 	UPROPERTY(Replicated, VisibleAnywhere)
 	EEnemyState CurrentEnemyState;
 
@@ -140,22 +148,22 @@ protected:
 
 	#pragma region Interface functions
 
-	AWOGBaseSquad* GetEnemyOwnerSquad_Implementation();
-	int32 GetEnemySquadUnitIndex_Implementation();
-	AActor* GetSquadCurrentTargetActor_Implementation();
+	virtual AWOGBaseSquad* GetEnemyOwnerSquad_Implementation() override;
+	virtual int32 GetEnemySquadUnitIndex_Implementation() override;
+	virtual AActor* GetSquadCurrentTargetActor_Implementation() override;
 
-	float GetAttackRangeValue_Implementation();
-	float GetDefendRangeValue_Implementation();
-	int32 GetComboIndex_Implementation();
-	void DefineComboIndex_Implementation();
-	FGameplayTag GetAttackData_Implementation(int32& TokensNeeded);
-	FGameplayTag GetRangedAttackData_Implementation(int32& TokensNeeded);
-	FGameplayTag GetCloseAttackData_Implementation(int32& TokensNeeded);
-	FGameplayTag GetAttackDataAtIndex_Implementation(const int32& Index, int32& TokensNeeded);
+	virtual float GetAttackRangeValue_Implementation() override;
+	virtual float GetDefendRangeValue_Implementation() override;
+	virtual int32 GetComboIndex_Implementation() override;
+	virtual void DefineComboIndex_Implementation() override;
+	virtual FGameplayTag GetAttackData_Implementation(int32& TokensNeeded) override;
+	virtual FGameplayTag GetRangedAttackData_Implementation(int32& TokensNeeded) override;
+	virtual FGameplayTag GetCloseAttackData_Implementation(int32& TokensNeeded) override;
+	virtual FGameplayTag GetAttackDataAtIndex_Implementation(const int32& Index, int32& TokensNeeded) override;
 	int32 GetAttackIndex_Implementation();
-	void DefineAttackTagIndex_Implementation();
-	void IncreaseComboIndex_Implementation();
-	void ResetComboIndex_Implementation();
+	virtual void DefineAttackTagIndex_Implementation() override;
+	virtual void IncreaseComboIndex_Implementation() override;
+	virtual void ResetComboIndex_Implementation() override;
 
 	#pragma endregion
 

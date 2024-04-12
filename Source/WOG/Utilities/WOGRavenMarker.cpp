@@ -8,7 +8,6 @@
 #include "PlayerCharacter/WOGAttacker.h"
 #include "Enemies/WOGRaven.h"
 #include "Kismet/GameplayStatics.h"
-#include "NiagaraSystem.h"
 #include "Interfaces/SpawnInterface.h"
 #include "NiagaraFunctionLibrary.h"
 #include "UI/WOGRavenMarkerWidget.h"
@@ -97,8 +96,7 @@ void AWOGRavenMarker::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, 
 
 		if (RavenOwner->SpawnedMarkers.Contains(this))
 		{
-			int32 AmountRemoved = RavenOwner->SpawnedMarkers.Remove(this);
-
+			RavenOwner->SpawnedMarkers.Remove(this);
 			Destroy();
 		}
 	}

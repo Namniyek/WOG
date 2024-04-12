@@ -9,12 +9,10 @@
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystem/Abilities/WOGGameplayAbilityBase.h"
 #include "AbilitySystemComponent.h"
-#include "GameplayTags.h"
 #include "PlayerController/WOGPlayerController.h"
 #include "ActorComponents/WOGUIManagerComponent.h"
 #include "Libraries/WOGBlueprintLibrary.h"
 #include "Data/WOGGameplayTags.h"
-#include "Kismet/KismetSystemLibrary.h"
 
 
 AWOGBaseConsumable::AWOGBaseConsumable()
@@ -78,7 +76,7 @@ void AWOGBaseConsumable::InitData()
 	}
 }
 
-void AWOGBaseConsumable::UpdateVendorData(FConsumableDataTable* Row)
+void AWOGBaseConsumable::UpdateVendorData(const FConsumableDataTable* Row)
 {
 	if (Row)
 	{

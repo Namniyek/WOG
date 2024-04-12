@@ -3,7 +3,6 @@
 
 #include "WOGProjectileAbility.h"
 #include "WOG/PlayerCharacter/BasePlayerCharacter.h"
-#include "WOG/PlayerController/WOGPlayerController.h"
 #include "Blueprint/UserWidget.h"
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraComponent.h"

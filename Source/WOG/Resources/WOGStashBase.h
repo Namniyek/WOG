@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "GameplayTags.h"
-#include "Types/CharacterTypes.h"
 #include "Interfaces/InventoryInterface.h"
 #include "WOGStashBase.generated.h"
 
@@ -97,7 +96,7 @@ private:
 
 	#pragma region TOD
 	UFUNCTION()
-	void TimeOfDayChanged(ETimeOfDay TOD);
+	void TimeOfDayChanged(const ETimeOfDay TOD);
 
 	UFUNCTION()
 	void OnKeyTimeHit(int32 CurrentTime);

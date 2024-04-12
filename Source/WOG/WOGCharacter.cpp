@@ -58,9 +58,6 @@ void AWOGCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInput
 {
 	// Set up gameplay key bindings
 	check(PlayerInputComponent);
-	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
-	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
-
 	PlayerInputComponent->BindAxis("Move Forward / Backward", this, &AWOGCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("Move Right / Left", this, &AWOGCharacter::MoveRight);
 

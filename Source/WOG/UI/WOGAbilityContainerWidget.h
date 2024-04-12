@@ -42,6 +42,6 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UOverlay> OverlayInputButton4;
 
-	void AddChildAbility(const int32& AbilityID, UWOGAbilityWidget* WidgetToAdd);
-	void RemoveChildAbility(const int32& AbilityID);
+	void AddChildAbility(const int32& AbilityID, UWOGAbilityWidget* WidgetToAdd) const;
+	void RemoveChildAbility(const int32& AbilityID) const;
 };

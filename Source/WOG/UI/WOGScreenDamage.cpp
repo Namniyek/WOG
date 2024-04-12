@@ -16,5 +16,7 @@ void UWOGScreenDamage::SetRadiusValue(const int32& DamageThreshold)
 	case 2:
 		RadiusMin = 0.45f;
 		break;
+	default:
+		break;
 	}
 }

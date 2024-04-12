@@ -15,7 +15,6 @@
 #include "AbilitySystemComponent.h"
 #include "ActorComponents/WOGUIManagerComponent.h"
 #include "Subsystems/WOGUIManagerSubsystem.h"
-#include "Enemies/WOGPossessableEnemy.h"
 
 AWOGPlayerController::AWOGPlayerController()
 {

@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "WOGBaseActorComponent.h"
 #include "Types/CharacterTypes.h"
-#include "Data/WOGDataTypes.h"
 #include "WOGSpawnComponent.generated.h"
 
 class UCameraComponent;
@@ -100,7 +99,7 @@ public:
 	void LaunchSpawnMode();
 
 	UFUNCTION(BlueprintCallable)
-	void PlaceSpawn();
+	void PlaceSpawn() const;
 
 	UFUNCTION(BlueprintCallable)
 	void HandleSpawnRotation(bool bRotateLeft);

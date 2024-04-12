@@ -6,7 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "WOGUIManagerComponent.generated.h"
 
-
+struct FGameplayTag;
 class UWOGUIManagerSubsystem;
 class AWOGHuntEnemy;
 

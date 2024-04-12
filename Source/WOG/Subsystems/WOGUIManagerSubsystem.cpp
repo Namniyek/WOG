@@ -498,7 +498,7 @@ void UWOGUIManagerSubsystem::RemoveVendorWidget()
 
 void UWOGUIManagerSubsystem::AddStashWidget(ABasePlayerCharacter* User, AWOGStashBase* Stash)
 {
-	MatchHUD == nullptr ? (TObjectPtr<AWOGMatchHUD>) Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
+	MatchHUD == nullptr ? static_cast<TObjectPtr<AWOGMatchHUD>>(Cast<AWOGMatchHUD>(OwnerPC->GetHUD())) : MatchHUD;
 	if (!MatchHUD || !IsValid(MatchHUD->StashWidgetClass)) return;
 
 	StashWidget = Cast<UWOGStashWidget>(CreateWidget<UUserWidget>(OwnerPC, MatchHUD->StashWidgetClass));

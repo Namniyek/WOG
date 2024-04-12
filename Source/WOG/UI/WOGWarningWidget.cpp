@@ -2,7 +2,6 @@
 
 
 #include "UI/WOGWarningWidget.h"
-#include "Components/TextBlock.h"
 
 //void UWOGWarningWidget::SetWarningText(const FString& Attribute)
 //{

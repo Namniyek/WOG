@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "Animation/AnimNotifies/AnimNotifyState_Trail.h"
-#include "GameplayEffectTypes.h"
 #include "WOGAnimNotifyAttackSwing.generated.h"
 
 /**

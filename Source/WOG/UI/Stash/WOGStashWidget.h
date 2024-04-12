@@ -16,6 +16,7 @@ class WOG_API UWOGStashWidget : public UUserWidget
 	GENERATED_BODY()
 
 private:
+
 	TObjectPtr<AActor> PlayerActor;
 	TObjectPtr<AWOGStashBase> StashActor;
 

@@ -3,9 +3,6 @@
 
 #include "WOGPlayerState.h"
 #include "Net/UnrealNetwork.h"
-#include "Kismet/KismetSystemLibrary.h"
-#include "PlayerCharacter/BasePlayerCharacter.h"
-#include "WOG/ActorComponents/WOGAbilitySystemComponent.h"
 
 AWOGPlayerState::AWOGPlayerState()
 {

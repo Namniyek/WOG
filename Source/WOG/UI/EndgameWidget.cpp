@@ -3,14 +3,12 @@
 
 #include "EndgameWidget.h"
 #include "WOG/GameState/WOGGameState.h"
-#include "WOG/PlayerController/WOGPlayerController.h"
 #include "Components/TextBlock.h"
 
 void UEndgameWidget::NativeOnInitialized()
 {
     Super::NativeOnInitialized();
     SetResults();
-    
 }
 
 FPlayerStats UEndgameWidget::GetPlayerStats()

@@ -6,7 +6,6 @@
 #include "Inventory/WOGBaseInventoryItem.h"
 #include "GameplayTagContainer.h"
 #include "Engine/DataTable.h"
-#include "GameplayAbilitySpec.h"
 #include "Data/WOGDataTypes.h"
 #include "WOGBaseMagic.generated.h"
 

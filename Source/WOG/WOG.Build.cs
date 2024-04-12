@@ -1,7 +1,9 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
+using System.Diagnostics.CodeAnalysis;
 using UnrealBuildTool;
 
+[SuppressMessage("ReSharper", "InconsistentNaming")]
 public class WOG : ModuleRules
 {
 	public WOG(ReadOnlyTargetRules Target) : base(Target)

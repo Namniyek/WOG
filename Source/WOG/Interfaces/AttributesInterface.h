@@ -27,10 +27,10 @@ public:
 	void SetMaxHealth(const float& Value);
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-	void BroadcastHit(AActor* AgressorActor, const FHitResult& Hit, const float& DamageToApply, AActor* InstigatorWeapon);
+	void BroadcastHit(AActor* AggressorActor, const FHitResult& Hit, const float& DamageToApply, AActor* InstigatorWeapon);
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-	void BroadcastMagicHit(AActor* AgressorActor, const FHitResult& Hit, const struct FMagicDataTable& AgressorMagicData);
+	void BroadcastMagicHit(AActor* AggressorActor, const FHitResult& Hit, const struct FMagicDataTable& AggressorMagicData);
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	bool ReserveAttackTokens(const int32& AmountToReserve);

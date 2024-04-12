@@ -1,7 +1,9 @@
 // Copyright Dominik Trautman. Published in 2022. All Rights Reserved.
 
+using System.Diagnostics.CodeAnalysis;
 using UnrealBuildTool;
 
+[SuppressMessage("ReSharper", "InconsistentNaming")]
 public class CPathfinding : ModuleRules
 {
 	public CPathfinding(ReadOnlyTargetRules Target) : base(Target)

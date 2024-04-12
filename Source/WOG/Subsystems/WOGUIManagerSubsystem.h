@@ -6,6 +6,8 @@
 #include "Subsystems/LocalPlayerSubsystem.h"
 #include "WOGUIManagerSubsystem.generated.h"
 
+class ABasePlayerCharacter;
+struct FGameplayTag;
 class UUserWidget;
 class UWOGVendorBaseWidget;
 class UWOGStashWidget;

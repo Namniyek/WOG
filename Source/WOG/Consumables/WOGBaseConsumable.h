@@ -97,7 +97,7 @@ public:
 
 protected:
 	virtual void InitData() override;
-	void UpdateVendorData(FConsumableDataTable* Row);
+	void UpdateVendorData(const FConsumableDataTable* Row);
 
 	#pragma region ActorComponents
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)

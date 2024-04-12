@@ -4,9 +4,8 @@
 #include "UI/WOGAbilityContainerWidget.h"
 #include "UI/WOGAbilityWidget.h"
 #include "Components/Overlay.h"
-#include "WOG.h"
 
-void UWOGAbilityContainerWidget::AddChildAbility(const int32& AbilityID, UWOGAbilityWidget* WidgetToAdd)
+void UWOGAbilityContainerWidget::AddChildAbility(const int32& AbilityID, UWOGAbilityWidget* WidgetToAdd) const
 {
 	if (!WidgetToAdd) return;
 
@@ -28,10 +27,12 @@ void UWOGAbilityContainerWidget::AddChildAbility(const int32& AbilityID, UWOGAbi
 		AbilityContainer_4->AddChild(WidgetToAdd);
 		OverlayInputButton4->SetVisibility(ESlateVisibility::Visible);
 		break;
+	default:
+		break;
 	}
 }
 
-void UWOGAbilityContainerWidget::RemoveChildAbility(const int32& AbilityID)
+void UWOGAbilityContainerWidget::RemoveChildAbility(const int32& AbilityID) const
 {
 	switch (AbilityID)
 	{
@@ -50,6 +51,8 @@ void UWOGAbilityContainerWidget::RemoveChildAbility(const int32& AbilityID)
 	case 4:
 		AbilityContainer_4->ClearChildren();
 		OverlayInputButton4->SetVisibility(ESlateVisibility::Hidden);
+		break;
+	default:
 		break;
 	}
 }

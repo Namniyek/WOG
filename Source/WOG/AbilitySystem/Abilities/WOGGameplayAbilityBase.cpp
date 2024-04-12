@@ -6,7 +6,6 @@
 #include "GameplayTagContainer.h"
 #include "Characters/WOGBaseCharacter.h"
 #include "PlayerCharacter/BasePlayerCharacter.h"
-#include "AbilitySystemLog.h"
 #include "AbilitySystemGlobals.h"
 #include "Data/WOGGameplayTags.h"
 #include "PlayerController/WOGPlayerController.h"

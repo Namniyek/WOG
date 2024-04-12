@@ -34,7 +34,7 @@ protected:
 	FLinearColor StaminaColor;
 	UPROPERTY(EditDefaultsOnly)
 	FLinearColor LowStaminaColor;
-
+	
 	TObjectPtr<UMaterialInstanceDynamic> DynamicProgressBarMaterial;
 
 	void SetPercent();

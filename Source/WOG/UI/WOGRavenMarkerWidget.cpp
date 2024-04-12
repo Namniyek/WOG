@@ -18,5 +18,7 @@ void UWOGRavenMarkerWidget::SetAmountAvailableMarkers_Implementation(const int32
 		break;
 	case 3:
 		AmountAvailableMarkers = 0;
+	default:
+		break;
 	}
 }

@@ -17,7 +17,7 @@ class WOG_API AWOGBaseSquad : public AActor
 public:	
 	friend class UWOGEnemyOrderComponent;
 	AWOGBaseSquad();
-	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 protected:
 	virtual void BeginPlay() override;
@@ -27,9 +27,6 @@ protected:
 
 	UPROPERTY(Replicated, VisibleAnywhere)
 	TObjectPtr<AActor> CurrentTargetActor;
-
-	UPROPERTY(Replicated, VisibleAnywhere)
-	TArray<TObjectPtr<AActor>> TargetActorsArray;
 
 	UPROPERTY(Replicated, BlueprintReadOnly, VisibleAnywhere)
 	FVector_NetQuantize CurrentTargetLocation;
@@ -76,16 +73,16 @@ private:
 	void DeregisterSquad();
 
 	AActor* FindRandomTarget();
-	AActor* GetClosestActor(TArray<AActor*> InArray);
+	AActor* GetClosestActor(TArray<AActor*> InArray) const;
 	
 	UFUNCTION()
 	void OnCurrentTargetDestroyed(AActor* Destroyer);
 
 public:	
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
-	void SendOrder(const EEnemyOrder& NewOrder, const FTransform& TargetTansform = FTransform(), AActor* TargetActor = nullptr);
+	void SendOrder(const EEnemyOrder& NewOrder, const FTransform& TargetTransform = FTransform(), AActor* TargetActor = nullptr);
 
-	void ReleasePreviousSquad();
+	void ReleasePreviousSquad() const;
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
 	FORCEINLINE void SetSquadType(EEnemySquadType& NewType) { SquadType = NewType; };
@@ -107,15 +104,6 @@ public:
 
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE AActor* GetCurrentTargetActor() const { return CurrentTargetActor; }
-
-	UFUNCTION(BlueprintPure)
-	FORCEINLINE TArray<AActor*> GetTargetActorsArray() const { return TargetActorsArray; }
-
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
-	void AddTargetActor(AActor* NewTarget);
-
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
-	void RemoveTargetActor(AActor* ActorToRemove);
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
 	void SetCurrentTargetLocation(const FVector_NetQuantize& NewTarget);

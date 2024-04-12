@@ -155,13 +155,13 @@ void AWOGStashBase::BackFromWidget_Implementation(AActor* Actor)
 	FreeStash();
 }
 
-void AWOGStashBase::SwitchItem_Implementation(bool bToCommon, AActor* ItemToSwitch, AActor* PreviousItem, FGameplayTagContainer AuxTagsContainer, TSubclassOf<AActor> ItemClass, const int32& Amount)
+void AWOGStashBase::SwitchItem_Implementation(const bool bToCommon, AActor* ItemToSwitch, AActor* PreviousItem, const FGameplayTagContainer AuxTagsContainer, const TSubclassOf<AActor> ItemClass, const int32& Amount)
 {
 	if (!PlayerUsingStash) return;
 	PlayerUsingStash->Server_SwitchItem(this, bToCommon, ItemToSwitch, PreviousItem, AuxTagsContainer, ItemClass, Amount);
 }
 
-void AWOGStashBase::SwitchStashedItems(const bool& bToCommon, AActor* ItemToSwitch, AActor* PreviousItem, FGameplayTagContainer AuxTagsContainer, TSubclassOf<AActor> ItemClass, const int32& Amount)
+void AWOGStashBase::SwitchStashedItems(const bool& bToCommon, AActor* ItemToSwitch, AActor* PreviousItem, FGameplayTagContainer AuxTagsContainer, const TSubclassOf<AActor> ItemClass, const int32& Amount)
 {
 	if (!HasAuthority()) return;
 	if (!CommonInventory) return;
@@ -361,7 +361,7 @@ void AWOGStashBase::OnCameraBlendOutFinished()
 	}
 }
 
-void AWOGStashBase::ShowCorrectWidget(bool bIsVendorBusy, ABasePlayerCharacter* OverlappingActor)
+void AWOGStashBase::ShowCorrectWidget(const bool bIsVendorBusy, ABasePlayerCharacter* OverlappingActor)
 {
 	if (!OverlappingActor) return;
 
@@ -399,7 +399,7 @@ void AWOGStashBase::RefreshStashItems()
 
 }
 
-void AWOGStashBase::TimeOfDayChanged(ETimeOfDay TOD)
+void AWOGStashBase::TimeOfDayChanged(const ETimeOfDay TOD)
 {
 	switch (TOD)
 	{
@@ -411,10 +411,12 @@ void AWOGStashBase::TimeOfDayChanged(ETimeOfDay TOD)
 		SetIsBusy(false, nullptr);
 		bIsDay = true;
 		break;
+	default:
+		break;
 	}
 }
 
-void AWOGStashBase::OnKeyTimeHit(int32 CurrentTime)
+void AWOGStashBase::OnKeyTimeHit(const int32 CurrentTime)
 {
 	if (CurrentTime == 1070)
 	{

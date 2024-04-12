@@ -5,7 +5,6 @@
 #include "Engine/NetConnection.h"
 #include "GameFramework/PlayerState.h"
 #include "WOG/PlayerController/WOGPlayerController.h"
-#include "GameFramework/HUD.h"
 #include "GameFramework/GameMode.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
@@ -22,6 +21,8 @@ AWOGGameState::AWOGGameState()
 	CurrentTargetScore = 0;
 	TotalTargetScore = 0;
 	EndGameDelay = 5.f;
+
+	TODActor = nullptr;
 }
 
 void AWOGGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

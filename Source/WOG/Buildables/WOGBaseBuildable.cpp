@@ -10,7 +10,6 @@
 #include "Libraries/WOGBlueprintLibrary.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
-#include "Data/WOGGameplayTags.h"
 #include "WOG.h"
 #include "Data/DataAssets/WOGSpawnCosmetics.h"
 #include "Kismet/GameplayStatics.h"

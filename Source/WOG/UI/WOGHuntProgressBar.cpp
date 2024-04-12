@@ -5,8 +5,6 @@
 #include "Components/ProgressBar.h"
 #include "CommonTextBlock.h"
 #include "Enemies/WOGHuntEnemy.h"
-#include "WOG.h"
-#include "ActorComponents/WOGAbilitySystemComponent.h"
 #include "AbilitySystem/AttributeSets/WOGAttributeSetBase.h"
 
 void UWOGHuntProgressBar::NativeConstruct()

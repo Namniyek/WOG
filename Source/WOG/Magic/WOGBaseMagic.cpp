@@ -7,14 +7,11 @@
 #include "WOG/PlayerCharacter/BasePlayerCharacter.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
-#include "Kismet/KismetMathLibrary.h"
-#include "Sound/SoundCue.h"
 #include "Components/SphereComponent.h"
 #include "Data/AGRLibrary.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "Data/WOGGameplayTags.h"
 #include "Types/CharacterTypes.h"
-#include "GameplayTags.h"
 #include "AbilitySystem/Abilities/WOGGameplayAbilityBase.h"
 #include "AbilitySystemComponent.h"
 #include "Magic/WOGBaseIdleMagic.h"
@@ -112,6 +109,8 @@ void AWOGBaseMagic::SpawnIdleClass()
 		{
 			IdleClass = MagicData.IdleAOEClass;
 		}
+		break;
+	default:
 		break;
 	}
 
@@ -239,6 +238,8 @@ void AWOGBaseMagic::AddAbilityWidget(const int32& Key)
 	case 2:
 		AbilityKey = OwnerCharacter->GetCharacterData().bIsAttacker ? 3 : -1;
 		break;
+	default:
+		break;
 	}
 
 	OwnerCharacter->GetOwnerPC()->GetUIManagerComponent()->Client_AddAbilityWidget(AbilityKey, MagicData.AbilityWidgetClass, MagicData.AbilityIcon, MagicData.Cooldown, MagicData.CooldownTag);
@@ -272,7 +273,7 @@ void AWOGBaseMagic::OnItemEquipped(AActor* User, FName SlotName)
 	{
 		AnimMaster->SetupBasePose(TAG_Pose_Relax);
 
-		bool Success = RemoveGrantedAbilities(User);
+		RemoveGrantedAbilities(User);
 
 		if (IdleActor)
 		{
@@ -632,7 +633,6 @@ void AWOGBaseMagic::GetBeamEndLocation(const FVector& StartLocation, FHitResult&
 
 	//Perform a second trace from character barrel
 	const FVector TraceStart = StartLocation;
-	const FVector StartToEnd = OutBeamLocation - StartLocation;
 	const FVector TraceEnd = OutBeamLocation; // + StartToEnd * 1.25f;
 
 	GetWorld()->LineTraceSingleByChannel(OutHitResult, TraceStart, TraceEnd, ECollisionChannel::ECC_Visibility);

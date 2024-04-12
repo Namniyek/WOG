@@ -1,9 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameplayTags.h"
 #include "GameplayTagContainer.h"
-#include "Data/WOGGameplayTags.h"
 #include "Engine/DataTable.h"
 #include "Data/WOGDataTypes.h"
 #include "Data/DataAssets/WOGSpawnCosmetics.h"

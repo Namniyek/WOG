@@ -1,8 +1,9 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
+using System.Diagnostics.CodeAnalysis;
 using UnrealBuildTool;
-using System.Collections.Generic;
 
+[SuppressMessage("ReSharper", "InconsistentNaming")]
 public class WOGTarget : TargetRules
 {
 	public WOGTarget(TargetInfo Target) : base(Target)
