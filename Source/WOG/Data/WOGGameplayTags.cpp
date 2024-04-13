@@ -185,6 +185,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Cooldown_Input_Magic_Buff, "Cooldown.Input.Magic.Buff
 
 //SetByCallerTag
 UE_DEFINE_GAMEPLAY_TAG(TAG_Data_Cooldown, "Data.Cooldown");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Data_Adrenaline, "Data.Adrenaline");
 
 //Aux tags
 UE_DEFINE_GAMEPLAY_TAG(TAG_Aux_Weapon, "Aux.Weapon");

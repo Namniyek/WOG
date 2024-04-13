@@ -10,7 +10,6 @@
 #include "WOG/FunctionLibrary/MeshMergeFunctionLibrary.h"
 #include "Types/CharacterTypes.h"
 #include "Interfaces/InventoryInterface.h"
-#include "Interfaces/TargetInterface.h"
 #include "BasePlayerCharacter.generated.h"
 
 
@@ -26,7 +25,6 @@ struct FMeshDataTables
 {
 	GENERATED_BODY()
 
-public:
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly)
 	class UDataTable* MaleBody = nullptr;
 
@@ -51,7 +49,6 @@ struct FMaterialColors : public FTableRowBase
 {
 	GENERATED_USTRUCT_BODY()
 
-public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	FLinearColor ColorVector = FLinearColor::Black;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
@@ -63,7 +60,6 @@ struct FCharacterMesh : public FTableRowBase
 {
 	GENERATED_USTRUCT_BODY()
 
-public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mesh")
 	USkeletalMesh* BaseMesh = nullptr;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Mesh")
@@ -134,7 +130,7 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void PossessedBy(AController* NewController) override;
 
-	virtual void PostInitializeComponents();
+	virtual void PostInitializeComponents() override;
 
 	#pragma region Handle Elim
 
@@ -418,7 +414,7 @@ public:
 
 	void HandleWeaponSwitch(bool bStoreWeapons);
 
-	void SendEquipmentToCommonInventory();
+	void SendEquipmentToCommonInventory() const;
 	void RestoreEquipmentFromCommonInventory();
 
 	#pragma endregion
@@ -440,6 +436,9 @@ public:
 
 	#pragma region Handle Combat
 	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setup|Combat")
+	TSubclassOf<UGameplayEffect> DamageEffectForSelf;
+	
 	UFUNCTION()
 	virtual void OnStartAttack();
 	TArray<TObjectPtr<AActor>> HitActorsToIgnore;
@@ -450,14 +449,14 @@ public:
 	UFUNCTION()
 	virtual void OnAttackHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh);
 
-	virtual void BroadcastHit_Implementation(AActor* AgressorActor, const FHitResult& Hit, const float& DamageToApply, AActor* InstigatorWeapon);
-	void HandleHitFromPlayerCharacter(AActor* AgressorActor, const FHitResult& Hit, const float& DamageToApply, AActor* InstigatorWeapon);
-	void HandleHitFromEnemyCharacter(AActor* AgressorActor, const FHitResult& Hit, const float& DamageToApply, AActor* InstigatorWeapon);
-	virtual void BroadcastMagicHit_Implementation(AActor* AgressorActor, const FHitResult& Hit, const struct FMagicDataTable& AgressorMagicData);
-	void SetCurrentEpicSquadSlot_Implementation(AWOGBaseSquad* NewSquad);
-	void FreeCurrentEpicSquadSlot_Implementation();
-	bool IsCurrentEpicSquadSlotAvailable_Implementation() const;
-	AWOGBaseSquad* GetCurrentEpicSquadSlot_Implementation() const;
+	virtual void BroadcastHit_Implementation(AActor* AggressorActor, const FHitResult& Hit, const float& DamageToApply, AActor* InstigatorWeapon) override;
+	void HandleHitFromPlayerCharacter(AActor* AggressorActor, const FHitResult& Hit, const float& DamageToApply, AActor* InstigatorWeapon);
+	void HandleHitFromEnemyCharacter(AActor* AggressorActor, const FHitResult& Hit, const float& DamageToApply, AActor* InstigatorWeapon);
+	virtual void BroadcastMagicHit_Implementation(AActor* AggressorActor, const FHitResult& Hit, const struct FMagicDataTable& AggressorMagicData) override;
+	virtual void SetCurrentEpicSquadSlot_Implementation(AWOGBaseSquad* NewSquad) override;
+	virtual void FreeCurrentEpicSquadSlot_Implementation() override;
+	virtual bool IsCurrentEpicSquadSlotAvailable_Implementation() const override;
+	virtual AWOGBaseSquad* GetCurrentEpicSquadSlot_Implementation() const override;
 
 	virtual void ProcessHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh) override;
 	virtual void ProcessMagicHit(const FHitResult& Hit, const struct FMagicDataTable& MagicData) override;
@@ -475,9 +474,9 @@ public:
 	#pragma endregion
 
 	#pragma region Vendors
-	void BuyItem_Implementation(const TArray<FCostMap>& CostMap, AWOGVendor* VendorActor, TSubclassOf<AActor> ItemClass, const int32& Amount, bool bIsUpgrade, const int32& NewLevel, const FGameplayTag& ItemTag);
+	virtual void BuyItem_Implementation(const TArray<FCostMap>& CostMap, AWOGVendor* VendorActor, TSubclassOf<AActor> ItemClass, const int32& Amount, bool bIsUpgrade, const int32& NewLevel, const FGameplayTag& ItemTag) override;
 
-	void TransactionComplete_Implementation();
+	virtual void TransactionComplete_Implementation() override;
 
 	UFUNCTION(Server, reliable)
 	void Server_BuyItem(const TArray<FCostMap>& CostMap, AWOGVendor* VendorActor, TSubclassOf<AActor> ItemClass, const int32& Amount, bool bIsUpgrade, const int32& NewLevel, const FGameplayTag& ItemTag);
@@ -511,9 +510,9 @@ public:
 
 	#pragma region UI
 	UFUNCTION()
-	void AddHoldProgressBar();
+	void AddHoldProgressBar() const;
 	UFUNCTION()
-	void RemoveHoldProgressBarWidget();
+	void RemoveHoldProgressBarWidget() const;
 
 	UPROPERTY(EditDefaultsOnly)
 	TObjectPtr<UWidgetComponent> StaminaWidgetContainer;
@@ -542,9 +541,9 @@ public:
 	#pragma endregion
 
 	#pragma region Interface functions
-	int32 GetAvailableAttackTokens_Implementation();
-	bool ReserveAttackTokens_Implementation(const int32& AmountToReserve);
-	void RestoreAttackTokens_Implementation(const int32& AmountToRestore);
+	virtual int32 GetAvailableAttackTokens_Implementation() override;
+	virtual bool ReserveAttackTokens_Implementation(const int32& AmountToReserve) override;
+	virtual void RestoreAttackTokens_Implementation(const int32& AmountToRestore) override;
 	#pragma endregion
 
 public:
@@ -552,7 +551,7 @@ public:
 	FORCEINLINE USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 	FORCEINLINE UTargetSystemComponent* GetTargetComponent() const { return TargetComponent; }
-	FORCEINLINE TObjectPtr<AActor>GetCurrentTarget() { return CurrentTarget; }
+	FORCEINLINE TObjectPtr<AActor>GetCurrentTarget() const { return CurrentTarget; }
 	FORCEINLINE FPlayerData GetPlayerProfile() const { return PlayerProfile; }
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE AWOGCommonInventory* GetCommonInventory() const { return CommonInventory; }
