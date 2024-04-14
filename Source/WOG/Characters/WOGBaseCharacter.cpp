@@ -692,7 +692,7 @@ void AWOGBaseCharacter::SetCapsulePawnCollision(const bool& bEnable) const
 	}
 }
 
-void AWOGBaseCharacter::UpdateDissolveMaterial(float DissolveValue)
+void AWOGBaseCharacter::UpdateDissolveMaterial(const float DissolveValue)
 {
 	if (CharacterMI)
 	{

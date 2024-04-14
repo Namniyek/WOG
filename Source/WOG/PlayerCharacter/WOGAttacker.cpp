@@ -19,12 +19,11 @@
 #include "Enemies/WOGMinerGiant.h"
 #include "Net/UnrealNetwork.h"
 #include "AbilitySystem/AttributeSets/WOGAttributeSetBase.h"
-#include "Kismet/KismetMathLibrary.h"
 #include "Interfaces/SpawnInterface.h"
 #include "Subsystems/WOGUIManagerSubsystem.h"
-#include "Libraries/WOGBlueprintLibrary.h"
 #include "ActorComponents/WOGEnemyOrderComponent.h"
 #include "Camera/CameraComponent.h"
+#include "DayNightCycle/TimeOfDay.h"
 
 
 AWOGAttacker::AWOGAttacker()
@@ -64,6 +63,48 @@ void AWOGAttacker::BeginPlay()
 	SetAllocatedMiner();
 }
 
+void AWOGAttacker::HandleTODChange()
+{
+	Super::HandleTODChange();
+	
+	switch (CurrentTOD)
+	{
+	case ETimeOfDay::TOD_Start:
+		//AbilitySystemComponent->AddLooseGameplayTag(TAG_State_Debuff_UnableToSpawn, 1);
+		break;
+	case ETimeOfDay::TOD_Dawn1:
+		AbilitySystemComponent->AddLooseGameplayTag(TAG_State_Debuff_UnableToSpawn, 1);
+		GEngine->AddOnScreenDebugMessage(1, 5.f, FColor::Emerald, FString("Unable to Spawn tag Added"));
+		break;
+	case ETimeOfDay::TOD_Dusk1:
+		AbilitySystemComponent->RemoveLooseGameplayTag(TAG_State_Debuff_UnableToSpawn, 1);
+		GEngine->AddOnScreenDebugMessage(1, 5.f, FColor::Emerald, FString("Unable to Spawn tag removed"));
+		break;
+	case ETimeOfDay::TOD_Dawn2:
+		AbilitySystemComponent->AddLooseGameplayTag(TAG_State_Debuff_UnableToSpawn, 1);
+		GEngine->AddOnScreenDebugMessage(1, 5.f, FColor::Emerald, FString("Unable to Spawn tag Added"));
+		break;
+	case ETimeOfDay::TOD_Dusk2:
+		AbilitySystemComponent->RemoveLooseGameplayTag(TAG_State_Debuff_UnableToSpawn, 1);
+		GEngine->AddOnScreenDebugMessage(1, 5.f, FColor::Emerald, FString("Unable to Spawn tag removed"));
+		break;
+	case ETimeOfDay::TOD_Dawn3:
+		AbilitySystemComponent->AddLooseGameplayTag(TAG_State_Debuff_UnableToSpawn, 1);
+		GEngine->AddOnScreenDebugMessage(1, 5.f, FColor::Emerald, FString("Unable to Spawn tag Added"));
+		break;
+	case ETimeOfDay::TOD_Dusk3:
+		AbilitySystemComponent->RemoveLooseGameplayTag(TAG_State_Debuff_UnableToSpawn, 1);
+		GEngine->AddOnScreenDebugMessage(1, 5.f, FColor::Emerald, FString("Unable to Spawn tag removed"));
+		break;
+	case ETimeOfDay::TOD_Dawn4:
+		AbilitySystemComponent->AddLooseGameplayTag(TAG_State_Debuff_UnableToSpawn, 1);
+		GEngine->AddOnScreenDebugMessage(1, 5.f, FColor::Emerald, FString("Unable to Spawn tag Added"));
+		break;
+	default:
+		break;
+	}
+}
+
 void AWOGAttacker::SetAllocatedRaven()
 {
 	TArray<AActor*> OutActors;
@@ -99,7 +140,7 @@ void AWOGAttacker::PossessMinion()
 		return;
 	}
 
-	OwnerPC = OwnerPC == nullptr ? (TObjectPtr<AWOGPlayerController>) Cast<AWOGPlayerController>(GetController()) : OwnerPC;
+	OwnerPC = OwnerPC == nullptr ? static_cast<TObjectPtr<AWOGPlayerController>>(Cast<AWOGPlayerController>(GetController())) : OwnerPC;
 	if (!OwnerPC)
 	{
 		UE_LOG(WOGLogSpawn, Error, TEXT("invalid OwnerPC"));
@@ -118,7 +159,6 @@ void AWOGAttacker::PossessMinion()
 		UE_LOG(WOGLogSpawn, Error, TEXT("Target cannot be possessed"));
 		return;
 	}
-
 	OwnerPC->Server_PossessMinion(CurrentTarget);
 	TargetComponent->TargetLockOff();
 
@@ -127,7 +167,6 @@ void AWOGAttacker::PossessMinion()
 	{
 		UIManager->RemoveCrosshairWidget();
 	}
-
 }
 
 void AWOGAttacker::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -561,7 +600,7 @@ void AWOGAttacker::OnHealthAttributeChanged(const FOnAttributeChangeData& Data)
 {
 	if (Data.NewValue <= (AttributeSet->GetMaxHealth() * 0.2f) && Data.OldValue > (AttributeSet->GetMaxHealth() * 0.2f))
 	{
-		UE_LOG(WOGLogSpawn, Warning, TEXT("Health below 20%"));
+		UE_LOG(WOGLogSpawn, Warning, TEXT("Health below 20%%"));
 
 		if (HasAuthority())
 		{
@@ -585,7 +624,7 @@ void AWOGAttacker::OnHealthAttributeChanged(const FOnAttributeChangeData& Data)
 
 	if (Data.NewValue >= (AttributeSet->GetMaxHealth() * 0.2f) && Data.OldValue < (AttributeSet->GetMaxHealth() * 0.2f) && HasAuthority())
 	{
-		UE_LOG(WOGLogSpawn, Display, TEXT("Health above 20%"));
+		UE_LOG(WOGLogSpawn, Display, TEXT("Health above 20%%"));
 
 		bCanPossessMinion = true;
 	}
@@ -593,7 +632,7 @@ void AWOGAttacker::OnHealthAttributeChanged(const FOnAttributeChangeData& Data)
 	//Check if health is at 80%
 	if (Data.NewValue <= (AttributeSet->GetMaxHealth() * 0.8f) && Data.OldValue > (AttributeSet->GetMaxHealth() * 0.8f) && !IsLocallyControlled())
 	{
-		UE_LOG(WOGLogSpawn, Display, TEXT("Health at 80%"));
+		UE_LOG(WOGLogSpawn, Display, TEXT("Health at 80%%"));
 		if (!OwnerPC || !CurrentExternalMinion)
 		{
 			return;
@@ -610,7 +649,7 @@ void AWOGAttacker::OnHealthAttributeChanged(const FOnAttributeChangeData& Data)
 	//Check if health is at 60%
 	if (Data.NewValue <= (AttributeSet->GetMaxHealth() * 0.6f) && Data.OldValue > (AttributeSet->GetMaxHealth() * 0.6f) && !IsLocallyControlled())
 	{
-		UE_LOG(WOGLogSpawn, Display, TEXT("Health at 60%"));
+		UE_LOG(WOGLogSpawn, Display, TEXT("Health at 60%%"));
 		if (!OwnerPC || !CurrentExternalMinion)
 		{
 			return;
@@ -627,7 +666,7 @@ void AWOGAttacker::OnHealthAttributeChanged(const FOnAttributeChangeData& Data)
 	//Check if health is at 40%
 	if (Data.NewValue <= (AttributeSet->GetMaxHealth() * 0.4f) && Data.OldValue > (AttributeSet->GetMaxHealth() * 0.4f) && !IsLocallyControlled())
 	{
-		UE_LOG(WOGLogSpawn, Display, TEXT("Health at 40%"));
+		UE_LOG(WOGLogSpawn, Display, TEXT("Health at 40%%"));
 		if (!OwnerPC || !CurrentExternalMinion)
 		{
 			return;

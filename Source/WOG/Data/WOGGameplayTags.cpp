@@ -19,6 +19,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_State_Debuff_Stun, "State.Debuff.Stun");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Debuff_Burn, "State.Debuff.Burn");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Debuff_Freeze, "State.Debuff.Freeze");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Debuff_Shock, "State.Debuff.Shock");
+UE_DEFINE_GAMEPLAY_TAG(TAG_State_Debuff_UnableToSpawn, "State.Debuff.UnableToSpawn");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Buff_DamageReduction, "State.Buff.DamageReduction");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Buff_Strength, "State.Buff.Strength");

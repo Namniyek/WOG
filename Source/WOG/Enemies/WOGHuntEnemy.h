@@ -19,8 +19,8 @@ class WOG_API AWOGHuntEnemy : public AWOGBaseEnemy
 	
 public:
 	AWOGHuntEnemy();
-	virtual void PostInitializeComponents();
-	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
+	virtual void PostInitializeComponents() override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 protected:
 
@@ -40,6 +40,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setup")
 	TObjectPtr<UDataTable> MinionDataTable;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setup")
+	FGameplayTag LevelUpCosmeticCue = FGameplayTag(); 
 	#pragma endregion
 
 	#pragma region HandleCombat
@@ -95,7 +98,7 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
 	void SetMinionLevel(const int32& NewLevel);
 
-	void ClearAbilties();
+	void ClearAbilities();
 
 	void FindNewTarget();
 

@@ -298,7 +298,7 @@ void AWOGHuntEnemy::SetMinionLevel(const int32& NewLevel)
 	if (!HasAuthority()) return;
 
 	MinionLevel = NewLevel > MinionLevel ? NewLevel : MinionLevel;
-	ClearAbilties();
+	ClearAbilities();
 	InitData();
 	MergeAttackTagMaps();
 	GiveDefaultAbilities();
@@ -315,7 +315,7 @@ void AWOGHuntEnemy::SetMinionLevel(const int32& NewLevel)
 	}
 }
 
-void AWOGHuntEnemy::ClearAbilties()
+void AWOGHuntEnemy::ClearAbilities()
 {
 	if (!HasAuthority() || !AbilitySystemComponent) return;
 

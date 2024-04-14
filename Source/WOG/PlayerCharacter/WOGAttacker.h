@@ -51,6 +51,8 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
+	virtual void HandleTODChange() override;
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<UWOGEnemyOrderComponent> EnemyOrderComponent;
 
