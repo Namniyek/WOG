@@ -19,7 +19,9 @@ class WOG_API AWOGBaseDayNPC : public AWOGBaseCharacter
 public:
 	AWOGBaseDayNPC();
 
-	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FGameplayTagContainer ActivitySlotsTags;

@@ -20,7 +20,7 @@ public:
 
 	AWOGBaseInventoryItem();
 	virtual void OnConstruction(const FTransform& Transform) override;
-	virtual void PostInitializeComponents();
+	virtual void PostInitializeComponents() override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 protected:
@@ -83,4 +83,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
 	void SetItemLevel(FGameplayTag ItemTag, int32 NewLevel);
+
+	UFUNCTION(BlueprintPure)
+	FORCEINLINE int32 GetItemLevel() const { return ItemLevel; }
 };

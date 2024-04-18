@@ -70,9 +70,6 @@ void AWOGAttacker::HandleTODChange()
 	switch (CurrentTOD)
 	{
 	case ETimeOfDay::TOD_Start:
-		//AbilitySystemComponent->AddLooseGameplayTag(TAG_State_Debuff_UnableToSpawn, 1);
-		break;
-	case ETimeOfDay::TOD_Dawn1:
 		AbilitySystemComponent->AddLooseGameplayTag(TAG_State_Debuff_UnableToSpawn, 1);
 		GEngine->AddOnScreenDebugMessage(1, 5.f, FColor::Emerald, FString("Unable to Spawn tag Added"));
 		break;

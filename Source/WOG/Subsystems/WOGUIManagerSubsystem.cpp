@@ -11,7 +11,6 @@
 #include "Engine/LocalPlayer.h"
 #include "UI/WOGWarningWidget.h"
 #include "Components/VerticalBox.h"
-#include "Characters/WOGBaseCharacter.h"
 #include "UI/WOGCharacterWidgetContainer.h"
 #include "Components/SizeBox.h"
 #include "UI/WOGRoundProgressBar.h"
@@ -20,15 +19,11 @@
 #include "UI/WOGRavenMarkerWidget.h"
 #include "UI/WOGAbilityWidget.h"
 #include "UI/WOGAbilityContainerWidget.h"
-#include "UI/WOGMatchHUD.h"
 #include "UI/WOGObjectiveWidget.h"
-#include "UI/MainAnnouncementWidget.h"
-#include "UI/EndgameWidget.h"
 #include "UI/WOGAvailableResourceWidget.h"
 #include "PlayerCharacter/BasePlayerCharacter.h"
 #include "UI/Stash/WOGStashWidget.h"
 #include "UI/WOGHuntProgressBar.h"
-#include "Enemies/WOGHuntEnemy.h"
 
 void UWOGUIManagerSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {

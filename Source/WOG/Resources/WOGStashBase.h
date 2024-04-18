@@ -3,8 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
 #include "GameplayTags.h"
+#include "GameFramework/Actor.h"
 #include "Interfaces/InventoryInterface.h"
 #include "WOGStashBase.generated.h"
 
@@ -25,12 +25,11 @@ public:
 
 	void SetIsBusy(const bool& NewBusy, ABasePlayerCharacter* UserPlayer);
 
-	void BackFromWidget_Implementation(AActor* Actor);
+	virtual void BackFromWidget_Implementation(AActor* Actor) override;
 
-	void SwitchItem_Implementation(bool bToCommon, AActor* ItemToSwitch, AActor* PreviousItem, FGameplayTagContainer AuxTagsContainer, TSubclassOf<AActor> ItemClass, const int32& Amount);
+	virtual void SwitchItem_Implementation(bool bToCommon, AActor* ItemToSwitch, AActor* PreviousItem, FGameplayTagContainer AuxTagsContainer, TSubclassOf<AActor> ItemClass, const int32& Amount) override;
 
 	void SwitchStashedItems(const bool& bToCommon, AActor* ItemToSwitch, AActor* PreviousItem, FGameplayTagContainer AuxTagsContainer, TSubclassOf<AActor> ItemClass, const int32& Amount);
-
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

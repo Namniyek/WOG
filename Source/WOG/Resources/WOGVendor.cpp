@@ -446,7 +446,11 @@ void AWOGVendor::TimeOfDayChanged(ETimeOfDay TOD)
 		SetIsBusy(false, nullptr);
 		bIsDay = true;
 		break;
+	default:
+		break;
 	}
+
+	InjectInventoryItems(TOD);
 }
 
 void AWOGVendor::OnKeyTimeHit(int32 CurrentTime)
@@ -462,6 +466,20 @@ void AWOGVendor::OnKeyTimeHit(int32 CurrentTime)
 		{
 			SetIsBusy(true, nullptr);
 			ShowCorrectWidget(true, nullptr);
+		}
+	}
+}
+
+void AWOGVendor::InjectInventoryItems(ETimeOfDay TOD)
+{
+	if(!HasAuthority()) return;
+
+	for(const auto Pair : InventoryItemInjectionMap)
+	{
+		if(Pair.Value == TOD)
+		{
+			FText OutNote;
+			VendorInventory->AddItemsOfClass(Pair.Key, 1, OutNote);
 		}
 	}
 }

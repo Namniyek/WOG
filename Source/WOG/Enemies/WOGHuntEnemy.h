@@ -6,6 +6,7 @@
 #include "Enemies/WOGBaseEnemy.h"
 #include "WOGHuntEnemy.generated.h"
 
+class AWOGVendor;
 /**
  * 
  */
@@ -23,8 +24,9 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 protected:
-
 	virtual void BeginPlay() override;
+
+	virtual void Elim(bool bPlayerLeftGame) override;
 
 	#pragma region ActorComponents
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
@@ -42,7 +44,13 @@ protected:
 	TObjectPtr<UDataTable> MinionDataTable;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setup")
-	FGameplayTag LevelUpCosmeticCue = FGameplayTag(); 
+	FGameplayTag LevelUpCosmeticCue = FGameplayTag();
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setup")
+	TSubclassOf<AActor> SpawnItemForVendor = nullptr;
+	
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "Setup")
+	TObjectPtr<AWOGVendor> AssignedVendor = nullptr;
 	#pragma endregion
 
 	#pragma region HandleCombat
@@ -93,6 +101,8 @@ private:
 
 	AActor* FindRandomClosestPlayer();
 	AActor* GetClosestActor(TArray<AActor*> InArray);
+	
+	void InjectVendorWithSpawnItem() const;
 
 public:
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)

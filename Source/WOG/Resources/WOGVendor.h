@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "GameplayTags.h"
+#include "DayNightCycle/TimeOfDay.h"
 #include "Types/CharacterTypes.h"
 #include "Interfaces/InventoryInterface.h"
 #include "WOGVendor.generated.h"
@@ -30,7 +31,7 @@ public:
 
 	void SetIsBusy(const bool& NewBusy, ABasePlayerCharacter* UserPlayer);
 
-	void BackFromWidget_Implementation(AActor* Actor);
+	virtual void BackFromWidget_Implementation(AActor* Actor) override;
 
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly)
 	TObjectPtr<AWOGBaseActivitySlot> AssignedActivitySlot;
@@ -111,6 +112,8 @@ private:
 
 	UPROPERTY(Replicated)
 	bool bIsDay = true;
+
+	void InjectInventoryItems(ETimeOfDay TOD);
 	#pragma endregion 
 
 	#pragma region Activity Slot
@@ -138,4 +141,7 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Setup)
 	FName CommonInventoryTag;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Setup)
+	TMap<TSubclassOf<AActor>, ETimeOfDay> InventoryItemInjectionMap; 
 };

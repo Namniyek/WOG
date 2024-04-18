@@ -7,6 +7,7 @@
 #include "Camera/CameraComponent.h"
 #include "Components/WidgetComponent.h"
 #include "Data/AGRLibrary.h"
+#include "Inventory/WOGBaseInventoryItem.h"
 #include "Net/UnrealNetwork.h"
 #include "Kismet/GameplayStatics.h"
 #include "Resources/WOGCommonInventory.h"
@@ -213,8 +214,22 @@ void AWOGStashBase::SwitchStashedItems(const bool& bToCommon, AActor* ItemToSwit
 	{
 		if (bIsSpawnMenuSwitch && Giver == CommonInventory)
 		{
-			FText OutNote;
-			Recipient->AddItemsOfClass(ItemClass, 1, OutNote);
+			// FText OutNote;
+			// Recipient->AddItemsOfClass(ItemClass, 1, OutNote);
+
+			AWOGBaseInventoryItem* NewItem = Cast<AWOGBaseInventoryItem>(UGameplayStatics::BeginDeferredActorSpawnFromClass(this,
+				Item->GetOwner()->GetClass(),
+				Item->GetOwner()->GetActorTransform(),
+				ESpawnActorCollisionHandlingMethod::AlwaysSpawn,
+				Item->GetOwner()->GetOwner()));
+			
+			NewItem = Cast<AWOGBaseInventoryItem>(UGameplayStatics::FinishSpawningActor(NewItem, Item->GetOwner()->GetActorTransform()));
+			if(NewItem)
+			{
+				AWOGBaseInventoryItem* BaseItem = Cast<AWOGBaseInventoryItem>(Item->GetOwner());
+				NewItem->SetItemLevel(Item->ItemTagSlotType, BaseItem->GetItemLevel());
+				Recipient->AddItemToInventoryDirectly(NewItem);
+			}
 			return;
 		}
 		if (bIsSpawnMenuSwitch && Recipient == CommonInventory && Giver != CommonInventory)

@@ -10,10 +10,8 @@
 #include "ActorComponents/WOGAbilitySystemComponent.h"
 #include "Components/SphereComponent.h"
 #include "PlayerCharacter/BasePlayerCharacter.h"
-#include "Kismet/GameplayStatics.h"
 #include "Libraries/WOGBlueprintLibrary.h"
 #include "AbilitySystem/AttributeSets/WOGAttributeSetBase.h"
-#include "AbilitySystemComponent.h"
 #include "ActorComponents/WOGUIManagerComponent.h"
 
 AWOGHuntEnemy::AWOGHuntEnemy()
@@ -93,6 +91,12 @@ void AWOGHuntEnemy::BeginPlay()
 	CurrentEnemyState = EEnemyState::EES_Idle;
 
 	OnAttributeChangedDelegate.AddDynamic(this, &ThisClass::OnAttributeChangedCallback);
+}
+
+void AWOGHuntEnemy::Elim(bool bPlayerLeftGame)
+{
+	InjectVendorWithSpawnItem();
+	Super::Elim(bPlayerLeftGame);
 }
 
 AActor* AWOGHuntEnemy::GetSquadCurrentTargetActor_Implementation()
@@ -212,6 +216,15 @@ AActor* AWOGHuntEnemy::GetClosestActor(TArray<AActor*> InArray)
 	}
 
 	return ClosestActor;
+}
+
+void AWOGHuntEnemy::InjectVendorWithSpawnItem() const
+{
+	if(!HasAuthority()) return;
+	if(!AssignedVendor) return;
+
+	FText OutNote;
+	UAGRLibrary::GetInventory(static_cast<const AActor*>(AssignedVendor))->AddItemsOfClass(SpawnItemForVendor, 1, OutNote);
 }
 
 void AWOGHuntEnemy::OnAgroOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
