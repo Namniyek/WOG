@@ -1,6 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Subsystems/WOGUIManagerSubsystem.h"
+
+#include "HairStrandsDefinitions.h"
 #include "WOG.h"
 #include "Data/TODEnum.h"
 #include "UI/Vendors/WOGVendorBaseWidget.h"
@@ -22,6 +24,7 @@
 #include "UI/WOGObjectiveWidget.h"
 #include "UI/WOGAvailableResourceWidget.h"
 #include "PlayerCharacter/BasePlayerCharacter.h"
+#include "UI/WOGCountdownWidget.h"
 #include "UI/Stash/WOGStashWidget.h"
 #include "UI/WOGHuntProgressBar.h"
 
@@ -60,9 +63,9 @@ void UWOGUIManagerSubsystem::InitVariables()
 	}
 }
 
-void UWOGUIManagerSubsystem::SetTODString(ETimeOfDay CurrentTOD, FString& StringMain, FString& StringSec)
+void UWOGUIManagerSubsystem::SetTODString(const ETimeOfDay CurrentTOD, FString& StringMain, FString& StringSec) const
 {
-	MatchHUD == nullptr ? (TObjectPtr<AWOGMatchHUD>) Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
+	MatchHUD == nullptr ? static_cast<TObjectPtr<AWOGMatchHUD>>(Cast<AWOGMatchHUD>(OwnerPC->GetHUD())) : MatchHUD;
 	if (!MatchHUD || !MatchHUD->HUDWidget) return;
 
 	switch (CurrentTOD)
@@ -290,7 +293,7 @@ void UWOGUIManagerSubsystem::RemoveAbilityWidget(const int32& AbilityID)
 
 void UWOGUIManagerSubsystem::AddAnnouncementWidget(ETimeOfDay NewTOD)
 {
-	MatchHUD == nullptr ? (TObjectPtr<AWOGMatchHUD>) Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
+	MatchHUD == nullptr ? static_cast<TObjectPtr<AWOGMatchHUD>>(Cast<AWOGMatchHUD>(OwnerPC->GetHUD())) : MatchHUD;
 	if (!MatchHUD || !MatchHUD->AnnouncementClass) return;
 
 	TOD = NewTOD;
@@ -301,7 +304,15 @@ void UWOGUIManagerSubsystem::AddAnnouncementWidget(ETimeOfDay NewTOD)
 	MatchHUD->AddAnnouncementWidget(StringMain, StringSec);
 }
 
-void UWOGUIManagerSubsystem::AddEndgameWidget()
+void UWOGUIManagerSubsystem::AddGenericAnnouncementWidget(const FText& MainText, const FText& SecText)
+{
+	MatchHUD == nullptr ? static_cast<TObjectPtr<AWOGMatchHUD>>(Cast<AWOGMatchHUD>(OwnerPC->GetHUD())) : MatchHUD;
+	if (!MatchHUD || !MatchHUD->AnnouncementClass) return;
+
+	MatchHUD->AddAnnouncementWidget(MainText.ToString(), SecText.ToString());
+}
+
+void UWOGUIManagerSubsystem::AddEndgameWidget() const
 {
 	MatchHUD == nullptr ? (TObjectPtr<AWOGMatchHUD>) Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
 	if (!MatchHUD) return;
@@ -574,7 +585,7 @@ void UWOGUIManagerSubsystem::RemoveCrosshairWidget()
 void UWOGUIManagerSubsystem::AddHuntWidget(AWOGHuntEnemy* HuntEnemy)
 {
 	if (!OwnerPC) return;
-	MatchHUD == nullptr ? (TObjectPtr<AWOGMatchHUD>) Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
+	MatchHUD == nullptr ? static_cast<TObjectPtr<AWOGMatchHUD>>(Cast<AWOGMatchHUD>(OwnerPC->GetHUD())) : MatchHUD;
 	if (!MatchHUD || !IsValid(MatchHUD->HuntWidgetClass)) return;
 	if (HuntWidget) return;
 
@@ -595,4 +606,22 @@ void UWOGUIManagerSubsystem::RemoveHuntWidget()
 	}
 
 	HuntWidget = nullptr;
+}
+
+void UWOGUIManagerSubsystem::AddCountdownWidget(const FText& MainText, const FText& SecText, float CountdownDuration)
+{
+	if (!OwnerPC) return;
+	MatchHUD == nullptr ? static_cast<TObjectPtr<AWOGMatchHUD>>(Cast<AWOGMatchHUD>(OwnerPC->GetHUD())) : MatchHUD;
+	if (!MatchHUD || !IsValid(MatchHUD->CountdownWidgetClass)) return;
+
+	UWOGCountdownWidget* CountdownWidget = CreateWidget<UWOGCountdownWidget>(OwnerPC, MatchHUD->CountdownWidgetClass);
+	if (CountdownWidget && MatchHUD->HUDWidget->GetCountdownContainer())
+	{
+		CountdownWidget->MainText = MainText;
+		CountdownWidget->SecText = SecText;
+		CountdownWidget->CountdownTime = CountdownDuration;
+		
+		MatchHUD->HUDWidget->GetCountdownContainer()->ClearChildren();
+		MatchHUD->HUDWidget->GetCountdownContainer()->AddChild(CountdownWidget);
+	}
 }

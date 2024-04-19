@@ -58,7 +58,7 @@ private:
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UWOGRavenMarkerWidget> RavenMarkerWidget = nullptr;
 
-	void SetTODString(ETimeOfDay CurrentTOD, FString& StringMain, FString& StringSec);
+	void SetTODString(const ETimeOfDay CurrentTOD, FString& StringMain, FString& StringSec) const;
 
 public:
 
@@ -108,9 +108,12 @@ public:
 
 	UFUNCTION()
 	void AddAnnouncementWidget(ETimeOfDay NewTOD);
+	
+	UFUNCTION(BlueprintCallable)
+	void AddGenericAnnouncementWidget(const FText& MainText, const FText& SecText);
 
 	UFUNCTION()
-	void AddEndgameWidget();
+	void AddEndgameWidget() const;
 
 	UFUNCTION(BlueprintCallable)
 	void ResetHUD();
@@ -169,4 +172,7 @@ public:
 	void AddHuntWidget(AWOGHuntEnemy* HuntEnemy);
 	UFUNCTION()
 	void RemoveHuntWidget();
+
+	UFUNCTION(BlueprintCallable)
+	void AddCountdownWidget(const FText& MainText, const FText& SecText, float CountdownDuration);
 };

@@ -23,7 +23,7 @@ public:
     virtual void Initialize(FSubsystemCollectionBase& Collection) override;
     virtual void Deinitialize() override;
 
-	virtual void OnWorldBeginPlay(UWorld& InWorld);
+	virtual void OnWorldBeginPlay(UWorld& InWorld) override;
 	
 	UFUNCTION()
 	void TimeOfDayChanged(ETimeOfDay TOD);

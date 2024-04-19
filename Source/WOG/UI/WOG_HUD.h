@@ -65,6 +65,9 @@ private:
 	UPROPERTY(meta = (BindWidget))
 	UVerticalBox* HuntProgressBarContainer;
 
+	UPROPERTY(meta = (BindWidget))
+	USizeBox* CountdownContainer;
+
 public:
 	UFUNCTION(BlueprintPure)
 	float GetHealthPercent();
@@ -90,5 +93,6 @@ public:
 	FORCEINLINE USizeBox* GetMinimapContainer() const { return MinimapContainer; }
 	FORCEINLINE USizeBox* GetTODContainer() const { return TODContainer; }
 	FORCEINLINE USizeBox* GetSquadOrderContainer() const { return SquadOrderContainer; }
+	FORCEINLINE USizeBox* GetCountdownContainer() const { return CountdownContainer; }
 
 };

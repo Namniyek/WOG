@@ -40,7 +40,7 @@ void UWOGWorldSubsystem::TimeOfDayChanged(ETimeOfDay TOD)
 	UE_LOG(WOGLogWorld, Display, TEXT("TimeOfDay = %s"), *UEnum::GetValueAsString(TOD));
 }
 
-void UWOGWorldSubsystem::OnKeyTimeHit(int32 CurrentTime)
+void UWOGWorldSubsystem::OnKeyTimeHit(const int32 CurrentTime)
 {
 	OnKeyTimeHitDelegate.Broadcast(CurrentTime);
 }

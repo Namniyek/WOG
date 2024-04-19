@@ -6,9 +6,7 @@
 #include "GameFramework/HUD.h"
 #include "WOGMatchHUD.generated.h"
 
-/**
- * 
- */
+class UWOGCountdownWidget;
 class UWOG_HUD;
 class UWOGRavenMarkerWidget;
 class UWOGScreenDamage;
@@ -89,6 +87,9 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Setup | WidgetClasses")
 	TSubclassOf<UWOGHuntProgressBar> HuntWidgetClass;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Setup | WidgetClasses")
+	TSubclassOf<UWOGCountdownWidget> CountdownWidgetClass;
 
 	#pragma endregion
 

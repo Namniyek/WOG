@@ -93,6 +93,13 @@ void AWOGHuntEnemy::BeginPlay()
 	OnAttributeChangedDelegate.AddDynamic(this, &ThisClass::OnAttributeChangedCallback);
 }
 
+void AWOGHuntEnemy::Destroyed()
+{
+	
+	
+	Super::Destroyed();
+}
+
 void AWOGHuntEnemy::Elim(bool bPlayerLeftGame)
 {
 	InjectVendorWithSpawnItem();
