@@ -148,12 +148,6 @@ void ABasePlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 	DOREPLIFETIME(ABasePlayerCharacter, CurrentEpicSquad);
 }
 
-void ABasePlayerCharacter::PossessedBy(AController* NewController)
-{
-	Super::PossessedBy(NewController);
-	SetOwner(NewController);
-}
-
 void ABasePlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
@@ -175,12 +169,12 @@ void ABasePlayerCharacter::BeginPlay()
 	/*
 	* Create default Pickaxe and Woodaxe
 	*/
-	if (HasAuthority() && CurrentTOD == ETimeOfDay::TOD_Start)
-	{
-		FTimerHandle TimerHandle;
-		float Delay = 2.f;
-		GetWorldTimerManager().SetTimer(TimerHandle, this, &ThisClass::CreateDefaults, Delay);
-	}
+	// if (HasAuthority() && CurrentTOD == ETimeOfDay::TOD_Start)
+	// {
+	// 	FTimerHandle TimerHandle;
+	// 	float Delay = 2.f;
+	// 	GetWorldTimerManager().SetTimer(TimerHandle, this, &ThisClass::CreateDefaults, Delay);
+	// }
 
 	if (HasAuthority() && CurrentTOD >= ETimeOfDay::TOD_Dawn1)
 	{
@@ -746,11 +740,7 @@ void ABasePlayerCharacter::Client_KickPlayerFromVendor_Implementation(AWOGVendor
 
 void ABasePlayerCharacter::ResetPreviouslyEquippedMaterial()
 {
-	if (!EquipmentManager)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Equipment component invalid"));
-		return;
-	}
+	checkf(EquipmentManager, TEXT("Equipment component invalid"));
 
 	//Unequip current magic
 	if (CurrentMagic != NAME_None)
@@ -816,12 +806,8 @@ void ABasePlayerCharacter::ResetPreviouslyEquippedMaterial()
 
 void ABasePlayerCharacter::UnequipMagic(const bool& bIsAttacker, const FName& Slot)
 {
-	if (!EquipmentManager)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Equipment component invalid"));
-		return;
-	}
-
+	checkf(EquipmentManager, TEXT("Equipment component invalid"));
+	
 	FName OtherSlot = Slot == FName("1") ? FName("2") : FName("1");
 
 	AActor* OutMagic = nullptr;
@@ -831,7 +817,7 @@ void ABasePlayerCharacter::UnequipMagic(const bool& bIsAttacker, const FName& Sl
 	if (PrimaryMagic && OutMagic && PrimaryMagic == OutMagic)
 	{
 		Server_UnequipMagic(Slot, PrimaryMagic);
-	}
+	} 
 	else if (bIsAttacker)
 	{
 		EquipmentManager->GetMagicShortcutReference(OtherSlot, OutMagic);
@@ -845,11 +831,7 @@ void ABasePlayerCharacter::UnequipMagic(const bool& bIsAttacker, const FName& Sl
 
 void ABasePlayerCharacter::UnequipWeapon(const bool& bIsAttacker, const FName& Slot)
 {
-	if (!EquipmentManager)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Equipment component invalid"));
-		return;
-	}
+	checkf(EquipmentManager, TEXT("Equipment component invalid"));
 
 	FName OtherSlot = Slot == FName("1") ? FName("2") : FName("1");
 
@@ -875,28 +857,27 @@ void ABasePlayerCharacter::UnequipWeapon(const bool& bIsAttacker, const FName& S
 
 void ABasePlayerCharacter::EquipMagic(const FName& Slot)
 {
-	if (!EquipmentManager)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString("Equipment component invalid"));
-		return;
-	}
-
+	checkf(EquipmentManager, TEXT("Equipment component invalid"));
+	
 	AActor* PrimaryMagic = nullptr;
 	AActor* OutMagic = nullptr;
 	EquipmentManager->GetMagicShortcutReference(Slot, OutMagic);
 	EquipmentManager->GetItemInSlot(NAME_MagicSlot_MagicPrimary, PrimaryMagic);
+	
 	if (PrimaryMagic && OutMagic && PrimaryMagic == OutMagic)
 	{
-		Server_UnequipMagic(Slot, PrimaryMagic);
+		HandleUnequipMagic(Slot, PrimaryMagic);
 	}
 	else if (OutMagic)
 	{
-		Server_EquipMagic(Slot, OutMagic);
+		HandleEquipMagic(Slot, OutMagic);
 	}
 }
 
 void ABasePlayerCharacter::EquipWeapon(const FName& Slot)
 {
+	checkf(EquipmentManager, TEXT("Equipment component invalid"));
+	
 	AActor* OutItem = nullptr;
 	AActor* PrimaryItem = nullptr;
 	EquipmentManager->GetWeaponShortcutReference(Slot, OutItem);
@@ -915,7 +896,7 @@ void ABasePlayerCharacter::EquipWeapon(const FName& Slot)
 		FGameplayEventData EventPayload;
 		EventPayload.EventTag = TAG_Event_Weapon_Equip;
 		EventPayload.OptionalObject = OutItem;
-		int32 Key = FCString::Atoi(*Slot.ToString());
+		const int32 Key = FCString::Atoi(*Slot.ToString());
 		EventPayload.EventMagnitude = Key;
 		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Weapon_Equip, EventPayload);
 	}
@@ -939,7 +920,6 @@ void ABasePlayerCharacter::Client_SaveShortcutReferences_Implementation(AActor* 
 	{
 		EquipmentManager->SaveShortcutReference(Key, InItem);
 		UE_LOG(LogTemp, Warning, TEXT("Added Item : %s to shortcut key : %s"), *GetNameSafe(InItem), *Key.ToString());
-		return;
 	}
 	//If actor pointer invalid, use tag
 	else
@@ -959,7 +939,7 @@ void ABasePlayerCharacter::Client_SaveShortcutReferences_Implementation(AActor* 
 	UE_LOG(LogTemp, Error, TEXT("Item not added to shortcut"));
 }
 
-void ABasePlayerCharacter::Server_EquipWeapon_Implementation(const FName& Key, AActor* InWeapon)
+void ABasePlayerCharacter::HandleEquipWeapon(const FName& Key, AActor* InWeapon)
 {
 	if (!InWeapon) return;
 
@@ -991,7 +971,6 @@ void ABasePlayerCharacter::Server_EquipWeapon_Implementation(const FName& Key, A
 		AActor* NewItem;
 		EquipmentManager->EquipItemInSlot(RelevantBackSlot, InWeapon, PreviousItem, NewItem);
 		UE_LOG(LogTemp, Display, TEXT("Same as Primary - Equipping to BackMain"));
-		return;
 	}
 	else
 	{
@@ -1030,7 +1009,6 @@ void ABasePlayerCharacter::Server_EquipWeapon_Implementation(const FName& Key, A
 			EquipmentManager->EquipItemInSlot(NAME_WeaponSlot_Primary, InWeapon, PreviousItem, NewItem);
 			PreviousWeapon = Key;
 			UE_LOG(LogTemp, Display, TEXT("Same as BackMain - Equipping to Primary"));
-			return;
 		}
 		else
 		{
@@ -1039,12 +1017,16 @@ void ABasePlayerCharacter::Server_EquipWeapon_Implementation(const FName& Key, A
 			AActor* NewItem;
 			EquipmentManager->EquipItemInSlot(RelevantBackSlot, InWeapon, PreviousItem, NewItem);
 			UE_LOG(LogTemp, Display, TEXT("Never equipped before - Equipping to Relevant BackSlot"));
-			return;
 		}
 	}
 }
 
-void ABasePlayerCharacter::Server_UnequipWeapon_Implementation(const FName& Key, AActor* InWeapon)
+void ABasePlayerCharacter::Server_EquipWeapon_Implementation(const FName& Key, AActor* InWeapon)
+{
+	HandleEquipWeapon(Key, InWeapon);
+}
+
+void ABasePlayerCharacter::HandleUnequipWeapon(const FName& Key, AActor* InWeapon)
 {
 	if (!InWeapon) return;
 
@@ -1071,6 +1053,11 @@ void ABasePlayerCharacter::Server_UnequipWeapon_Implementation(const FName& Key,
 	return;
 }
 
+void ABasePlayerCharacter::Server_UnequipWeapon_Implementation(const FName& Key, AActor* InWeapon)
+{
+	HandleUnequipWeapon(Key, InWeapon);
+}
+
 void ABasePlayerCharacter::Server_UnequipWeaponSwap_Implementation(const FName& Key, AActor* InWeapon)
 {
 	FText Note;
@@ -1080,7 +1067,7 @@ void ABasePlayerCharacter::Server_UnequipWeaponSwap_Implementation(const FName& 
 	EquipmentManager->EquipItemInSlot(Key, InWeapon, PreviousItem, NewItem);
 }
 
-void ABasePlayerCharacter::Server_EquipMagic_Implementation(const FName& Key, AActor* InMagic)
+void ABasePlayerCharacter::HandleEquipMagic(const FName& Key, AActor* InMagic)
 {
 	if (!InMagic) return;
 
@@ -1165,9 +1152,14 @@ void ABasePlayerCharacter::Server_EquipMagic_Implementation(const FName& Key, AA
 	}
 }
 
-void ABasePlayerCharacter::Server_UnequipMagic_Implementation(const FName& Key, AActor* InWeapon)
+void ABasePlayerCharacter::Server_EquipMagic_Implementation(const FName& Key, AActor* InMagic)
 {
-	if (!InWeapon) return;
+	HandleEquipMagic(Key, InMagic);
+}
+
+void ABasePlayerCharacter::HandleUnequipMagic(const FName& Key, AActor* InMagic) const
+{
+	if (!InMagic) return;
 
 	//Determine the back slots names
 	FName BackSlot;
@@ -1182,12 +1174,16 @@ void ABasePlayerCharacter::Server_UnequipMagic_Implementation(const FName& Key, 
 
 	//Unequip from primary and equip to back
 	FText Note;
-	EquipmentManager->UnEquipByReference(InWeapon, Note);
+	EquipmentManager->UnEquipByReference(InMagic, Note);
 	AActor* PreviousItem;
 	AActor* NewItem;
-	EquipmentManager->EquipItemInSlot(BackSlot, InWeapon, PreviousItem, NewItem);
+	EquipmentManager->EquipItemInSlot(BackSlot, InMagic, PreviousItem, NewItem);
 	CurrentMagic == NAME_None;
-	return;
+}
+
+void ABasePlayerCharacter::Server_UnequipMagic_Implementation(const FName& Key, AActor* InMagic)
+{
+	HandleUnequipMagic(Key, InMagic);
 }
 
 void ABasePlayerCharacter::HandleStateElimmed(AController* InstigatedBy)
@@ -2003,6 +1999,9 @@ void ABasePlayerCharacter::HandleTODChange()
 	{
 		switch (CurrentTOD)
 		{
+		case ETimeOfDay::TOD_Dawn1:
+			CreateDefaults();
+			break;
 		case ETimeOfDay::TOD_Dusk1:
 			HandleWeaponSwitch(false);
 			break;

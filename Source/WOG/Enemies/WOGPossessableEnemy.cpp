@@ -14,10 +14,8 @@
 #include "Data/WOGGameplayTags.h"
 #include "Subsystems/WOGWorldSubsystem.h"
 #include "AbilitySystemBlueprintLibrary.h"
-#include "PlayerController/WOGPlayerController.h"
 #include "TargetSystemComponent.h"
 #include "Subsystems/WOGUIManagerSubsystem.h"
-#include "AbilitySystemComponent.h"
 #include "ActorComponents/WOGAbilitySystemComponent.h"
 
 AWOGPossessableEnemy::AWOGPossessableEnemy()
@@ -299,6 +297,8 @@ void AWOGPossessableEnemy::HandleTODChange()
 	case ETimeOfDay::TOD_Dawn4:
 		Destroy();
 		break;
+	default:
+		break;
 	}
 }
 
@@ -314,7 +314,7 @@ void AWOGPossessableEnemy::Server_UnpossessMinion_Implementation()
 {
 	if (IsPlayerControlled())
 	{
-		TObjectPtr<AWOGPlayerController> PlayerController = Cast<AWOGPlayerController>(GetController());
+		const TObjectPtr<AWOGPlayerController> PlayerController = Cast<AWOGPlayerController>(GetController());
 		if (PlayerController)
 		{
 			PlayerController->Server_UnpossessMinion(this);

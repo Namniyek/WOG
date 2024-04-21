@@ -6,6 +6,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Debuff_Knockback, "Ability.Debuff.Knockback")
 UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Debuff_KO, "Ability.Debuff.KO");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Debuff_HitReact, "Ability.Debuff.HitReact");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Debuff_Stagger, "Ability.Debuff.Stagger");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Combat_Weapon_Equip, "Ability.Combat.Weapon.Equip");
 
 //State tags
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Dead, "State.Dead");

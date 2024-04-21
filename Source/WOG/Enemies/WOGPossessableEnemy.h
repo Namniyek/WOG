@@ -69,7 +69,7 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	virtual void PossessedBy(AController* NewController) override;
-	virtual void UnpossessMinion_Implementation();
+	virtual void UnpossessMinion_Implementation() override;
 
 	#pragma region Components variables
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
@@ -149,7 +149,7 @@ protected:
 	#pragma endregion
 
 	#pragma region Interface functions
-	bool CanBePossessed_Implementation() const;
+	virtual bool CanBePossessed_Implementation() const override;
 	#pragma endregion
 
 public:

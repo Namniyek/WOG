@@ -128,14 +128,13 @@ public:
 	ABasePlayerCharacter();
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	virtual void PossessedBy(AController* NewController) override;
 
 	virtual void PostInitializeComponents() override;
 
 	#pragma region Handle Elim
 
 	virtual void Elim(bool bPlayerLeftGame) override;
-
+	
 	virtual void HandleStateElimmed(AController* InstigatedBy = nullptr) override;
 
 	UFUNCTION(NetMulticast, Reliable)
@@ -355,6 +354,12 @@ protected:
 
 	UFUNCTION()
 	void OnConsumablePickedUp(AActor* Item);
+
+	
+	void HandleEquipWeapon(const FName& Key, AActor* InWeapon);
+	void HandleUnequipWeapon(const FName& Key, AActor* InWeapon);
+	void HandleEquipMagic(const FName& Key, AActor* InMagic);
+	void HandleUnequipMagic(const FName& Key, AActor* InMagic) const;
 
 public:
 	UFUNCTION(Server, reliable, BlueprintCallable)

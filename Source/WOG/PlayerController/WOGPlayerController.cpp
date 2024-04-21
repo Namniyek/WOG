@@ -94,7 +94,7 @@ void AWOGPlayerController::BeginPlay()
 	Super::BeginPlay();
 
 	//Init UIManagerSubsystem and variables
-	TObjectPtr<UWOGUIManagerSubsystem> UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(GetLocalPlayer());
+	const TObjectPtr<UWOGUIManagerSubsystem> UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(GetLocalPlayer());
 	if (UIManager)
 	{
 		UIManager->InitVariables();

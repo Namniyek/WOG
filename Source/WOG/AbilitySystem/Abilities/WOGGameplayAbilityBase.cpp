@@ -45,7 +45,7 @@ UWOGGameplayAbilityBase::UWOGGameplayAbilityBase(const FObjectInitializer& Objec
 void UWOGGameplayAbilityBase::OnAvatarSet(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec)
 {
 	Super::OnAvatarSet(ActorInfo, Spec);
-
+	
 	if (ActivateAbilityOnGranted)
 	{
 		ActorInfo->AbilitySystemComponent->TryActivateAbility(Spec.Handle, false);
@@ -56,6 +56,8 @@ void UWOGGameplayAbilityBase::ActivateAbility(const FGameplayAbilitySpecHandle H
 {
 	UAbilitySystemComponent* AbilitySystemComponent = ActorInfo->AbilitySystemComponent.Get();
 	if (!AbilitySystemComponent) return;
+
+	AbilitySystemComponent->RefreshAbilityActorInfo();
 
 	FGameplayEffectContextHandle EffectContext = AbilitySystemComponent->MakeEffectContext();
 

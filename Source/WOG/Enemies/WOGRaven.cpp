@@ -180,6 +180,8 @@ void AWOGRaven::PossessedBy(AController* NewController)
 		bUseControllerRotationYaw = false;
 		GetCharacterMovement()->MaxFlySpeed = 700.f;
 	}
+
+	GetController();
 }
 
 void AWOGRaven::UnpossessMinion_Implementation()
@@ -218,6 +220,8 @@ void AWOGRaven::TODChanged(ETimeOfDay TOD)
 	case ETimeOfDay::TOD_Dusk3:
 		Client_RemoveRavenMarkerWidget();
 		Server_UnpossessMinion();
+		break;
+	default:
 		break;
 	}
 }
@@ -291,5 +295,7 @@ void AWOGRaven::Server_UnpossessMinion_Implementation()
 		{
 			PlayerController->Server_UnpossessMinion(this);
 		}
+
+		OwnerPC = nullptr;
 	}
 }

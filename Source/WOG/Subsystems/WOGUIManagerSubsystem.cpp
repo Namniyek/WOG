@@ -2,7 +2,6 @@
 
 #include "Subsystems/WOGUIManagerSubsystem.h"
 
-#include "HairStrandsDefinitions.h"
 #include "WOG.h"
 #include "Data/TODEnum.h"
 #include "UI/Vendors/WOGVendorBaseWidget.h"
@@ -164,7 +163,7 @@ void UWOGUIManagerSubsystem::CreateGenericWarningWidget(const FString& WarningSt
 	}
 }
 
-void UWOGUIManagerSubsystem::AddStaminaWidget()
+void UWOGUIManagerSubsystem::AddStaminaWidget() const
 {
 	MatchHUD == nullptr ? (TObjectPtr<AWOGMatchHUD>) Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
 	if (!MatchHUD || !IsValid(MatchHUD->StaminaBarClass)) return;

@@ -27,7 +27,6 @@
 #include "Subsystems/WOGWorldSubsystem.h"
 #include "Libraries/WOGBlueprintLibrary.h"
 #include "AI/Combat/WOGBaseSquad.h"
-#include "Components/StaticMeshComponent.h"
 #include "Data/AGRLibrary.h"
 #include "EnhancedInputSubsystems.h"
 #include "Enemies/WOGHuntEnemy.h"
@@ -91,7 +90,6 @@ void AWOGBaseCharacter::PossessedBy(AController* NewController)
 
 	// ASC MixedMode replication requires that the ASC Owner's Owner be the Controller.
 	SetOwner(NewController);
-
 	OwnerPC = Cast<AWOGPlayerController>(NewController);
 
 	Multicast_OnPossessed();
@@ -132,7 +130,7 @@ void AWOGBaseCharacter::BeginPlay()
 
 	if (HasAuthority())
 	{
-		TObjectPtr<UWOGWorldSubsystem> WorldSubsystem = GetWorld()->GetSubsystem<UWOGWorldSubsystem>();
+		const TObjectPtr<UWOGWorldSubsystem> WorldSubsystem = GetWorld()->GetSubsystem<UWOGWorldSubsystem>();
 		if (WorldSubsystem)
 		{
 			CurrentTOD = WorldSubsystem->CurrentTOD;

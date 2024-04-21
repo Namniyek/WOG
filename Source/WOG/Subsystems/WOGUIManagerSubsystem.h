@@ -83,7 +83,7 @@ public:
 	void CreateGenericWarningWidget(const FString& WarningString);
 
 	UFUNCTION()
-	void AddStaminaWidget();
+	void AddStaminaWidget() const;
 
 	UFUNCTION()
 	void RemoveStaminaWidget();
