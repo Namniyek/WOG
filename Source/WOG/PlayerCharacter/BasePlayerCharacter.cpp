@@ -2159,14 +2159,20 @@ void ABasePlayerCharacter::Elim(bool bPlayerLeftGame)
 
 void ABasePlayerCharacter::Multicast_Elim_Implementation(bool bPlayerLeftGame)
 {
-
-	GetMesh()->SetCollisionProfileName(FName("Ragdoll"));
-	GetMesh()->SetAllBodiesSimulatePhysics(true);
-	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	// GetMesh()->SetCollisionProfileName(FName("Ragdoll"));
+	// GetMesh()->SetAllBodiesSimulatePhysics(true);
+	// GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	StartDissolve();
+	GetMesh()->bPauseAnims = true;
 	GetCharacterMovement()->DisableMovement();
 	GetCharacterMovement()->StopMovementImmediately();
-	FVector ImpulseDirection = LastHitDirection.GetSafeNormal() * -45000.f;
-	GetMesh()->AddImpulse(ImpulseDirection);
+	APlayerController* PC = Cast<APlayerController>(GetController());
+	if(PC && PC->IsLocalController())
+	{
+		DisableInput(PC);	
+	}
+	//FVector ImpulseDirection = LastHitDirection.GetSafeNormal() * -45000.f;
+	//GetMesh()->AddImpulse(ImpulseDirection);
 	TargetComponent->TargetLockOff();
 	if(OwnerPC)	OwnerPC->SetDefaultPawn(nullptr);
 

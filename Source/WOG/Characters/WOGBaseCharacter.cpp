@@ -222,8 +222,6 @@ bool AWOGBaseCharacter::ApplyGameplayEffectToSelf(TSubclassOf<UGameplayEffect> E
 
 void AWOGBaseCharacter::OnHealthAttributeChanged(const FOnAttributeChangeData& Data)
 {
-	UE_LOG(WOGLogCombat, Display, TEXT("%s Damaged: new health: %f"), *GetNameSafe(this), Data.NewValue);
-	
 	if (AbilitySystemComponent && AttributeSet)
 	{
 		bool bFound = false;
@@ -232,78 +230,70 @@ void AWOGBaseCharacter::OnHealthAttributeChanged(const FOnAttributeChangeData& D
 		OnAttributeChangedDelegate.Broadcast(AttributeSet->GetHealthAttribute(), Data.NewValue, MaxHealth);
 	}
 
-	if (Data.NewValue <= 0 && Data.OldValue >= 0 && HasAuthority())
+	if (Data.NewValue <= 0 && Data.OldValue >= 0 && Data.GEModData)
 	{
-		if (Data.GEModData)
+		const FGameplayEffectContextHandle& EffectContext = Data.GEModData->EffectSpec.GetContext();
+
+		if (EffectContext.GetInstigator()->IsA<ABasePlayerCharacter>())
 		{
-			const FGameplayEffectContextHandle& EffectContext = Data.GEModData->EffectSpec.GetContext();
-
-			if (EffectContext.GetInstigator()->IsA<ABasePlayerCharacter>())
+			ABasePlayerCharacter* InstigatorCharacter = Cast<ABasePlayerCharacter>(EffectContext.GetInstigator());
+			if (InstigatorCharacter && InstigatorCharacter->GetController())
 			{
-				ABasePlayerCharacter* InstigatorCharacter = Cast<ABasePlayerCharacter>(EffectContext.GetInstigator());
-				if (InstigatorCharacter && InstigatorCharacter->GetController())
-				{
-					FGameplayEventData EventPayload;
-					EventPayload.EventTag = TAG_Event_Elim;
-					EventPayload.Instigator = InstigatorCharacter->GetController();
-					EventPayload.OptionalObject = EffectContext.GetInstigator();
-					UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Elim, EventPayload);
-					UE_LOG(WOGLogCombat, Error, TEXT("Killed by Character"));
-
-					InstigatorCharacter->Multicast_TargetLockOff();
-				}
-
-				GiveDeathResources(EffectContext.GetInstigator());
-
-				return;
-			}
-
-			else if (EffectContext.GetInstigator()->IsA<AWOGHuntEnemy>())
-			{
-				AWOGHuntEnemy* InstigatorEnemy = Cast<AWOGHuntEnemy>(EffectContext.GetInstigator());
-				if (!InstigatorEnemy || !InstigatorEnemy->GetController()) return;
-
 				FGameplayEventData EventPayload;
 				EventPayload.EventTag = TAG_Event_Elim;
-				EventPayload.Instigator = InstigatorEnemy->GetController();
+				EventPayload.Instigator = InstigatorCharacter->GetController();
 				EventPayload.OptionalObject = EffectContext.GetInstigator();
 				UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Elim, EventPayload);
-				UE_LOG(WOGLogCombat, Error, TEXT("Killed by Hunt Enemy"));
+				UE_LOG(WOGLogCombat, Error, TEXT("Killed by Character"));
 
-				return;
+				InstigatorCharacter->Multicast_TargetLockOff();
 			}
 
-			else if (EffectContext.GetInstigator()->IsA<AWOGBaseEnemy>())
+			GiveDeathResources(EffectContext.GetInstigator());
+		}
+
+		else if (EffectContext.GetInstigator()->IsA<AWOGHuntEnemy>())
+		{
+			AWOGHuntEnemy* InstigatorEnemy = Cast<AWOGHuntEnemy>(EffectContext.GetInstigator());
+			if (!InstigatorEnemy || !InstigatorEnemy->GetController()) return;
+
+			FGameplayEventData EventPayload;
+			EventPayload.EventTag = TAG_Event_Elim;
+			EventPayload.Instigator = InstigatorEnemy->GetController();
+			EventPayload.OptionalObject = EffectContext.GetInstigator();
+			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Elim, EventPayload);
+			UE_LOG(WOGLogCombat, Error, TEXT("Killed by Hunt Enemy"));
+		}
+
+		else if (EffectContext.GetInstigator()->IsA<AWOGBaseEnemy>())
+		{
+			AWOGBaseEnemy* InstigatorEnemy = Cast<AWOGBaseEnemy>(EffectContext.GetInstigator());
+			if (!InstigatorEnemy || !InstigatorEnemy->GetOwnerAttacker()) return;
+
+			AController* InstigatorController = InstigatorEnemy->IsPlayerControlled() ? InstigatorEnemy->GetOwnerPC() : InstigatorEnemy->GetOwnerAttacker()->GetController();
+			if(InstigatorController)
 			{
-				AWOGBaseEnemy* InstigatorEnemy = Cast<AWOGBaseEnemy>(EffectContext.GetInstigator());
-				if (!InstigatorEnemy || !InstigatorEnemy->GetOwnerAttacker()) return;
+				FGameplayEventData EventPayload;
+				EventPayload.EventTag = TAG_Event_Elim;
+				EventPayload.Instigator = InstigatorController;
+				EventPayload.OptionalObject = EffectContext.GetInstigator();
+				UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Elim, EventPayload);
+				UE_LOG(WOGLogCombat, Error, TEXT("Killed by Enemy"));
 
-				AController* InstigatorController = InstigatorEnemy->IsPlayerControlled() ? InstigatorEnemy->GetOwnerPC() : InstigatorEnemy->GetOwnerAttacker()->GetController();
-				if(InstigatorController)
+				if (InstigatorEnemy->GetOwnerSquad())
 				{
-					FGameplayEventData EventPayload;
-					EventPayload.EventTag = TAG_Event_Elim;
-					EventPayload.Instigator = InstigatorController;
-					EventPayload.OptionalObject = EffectContext.GetInstigator();
-					UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Elim, EventPayload);
-					UE_LOG(WOGLogCombat, Error, TEXT("Killed by Enemy"));
-
-					if (InstigatorEnemy->GetOwnerSquad())
-					{
-						InstigatorEnemy->GetOwnerSquad()->SendOrder(EEnemyOrder::EEO_Follow);
-					}
+					InstigatorEnemy->GetOwnerSquad()->SendOrder(EEnemyOrder::EEO_Follow);
 				}
-
-				GiveDeathResources(InstigatorEnemy->GetOwnerAttacker());
-
-				return;
 			}
+
+			GiveDeathResources(InstigatorEnemy->GetOwnerAttacker());
 		}
 	}
 }
 
 void AWOGBaseCharacter::GiveDeathResources(AActor* InActor)
 {
+	if(!HasAuthority()) return;
 	TObjectPtr<ABasePlayerCharacter> InstigatorPlayer = Cast<ABasePlayerCharacter>(InActor);
 	if (!InstigatorPlayer || !InstigatorPlayer->CommonInventory) return;
 
