@@ -73,7 +73,7 @@ private:
 
 	//Tries to activate an ability by a tag passing custom data into the ability
 	UFUNCTION(BlueprintCallable, BlueprintPure, DisplayName = "Try Activate Ability by Tag with Data", Category = "WOG Library")
-		static bool K2_UTryActivateAbilityByTagWithData(AActor* Target, const FGameplayTag& ActivationTag, FGameplayEventData AbilityData)
+	static bool K2_UTryActivateAbilityByTagWithData(AActor* Target, const FGameplayTag& ActivationTag, FGameplayEventData AbilityData)
 	{
 		return TryActivateAbilityByTagWithData(Target, ActivationTag, AbilityData);
 	};

@@ -75,7 +75,7 @@ public:
 	FOnAttributeChangedDelegate OnAttributeChangedDelegate;
 
 	//TO-DO find another way to pass data to abilities. I don't like this
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadWrite)
 	FGameplayEventData AbilityActivationPayload;
 
 protected:
