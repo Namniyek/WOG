@@ -31,6 +31,8 @@ class AWOGPlayerController;
 class UInputMappingContext;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnAttributeChangedDelegate, FGameplayAttribute, ChangedAttribute, float, NewValue, float, MaxValue);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCharacterDeadDelegate, AWOGBaseCharacter*, DeadCharacter);
+
 
 UCLASS()
 class WOG_API AWOGBaseCharacter : public ACharacter, public IAttributesInterface, public IAbilitySystemInterface, public ITargetInterface
@@ -73,6 +75,9 @@ public:
 
 	UPROPERTY(BlueprintAssignable)
 	FOnAttributeChangedDelegate OnAttributeChangedDelegate;
+	
+	UPROPERTY(BlueprintAssignable)
+	FOnCharacterDeadDelegate OnCharacterDeadDelegate;
 
 	//TO-DO find another way to pass data to abilities. I don't like this
 	UPROPERTY(BlueprintReadWrite)

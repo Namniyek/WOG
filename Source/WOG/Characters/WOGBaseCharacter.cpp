@@ -232,6 +232,8 @@ void AWOGBaseCharacter::OnHealthAttributeChanged(const FOnAttributeChangeData& D
 
 	if (Data.NewValue <= 0 && Data.OldValue >= 0 && Data.GEModData)
 	{
+		OnCharacterDeadDelegate.Broadcast(this);
+		
 		const FGameplayEffectContextHandle& EffectContext = Data.GEModData->EffectSpec.GetContext();
 
 		if (EffectContext.GetInstigator()->IsA<ABasePlayerCharacter>())

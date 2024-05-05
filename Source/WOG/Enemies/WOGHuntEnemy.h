@@ -105,6 +105,9 @@ private:
 	
 	void InjectVendorWithSpawnItem() const;
 
+	UFUNCTION()
+	void PlayerCharacterEndedOverlap(AWOGBaseCharacter* LeavingPlayer);
+
 public:
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
 	void SetMinionLevel(const int32& NewLevel);
@@ -119,8 +122,8 @@ public:
 	void MergeAttackTagMaps();
 
 	UFUNCTION(BlueprintImplementableEvent)
-	void OnPlayerEnteredAgroSphere(AActor* NewPLayer);
+	void OnPlayerEnteredAgroSphere(AActor* NewPlayer);
 
 	UFUNCTION(BlueprintImplementableEvent)
-	void OnPlayerExitedAgroSphere(AActor* LeavingPLayer);
+	void OnPlayerExitedAgroSphere(AActor* LeavingPlayer);
 };

@@ -234,6 +234,40 @@ void AWOGHuntEnemy::InjectVendorWithSpawnItem() const
 	UAGRLibrary::GetInventory(static_cast<const AActor*>(AssignedVendor))->AddItemsOfClass(SpawnItemForVendor, 1, OutNote);
 }
 
+void AWOGHuntEnemy::PlayerCharacterEndedOverlap(AWOGBaseCharacter* LeavingPlayer)
+{
+	if (!HasAuthority()) return;
+	if (!LeavingPlayer) return;
+
+	if (LeavingPlayer == CurrentTarget)
+	{
+		FindNewTarget();
+	}
+	
+	if (CurrentTargetArray.Contains(LeavingPlayer))
+	{
+		int32 Amount = CurrentTargetArray.Remove(LeavingPlayer);
+		OnPlayerExitedAgroSphere(LeavingPlayer);
+		
+		if (LeavingPlayer->GetController())
+		{
+			UWOGUIManagerComponent* UIManager = UWOGBlueprintLibrary::GetUIManagerComponent(LeavingPlayer->GetController());
+			if (UIManager)
+			{
+				UIManager->Client_RemoveHuntWidget();
+				UE_LOG(WOGLogUI, Display, TEXT("HuntWidget removed"));
+			}
+		}
+	}
+
+	if (CurrentTargetArray.IsEmpty())
+	{
+		CurrentTarget = nullptr;
+		SetCurrentEnemyState(EEnemyState::EES_Idle);
+		UE_LOG(WOGLogSpawn, Display, TEXT("Target array empty. No CurrentTarget"));
+	}
+}
+
 void AWOGHuntEnemy::OnAgroOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (!HasAuthority()) return;
@@ -244,9 +278,11 @@ void AWOGHuntEnemy::OnAgroOverlap(UPrimitiveComponent* OverlappedComponent, AAct
 		CurrentTargetArray.AddUnique(OtherActor);
 		OnPlayerEnteredAgroSphere(OtherActor);
 
-		APawn* Pawn = Cast<APawn>(OtherActor);
+		AWOGBaseCharacter* Pawn = Cast<AWOGBaseCharacter>(OtherActor);
 		if (Pawn && Pawn->GetController())
 		{
+			Pawn->OnCharacterDeadDelegate.AddDynamic(this, &ThisClass::PlayerCharacterEndedOverlap);
+			
 			UWOGUIManagerComponent* UIManager = UWOGBlueprintLibrary::GetUIManagerComponent(Pawn->GetController());
 			if (UIManager)
 			{
@@ -265,37 +301,10 @@ void AWOGHuntEnemy::OnAgroOverlap(UPrimitiveComponent* OverlappedComponent, AAct
 
 void AWOGHuntEnemy::OnAgroEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	if (!HasAuthority()) return;
-	if (!OtherActor) return;
-
-	if (OtherActor == CurrentTarget)
-	{
-		FindNewTarget();
-	}
+	if(!HasAuthority()) return;
 	
-	if (CurrentTargetArray.Contains(OtherActor))
-	{
-		int32 Amount = CurrentTargetArray.Remove(OtherActor);
-		OnPlayerExitedAgroSphere(OtherActor);
-
-		APawn* Pawn = Cast<APawn>(OtherActor);
-		if (Pawn && Pawn->GetController())
-		{
-			UWOGUIManagerComponent* UIManager = UWOGBlueprintLibrary::GetUIManagerComponent(Pawn->GetController());
-			if (UIManager)
-			{
-				UIManager->Client_RemoveHuntWidget();
-				UE_LOG(WOGLogUI, Display, TEXT("HuntWidget removed"));
-			}
-		}
-	}
-
-	if (CurrentTargetArray.IsEmpty())
-	{
-		CurrentTarget = nullptr;
-		SetCurrentEnemyState(EEnemyState::EES_Idle);
-		UE_LOG(WOGLogSpawn, Display, TEXT("Target array empty. No CurrentTarget"));
-	}
+	AWOGBaseCharacter* LeavingPlayer = Cast<AWOGBaseCharacter>(OtherActor);
+	PlayerCharacterEndedOverlap(LeavingPlayer);
 }
 
 void AWOGHuntEnemy::OnAttributeChangedCallback(FGameplayAttribute ChangedAttribute, float NewValue, float MaxValue)
