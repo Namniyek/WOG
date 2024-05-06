@@ -62,6 +62,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Weapon_Ranged_Throw, "Event.Weapon.Ranged.Throw
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Weapon_Ranged_Catch, "Event.Weapon.Ranged.Catch");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Weapon_Equip, "Event.Weapon.Equip");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Weapon_Unequip, "Event.Weapon.Unequip");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Weapon_Shoot, "Event.Weapon.Shoot");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Magic_Cast, "Event.Magic.Cast");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Magic_SpawnAOE, "Event.Magic.SpawnAOE");
@@ -102,6 +103,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Resource_Stone, "Inventory.Resource.Stone")
 UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Weapon_Shield, "Inventory.Weapon.Shield");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Weapon_TwoHanded, "Inventory.Weapon.TwoHanded");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Weapon_DualWield, "Inventory.Weapon.DualWield");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Weapon_Ranged, "Inventory.Weapon.Ranged");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Weapon, "Inventory.Weapon");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Tool, "Inventory.Tool");
 
@@ -114,6 +116,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Weapon_TwoHanded_Axe, "Inventory.Weapon.Two
 UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Weapon_DualWield_Axe, "Inventory.Weapon.DualWield.Axe");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Weapon_DualWield_Hammer, "Inventory.Weapon.DualWield.Hammer");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Weapon_DualWield_Sword, "Inventory.Weapon.DualWield.Sword");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Weapon_Ranged_Crossbow, "Inventory.Weapon.Ranged.Crossbow");
 
 //Magic
 UE_DEFINE_GAMEPLAY_TAG(TAG_Inventory_Magic, "Inventory.Magic");
@@ -145,8 +148,10 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Pose_TwoHanded_Axe, "Pose.TwoHanded.Axe");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Pose_DualWield_Sword, "Pose.DualWield.Sword");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Pose_DualWield_Hammer, "Pose.DualWield.Hammer");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Pose_DualWield_Axe, "Pose.DualWield.Axe");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Pose_Ranged_Crossbow, "Pose.Ranged.Crossbow");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Pose_Overlay_Block, "Pose.Overlay.Block");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Pose_Overlay_Aim, "Pose.Overlay.Aim");
 
 //Gameplay Cue Tags
 UE_DEFINE_GAMEPLAY_TAG(TAG_Cue_Weapon_BodyHit, "GameplayCue.Weapon.BodyHit");
