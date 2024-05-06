@@ -409,7 +409,11 @@ void ABasePlayerCharacter::PrimaryLightButtonPressed(const FInputActionValue& Va
 	}
 
 	TObjectPtr<AWOGBaseWeapon> EquippedWeapon = UWOGBlueprintLibrary::GetEquippedWeapon(this);
-	if (EquippedWeapon && HasMatchingGameplayTag(TAG_State_Weapon_Ranged_AOE) && AbilitySystemComponent.Get())
+	if (EquippedWeapon &&
+		(HasMatchingGameplayTag(TAG_State_Weapon_Ranged_AOE)
+			|| HasMatchingGameplayTag(TAG_State_Weapon_Aim)
+			|| HasMatchingGameplayTag(TAG_State_Weapon_Block))
+		&& AbilitySystemComponent.Get())
 	{
 		AbilitySystemComponent->LocalInputConfirm();
 		UE_LOG(LogTemp, Warning, TEXT("Confirmed Input"));
