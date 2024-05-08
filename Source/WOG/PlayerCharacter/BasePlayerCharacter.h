@@ -462,9 +462,10 @@ public:
 	virtual void FreeCurrentEpicSquadSlot_Implementation() override;
 	virtual bool IsCurrentEpicSquadSlotAvailable_Implementation() const override;
 	virtual AWOGBaseSquad* GetCurrentEpicSquadSlot_Implementation() const override;
-
+	
 	virtual void ProcessHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh) override;
 	virtual void ProcessMagicHit(const FHitResult& Hit, const struct FMagicDataTable& MagicData) override;
+	virtual void ProcessRangedHit(const FHitResult& Hit, const float& DamageToApply, AActor* AggressorWeapon) override;
 	#pragma endregion
 
 	#pragma region Handle Resources 

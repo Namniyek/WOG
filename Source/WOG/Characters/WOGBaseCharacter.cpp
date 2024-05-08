@@ -492,6 +492,69 @@ bool AWOGBaseCharacter::CanBePossessed_Implementation() const
 	return false;
 }
 
+bool AWOGBaseCharacter::TraceUnderCrosshairs(FHitResult& OutHitResult, FVector& OutHitLocation)
+{
+	//Get Viewport size
+	FVector2D ViewportSize;
+	if (GEngine && GEngine->GameViewport)
+	{
+		GEngine->GameViewport->GetViewportSize(ViewportSize);
+	}
+
+	//Get screen space location of the crosshair
+	FVector2D CrosshairLocation((ViewportSize.X / 2.f), (ViewportSize.Y / 2.f));
+	FVector CrosshairWorldPosition;
+	FVector CrosshairWorldDirection;
+
+	//Get world position and direction of the crosshair
+	TObjectPtr<APlayerController> PlayerController = Cast<APlayerController>(GetController());
+	if (!PlayerController) return false;
+
+	bool bScreenToWorld = UGameplayStatics::DeprojectScreenToWorld(PlayerController, CrosshairLocation, CrosshairWorldPosition, CrosshairWorldDirection);
+	if (bScreenToWorld)
+	{
+		//Trace from Crosshair world location outward
+		const FVector Start(CrosshairWorldPosition);
+		const FVector End(Start + CrosshairWorldDirection * 50'000.f);
+		OutHitLocation = End;
+		GetWorld()->LineTraceSingleByChannel(OutHitResult, Start, End, ECollisionChannel::ECC_Visibility);
+
+		if (OutHitResult.bBlockingHit)
+		{
+			OutHitLocation = OutHitResult.Location;
+			return true;
+		}
+	}
+
+	return false;
+}
+
+void AWOGBaseCharacter::GetBeamEndLocation(const FVector& StartLocation, FHitResult& OutHitResult)
+{
+	//Check for crosshairs trace hit
+	FHitResult CrosshairHitResult;
+	FVector OutBeamLocation;
+	bool bCrosshairHit(TraceUnderCrosshairs(CrosshairHitResult, OutBeamLocation));
+
+	if (bCrosshairHit)
+	{
+		//Tentative beam location
+		OutBeamLocation = CrosshairHitResult.Location;
+	}
+
+	//Perform a second trace from character barrel
+	const FVector TraceStart = StartLocation;
+	const FVector TraceEnd = OutBeamLocation; // + StartToEnd * 1.25f;
+
+	GetWorld()->LineTraceSingleByChannel(OutHitResult, TraceStart, TraceEnd, ECollisionChannel::ECC_Visibility);
+
+	//object between character and beam end point
+	if (!OutHitResult.bBlockingHit)
+	{
+		OutHitResult.Location = OutBeamLocation;
+	}
+}
+
 void AWOGBaseCharacter::Server_ToRagdoll_Implementation(const float& Radius, const float& Strength, const FVector_NetQuantize& Origin)
 {
 	bIsRagdolling = true;

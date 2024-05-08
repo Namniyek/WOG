@@ -1328,6 +1328,45 @@ void ABasePlayerCharacter::ProcessMagicHit(const FHitResult& Hit, const FMagicDa
 	}
 }
 
+void ABasePlayerCharacter::ProcessRangedHit(const FHitResult& Hit, const float& DamageToApply, AActor* AggressorWeapon)
+{
+	if (!Hit.GetActor() || Hit.GetActor() == this)
+	{
+		UE_LOG(LogTemp, Error, TEXT("No Victim actor"));
+		return;
+	}
+
+	//Get the Damage to apply values:
+	float LocalDamageToApply = DamageToApply;;
+	if (HasAuthority())
+	{
+		float StrengthMultiplier = AttributeSet->GetStrengthMultiplier();
+		LocalDamageToApply *= StrengthMultiplier;
+		UE_LOG(LogTemp, Warning, TEXT("DamageToApply after StrengthMultiplier : %f"), LocalDamageToApply);
+	}
+
+	//Check if we hit build and apply build damage
+	IBuildingInterface* BuildInterface = Cast<IBuildingInterface>(Hit.GetActor());
+	if (BuildInterface && HasAuthority())
+	{
+		BuildInterface->Execute_DealDamage(Hit.GetActor(), LocalDamageToApply, this);
+		UE_LOG(LogTemp, Warning, TEXT("Build damaged with %f"), LocalDamageToApply);
+		return;
+	}
+
+	//Check if we hit other character
+	IAttributesInterface* AttributesInterface = Cast<IAttributesInterface>(Hit.GetActor());
+	if (AttributesInterface)
+	{
+		bool FoundAttribute;
+		float DamageReduction = UAbilitySystemBlueprintLibrary::GetFloatAttribute(Hit.GetActor(), AttributeSet->GetDamageReductionAttribute(), FoundAttribute);
+		LocalDamageToApply *= (1 - DamageReduction);
+		UE_LOG(LogTemp, Warning, TEXT("DamageToApply after DamageReduction of %f : %f"), DamageReduction, LocalDamageToApply);
+
+		AttributesInterface->Execute_BroadcastHit(Hit.GetActor(), this, Hit, LocalDamageToApply, AggressorWeapon);
+	}
+}
+
 void ABasePlayerCharacter::OnStartAttack()
 {
 	HitActorsToIgnore.Empty();

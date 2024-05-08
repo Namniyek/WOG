@@ -204,10 +204,6 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void SpawnAOE(const FVector_NetQuantize& TargetLocation);
 
-	//Line trace for item under the crosshairs
-	bool TraceUnderCrosshairs(FHitResult& OutHitResult, FVector& OutHitLocation);
-	void GetBeamEndLocation(const FVector& StartLocation, FHitResult& OutHitResult);
-
 private:
 	void SpawnIdleClass();
 	TObjectPtr<AWOGBaseIdleMagic> IdleActor;

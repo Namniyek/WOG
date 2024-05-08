@@ -47,6 +47,13 @@ public:
 	UFUNCTION(BlueprintCallable)
 	virtual void Elim(bool bPlayerLeftGame) { /*To be overriden in Children*/ };
 
+	#pragma region Handle Combat
+	//Line trace for item under the crosshairs
+	bool TraceUnderCrosshairs(FHitResult& OutHitResult, FVector& OutHitLocation);
+	UFUNCTION(BlueprintCallable)
+	void GetBeamEndLocation(const FVector& StartLocation, FHitResult& OutHitResult);
+	#pragma endregion 
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -288,8 +295,12 @@ public:
 	FORCEINLINE AWOGPlayerController* GetOwnerPC() const { return OwnerPC; }
 
 	#pragma region Handle Combat
+	UFUNCTION(BlueprintCallable)
 	virtual void ProcessHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh) {/*To be overriden in children*/ };
+	UFUNCTION(BlueprintCallable)
 	virtual void ProcessMagicHit(const FHitResult& Hit, const struct FMagicDataTable& MagicData) {/*To be overriden in children*/ };
+	UFUNCTION(BlueprintCallable)
+	virtual void ProcessRangedHit(const FHitResult& Hit, const float& DamageToApply, AActor* AggressorWeapon) {/*To be overriden in children*/ };
 
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly)
 	bool bComboWindowOpen;
