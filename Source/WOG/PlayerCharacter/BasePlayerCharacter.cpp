@@ -165,22 +165,21 @@ void ABasePlayerCharacter::BeginPlay()
 			UIManager->AddCrosshairWidget();
 		}
 	}
-
-	/*
-	* Create default Pickaxe and Woodaxe
-	*/
-	// if (HasAuthority() && CurrentTOD == ETimeOfDay::TOD_Start)
-	// {
-	// 	FTimerHandle TimerHandle;
-	// 	float Delay = 2.f;
-	// 	GetWorldTimerManager().SetTimer(TimerHandle, this, &ThisClass::CreateDefaults, Delay);
-	// }
-
-	if (HasAuthority() && CurrentTOD >= ETimeOfDay::TOD_Dawn1)
+	
+	if (HasAuthority())
 	{
+		FTimerDelegate TimerDel;
 		FTimerHandle TimerHandle;
-		float Delay = 2.f;
-		GetWorldTimerManager().SetTimer(TimerHandle, this, &ThisClass::RestoreEquipmentFromCommonInventory, Delay);
+		const float Delay = 2.f;
+
+		bool bStoreWeapons = (CurrentTOD == ETimeOfDay::TOD_Dawn1
+		|| CurrentTOD == ETimeOfDay::TOD_Dawn2
+		|| CurrentTOD == ETimeOfDay::TOD_Dawn3
+		|| CurrentTOD == ETimeOfDay::TOD_Dawn4);
+
+		//Binding the function with specific values
+		TimerDel.BindUFunction(this, FName("HandleWeaponSwitch"), bStoreWeapons);
+		GetWorld()->GetTimerManager().SetTimer(TimerHandle, TimerDel, Delay, false);
 	}
 }
 
@@ -2044,6 +2043,7 @@ void ABasePlayerCharacter::HandleTODChange()
 		{
 		case ETimeOfDay::TOD_Dawn1:
 			CreateDefaults();
+			GrantDefaultInventoryItems();
 			break;
 		case ETimeOfDay::TOD_Dusk1:
 			HandleWeaponSwitch(false);
@@ -2195,6 +2195,7 @@ void ABasePlayerCharacter::PostInitializeComponents()
 
 void ABasePlayerCharacter::Elim(bool bPlayerLeftGame)
 {
+	DestroyDefaultToolsAndMagics();
 	StoreEquipment();
 	SendEquipmentToCommonInventory();
 	Multicast_Elim(bPlayerLeftGame);
@@ -2502,8 +2503,6 @@ void ABasePlayerCharacter::CreateDefaults()
 	{
 		CreateDefaultTools();
 	}
-
-	GrantDefaultInventoryItems();
 }
 
 void ABasePlayerCharacter::CreateDefaultTools()
@@ -2592,6 +2591,7 @@ void ABasePlayerCharacter::HandleWeaponSwitch(bool bStoreWeapons)
 	{
 		StoreEquipment();
 		CreateDefaults();
+		RestoreTools();
 	}
 	else
 	{

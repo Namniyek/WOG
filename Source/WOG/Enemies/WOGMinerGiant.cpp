@@ -2,7 +2,6 @@
 
 
 #include "Enemies/WOGMinerGiant.h"
-#include "WOG.h"
 #include "Interfaces/ResourcesInterface.h"
 #include "Kismet/KismetSystemLibrary.h"
 
@@ -14,7 +13,6 @@ void AWOGMinerGiant::ProcessHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh)
 	bool bImplementsInterface = UKismetSystemLibrary::DoesImplementInterface(Hit.GetActor(), UResourcesInterface::StaticClass());
 	if (bImplementsInterface)
 	{
-		IResourcesInterface::Execute_ResourcesHit(Hit.GetActor(), Hit, GetActorLocation(), 2);
-		return;
+		IResourcesInterface::Execute_ResourcesHit(Hit.GetActor(), Hit, GetActorLocation(), 4);
 	}
 }

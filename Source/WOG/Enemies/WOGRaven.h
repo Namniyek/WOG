@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "Characters/WOGBaseCharacter.h"
 #include "Interfaces/SpawnInterface.h"
-#include "Interfaces/TargetInterface.h"
 #include "InputActionValue.h"
 #include "WOGRaven.generated.h"
 

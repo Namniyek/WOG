@@ -417,11 +417,11 @@ public:
 
 	void DestroyDefaultToolsAndMagics();
 
+	UFUNCTION()
 	void HandleWeaponSwitch(bool bStoreWeapons);
 
 	void SendEquipmentToCommonInventory() const;
 	void RestoreEquipmentFromCommonInventory();
-
 	#pragma endregion
 
 	#pragma region Actor Components
@@ -475,7 +475,7 @@ public:
 
 	void FindCommonInventory();
 
-	UFUNCTION(Server, reliable)
+	UFUNCTION(Server, reliable, BlueprintCallable)
 	void Server_CollectResource(UAGR_ItemComponent* ItemToCollect);
 	#pragma endregion
 

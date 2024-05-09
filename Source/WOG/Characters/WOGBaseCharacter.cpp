@@ -29,6 +29,7 @@
 #include "AI/Combat/WOGBaseSquad.h"
 #include "Data/AGRLibrary.h"
 #include "EnhancedInputSubsystems.h"
+#include "InputMappingContext.h"
 #include "Enemies/WOGHuntEnemy.h"
 
 AWOGBaseCharacter::AWOGBaseCharacter()
@@ -113,7 +114,7 @@ void AWOGBaseCharacter::SetupMappingContext() const
 	{
 		Subsystem->ClearAllMappings();
 		Subsystem->AddMappingContext(MainMappingContext, 0);
-		UE_LOG(WOGLogSpawn, Display, TEXT("MainMappingContext for %s added on %s"), *GetNameSafe(this), *UEnum::GetValueAsString(GetLocalRole()));
+		UE_LOG(WOGLogSpawn, Display, TEXT("MainMappingContext for %s added on %s"), *MainMappingContext->GetName(), *UEnum::GetValueAsString(GetLocalRole()));
 	}
 }
 

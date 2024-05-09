@@ -84,6 +84,12 @@ void ATimeOfDay::UpdateTime()
 		OnKeyTimeHit.Broadcast(RepCurrentTime);
 	}
 
+	//17:20
+	if (RepCurrentTime == 1040)
+	{
+		OnKeyTimeHit.Broadcast(RepCurrentTime);
+	}
+
 	//17:30
 	if (RepCurrentTime == 1050)
 	{

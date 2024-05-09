@@ -112,10 +112,18 @@ void AWOGRaven::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 void AWOGRaven::MoveActionPressed(const FInputActionValue& Value)
 {
 	FVector2D MovementVector = Value.Get<FVector2D>();
-	if (Controller != nullptr && MovementVector.Y > 0.f)
+
+	if (MovementVector.X != 0)
 	{
-		// add movement 
-		AddMovementInput(GetActorForwardVector(), MovementVector.Y);
+		FGameplayEventData EventPayload;
+		EventPayload.EventMagnitude = MovementVector.X;
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Movement_Right, EventPayload);
+	}
+	if (MovementVector.Y > 0)
+	{
+		FGameplayEventData EventPayload;
+		EventPayload.EventMagnitude = MovementVector.Y;
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, TAG_Event_Movement_Forward, EventPayload);
 	}
 }
 
@@ -229,6 +237,11 @@ void AWOGRaven::TODChanged(ETimeOfDay TOD)
 void AWOGRaven::KeyTimeHit(int32 CurrentTime)
 {
 	if (CurrentTime == 350 && IsLocallyControlled())
+	{
+		Client_RemoveRavenMarkerWidget();
+		Server_UnpossessMinion();
+	}
+	if (CurrentTime == 1040 && IsLocallyControlled())
 	{
 		Client_RemoveRavenMarkerWidget();
 		Server_UnpossessMinion();

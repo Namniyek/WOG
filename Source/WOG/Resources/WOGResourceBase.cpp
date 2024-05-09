@@ -6,9 +6,13 @@
 #include "Components/SphereComponent.h"
 #include "Components/WidgetComponent.h"
 #include "Data/AGRLibrary.h"
+#include "Enemies/WOGMinerGiant.h"
+#include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 #include "Resources/WOGCommonInventory.h"
 #include "PlayerCharacter/BasePlayerCharacter.h"
+#include "PlayerCharacter/WOGAttacker.h"
+#include "Slate/SGameLayerManager.h"
 
 
 // Sets default values
@@ -57,6 +61,16 @@ void AWOGResourceBase::BeginPlay()
 
 void AWOGResourceBase::OnSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+	if(OtherActor && OtherActor->IsA<AWOGMinerGiant>())
+	{
+		AWOGAttacker* Attacker = Cast<AWOGAttacker>(UGameplayStatics::GetActorOfClass(this, AWOGAttacker::StaticClass()));
+		if(Attacker)
+		{
+			Attacker->Server_CollectResource(ItemComponent);
+			return;
+		}
+	}
+	
 	TObjectPtr<ABasePlayerCharacter> Player = Cast<ABasePlayerCharacter>(OtherActor);
 	if (!Player) return;
 

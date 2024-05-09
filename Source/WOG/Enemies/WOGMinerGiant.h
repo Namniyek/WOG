@@ -17,5 +17,4 @@ class WOG_API AWOGMinerGiant : public AWOGPossessableEnemy
 protected:
 
 	virtual void ProcessHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh) override;
-	
 };

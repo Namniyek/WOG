@@ -308,6 +308,10 @@ void AWOGPossessableEnemy::KeyTimeHit(int32 CurrentTime)
 	{
 		Server_UnpossessMinion();
 	}
+	if (CurrentTime == 1040)
+	{
+		Server_UnpossessMinion();
+	}
 }
 
 void AWOGPossessableEnemy::Server_UnpossessMinion_Implementation()
