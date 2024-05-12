@@ -903,9 +903,6 @@ bool UAGR_InventoryManager::HasExactItem(AActor* Item)
 
 void UAGR_InventoryManager::Multicast_OnItemUpdated_Implementation(AActor* Item)
 {
-   /* if (!GetOwner()->HasAuthority())
-    {
-        OnItemUpdated.Broadcast(Item);
-        UE_LOG(LogAGR, Display, TEXT("Multicast  OnItemUpdated.Broadcast(%s), %s"), *GetNameSafe(Item), *UEnum::GetValueAsString(GetOwner()->GetLocalRole()));
-    }*/
+    OnItemUpdated.Broadcast(Item);
+    UE_LOG(LogAGR, Display, TEXT("Multicast  OnItemUpdated.Broadcast(%s), %s"), *GetNameSafe(Item), *UEnum::GetValueAsString(GetOwner()->GetLocalRole()));
 }

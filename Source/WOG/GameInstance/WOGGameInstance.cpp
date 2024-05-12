@@ -20,7 +20,6 @@ const FName SESSION_NAME = TEXT("WOG Session");
 UWOGGameInstance::UWOGGameInstance()
 {
 	bIsLoggedIn = false;
-
 }
 
 void UWOGGameInstance::Init()
@@ -109,8 +108,18 @@ void UWOGGameInstance::CreateSession()
 
 			SessionPtr.Get()->OnCreateSessionCompleteDelegates.AddUObject(this, &ThisClass::OnCreateSessionComplete);
 			SessionPtr.Get()->CreateSession(0, SESSION_NAME, SessionSettings);
+			UE_LOG(LogTemp, Display, TEXT("Attempt to create Session"));
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("Invalid SessionPtr when creating session"));
 		}
 	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Invalid Online Subsystem"));
+	}
+	
 }
 
 void UWOGGameInstance::OnCreateSessionComplete(FName SessionName, bool bSuccessful)
@@ -124,7 +133,16 @@ void UWOGGameInstance::OnCreateSessionComplete(FName SessionName, bool bSuccessf
 		{
 			SessionPtr.Get()->ClearOnCreateSessionCompleteDelegates(this);
 			GetWorld()->ServerTravel(FString("/Game/Maps/Lobby?listen"), true);
+			UE_LOG(LogTemp, Display, TEXT("Session Created, ServerTravel() called"));
 		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("Invalid SessionPtr on OnCreateSessionComplete delegate"));
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Invalid Online Subsystem"));
 	}
 }
 

@@ -595,7 +595,7 @@ void ABasePlayerCharacter::SetMeshesAndAnimations(bool bIsMale, FName RowName)
 		return;
 	}
 
-	MergeParams.bNeedsCpuAccess = true;
+	/*MergeParams.bNeedsCpuAccess = true;
 
 	MergeParams.MeshesToMerge.Add(MeshRow->Head);
 	MergeParams.MeshesToMerge.Add(MeshRow->Torso);
@@ -614,14 +614,11 @@ void ABasePlayerCharacter::SetMeshesAndAnimations(bool bIsMale, FName RowName)
 	MergeParams.MeshesToMerge.Add(MeshRow->Eyebrows);
 	MergeParams.MeshesToMerge.Add(MeshRow->Helmet);
 
-	MergeParams.Skeleton = MeshRow->Skeleton;
+	MergeParams.Skeleton = MeshRow->Skeleton;*/
 
-	USkeletalMesh* NewMesh = UMeshMergeFunctionLibrary::MergeMeshes(MergeParams);
+	USkeletalMesh* NewMesh = MeshRow->Head;/*UMeshMergeFunctionLibrary::MergeMeshes(MergeParams);*/
 	if (NewMesh)
 	{
-		//UE_LOG(LogTemp, Warning, TEXT("%d Amount of LODs"), NewMesh->GetLODNum());
-		//NewMesh->GetLODInfo(NewMesh->GetLODNum())->bAllowCPUAccess = true;
-
 		GetMesh()->SetSkinnedAssetAndUpdate(NewMesh, true);
 		GetMesh()->SetMaterial(0, CharacterMI);
 		GetMesh()->SetMaterial(1, CharacterMI);

@@ -17,6 +17,7 @@ AWOGBaseMagicAOE::AWOGBaseMagicAOE()
 	bReplicates = true;
 	bNetLoadOnClient = false;
 	InitDelay = 1.f;
+	bAlwaysRelevant = true;
 
 	OverlapSphere = CreateDefaultSubobject<USphereComponent>(TEXT("OverlapSphere"));
 	SetRootComponent(OverlapSphere);

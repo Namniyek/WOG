@@ -48,8 +48,8 @@ public:
 	virtual void Elim(bool bPlayerLeftGame) { /*To be overriden in Children*/ };
 
 	#pragma region Handle Combat
-	//Line trace for item under the crosshairs
-	bool TraceUnderCrosshairs(FHitResult& OutHitResult, FVector& OutHitLocation);
+	//Line trace for item under the crosshair
+	bool TraceUnderCrosshair(FHitResult& OutHitResult, FVector& OutHitLocation);
 	UFUNCTION(BlueprintCallable)
 	void GetBeamEndLocation(const FVector& StartLocation, FHitResult& OutHitResult);
 	#pragma endregion 

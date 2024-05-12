@@ -52,7 +52,9 @@ protected:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	bool bIsSpawnerActive;
-
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	int32 SpawnDelay;
+	
 	virtual bool StartSpawn();
 	virtual void SpawnNPC(const TSubclassOf<AActor>& ClassToSpawn, const FVector& Location);
 

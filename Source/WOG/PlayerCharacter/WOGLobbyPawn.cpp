@@ -15,23 +15,3 @@ AWOGLobbyPawn::AWOGLobbyPawn()
 	SetRootComponent(Camera);
 }
 
-// Called when the game starts or when spawned
-void AWOGLobbyPawn::BeginPlay()
-{
-	Super::BeginPlay();
-}
-
-// Called every frame
-void AWOGLobbyPawn::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-}
-
-// Called to bind functionality to input
-void AWOGLobbyPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
-}
-

@@ -321,6 +321,7 @@ void UWOGUIManagerSubsystem::AddEndgameWidget() const
 
 void UWOGUIManagerSubsystem::ResetHUD()
 {
+	if(!OwnerPC || !OwnerPC->GetHUD()) return;
 	MatchHUD == nullptr ? (TObjectPtr<AWOGMatchHUD>) Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
 	if (MatchHUD)
 	{

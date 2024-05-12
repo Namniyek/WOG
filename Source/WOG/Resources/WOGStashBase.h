@@ -73,6 +73,7 @@ private:
 
 	bool bIsPlayerOverlapping;
 
+	UPROPERTY()
 	TObjectPtr<APlayerController> CurrentUserPC;
 
 	UPROPERTY(Replicated)

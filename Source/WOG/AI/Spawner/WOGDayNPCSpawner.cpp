@@ -14,6 +14,7 @@ AWOGDayNPCSpawner::AWOGDayNPCSpawner()
 	bIsSpawnerActive = true;
 
 	CurrentTOD = ETimeOfDay::TOD_Start;
+	SpawnDelay = 2;
 }
 
 void AWOGDayNPCSpawner::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -119,7 +120,7 @@ void AWOGDayNPCSpawner::SpawnNPC(const TSubclassOf<AActor>& ClassToSpawn, const 
 	FTimerDelegate TimerDel;
 	FTimerHandle TimerHandle;
 	//Setup random spawn delay time
-	float TimerDelay = FMath::RandRange(0.1f, 3.f);
+	float TimerDelay = FMath::RandRange(0.1f, 3.f) + SpawnDelay;
 
 	//Binding the function with specific values
 	TimerDel.BindUFunction(this, FName("DelayedSpawnNPC"), ClassToSpawn, Location);

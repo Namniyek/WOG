@@ -347,7 +347,7 @@ void AWOGBaseCharacter::OnGameplayEffectAppliedToSelf(UAbilitySystemComponent* S
 	Spec.GetAllGrantedTags(GrantedTags);
 	for (auto Tag : GrantedTags)
 	{
-		if (Tag == TAG_State_Debuff_Freeze)
+		if (Tag == TAG_State_Debuff_Freeze && !IsA<AWOGBaseEnemy>())
 		{
 			Server_SetCharacterFrozen(true);
 			UE_LOG(LogTemp, Display, TEXT("Server_SetCharacterFrozen(true) called"));
@@ -493,7 +493,7 @@ bool AWOGBaseCharacter::CanBePossessed_Implementation() const
 	return false;
 }
 
-bool AWOGBaseCharacter::TraceUnderCrosshairs(FHitResult& OutHitResult, FVector& OutHitLocation)
+bool AWOGBaseCharacter::TraceUnderCrosshair(FHitResult& OutHitResult, FVector& OutHitLocation)
 {
 	//Get Viewport size
 	FVector2D ViewportSize;
@@ -535,7 +535,7 @@ void AWOGBaseCharacter::GetBeamEndLocation(const FVector& StartLocation, FHitRes
 	//Check for crosshairs trace hit
 	FHitResult CrosshairHitResult;
 	FVector OutBeamLocation;
-	bool bCrosshairHit(TraceUnderCrosshairs(CrosshairHitResult, OutBeamLocation));
+	bool bCrosshairHit(TraceUnderCrosshair(CrosshairHitResult, OutBeamLocation));
 
 	if (bCrosshairHit)
 	{

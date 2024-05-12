@@ -109,6 +109,7 @@ protected:
 	virtual void ProcessMagicHit(const FHitResult& Hit, const struct FMagicDataTable& MagicData) override;
 
 	virtual void BroadcastHit_Implementation(AActor* AggressorActor, const FHitResult& Hit, const float& DamageToApply, AActor* InstigatorWeapon) override;
+	virtual void BroadcastMagicHit_Implementation(AActor* AggressorActor, const FHitResult& Hit, const struct FMagicDataTable& AggressorMagicData) override;
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnCharacterElimEvent();
@@ -160,7 +161,7 @@ protected:
 	virtual FGameplayTag GetRangedAttackData_Implementation(int32& TokensNeeded) override;
 	virtual FGameplayTag GetCloseAttackData_Implementation(int32& TokensNeeded) override;
 	virtual FGameplayTag GetAttackDataAtIndex_Implementation(const int32& Index, int32& TokensNeeded) override;
-	int32 GetAttackIndex_Implementation();
+	int32 GetAttackIndex_Implementation() const;
 	virtual void DefineAttackTagIndex_Implementation() override;
 	virtual void IncreaseComboIndex_Implementation() override;
 	virtual void ResetComboIndex_Implementation() override;
@@ -171,12 +172,12 @@ protected:
 	UPROPERTY(Replicated)
 	TObjectPtr<UWOGSpawnCosmetics> CosmeticsDataAsset;
 
-	void HandleDestroyCosmetics();
+	void HandleDestroyCosmetics() const;
 	void ExecuteGameplayCueWithCosmeticsDataAsset(const FGameplayTag& CueTag);
 	#pragma endregion
 
 public:
-	void HandleSpawnCosmetics();
+	void HandleSpawnCosmetics() const;
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
 	void SetOwnerAttacker(AWOGAttacker* NewOwner);
