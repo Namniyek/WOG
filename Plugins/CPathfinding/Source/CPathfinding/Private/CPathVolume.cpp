@@ -822,13 +822,9 @@ CPathOctree* ACPathVolume::FindLeafRecursive(FVector RelativeLocation, uint32& T
 		RelativeLocation = RelativeLocation - (LookupTable_ChildPositionOffsetMaskByIndex[ChildIndex] * (GetVoxelSizeByDepth(CurrentDepth) / 2.f));
 		return FindLeafRecursive(RelativeLocation, TreeID, CurrentDepth, ChildTree);
 	}
-	else
-	{
-		ReplaceDepth(TreeID, CurrentDepth);
-		return ChildTree;
-	}
-
-	return nullptr;
+	
+	ReplaceDepth(TreeID, CurrentDepth);
+	return ChildTree;
 }
 
 FVector ACPathVolume::GetOuterTreeWorldLocation(uint32 TreeID) const

@@ -8,7 +8,7 @@ public class WOGEditorTarget : TargetRules
 	public WOGEditorTarget(TargetInfo Target) : base(Target)
 	{
 		Type = TargetType.Editor;
-		DefaultBuildSettings = BuildSettingsVersion.V4;
+		DefaultBuildSettings = BuildSettingsVersion.V5;
 		ExtraModuleNames.Add("WOG");
         IncludeOrderVersion = EngineIncludeOrderVersion.Latest;
     }

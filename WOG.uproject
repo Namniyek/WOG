@@ -1,6 +1,6 @@
 {
 	"FileVersion": 3,
-	"EngineAssociation": "5.3",
+	"EngineAssociation": "5.4",
 	"Category": "",
 	"Description": "",
 	"Modules": [
@@ -44,7 +44,7 @@
 		},
 		{
 			"Name": "VisualStudioTools",
-			"Enabled": true,
+			"Enabled": false,
 			"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/product/362651520df94e4fa65492dbcba44ae2",
 			"SupportedTargetPlatforms": [
 				"Win64"
@@ -98,7 +98,7 @@
 		},
 		{
 			"Name": "LogViewer",
-			"Enabled": true,
+			"Enabled": false,
 			"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/content/4853cdc0a6a54d7b9c0712cbe72f6b68"
 		},
 		{
@@ -107,12 +107,12 @@
 		},
 		{
 			"Name": "GBW_Scratch",
-			"Enabled": true,
+			"Enabled": false,
 			"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/product/5167bd6c4cea4f08b4ddf213e1942c79"
 		},
 		{
 			"Name": "DidItHit",
-			"Enabled": true
+			"Enabled": false
 		},
 		{
 			"Name": "ActorPalette",

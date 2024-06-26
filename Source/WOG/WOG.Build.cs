@@ -16,8 +16,6 @@ public class WOG : ModuleRules
             "Engine",
             "InputCore",
             "OnlineSubsystem",
-            "OnlineSubsystemSteam",
-            "OnlineSubsystemEOS",
             "EnhancedInput",
             "AnimGraphRuntime",
             "Niagara",
