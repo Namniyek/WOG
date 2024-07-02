@@ -9,6 +9,8 @@
 /**
  * 
  */
+ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnLoginProcessCompleteDelegate, bool, bWasSuccessful);
+ 
 UCLASS()
 class WOG_API UWOGEpicOnlineServicesSubsystem : public UGameInstanceSubsystem
 {
@@ -16,6 +18,9 @@ class WOG_API UWOGEpicOnlineServicesSubsystem : public UGameInstanceSubsystem
 
 public:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnLoginProcessCompleteDelegate OnLoginCompleteDelegate;
 
 protected:
 	UFUNCTION(BlueprintCallable)
