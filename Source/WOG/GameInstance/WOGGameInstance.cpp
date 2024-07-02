@@ -27,7 +27,7 @@ void UWOGGameInstance::Init()
 	Super::Init();
 
 	OnlineSubsystem = IOnlineSubsystem::Get();
-	Login();
+	//Login();
 
 	if (!OnlineSubsystem) return;
 
@@ -84,11 +84,13 @@ void UWOGGameInstance::OnLoginComplete(int ControllerIndex, bool bWasSuccessful,
 
 void UWOGGameInstance::CreateSession()
 {
-	if (!bIsLoggedIn)
+	IOnlineIdentityPtr Identity = OnlineSubsystem->GetIdentityInterface();
+	if (Identity && Identity->GetLoginStatus(0)==ELoginStatus::NotLoggedIn)
 	{
-		UE_LOG(LogTemp, Error, TEXT("Not logged in: Cannot create session"));
+		GEngine->AddOnScreenDebugMessage(0, 6.f, FColor::Red, FString("Not logged in: Cannot create session"));
 		return;
 	}
+	
 	if (OnlineSubsystem)
 	{
 		IOnlineSessionPtr SessionPtr = OnlineSubsystem->GetSessionInterface();
