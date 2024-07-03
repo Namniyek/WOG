@@ -26,6 +26,12 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void Login();
 
+	UFUNCTION(BlueprintCallable)
+	void CreateLobby();
+
+	UFUNCTION(BlueprintCallable)
+	void GetLobbyMembers();
+
 private:
 	
 	#pragma region Callback functions
@@ -34,6 +40,14 @@ private:
 
 	#pragma region Delegate handles
 	FDelegateHandle LoginDelegateHandle;
+	#pragma endregion
+
+	#pragma region Created Lobby
+	FString LobbyIdString;
 	#pragma endregion 
-	
+
+public:
+
+	UFUNCTION(BlueprintPure)
+	bool IsLocalUserLoggedIn() const;
 };
