@@ -33,6 +33,8 @@ public:
 
 	virtual void AcknowledgePossession(class APawn* P);
 
+	void OnNetCleanup(UNetConnection* Connection) override;
+
 protected:
 	virtual void OnPossess(APawn* aPawn) override;
 	virtual void BeginPlay() override;

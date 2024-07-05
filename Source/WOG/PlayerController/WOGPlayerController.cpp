@@ -14,6 +14,7 @@
 #include "PlayerCharacter/WOGAttacker.h"
 #include "AbilitySystemComponent.h"
 #include "ActorComponents/WOGUIManagerComponent.h"
+#include "GameMode/WOGGameMode.h"
 #include "Subsystems/WOGUIManagerSubsystem.h"
 
 AWOGPlayerController::AWOGPlayerController()
@@ -46,6 +47,20 @@ void AWOGPlayerController::AcknowledgePossession(APawn* P)
 			UIManager->AddCrosshairWidget();
 		}
 	}
+}
+
+void AWOGPlayerController::OnNetCleanup(UNetConnection* Connection)
+{
+	if (GetLocalRole() == ROLE_Authority && PlayerState != NULL)
+	{
+		AWOGGameMode* GameMode = Cast<AWOGGameMode>(GetWorld()->GetAuthGameMode());
+		if (GameMode)
+		{
+			GameMode->PreLogout(this);
+		}
+	}
+	
+	Super::OnNetCleanup(Connection);
 }
 
 void AWOGPlayerController::OnPossess(APawn* aPawn)

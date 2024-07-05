@@ -35,7 +35,7 @@ void AWOGLobbyPlayerController::OnNetCleanup(UNetConnection* Connection)
 {
 	if (GetLocalRole() == ROLE_Authority && PlayerState != NULL)
 	{
-		AWOGLobbyGameMode *GameMode = Cast<AWOGLobbyGameMode>(GetWorld()->GetAuthGameMode());
+		AWOGLobbyGameMode* GameMode = Cast<AWOGLobbyGameMode>(GetWorld()->GetAuthGameMode());
 		if (GameMode)
 		{
 			GameMode->PreLogout(this);
@@ -57,8 +57,6 @@ void AWOGLobbyPlayerController::SetViewTargetCamera(AActor* NewViewTarget)
 {
 	SetViewTargetWithBlend(NewViewTarget, 0.35f);
 }
-
-
 
 void AWOGLobbyPlayerController::Server_SaveGame_Implementation()
 {

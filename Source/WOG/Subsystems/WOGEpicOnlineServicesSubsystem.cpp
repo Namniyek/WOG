@@ -581,3 +581,48 @@ bool UWOGEpicOnlineServicesSubsystem::EndSession()
 
 	return Session->EndSession(WOG_SESSION_NAME);
 }
+
+void UWOGEpicOnlineServicesSubsystem::UnregisterPlayerFromSession(APlayerController* InPlayerController)
+{
+	check(IsValid(InPlayerController));
+
+	if(InPlayerController->GetLocalRole() != ROLE_Authority) return;
+
+	// This code handles logins for both the local player (listen server) and remote players (net connection).
+	FUniqueNetIdRepl UniqueNetIdRepl;
+	if (InPlayerController->IsLocalPlayerController())
+	{
+		ULocalPlayer *LocalPlayer = InPlayerController->GetLocalPlayer();
+		if (IsValid(LocalPlayer))
+		{
+			UniqueNetIdRepl = LocalPlayer->GetPreferredUniqueNetId();
+		}
+		else
+		{
+			UNetConnection *RemoteNetConnection = Cast<UNetConnection>(InPlayerController->Player);
+			check(IsValid(RemoteNetConnection));
+			UniqueNetIdRepl = RemoteNetConnection->PlayerId;
+		}
+	}
+	else
+	{
+		UNetConnection *RemoteNetConnection = Cast<UNetConnection>(InPlayerController->Player);
+		check(IsValid(RemoteNetConnection));
+		UniqueNetIdRepl = RemoteNetConnection->PlayerId;
+	}
+
+	// Get the unique player ID.
+	TSharedPtr<const FUniqueNetId> UniqueNetId = UniqueNetIdRepl.GetUniqueNetId();
+	check(UniqueNetId != nullptr);
+
+	// Get the online session interface.
+	IOnlineSubsystem *Subsystem = Online::GetSubsystem(InPlayerController->GetWorld());
+	IOnlineSessionPtr Session = Subsystem->GetSessionInterface();
+
+	// Unregister the player with the "WOG_SESSION_NAME" session; this name should match the name you provided in CreateSession.
+	if (!Session->UnregisterPlayer(WOG_SESSION_NAME, *UniqueNetId))
+	{
+		// The player could not be unregistered.
+		GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Red, FString("Failed to call Unregister player"));
+	}
+}

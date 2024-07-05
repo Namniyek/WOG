@@ -41,6 +41,7 @@ public:
 	TSubclassOf<class AWOGAttacker> AttackerCharacter;
 
 	void PlayerEliminated(class AWOGBaseCharacter* ElimmedCharacter, class AWOGPlayerController* VictimController, AWOGPlayerController* AttackerController);
+	void PreLogout(APlayerController* InPlayerController);
 
 private:
 	void HandleDropIn(APlayerController* NewPlayer);

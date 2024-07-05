@@ -95,6 +95,9 @@ protected:
 	//true if the call succeeds, false otherwise
 	UFUNCTION(BlueprintCallable)
 	bool EndSession();
+
+	UFUNCTION(BlueprintCallable)
+	void UnregisterPlayerFromSession(APlayerController* InPlayerController);
 private:
 	
 	#pragma region Callback functions

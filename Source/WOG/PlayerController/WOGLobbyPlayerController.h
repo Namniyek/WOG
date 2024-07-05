@@ -27,7 +27,6 @@ public:
 	
 	void OnNetCleanup(UNetConnection* Connection) override;
 
-	
 protected:
 	virtual void BeginPlay() override;
 
