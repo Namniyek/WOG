@@ -14,6 +14,8 @@ static FName NAME_MagicSlot_MagicBackMain = FName("MagicBackMain");
 static FName NAME_MagicSlot_MagicBackSecondary = FName("MagicBackSecondary");
 static FName NAME_ConsumableSlot_Consumable = FName("Consumable");
 
+static FName WOG_SESSION_NAME = FName("WOG_default_session");
+
 DECLARE_LOG_CATEGORY_EXTERN(WOGLogUI, Log, All);
 DECLARE_LOG_CATEGORY_EXTERN(WOGLogCombat, Log, All);
 DECLARE_LOG_CATEGORY_EXTERN(WOGLogSpawn, Log, All);

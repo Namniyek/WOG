@@ -24,6 +24,8 @@ public:
 
 	UPROPERTY(BlueprintReadWrite)
 	bool bInEditMode = false;
+	
+	void OnNetCleanup(UNetConnection* Connection) override;
 
 	
 protected:

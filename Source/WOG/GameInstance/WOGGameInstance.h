@@ -8,30 +8,6 @@
 #include "WOGGameInstance.generated.h"
 
 USTRUCT(BlueprintType)
-struct FServerItem
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY(BlueprintReadOnly)
-		FString HostName = FString("");
-	UPROPERTY(BlueprintReadOnly)
-		FString CurrentPlayers = FString("");
-	UPROPERTY()
-		int32 NumCurrentPlayers = 0;
-	UPROPERTY()
-		int32 NumMaxPlayers = 0;
-	UPROPERTY(BlueprintReadOnly)
-		int32 ServerArrayIndex = 0;
-
-	void SetCurrentPlayers()
-	{
-		CurrentPlayers = FString(FString::FromInt(NumCurrentPlayers) + " / " + FString::FromInt(NumMaxPlayers));
-	}
-
-};
-
-USTRUCT(BlueprintType)
 struct FFriendItem
 {
 	GENERATED_BODY()
@@ -49,7 +25,6 @@ public:
 		int32 ServerArrayIndex = 0;
 };
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FServerFoundDelegate, FServerItem, ServerInfo);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FFriendFoundDelegate, FFriendItem, FriendInfo);
 
 /**
@@ -65,11 +40,6 @@ public:
 
 	virtual void Init() override;
 
-	void Login();
-	void OnLoginComplete(int ControllerIndex, bool bWasSuccessful, const FUniqueNetId& UserId, const FString& ErrorString);
-
-	TSharedPtr <class FOnlineSessionSearch> SearchSettings;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TMap<int, FString> PlayersMap;
 
@@ -80,42 +50,21 @@ protected:
 	bool bIsLoggedIn;
 
 	UPROPERTY(BlueprintAssignable)
-	FServerFoundDelegate ServerFoundDelegate;
-
-	UPROPERTY(BlueprintAssignable)
 	FFriendFoundDelegate FriendFoundDelegate;
 
 public:
 	UFUNCTION(BlueprintCallable)
-	void CreateSession();
-	void OnCreateSessionComplete(FName SessionName, bool bSuccessful);
-
-	UFUNCTION(BlueprintCallable)
-	void DestroySession();
-	void OnDestroySessionComplete(FName SessionName, bool bSuccessful);
-
-
-	UFUNCTION(BlueprintCallable)
 	void GetFriends();
 	void OnGetFriendsComplete(int32 LocalUserNum, bool bWasSuccessful, const FString& ListName, const FString& ErrorStr);
-
-	UFUNCTION(BlueprintCallable)
-	void FindSessions();
-	void OnFindSessionsComplete(bool bWasSuccessful);
 
 	UFUNCTION(BlueprintCallable)
 	bool SendInvite(FString UniqueID);
 
 	//void OnSessionInviteReceived(const FUniqueNetId& UserId, const FUniqueNetId& FromId, const FString& AppId, const FOnlineSessionSearchResult& InviteResult);
 	void OnSessionInviteAccepted(const bool bWasSuccessful, const int32 ControllerId, FUniqueNetIdPtr UserId, const FOnlineSessionSearchResult& InviteResult);
-
-	UFUNCTION(BlueprintCallable)
-	void JoinServer(int32 ServerIndex);
+	
 	void JoinFriendServer(const FOnlineSessionSearchResult& InviteResult);
 	void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
-
-	UFUNCTION(BlueprintCallable)
-	void BPServerTravel(FString Address);
 
 
 };

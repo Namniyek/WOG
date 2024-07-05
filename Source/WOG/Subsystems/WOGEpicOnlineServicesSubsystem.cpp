@@ -1,11 +1,16 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "Subsystems/WOGEpicOnlineServicesSubsystem.h"
+#include "WOG.h"
+#include "OnlineSessionSettings.h"
 #include "OnlineSubsystem.h"
 #include "OnlineSubsystemUtils.h"
+#include "UnrealUSDWrapper.h"
 #include "Interfaces/OnlineIdentityInterface.h"
-#include "RedpointInterfaces/OnlineLobbyInterface.h"
+#include "Interfaces/OnlineSessionInterface.h"
+#include "GameFramework/PlayerController.h"
+#include "GameMode/WOGLobbyGameMode.h"
+#include "Online/OnlineSessionNames.h"
 
 void UWOGEpicOnlineServicesSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -17,9 +22,9 @@ void UWOGEpicOnlineServicesSubsystem::Login()
 	const IOnlineSubsystem *Subsystem = Online::GetSubsystem(GetWorld());
 	const IOnlineIdentityPtr Identity = Subsystem->GetIdentityInterface();
 
-	if(Identity && Identity->GetLoginStatus(0) == ELoginStatus::LoggedIn)
+	if(IsLocalUserLoggedIn())
 	{
-		GEngine->AddOnScreenDebugMessage(0, 6.f, FColor::Orange, FString("Already Logged in"));
+		GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Orange, FString("Already Logged in"));
 		return;
 	}
 
@@ -28,7 +33,7 @@ void UWOGEpicOnlineServicesSubsystem::Login()
 
 	if(!Identity->AutoLogin(0))
 	{
-		GEngine->AddOnScreenDebugMessage(0, 6.f, FColor::Red, FString("Failed to AutoLogin"));
+		GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Red, FString("Failed to AutoLogin"));
 		Identity->ClearOnLoginCompleteDelegate_Handle(0, LoginDelegateHandle);
 		LoginDelegateHandle.Reset();
 	}
@@ -38,12 +43,12 @@ void UWOGEpicOnlineServicesSubsystem::HandleLoginComplete(int32 LocalUserNum, bo
 {
 	if(bWasSuccessful)
 	{
-		GEngine->AddOnScreenDebugMessage(0, 6.f, FColor::Green, FString("Login successful"));
+		GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Green, FString("Login successful"));
 		OnLoginCompleteDelegate.Broadcast(bWasSuccessful);
 	}
 	else
 	{
-		GEngine->AddOnScreenDebugMessage(0, 6.f, FColor::Red, FString("AutoLogin succeeded, but failed to Login"));
+		GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Red, FString("AutoLogin succeeded, but failed to Login"));
 		OnLoginCompleteDelegate.Broadcast(bWasSuccessful);
 	}
 
@@ -75,7 +80,7 @@ void UWOGEpicOnlineServicesSubsystem::CreateLobby()
 	TSharedPtr<FOnlineLobbyTransaction> LobbyTransaction = LobbyInterface->MakeCreateLobbyTransaction(*LocalUserId.Get());
 
 	// TODO - To enable voice chat on a lobby, set the special "EOSVoiceChat_Enabled" metadata value.
-	LobbyTransaction->SetMetadata.Add(TEXT("EOSVoiceChat_Enabled"), false);
+	LobbyTransaction->SetMetadata.Add(TEXT("EOSVoiceChat_Enabled"), true);
 
 	// To allow clients connecting to the listen server to join the lobby based on just the ID, we need
 	// to set it to public.
@@ -90,6 +95,10 @@ void UWOGEpicOnlineServicesSubsystem::CreateLobby()
 	//Setting the custom parameter to filter the correct MatchTypes
 	LobbyTransaction->SetMetadata.Add(TEXT("MatchType"), FVariantData(TEXT("WOG_default")));
 
+	//Setting the custom parameter to check the Host name
+	FString HostName = Identity->GetUserAccount(*LocalUserId)->GetDisplayName();
+	LobbyTransaction->SetMetadata.Add(TEXT("HostName"), FVariantData(HostName));
+
 	/*
 	 * Create the Lobby
 	 */
@@ -99,23 +108,32 @@ void UWOGEpicOnlineServicesSubsystem::CreateLobby()
 		const FUniqueNetId & UserId,
 		const TSharedPtr<FOnlineLobby> & CreatedLobby)
 	{
-		if (Error.WasSuccessful())
-		{
-			// The lobby was created successfully and is now in CreatedLobby.
-			GEngine->AddOnScreenDebugMessage(0, 6.f, FColor::Green, FString("Lobby Created"));
-			LobbyIdString = CreatedLobby->Id->ToString();
-			GetWorld()->ServerTravel(FString("/Game/Maps/Lobby?listen"), true);
-			// You'll need to store IdStr somewhere, as that is what needs to be sent to connecting clients.
-		}
-		else
-		{
-			// Lobby could not be created.
-			GEngine->AddOnScreenDebugMessage(0, 6.f, FColor::Red, FString("Failed to Create Lobby"));
-		}
-	})))
+		//Create Lobby call successful
+		HandleCreateLobbyCompleted(Error, UserId, CreatedLobby);
+		GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Green, FString("Create Lobby call successful"));	})))
 	{
 		// Call failed to start.
-		GEngine->AddOnScreenDebugMessage(0, 6.f, FColor::Red, FString("Call to Create Lobby failed to start"));
+		GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Red, FString("Call to Create Lobby failed to start"));
+		OnLobbyCreatedDelegate.Broadcast(false);
+	}
+}
+
+void UWOGEpicOnlineServicesSubsystem::HandleCreateLobbyCompleted(const FOnlineError& Error, const FUniqueNetId& UserId,
+	const TSharedPtr<FOnlineLobby>& CreatedLobby)
+{
+	if (Error.WasSuccessful())
+	{
+		// The lobby was created successfully and is now in CreatedLobby.
+		GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Green, FString("Lobby Created"));
+		LobbyIdString = CreatedLobby->Id->ToString();
+		OnLobbyCreatedDelegate.Broadcast(true);
+		// You'll need to store IdStr somewhere, as that is what needs to be sent to connecting clients.
+	}
+	else
+	{
+		// Lobby could not be created.
+		GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Red, FString("Failed to Create Lobby"));
+		OnLobbyCreatedDelegate.Broadcast(false);
 	}
 }
 
@@ -127,7 +145,7 @@ void UWOGEpicOnlineServicesSubsystem::GetLobbyMembers()
 
 	TSharedPtr<const FUniqueNetId> LocalUserId = Identity->GetUniquePlayerId(0);
 	TSharedPtr<FOnlineLobbyId> CurrentLobbyID = Lobby->ParseSerializedLobbyId(LobbyIdString);
-	
+
 	TArray<TSharedRef<const FUniqueNetId>> MemberIds;
 	int32 MemberCount = 0;
 	Lobby->GetMemberCount(*LocalUserId.Get(), *CurrentLobbyID.Get(), MemberCount);
@@ -145,7 +163,7 @@ void UWOGEpicOnlineServicesSubsystem::GetLobbyMembers()
 
 	if(MemberIds.IsEmpty())
 	{
-		GEngine->AddOnScreenDebugMessage(0, 6.f, FColor::Red, FString("MembersID Array is empty"));
+		GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Red, FString("MembersID Array is empty"));
 		return;
 	}
 	
@@ -159,5 +177,407 @@ void UWOGEpicOnlineServicesSubsystem::GetLobbyMembers()
 		GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Purple, FString("Lobby member name: ") + Account->GetDisplayName());
 		GEngine->AddOnScreenDebugMessage(-1, 20, FColor::Purple, FString("ProductUserID: ") + ProductUserID);
 		UE_LOG(LogTemp, Display, TEXT("ProductUserID: %s"), *ProductUserID);
+
+		FVariantData HostName;
+		FString HostNameString = FString();
+		Lobby->GetLobbyMetadataValue(*LocalUserId, *CurrentLobbyID, FString("HostName"), HostName);
+		HostName.GetValue(HostNameString);
+		GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Emerald, FString("Lobby Host name: ") + HostNameString);
 	}
+}
+
+void UWOGEpicOnlineServicesSubsystem::DestroyLobby()
+{
+	if(LobbyIdString==FString()) return;
+	
+	IOnlineSubsystem* Subsystem = Online::GetSubsystem(GetWorld());
+	if(!Subsystem) return;
+	
+	TSharedPtr<IOnlineLobby> Lobby = Online::GetLobbyInterface(Subsystem);
+	const IOnlineIdentityPtr Identity = Subsystem->GetIdentityInterface();
+
+	TSharedPtr<const FUniqueNetId> LocalUserId = Identity->GetUniquePlayerId(0);
+	TSharedPtr<FOnlineLobbyId> CurrentLobbyID = Lobby->ParseSerializedLobbyId(LobbyIdString);
+
+	if (!Lobby->DeleteLobby(
+	*LocalUserId,
+	*CurrentLobbyID,
+	FOnLobbyOperationComplete::CreateLambda([&](
+		const FOnlineError & Error,
+		const FUniqueNetId & UserId)
+	{
+		if (Error.WasSuccessful())
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Green, FString("Lobby deleted successfully"));
+			LobbyIdString = FString();
+		}
+		else
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Red, FString("Lobby not deleted"));
+		}
+	})))
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Red, FString("DeleteLobby function call failed"));
+	}
+}
+
+void UWOGEpicOnlineServicesSubsystem::SearchLobbies()
+{
+	IOnlineSubsystem* Subsystem = Online::GetSubsystem(this->GetWorld());
+	TSharedPtr<IOnlineLobby> Lobby = Online::GetLobbyInterface(Subsystem);
+	const IOnlineIdentityPtr Identity = Subsystem->GetIdentityInterface();
+	
+	TSharedPtr<const FUniqueNetId> LocalUserId = Identity->GetUniquePlayerId(0);
+
+	TSharedRef<FOnlineLobbySearchQuery> Search = MakeShared<FOnlineLobbySearchQuery>();
+
+	// To search by settings, add a LobbySetting and SettingValue to search for:
+	Search->Filters.Add(
+		FOnlineLobbySearchQueryFilter(
+		FString(TEXT("MatchType")),
+		FString(TEXT("WOG_default")),
+		EOnlineLobbySearchQueryFilterComparator::Equal));
+
+	if (!Lobby->Search(
+	*LocalUserId.Get(),
+	*Search,
+	FOnLobbySearchComplete::CreateLambda([&, Lobby, LocalUserId](const FOnlineError &Error,
+	                                                             const FUniqueNetId &UserId,
+	                                                             const TArray<TSharedRef<const FOnlineLobbyId>> &Lobbies)
+	{
+		if (Error.WasSuccessful())
+		{
+			// The search was successful, access the results
+			// via the "Lobbies" parameter.
+			if(Lobbies.IsEmpty()) return;
+
+			GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Green, FString("Lobby search complete. Lobbies found: ") + FString::FromInt(Lobbies.Num()));
+
+			int8 ArrayIndex = -1;
+			for(auto FoundLobby : Lobbies)
+			{
+				ArrayIndex++;
+				FServerItem ServerInfo;
+				
+				FVariantData HostName;
+				FString HostNameString = FString();
+				Lobby->GetLobbyMetadataValue(*LocalUserId, *FoundLobby, FString("HostName"), HostName);
+				HostName.GetValue(HostNameString);				
+				ServerInfo.HostName = HostNameString;
+				
+				ServerInfo.NumMaxPlayers = 5;
+				int32 MemberCount = 0;
+				Lobby->GetMemberCount(*LocalUserId.Get(), *FoundLobby, MemberCount);
+				ServerInfo.NumCurrentPlayers = MemberCount;
+				
+				ServerInfo.ServerArrayIndex = ArrayIndex;
+				ServerInfo.SetCurrentPlayers();
+
+				ServerFoundDelegate.Broadcast(ServerInfo);
+			}
+		}
+		else
+		{
+			// The search failed, refer to the "Error" parameter
+			// for more detail on the error.
+			GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Red, FString("Lobby search failed"));
+		}
+	})))
+	{
+		// Call failed to start.
+		GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Red, FString("Lobby search call failed to start"));
+	}
+}
+
+void UWOGEpicOnlineServicesSubsystem::JoinLobby(const FString& DesiredLobbyIdString)
+{
+	IOnlineSubsystem* Subsystem = Online::GetSubsystem(this->GetWorld());
+	TSharedPtr<IOnlineLobby> Lobby = Online::GetLobbyInterface(Subsystem);
+	const IOnlineIdentityPtr Identity = Subsystem->GetIdentityInterface();
+	TSharedPtr<const FUniqueNetId> LocalUserId = Identity->GetUniquePlayerId(0);
+	TSharedPtr<FOnlineLobbyId> DesiredLobbyID = Lobby->ParseSerializedLobbyId(DesiredLobbyIdString);
+
+	if (!Lobby->ConnectLobby(
+	*LocalUserId,
+	*DesiredLobbyID,
+	FOnLobbyCreateOrConnectComplete::CreateLambda([this](
+		const FOnlineError & Error,
+		const FUniqueNetId & UserId,
+		const TSharedPtr<class FOnlineLobby> & CreatedLobby)
+	{
+		if (Error.WasSuccessful())
+		{
+			// The lobby was joined successfully.
+			GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Green, FString("Lobby joined successfully"));
+
+			/*
+			if(!GetGameInstance()) return;
+
+			const APlayerController* LocalPC = GetGameInstance()->GetFirstLocalPlayerController();
+			if(LocalPC)
+			{
+				LocalPC->ClientTravel
+			}*/
+		}
+		else
+		{
+			// Lobby could not be joined.
+			GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Red, FString("Lobby join failed"));
+		}
+	})))
+	{
+		// Call failed to start.
+		GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Red, FString("Join lobby call failed to start"));
+	}
+}
+
+void UWOGEpicOnlineServicesSubsystem::CreateSession()
+{
+	const IOnlineSubsystem* Subsystem = Online::GetSubsystem(this->GetWorld());
+	const IOnlineSessionPtr Session = Subsystem->GetSessionInterface();
+
+	//Necessary to get the host name
+	const IOnlineIdentityPtr Identity = Subsystem->GetIdentityInterface();
+	TSharedPtr<const FUniqueNetId> LocalUserId = Identity->GetUniquePlayerId(0);
+	
+	
+	CreateSessionDelegateHandle =
+	Session->AddOnCreateSessionCompleteDelegate_Handle(FOnCreateSessionComplete::FDelegate::CreateUObject(
+		this,
+		&ThisClass::HandleCreateSessionComplete));
+
+	TSharedRef<FOnlineSessionSettings> SessionSettings = MakeShared<FOnlineSessionSettings>();
+	SessionSettings->NumPublicConnections = 5; // The number of players.
+	SessionSettings->bShouldAdvertise = true;  // Set to true to make this session discoverable with FindSessions.
+	SessionSettings->bUsesPresence = true;    // Set to true if you want this session to be discoverable by presence (Epic Social Overlay).
+	SessionSettings->bIsDedicated = false;
+	SessionSettings->bIsLANMatch = false;
+	SessionSettings->bAllowJoinInProgress = false;
+	SessionSettings->bAllowJoinViaPresence = true;
+	SessionSettings->bAllowInvites = true;
+	SessionSettings->bUseLobbiesIfAvailable = true;
+	SessionSettings->Set(SEARCH_KEYWORDS, FOnlineSessionSetting(WOG_SESSION_NAME.ToString(), EOnlineDataAdvertisementType::ViaOnlineService));
+	SessionSettings->Set(FName("MatchType"),FOnlineSessionSetting( FString("WOG_default"), EOnlineDataAdvertisementType::ViaOnlineService));
+	
+	FString HostName = Identity->GetUserAccount(*LocalUserId)->GetDisplayName();
+	SessionSettings->Set(FName("HostName"),FOnlineSessionSetting( HostName, EOnlineDataAdvertisementType::ViaOnlineService));
+
+	// Create a session and give the local name "MyLocalSessionName". This name is entirely local to the current player and isn't stored in EOS.
+	if (!Session->CreateSession(0, WOG_SESSION_NAME, *SessionSettings))
+	{
+		// Call didn't start, return error.
+		GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Red, FString("Create Session call failed to start"));
+	}
+}
+
+void UWOGEpicOnlineServicesSubsystem::HandleCreateSessionComplete(FName SessionName, bool bWasSuccessful)
+{
+	if(bWasSuccessful)
+	{
+		//Session created successfully
+		GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Green, FString("Session created successfully"));
+
+		//Register existing players
+		if(AWOGLobbyGameMode* LobbyGameMode = Cast<AWOGLobbyGameMode>(GetWorld()->GetAuthGameMode()))
+		{
+			LobbyGameMode->RegisterExistingPlayers();
+		}
+	}
+	else
+	{
+		//Session was not created
+		GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Red, FString("Failed to create Session"));
+	}
+	
+	// Deregister the event handler.
+	IOnlineSubsystem *Subsystem = Online::GetSubsystem(this->GetWorld());
+	IOnlineSessionPtr Session = Subsystem->GetSessionInterface();
+	Session->ClearOnCreateSessionCompleteDelegate_Handle(this->CreateSessionDelegateHandle);
+	this->CreateSessionDelegateHandle.Reset();
+}
+
+void UWOGEpicOnlineServicesSubsystem::FindSession()
+{
+	IOnlineSubsystem* Subsystem = Online::GetSubsystem(this->GetWorld());
+	IOnlineSessionPtr Session = Subsystem->GetSessionInterface();
+
+	TSharedRef<FOnlineSessionSearch> Search = MakeShared<FOnlineSessionSearch>();
+	// Remove the default search parameters that FOnlineSessionSearch sets up.
+	Search->QuerySettings.SearchParams.Empty();
+
+	// Add your search settings here. If you're including both listening and non-listening sessions as per the __EOS_bListening example above, then you must include at least one additional filter, or EOS will not return any search results.
+	Search->QuerySettings.Set(FName("MatchType"),FString("WOG_default"),EOnlineComparisonOp::Equals);
+	Search->QuerySettings.Set(SEARCH_KEYWORDS, WOG_SESSION_NAME.ToString(), EOnlineComparisonOp::Equals);
+	Search->QuerySettings.Set(SEARCH_LOBBIES, true, EOnlineComparisonOp::Equals);
+	Search->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
+	Search->MaxSearchResults = 100;
+	Search->bIsLanQuery = false;
+
+	this->FindSessionsDelegateHandle =
+	Session->AddOnFindSessionsCompleteDelegate_Handle(FOnFindSessionsComplete::FDelegate::CreateUObject(
+		this,
+		&ThisClass::HandleFindSessionsComplete,
+		Search));
+
+	if (!Session->FindSessions(0, Search))
+	{
+		// Call didn't start, return error.
+		GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Red, FString("Find Session call failed to start"));
+	}
+}
+
+void UWOGEpicOnlineServicesSubsystem::HandleFindSessionsComplete(bool bWasSuccessful, TSharedRef<FOnlineSessionSearch> Search)
+{
+	IOnlineSubsystem *Subsystem = Online::GetSubsystem(GetWorld());
+	IOnlineSessionPtr Session = Subsystem->GetSessionInterface();
+
+	if (bWasSuccessful)
+	{
+		if (Search->SearchResults.IsEmpty())
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Red, FString("No sessions found"));
+			return;
+		}
+
+		int8 ArrayIndex = -1;
+
+		//Caching the search results for future access
+		CachedSessionSearchResults.Empty();
+		CachedSessionSearchResults = Search->SearchResults;
+		
+		for (FOnlineSessionSearchResult Result : Search->SearchResults)
+		{
+			++ArrayIndex;
+			if (!Result.IsValid()) continue;
+
+			FServerItem ServerInfo;
+			FString OutHostName;
+			Result.Session.SessionSettings.Get(FName("HostName"), OutHostName);
+			ServerInfo.HostName = OutHostName;
+			ServerInfo.NumMaxPlayers = Result.Session.SessionSettings.NumPublicConnections;
+			ServerInfo.NumCurrentPlayers = (Result.Session.SessionSettings.NumPublicConnections) - (Result.Session.NumOpenPublicConnections);
+			ServerInfo.ServerArrayIndex = ArrayIndex;
+			ServerInfo.SetCurrentPlayers();
+
+			ServerFoundDelegate.Broadcast(ServerInfo);
+		}
+	}
+
+	Session->ClearOnFindSessionsCompleteDelegate_Handle(this->FindSessionsDelegateHandle);
+	this->FindSessionsDelegateHandle.Reset();
+}
+
+void UWOGEpicOnlineServicesSubsystem::DestroySession()
+{
+	IOnlineSubsystem* Subsystem = Online::GetSubsystem(this->GetWorld());
+	IOnlineSessionPtr Session = Subsystem->GetSessionInterface();
+
+	DestroySessionDelegateHandle =
+	Session->AddOnDestroySessionCompleteDelegate_Handle(FOnDestroySessionComplete::FDelegate::CreateUObject(
+			this,
+			&ThisClass::HandleDestroySessionComplete));
+
+	// "MyLocalSessionName" is the local name of the session for the client or server. It should be the value you specified when creating or joining the session (depending on which you called).
+	if (!Session->DestroySession(WOG_SESSION_NAME))
+	{
+		// Call didn't start, return error.
+		GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Red, FString("Destroy Session call failed to start"));
+	}
+}
+
+void UWOGEpicOnlineServicesSubsystem::HandleDestroySessionComplete(FName SessionName, bool bWasSuccessful)
+{
+	if(bWasSuccessful)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Green, FString("Session destroyed successfully"));
+	}
+	else
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Red, FString("Failed to destroy Session"));
+	}
+
+	// Deregister the event handler.
+	IOnlineSubsystem *Subsystem = Online::GetSubsystem(this->GetWorld());
+	IOnlineSessionPtr Session = Subsystem->GetSessionInterface();
+	Session->ClearOnDestroySessionCompleteDelegate_Handle(this->DestroySessionDelegateHandle);
+	this->DestroySessionDelegateHandle.Reset();
+}
+
+void UWOGEpicOnlineServicesSubsystem::JoinSession(int32 SessionIndex)
+{
+	if(CachedSessionSearchResults.IsEmpty() || !CachedSessionSearchResults[SessionIndex].IsValid())
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Red, FString("No valid cached search results"));
+		return;
+	}
+
+	IOnlineSubsystem* Subsystem = Online::GetSubsystem(this->GetWorld());
+	IOnlineSessionPtr Session = Subsystem->GetSessionInterface();
+	
+	JoinSessionDelegateHandle =
+	Session->AddOnJoinSessionCompleteDelegate_Handle(FOnJoinSessionComplete::FDelegate::CreateUObject(
+			this,
+			&ThisClass::HandleJoinSessionComplete));
+
+	// "WOG_SESSION_NAME" is the local name of the session for this player. It doesn't have to match the name the server gave their session.
+	if (!Session->JoinSession(0, WOG_SESSION_NAME, CachedSessionSearchResults[SessionIndex]))
+	{
+		// Call didn't start, return error.
+		GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Red, FString("Join Session call failed to start"));
+	}
+}
+
+void UWOGEpicOnlineServicesSubsystem::HandleJoinSessionComplete(FName SessionName,	EOnJoinSessionCompleteResult::Type JoinResult)
+{
+	IOnlineSubsystem *Subsystem = Online::GetSubsystem(GetWorld());
+	IOnlineSessionPtr Session = Subsystem->GetSessionInterface();
+	
+	if (JoinResult == EOnJoinSessionCompleteResult::Success || JoinResult == EOnJoinSessionCompleteResult::AlreadyInSession)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Green, FString("Session joined successfully"));
+
+		FString ConnectInfo;
+		Session->GetResolvedConnectString(SessionName, ConnectInfo, NAME_GamePort);
+		
+		FURL NewURL(nullptr, *ConnectInfo, ETravelType::TRAVEL_Absolute);
+		FString BrowseError;
+		if (GEngine->Browse(GEngine->GetWorldContextFromWorldChecked(GetWorld()), NewURL, BrowseError) ==
+			EBrowseReturnVal::Failure)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Red, FString("Failed to start browse: ") + BrowseError);
+		}
+		
+		// Use the connection string that you got from FindSessions in order
+		// to connect to the server.
+		//
+		// Refer to "Connecting to a game server" under the "Networking & Anti-Cheat"
+		// section of the documentation for more information on how to do this.
+		//
+		// NOTE: You can also call GetResolvedConnectString at this point instead
+		// of in FindSessions, but it's recommended that you call it in
+		// FindSessions so you know the result is valid.
+	}
+	else
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Red, FString("Failed to join session"));
+	}
+
+	Session->ClearOnJoinSessionCompleteDelegate_Handle(this->JoinSessionDelegateHandle);
+	this->JoinSessionDelegateHandle.Reset();
+}
+
+bool UWOGEpicOnlineServicesSubsystem::StartSession()
+{
+	IOnlineSubsystem* Subsystem = Online::GetSubsystem(this->GetWorld());
+	IOnlineSessionPtr Session = Subsystem->GetSessionInterface();
+
+	return Session->StartSession(WOG_SESSION_NAME);
+}
+
+bool UWOGEpicOnlineServicesSubsystem::EndSession()
+{
+	IOnlineSubsystem* Subsystem = Online::GetSubsystem(this->GetWorld());
+	IOnlineSessionPtr Session = Subsystem->GetSessionInterface();
+
+	return Session->EndSession(WOG_SESSION_NAME);
 }

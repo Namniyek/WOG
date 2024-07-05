@@ -7,6 +7,7 @@
 #include "WOG/Lobby/WOGLobbyAvatar.h"
 #include "WOG/Lobby/WOGLobbyPlayerSpot.h"
 #include "GameFramework/PlayerState.h"
+#include "GameMode/WOGLobbyGameMode.h"
 #include "Kismet/GameplayStatics.h"
 
 
@@ -28,6 +29,20 @@ void AWOGLobbyPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimePrope
 	DOREPLIFETIME(AWOGLobbyPlayerController, LobbyAvatar);
 	DOREPLIFETIME(AWOGLobbyPlayerController, LobbyPlayerSpot);
 	DOREPLIFETIME(AWOGLobbyPlayerController, bIsAttacker);
+}
+
+void AWOGLobbyPlayerController::OnNetCleanup(UNetConnection* Connection)
+{
+	if (GetLocalRole() == ROLE_Authority && PlayerState != NULL)
+	{
+		AWOGLobbyGameMode *GameMode = Cast<AWOGLobbyGameMode>(GetWorld()->GetAuthGameMode());
+		if (GameMode)
+		{
+			GameMode->PreLogout(this);
+		}
+	}
+
+	Super::OnNetCleanup(Connection);
 }
 
 void AWOGLobbyPlayerController::BeginPlay()

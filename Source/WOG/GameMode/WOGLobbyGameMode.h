@@ -24,6 +24,7 @@ public:
 	void RegisterPlayer(APlayerController* NewPlayer);
 
 	virtual void Logout(AController* Exiting) override;
+	void PreLogout(APlayerController *InPlayerController);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TArray <class AWOGLobbyPlayerController*> AllLobbyPlayers;
@@ -37,7 +38,7 @@ public:
 	int32 PlayersReady;
 
 private:
-
+	bool bAllExistingPlayersRegistered;
 
 	TArray <class AWOGLobbyPlayerSpot*> AllLobbySpots;
 
@@ -45,6 +46,8 @@ private:
 
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<class AWOGLobbyAvatar> AvatarBP;
+
+
 	
 public:
 
@@ -57,5 +60,7 @@ public:
 	void IncreasePlayerReady();
 	UFUNCTION(BlueprintImplementableEvent)
 	void DecreasePlayerReady();
+
+	void RegisterExistingPlayers();
 
 };

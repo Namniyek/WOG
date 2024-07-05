@@ -9,9 +9,7 @@
 #include "Interfaces/OnlineFriendsInterface.h"
 #include "Interfaces/OnlinePresenceInterface.h"
 #include "Interfaces/OnlineExternalUIInterface.h"
-#include "Kismet/GameplayStatics.h"
 #include "GameFramework/PlayerController.h"
-#include "GameFramework/PlayerState.h"
 #include "Engine/LocalPlayer.h"
 #include "Online/OnlineSessionNames.h"
 
@@ -27,7 +25,6 @@ void UWOGGameInstance::Init()
 	Super::Init();
 
 	OnlineSubsystem = IOnlineSubsystem::Get();
-	//Login();
 
 	if (!OnlineSubsystem) return;
 
@@ -37,141 +34,6 @@ void UWOGGameInstance::Init()
 	for (int32 i = 0; i < 5; i++)
 	{
 		PlayersMap.Add(i, FString("empty"));
-	}
-}
-
-void UWOGGameInstance::Login()
-{
-	if (OnlineSubsystem)
-	{
-		IOnlineIdentityPtr Identity = OnlineSubsystem->GetIdentityInterface();
-		if (Identity)
-		{
-			UE_LOG(LogTemp, Error, TEXT("Yes Identity"));
-
-			FOnlineAccountCredentials Credentials;
-			Credentials.Id = nullptr;
-			Credentials.Token = nullptr;
-			Credentials.Type = FString("persistentauth");
-
-
-			Identity.Get()->OnLoginCompleteDelegates->AddUObject(this, &ThisClass::OnLoginComplete);
-			Identity.Get()->Login(0, Credentials);
-		}
-		else
-		{
-			UE_LOG(LogTemp, Error, TEXT("No identity"));
-		}
-	}
-}
-
-void UWOGGameInstance::OnLoginComplete(int ControllerIndex, bool bWasSuccessful, const FUniqueNetId& UserId, const FString& ErrorString)
-{
-	UE_LOG(LogTemp, Warning, TEXT("Logged in: %d"), bWasSuccessful);
-
-	bIsLoggedIn = bWasSuccessful;
-
-	if (OnlineSubsystem)
-	{
-		IOnlineIdentityPtr Identity = OnlineSubsystem->GetIdentityInterface();
-		if (Identity)
-		{
-			Identity->ClearOnLoginCompleteDelegates(0, this);
-		}
-	}
-	DestroySession();
-}
-
-void UWOGGameInstance::CreateSession()
-{
-	/*IOnlineIdentityPtr Identity = OnlineSubsystem->GetIdentityInterface();
-	if (Identity && Identity->GetLoginStatus(0)==ELoginStatus::NotLoggedIn)
-	{
-		GEngine->AddOnScreenDebugMessage(0, 6.f, FColor::Red, FString("Not logged in: Cannot create session"));
-		return;
-	}
-	
-	if (OnlineSubsystem)
-	{
-		IOnlineSessionPtr SessionPtr = OnlineSubsystem->GetSessionInterface();
-		if (SessionPtr)
-		{
-			FOnlineSessionSettings SessionSettings;
-			SessionSettings.bIsDedicated = false;
-			SessionSettings.bShouldAdvertise = true;
-			SessionSettings.bIsLANMatch = false;
-			SessionSettings.NumPublicConnections = 5;
-			SessionSettings.bAllowJoinInProgress = true;
-			SessionSettings.bAllowJoinViaPresence = true;
-			SessionSettings.bAllowInvites = true;
-			SessionSettings.bUsesPresence = true;
-			SessionSettings.bUseLobbiesIfAvailable = true;
-			SessionSettings.Set(SEARCH_KEYWORDS, FString("WOG_dev_lobby"), EOnlineDataAdvertisementType::ViaOnlineService);
-
-			SessionPtr.Get()->OnCreateSessionCompleteDelegates.AddUObject(this, &ThisClass::OnCreateSessionComplete);
-			SessionPtr.Get()->CreateSession(0, SESSION_NAME, SessionSettings);
-			UE_LOG(LogTemp, Display, TEXT("Attempt to create Session"));
-		}
-		else
-		{
-			UE_LOG(LogTemp, Error, TEXT("Invalid SessionPtr when creating session"));
-		}
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("Invalid Online Subsystem"));
-	}
-	*/
-	
-}
-
-void UWOGGameInstance::OnCreateSessionComplete(FName SessionName, bool bSuccessful)
-{
-	UE_LOG(LogTemp, Warning, TEXT("Success %d"), bSuccessful);
-
-	if (OnlineSubsystem)
-	{
-		IOnlineSessionPtr SessionPtr = OnlineSubsystem->GetSessionInterface();
-		if (SessionPtr)
-		{
-			SessionPtr.Get()->ClearOnCreateSessionCompleteDelegates(this);
-			GetWorld()->ServerTravel(FString("/Game/Maps/Lobby?listen"), true);
-			UE_LOG(LogTemp, Display, TEXT("Session Created, ServerTravel() called"));
-		}
-		else
-		{
-			UE_LOG(LogTemp, Error, TEXT("Invalid SessionPtr on OnCreateSessionComplete delegate"));
-		}
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("Invalid Online Subsystem"));
-	}
-}
-
-void UWOGGameInstance::DestroySession()
-{
-	if (!bIsLoggedIn) return;
-	if (OnlineSubsystem)
-	{
-		IOnlineSessionPtr SessionPtr = OnlineSubsystem->GetSessionInterface();
-		if (SessionPtr)
-		{
-			SessionPtr.Get()->OnDestroySessionCompleteDelegates.AddUObject(this, &ThisClass::OnDestroySessionComplete);
-			bool DestroyedSession = SessionPtr.Get()->DestroySession(SESSION_NAME);
-		}
-	}
-}
-
-void UWOGGameInstance::OnDestroySessionComplete(FName SessionName, bool bSuccessful)
-{
-	if (OnlineSubsystem)
-	{
-		IOnlineSessionPtr SessionPtr = OnlineSubsystem->GetSessionInterface();
-		if (SessionPtr)
-		{
-			SessionPtr->ClearOnDestroySessionCompleteDelegates(this);
-		}
 	}
 }
 
@@ -273,89 +135,6 @@ void UWOGGameInstance::OnSessionInviteAccepted(const bool bWasSuccessful, const 
 	JoinFriendServer(InviteResult);
 }
 
-void UWOGGameInstance::FindSessions()
-{
-	if (!bIsLoggedIn)
-	{
-		return;
-	}
-	if (OnlineSubsystem)
-	{
-		IOnlineSessionPtr SessionPtr = OnlineSubsystem->GetSessionInterface();
-		if (SessionPtr)
-		{
-			SearchSettings = MakeShareable(new FOnlineSessionSearch());
-
-			SearchSettings->QuerySettings.Set(SEARCH_KEYWORDS, FString("WOG_dev_lobby"), EOnlineComparisonOp::Equals);
-			SearchSettings->QuerySettings.Set(SEARCH_LOBBIES, true, EOnlineComparisonOp::Equals);
-			SearchSettings->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
-			SearchSettings->MaxSearchResults = 10000;
-			SearchSettings->bIsLanQuery = false;
-
-			SessionPtr.Get()->OnFindSessionsCompleteDelegates.AddUObject(this, &ThisClass::OnFindSessionsComplete);
-			SessionPtr.Get()->FindSessions(0, SearchSettings.ToSharedRef());
-		}
-	}
-
-}
-
-void UWOGGameInstance::OnFindSessionsComplete(bool bWasSuccessful)
-{
-	if (!OnlineSubsystem) return;
-
-	IOnlineSessionPtr SessionPtr = OnlineSubsystem->GetSessionInterface();
-
-	UE_LOG(LogTemp, Warning, TEXT("Success: %d"), bWasSuccessful);
-
-	if (bWasSuccessful)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Amount sessions found: %d"), SearchSettings->SearchResults.Num());
-		TArray<FOnlineSessionSearchResult> SearchResults = SearchSettings->SearchResults;
-		int8 ArrayIndex = -1;
-
-		if (SessionPtr)
-		{
-			if (SearchResults.Num())
-			{
-				for (FOnlineSessionSearchResult Result : SearchResults)
-				{
-					++ArrayIndex;
-					if (!Result.IsValid()) continue;
-
-					FServerItem ServerInfo;
-					ServerInfo.HostName = Result.Session.OwningUserName;
-					ServerInfo.NumMaxPlayers = Result.Session.SessionSettings.NumPublicConnections;
-					ServerInfo.NumCurrentPlayers = (Result.Session.SessionSettings.NumPublicConnections) - (Result.Session.NumOpenPublicConnections);
-					ServerInfo.ServerArrayIndex = ArrayIndex;
-					ServerInfo.SetCurrentPlayers();
-
-					ServerFoundDelegate.Broadcast(ServerInfo);
-				}
-			}
-		}
-	}
-	if (SessionPtr)
-	{
-		SessionPtr.Get()->ClearOnFindSessionsCompleteDelegates(this);
-	}
-}
-
-void UWOGGameInstance::JoinServer(int32 ServerIndex)
-{
-	if (!OnlineSubsystem || !SearchSettings) return;
-	IOnlineSessionPtr SessionPtr = OnlineSubsystem->GetSessionInterface();
-	if (!SessionPtr.IsValid()) return;
-	TArray<FOnlineSessionSearchResult> SearchResults = SearchSettings->SearchResults;
-
-	if (SearchResults.Num())
-	{
-		GEngine->AddOnScreenDebugMessage(0, 2.f, FColor::Cyan, FString("SearchResults not empty"));
-		SessionPtr.Get()->OnJoinSessionCompleteDelegates.AddUObject(this, &ThisClass::OnJoinSessionComplete);
-		SessionPtr.Get()->JoinSession(0, SESSION_NAME, SearchSettings->SearchResults[ServerIndex]);
-		GEngine->AddOnScreenDebugMessage(1, 2.f, FColor::Cyan, FString::Printf(TEXT("Joining SearchResults at index: %d"), ServerIndex));
-	}
-}
-
 void UWOGGameInstance::JoinFriendServer(const FOnlineSessionSearchResult& InviteResult)
 {
 	if (!OnlineSubsystem) return;
@@ -395,9 +174,4 @@ void UWOGGameInstance::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCo
 			}
 		}
 	}
-}
-
-void UWOGGameInstance::BPServerTravel(FString Address)
-{
-	GetWorld()->ServerTravel(Address, true);
 }
