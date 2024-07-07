@@ -98,6 +98,10 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 	void UnregisterPlayerFromSession(APlayerController* InPlayerController);
+
+	void JoinFriendServer(const FOnlineSessionSearchResult& InviteResult);
+
+	void UpdatePresence(const FString& NewPresenceStatus = FString());
 private:
 	
 	#pragma region Callback functions
@@ -118,6 +122,9 @@ private:
 
 	//This function will run when session is joined
 	void HandleJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type JoinResult);
+
+	//This function handles User invites
+	void OnSessionUserInviteAccepted(bool bWasSuccessful, int ControllerId, TSharedPtr<const FUniqueNetId> UserId, const FOnlineSessionSearchResult& InviteResult);
 	#pragma endregion
 
 	#pragma region Delegate handles

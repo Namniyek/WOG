@@ -10,11 +10,17 @@
 #include "Interfaces/OnlineSessionInterface.h"
 #include "GameFramework/PlayerController.h"
 #include "GameMode/WOGLobbyGameMode.h"
+#include "Interfaces/OnlinePresenceInterface.h"
 #include "Online/OnlineSessionNames.h"
 
 void UWOGEpicOnlineServicesSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
+
+	const IOnlineSubsystem* Subsystem = Online::GetSubsystem(this->GetWorld());
+	const IOnlineSessionPtr Session = Subsystem->GetSessionInterface();
+
+	Session->OnSessionUserInviteAcceptedDelegates.AddUObject(this, &ThisClass::OnSessionUserInviteAccepted);
 }
 
 void UWOGEpicOnlineServicesSubsystem::Login()
@@ -376,6 +382,9 @@ void UWOGEpicOnlineServicesSubsystem::HandleCreateSessionComplete(FName SessionN
 		//Session created successfully
 		GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Green, FString("Session created successfully"));
 
+		//Update presence status
+		UpdatePresence(FString("Raiding villages"));
+
 		//Register existing players
 		if(AWOGLobbyGameMode* LobbyGameMode = Cast<AWOGLobbyGameMode>(GetWorld()->GetAuthGameMode()))
 		{
@@ -624,4 +633,62 @@ void UWOGEpicOnlineServicesSubsystem::UnregisterPlayerFromSession(APlayerControl
 		// The player could not be unregistered.
 		GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Red, FString("Failed to call Unregister player"));
 	}
+}
+
+void UWOGEpicOnlineServicesSubsystem::OnSessionUserInviteAccepted(bool bWasSuccessful, int ControllerId,
+                                                                  TSharedPtr<const FUniqueNetId> UserId, const FOnlineSessionSearchResult& InviteResult)
+{
+	if(bWasSuccessful)
+	{
+		JoinFriendServer(InviteResult);
+	}
+	else
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Red, FString("Failed to join friend's session"));
+	}
+}
+
+void UWOGEpicOnlineServicesSubsystem::JoinFriendServer(const FOnlineSessionSearchResult& InviteResult)
+{
+	IOnlineSubsystem* Subsystem = Online::GetSubsystem(this->GetWorld());
+	IOnlineSessionPtr Session = Subsystem->GetSessionInterface();
+	
+	if (InviteResult.IsValid())
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Cyan, FString("Joining friend"));
+		Session.Get()->OnJoinSessionCompleteDelegates.AddUObject(this, &ThisClass::HandleJoinSessionComplete);
+		Session.Get()->JoinSession(0, WOG_SESSION_NAME, InviteResult);
+	}
+	else
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString("Invite result not valid. Not joining friend"));
+	}
+}
+
+void UWOGEpicOnlineServicesSubsystem::UpdatePresence(const FString& NewPresenceStatus)
+{
+	IOnlineSubsystem *Subsystem = Online::GetSubsystem(this->GetWorld());
+	IOnlineIdentityPtr Identity = Subsystem->GetIdentityInterface();
+	IOnlinePresencePtr Presence = Subsystem->GetPresenceInterface();
+
+	FOnlineUserPresenceStatus Status;
+	Status.State = EOnlinePresenceState::Online;
+	Status.StatusStr = NewPresenceStatus;
+
+	Presence->SetPresence(
+		*Identity->GetUniquePlayerId(0).Get(),
+		Status,
+		IOnlinePresence::FOnPresenceTaskCompleteDelegate::CreateLambda([](
+			const class FUniqueNetId &UserId,
+			const bool bWasSuccessful)
+			{
+				if(bWasSuccessful)
+				{
+					GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Green, FString("Presence Status updated"));
+				}
+				else
+				{
+					GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, FString("Presence Status failed to update"));
+				}
+			}));
 }

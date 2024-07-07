@@ -59,11 +59,7 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	bool SendInvite(FString UniqueID);
-
-	//void OnSessionInviteReceived(const FUniqueNetId& UserId, const FUniqueNetId& FromId, const FString& AppId, const FOnlineSessionSearchResult& InviteResult);
-	void OnSessionInviteAccepted(const bool bWasSuccessful, const int32 ControllerId, FUniqueNetIdPtr UserId, const FOnlineSessionSearchResult& InviteResult);
 	
-	void JoinFriendServer(const FOnlineSessionSearchResult& InviteResult);
 	void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
 
 

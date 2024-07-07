@@ -28,9 +28,6 @@ void UWOGGameInstance::Init()
 
 	if (!OnlineSubsystem) return;
 
-	IOnlineSessionPtr SessionsPtr = OnlineSubsystem->GetSessionInterface();
-	SessionsPtr->OnSessionUserInviteAcceptedDelegates.AddUObject(this, &ThisClass::OnSessionInviteAccepted);
-
 	for (int32 i = 0; i < 5; i++)
 	{
 		PlayersMap.Add(i, FString("empty"));
@@ -128,27 +125,6 @@ bool UWOGGameInstance::SendInvite(FString UniqueID)
 	}
 	GEngine->AddOnScreenDebugMessage(-1, 10, FColor::Red, FString(TEXT("Something went wrong")));
 	return false;
-}
-
-void UWOGGameInstance::OnSessionInviteAccepted(const bool bWasSuccessful, const int32 ControllerId, FUniqueNetIdPtr UserId, const FOnlineSessionSearchResult& InviteResult)
-{
-	JoinFriendServer(InviteResult);
-}
-
-void UWOGGameInstance::JoinFriendServer(const FOnlineSessionSearchResult& InviteResult)
-{
-	if (!OnlineSubsystem) return;
-	IOnlineSessionPtr SessionPtr = OnlineSubsystem->GetSessionInterface();
-	if (InviteResult.IsValid())
-	{
-		GEngine->AddOnScreenDebugMessage(0, 2.f, FColor::Cyan, FString("Joining friend"));
-		SessionPtr.Get()->OnJoinSessionCompleteDelegates.AddUObject(this, &ThisClass::OnJoinSessionComplete);
-		SessionPtr.Get()->JoinSession(0, SESSION_NAME, InviteResult);
-	}
-	else
-	{
-		GEngine->AddOnScreenDebugMessage(0, 5.f, FColor::Red, FString("Invite result not valid"));
-	}
 }
 
 void UWOGGameInstance::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result)
