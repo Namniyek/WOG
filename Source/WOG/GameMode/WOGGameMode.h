@@ -50,9 +50,6 @@ private:
 	UPROPERTY()
 	class UWOGGameInstance* GameInstance;
 
-
-	
-
 public:
 
 	void HandleStartingPlayer(APlayerController* NewPlayer);

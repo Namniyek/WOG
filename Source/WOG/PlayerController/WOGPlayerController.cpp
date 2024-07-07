@@ -39,14 +39,14 @@ void AWOGPlayerController::AcknowledgePossession(APawn* P)
 		CharacterBase->GetAbilitySystemComponent()->InitAbilityActorInfo(CharacterBase, CharacterBase);
 	}
 
-	if (P->IsA<AWOGPossessableEnemy>() || P->IsA<ABasePlayerCharacter>())
-	{
-		TObjectPtr<UWOGUIManagerSubsystem> UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(GetLocalPlayer());
-		if (UIManager)
-		{
-			UIManager->AddCrosshairWidget();
-		}
-	}
+	// if (P && (P->IsA<AWOGPossessableEnemy>() || P->IsA<ABasePlayerCharacter>()))
+	// {
+	// 	TObjectPtr<UWOGUIManagerSubsystem> UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(GetLocalPlayer());
+	// 	if (UIManager)
+	// 	{
+	// 		UIManager->AddCrosshairWidget();
+	// 	}
+	// }
 }
 
 void AWOGPlayerController::OnNetCleanup(UNetConnection* Connection)

@@ -41,6 +41,20 @@ void UWOGUIManagerSubsystem::Deinitialize()
 
 void UWOGUIManagerSubsystem::InitVariables()
 {
+	VendorWidget = nullptr;
+	StashWidget = nullptr;
+	BarsWidget = nullptr;
+	TODWidget = nullptr;
+	MinimapWidget = nullptr;
+	AbilityContainerWidget = nullptr;
+	AvailableResourcesWidget = nullptr;
+	SquadOrderWidget = nullptr;
+	CrosshairWidget = nullptr;
+	HuntWidget = nullptr;
+	HoldProgressBarWidget = nullptr;
+	RavenMarkerWidget = nullptr;
+
+	
 	OwnerPC = Cast<AWOGPlayerController>(GetLocalPlayer()->GetPlayerController(GetLocalPlayer()->GetWorld()));
 	if (OwnerPC)
 	{

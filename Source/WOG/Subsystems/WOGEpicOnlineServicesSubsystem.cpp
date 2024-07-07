@@ -340,7 +340,6 @@ void UWOGEpicOnlineServicesSubsystem::CreateSession()
 	const IOnlineIdentityPtr Identity = Subsystem->GetIdentityInterface();
 	TSharedPtr<const FUniqueNetId> LocalUserId = Identity->GetUniquePlayerId(0);
 	
-	
 	CreateSessionDelegateHandle =
 	Session->AddOnCreateSessionCompleteDelegate_Handle(FOnCreateSessionComplete::FDelegate::CreateUObject(
 		this,

@@ -23,7 +23,8 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	void HandleTODAnnouncement(ETimeOfDay TOD);
-	UFUNCTION(Server, Reliable)
+	
+	UFUNCTION(Server, Reliable, BlueprintCallable)
 	void Server_HandleEndGame();
 
 	UPROPERTY(EditDefaultsOnly, Category = Setup)
