@@ -400,8 +400,8 @@ void UWOGEpicOnlineServicesSubsystem::HandleCreateSessionComplete(FName SessionN
 	// Deregister the event handler.
 	IOnlineSubsystem *Subsystem = Online::GetSubsystem(this->GetWorld());
 	IOnlineSessionPtr Session = Subsystem->GetSessionInterface();
-	Session->ClearOnCreateSessionCompleteDelegate_Handle(this->CreateSessionDelegateHandle);
-	this->CreateSessionDelegateHandle.Reset();
+	Session->ClearOnCreateSessionCompleteDelegate_Handle(CreateSessionDelegateHandle);
+	CreateSessionDelegateHandle.Reset();
 }
 
 void UWOGEpicOnlineServicesSubsystem::FindSession()
