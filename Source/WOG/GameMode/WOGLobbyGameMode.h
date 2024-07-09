@@ -9,6 +9,10 @@
 /**
  * 
  */
+class AWOGLobbyPlayerSpot;
+class AWOGLobbyPlayerController;
+class AWOGLobbyAvatar;
+
 UCLASS()
 class WOG_API AWOGLobbyGameMode : public AGameMode
 {
@@ -29,12 +33,12 @@ public:
 	void PreLogout(APlayerController *InPlayerController);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	TArray <class AWOGLobbyPlayerController*> AllLobbyPlayers;
+	TArray <AWOGLobbyPlayerController*> AllLobbyPlayers;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray <class AWOGLobbyPlayerSpot*> DefenderLobbySpots;
+	TArray <AWOGLobbyPlayerSpot*> DefenderLobbySpots;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray <class AWOGLobbyPlayerSpot*> AttackerLobbySpots;
+	TArray <AWOGLobbyPlayerSpot*> AttackerLobbySpots;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	int32 PlayersReady;
@@ -42,12 +46,12 @@ public:
 private:
 	bool bAllExistingPlayersRegistered;
 
-	TArray <class AWOGLobbyPlayerSpot*> AllLobbySpots;
+	TArray <AWOGLobbyPlayerSpot*> AllLobbySpots;
 
 	void SetupLobbyCharacter(int32 PlayerIndex);
 
 	UPROPERTY(EditDefaultsOnly)
-	TSubclassOf<class AWOGLobbyAvatar> AvatarBP;
+	TSubclassOf<AWOGLobbyAvatar> AvatarBP;
 
 
 	
