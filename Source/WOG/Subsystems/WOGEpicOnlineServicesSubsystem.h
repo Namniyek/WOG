@@ -57,6 +57,12 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FServerFoundDelegate ServerFoundDelegate;
 
+	UFUNCTION(BlueprintCallable)
+	void UnregisterPlayerFromSession(APlayerController* InPlayerController);
+
+	UFUNCTION(BlueprintCallable)
+	void DisconnectFromLobby();
+
 protected:
 	UFUNCTION(BlueprintCallable)
 	void Login();
@@ -77,9 +83,6 @@ protected:
 	void JoinLobby(const FString& DesiredLobbyIdString);
 
 	UFUNCTION(BlueprintCallable)
-	void DisconnectFromLobby(const FString& DesiredLobbyIdString);
-
-	UFUNCTION(BlueprintCallable)
 	void CreateSession();
 
 	UFUNCTION(BlueprintCallable)
@@ -98,9 +101,6 @@ protected:
 	//true if the call succeeds, false otherwise
 	UFUNCTION(BlueprintCallable)
 	bool EndSession();
-
-	UFUNCTION(BlueprintCallable)
-	void UnregisterPlayerFromSession(APlayerController* InPlayerController);
 
 	void JoinFriendServer(const FOnlineSessionSearchResult& InviteResult);
 

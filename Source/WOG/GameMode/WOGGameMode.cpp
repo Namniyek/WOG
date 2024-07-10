@@ -17,6 +17,7 @@
 #include "WOG/GameState/WOGGameState.h"
 #include "Engine/Engine.h"
 #include "OnlineSubsystemUtils.h"
+#include "Subsystems/WOGEpicOnlineServicesSubsystem.h"
 
 
 void AWOGGameMode::HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer)
@@ -207,44 +208,11 @@ void AWOGGameMode::PlayerEliminated(AWOGBaseCharacter* ElimmedCharacter, AWOGPla
 void AWOGGameMode::PreLogout(APlayerController* InPlayerController)
 {
 	check(IsValid(InPlayerController));
-
-	// This code handles logins for both the local player (listen server) and remote players (net connection).
-	FUniqueNetIdRepl UniqueNetIdRepl;
-	if (InPlayerController->IsLocalPlayerController())
-	{
-		ULocalPlayer *LocalPlayer = InPlayerController->GetLocalPlayer();
-		if (IsValid(LocalPlayer))
-		{
-			UniqueNetIdRepl = LocalPlayer->GetPreferredUniqueNetId();
-		}
-		else
-		{
-			UNetConnection *RemoteNetConnection = Cast<UNetConnection>(InPlayerController->Player);
-			check(IsValid(RemoteNetConnection));
-			UniqueNetIdRepl = RemoteNetConnection->PlayerId;
-		}
-	}
-	else
-	{
-		UNetConnection *RemoteNetConnection = Cast<UNetConnection>(InPlayerController->Player);
-		check(IsValid(RemoteNetConnection));
-		UniqueNetIdRepl = RemoteNetConnection->PlayerId;
-	}
-
-	// Get the unique player ID.
-	TSharedPtr<const FUniqueNetId> UniqueNetId = UniqueNetIdRepl.GetUniqueNetId();
-	check(UniqueNetId != nullptr);
-
-	// Get the online session interface.
-	IOnlineSubsystem *Subsystem = Online::GetSubsystem(InPlayerController->GetWorld());
-	IOnlineSessionPtr Session = Subsystem->GetSessionInterface();
-
-	// Unregister the player with the "MyLocalSessionName" session; this name should match the name you provided in CreateSession.
-	if (!Session->UnregisterPlayer(WOG_SESSION_NAME, *UniqueNetId))
-	{
-		// The player could not be unregistered.
-		GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Red, FString("Failed to call Unregister player"));
-	}
+	
+	UWOGEpicOnlineServicesSubsystem* Subsystem = GetGameInstance()->GetSubsystem<UWOGEpicOnlineServicesSubsystem>();
+	if(!Subsystem) return;
+	
+	Subsystem->UnregisterPlayerFromSession(InPlayerController);
 }
 
 void AWOGGameMode::RequestRespawn(ABasePlayerCharacter* ElimmedCharacter, APlayerController* ElimmedController)

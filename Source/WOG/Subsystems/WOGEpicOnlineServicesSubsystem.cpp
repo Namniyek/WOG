@@ -336,9 +336,45 @@ void UWOGEpicOnlineServicesSubsystem::JoinLobby(const FString& DesiredLobbyIdStr
 	}
 }
 
-void UWOGEpicOnlineServicesSubsystem::DisconnectFromLobby(const FString& DesiredLobbyIdString)
+void UWOGEpicOnlineServicesSubsystem::DisconnectFromLobby()
 {
+	IOnlineSubsystem* Subsystem = Online::GetSubsystem(this->GetWorld());
+	TSharedPtr<IOnlineLobby> Lobby = Online::GetLobbyInterface(Subsystem);
+	IOnlineSessionPtr Session = Subsystem->GetSessionInterface();
+	const IOnlineIdentityPtr Identity = Subsystem->GetIdentityInterface();
+	TSharedPtr<const FUniqueNetId> LocalUserId = Identity->GetUniquePlayerId(0);
+
+	/*
+	* Handle disconnect from lobby
+	*/
+	FOnlineSessionSettings* SessionSettings = Session->GetSessionSettings(WOG_SESSION_NAME);
+	FString OutLobbyID = FString();
+	SessionSettings->Get(FName("LobbyID"), OutLobbyID);
+	TSharedPtr<FOnlineLobbyId> DesiredLobbyID = Lobby->ParseSerializedLobbyId(OutLobbyID);
 	
+	if (!Lobby->DisconnectLobby(
+	*LocalUserId,
+	*DesiredLobbyID,
+	FOnLobbyOperationComplete::CreateLambda([](
+		const FOnlineError& Error,
+		const FUniqueNetId& UserId)
+	{
+		if (Error.WasSuccessful())
+		{
+			// Player has been disconnected from lobby.
+			GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Green, FString("Disconnect from Lobby successful"));
+		}
+		else
+		{
+			// Could not disconnect from lobby.
+			GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Red, FString("Disconnect from Lobby failed"));
+		}
+	})
+))
+	{
+		// Call failed to start.
+		GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Red, FString("Disconnect from lobby call failed to start"));
+	}
 }
 
 void UWOGEpicOnlineServicesSubsystem::CreateSession()
@@ -605,7 +641,7 @@ bool UWOGEpicOnlineServicesSubsystem::EndSession()
 void UWOGEpicOnlineServicesSubsystem::UnregisterPlayerFromSession(APlayerController* InPlayerController)
 {
 	check(IsValid(InPlayerController));
-
+	
 	if(InPlayerController->GetLocalRole() != ROLE_Authority) return;
 
 	// This code handles logins for both the local player (listen server) and remote players (net connection).
@@ -639,7 +675,10 @@ void UWOGEpicOnlineServicesSubsystem::UnregisterPlayerFromSession(APlayerControl
 	IOnlineSubsystem *Subsystem = Online::GetSubsystem(InPlayerController->GetWorld());
 	IOnlineSessionPtr Session = Subsystem->GetSessionInterface();
 
-	// Unregister the player with the "WOG_SESSION_NAME" session; this name should match the name you provided in CreateSession.
+	/*
+	* Handle unregister the player
+	* Unregister the player with the "WOG_SESSION_NAME" session; this name should match the name you provided in CreateSession.
+	*/
 	if (!Session->UnregisterPlayer(WOG_SESSION_NAME, *UniqueNetId))
 	{
 		// The player could not be unregistered.

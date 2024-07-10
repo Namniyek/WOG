@@ -9,12 +9,12 @@
 #include "Data/PlayerProfileSaveGame.h"
 #include "PlayerCharacter/BasePlayerCharacter.h"
 #include "Net/UnrealNetwork.h"
-#include "Enemies/WOGPossessableEnemy.h"
 #include "Characters/WOGBaseCharacter.h"
 #include "PlayerCharacter/WOGAttacker.h"
 #include "AbilitySystemComponent.h"
 #include "ActorComponents/WOGUIManagerComponent.h"
 #include "GameMode/WOGGameMode.h"
+#include "Subsystems/WOGEpicOnlineServicesSubsystem.h"
 #include "Subsystems/WOGUIManagerSubsystem.h"
 
 AWOGPlayerController::AWOGPlayerController()
@@ -44,8 +44,7 @@ void AWOGPlayerController::OnNetCleanup(UNetConnection* Connection)
 {
 	if (GetLocalRole() == ROLE_Authority && PlayerState != NULL)
 	{
-		AWOGGameMode* GameMode = Cast<AWOGGameMode>(GetWorld()->GetAuthGameMode());
-		if (GameMode)
+		if (AWOGGameMode* GameMode = Cast<AWOGGameMode>(GetWorld()->GetAuthGameMode()))
 		{
 			GameMode->PreLogout(this);
 		}
