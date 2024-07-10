@@ -62,7 +62,7 @@ protected:
 	void Login();
 
 	UFUNCTION(BlueprintCallable)
-	void CreateLobby();
+	void CreateLobby(bool bIsPublic, bool bVoiceChat, const FString& MapName);
 
 	UFUNCTION(BlueprintCallable)
 	void GetLobbyMembers();
@@ -75,6 +75,9 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 	void JoinLobby(const FString& DesiredLobbyIdString);
+
+	UFUNCTION(BlueprintCallable)
+	void DisconnectFromLobby(const FString& DesiredLobbyIdString);
 
 	UFUNCTION(BlueprintCallable)
 	void CreateSession();
@@ -101,7 +104,7 @@ protected:
 
 	void JoinFriendServer(const FOnlineSessionSearchResult& InviteResult);
 
-	void UpdatePresence(const FString& NewPresenceStatus = FString());
+	void UpdatePresence(const FString& NewPresenceStatus = FString()) const;
 private:
 	
 	#pragma region Callback functions
@@ -146,6 +149,8 @@ private:
 	FString LobbyIdString = FString();
 
 	TArray<FOnlineSessionSearchResult> CachedSessionSearchResults = {};
+
+	FString CachedMapName = FString();
 	#pragma endregion 
 
 public:

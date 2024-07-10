@@ -11,6 +11,7 @@
 #include "GameFramework/PlayerController.h"
 #include "GameMode/WOGLobbyGameMode.h"
 #include "Interfaces/OnlinePresenceInterface.h"
+#include "Kismet/GameplayStatics.h"
 #include "Online/OnlineSessionNames.h"
 
 void UWOGEpicOnlineServicesSubsystem::Initialize(FSubsystemCollectionBase& Collection)
@@ -73,7 +74,7 @@ bool UWOGEpicOnlineServicesSubsystem::IsLocalUserLoggedIn() const
 	return Identity && Identity->GetLoginStatus(0) == ELoginStatus::LoggedIn; 
 }
 
-void UWOGEpicOnlineServicesSubsystem::CreateLobby()
+void UWOGEpicOnlineServicesSubsystem::CreateLobby(bool bIsPublic, bool bVoiceChat, const FString& MapName)
 {
 	IOnlineSubsystem* Subsystem = Online::GetSubsystem(GetWorld());
 	TSharedPtr<IOnlineLobby> LobbyInterface = Online::GetLobbyInterface(Subsystem);
@@ -86,11 +87,11 @@ void UWOGEpicOnlineServicesSubsystem::CreateLobby()
 	TSharedPtr<FOnlineLobbyTransaction> LobbyTransaction = LobbyInterface->MakeCreateLobbyTransaction(*LocalUserId.Get());
 
 	// TODO - To enable voice chat on a lobby, set the special "EOSVoiceChat_Enabled" metadata value.
-	LobbyTransaction->SetMetadata.Add(TEXT("EOSVoiceChat_Enabled"), true);
+	LobbyTransaction->SetMetadata.Add(TEXT("EOSVoiceChat_Enabled"), bVoiceChat);
 
 	// To allow clients connecting to the listen server to join the lobby based on just the ID, we need
 	// to set it to public.
-	LobbyTransaction->Public = true;
+	LobbyTransaction->Public = bIsPublic;
 
 	// Here you can adjust the capacity of the lobby. 
 	LobbyTransaction->Capacity = 5;
@@ -104,6 +105,11 @@ void UWOGEpicOnlineServicesSubsystem::CreateLobby()
 	//Setting the custom parameter to check the Host name
 	FString HostName = Identity->GetUserAccount(*LocalUserId)->GetDisplayName();
 	LobbyTransaction->SetMetadata.Add(TEXT("HostName"), FVariantData(HostName));
+
+	//Clear previous cached map name
+	CachedMapName = FString();
+	//Cache the desired map name
+	CachedMapName = MapName;
 
 	/*
 	 * Create the Lobby
@@ -133,6 +139,8 @@ void UWOGEpicOnlineServicesSubsystem::HandleCreateLobbyCompleted(const FOnlineEr
 		GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Green, FString("Lobby Created"));
 		LobbyIdString = CreatedLobby->Id->ToString();
 		OnLobbyCreatedDelegate.Broadcast(true);
+	
+		UGameplayStatics::OpenLevel(this, *CachedMapName, true, FString("listen"));
 		// You'll need to store IdStr somewhere, as that is what needs to be sent to connecting clients.
 	}
 	else
@@ -302,7 +310,7 @@ void UWOGEpicOnlineServicesSubsystem::JoinLobby(const FString& DesiredLobbyIdStr
 	const IOnlineIdentityPtr Identity = Subsystem->GetIdentityInterface();
 	TSharedPtr<const FUniqueNetId> LocalUserId = Identity->GetUniquePlayerId(0);
 	TSharedPtr<FOnlineLobbyId> DesiredLobbyID = Lobby->ParseSerializedLobbyId(DesiredLobbyIdString);
-
+	
 	if (!Lobby->ConnectLobby(
 	*LocalUserId,
 	*DesiredLobbyID,
@@ -315,15 +323,6 @@ void UWOGEpicOnlineServicesSubsystem::JoinLobby(const FString& DesiredLobbyIdStr
 		{
 			// The lobby was joined successfully.
 			GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Green, FString("Lobby joined successfully"));
-
-			/*
-			if(!GetGameInstance()) return;
-
-			const APlayerController* LocalPC = GetGameInstance()->GetFirstLocalPlayerController();
-			if(LocalPC)
-			{
-				LocalPC->ClientTravel
-			}*/
 		}
 		else
 		{
@@ -335,6 +334,11 @@ void UWOGEpicOnlineServicesSubsystem::JoinLobby(const FString& DesiredLobbyIdStr
 		// Call failed to start.
 		GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Red, FString("Join lobby call failed to start"));
 	}
+}
+
+void UWOGEpicOnlineServicesSubsystem::DisconnectFromLobby(const FString& DesiredLobbyIdString)
+{
+	
 }
 
 void UWOGEpicOnlineServicesSubsystem::CreateSession()
@@ -363,6 +367,7 @@ void UWOGEpicOnlineServicesSubsystem::CreateSession()
 	SessionSettings->bUseLobbiesIfAvailable = true;
 	SessionSettings->Set(SEARCH_KEYWORDS, FOnlineSessionSetting(WOG_SESSION_NAME.ToString(), EOnlineDataAdvertisementType::ViaOnlineService));
 	SessionSettings->Set(FName("MatchType"),FOnlineSessionSetting( FString("WOG_default"), EOnlineDataAdvertisementType::ViaOnlineService));
+	SessionSettings->Set(FName("LobbyID"), FOnlineSessionSetting(LobbyIdString, EOnlineDataAdvertisementType::ViaOnlineService));
 	
 	FString HostName = Identity->GetUserAccount(*LocalUserId)->GetDisplayName();
 	SessionSettings->Set(FName("HostName"),FOnlineSessionSetting( HostName, EOnlineDataAdvertisementType::ViaOnlineService));
@@ -498,6 +503,7 @@ void UWOGEpicOnlineServicesSubsystem::HandleDestroySessionComplete(FName Session
 	if(bWasSuccessful)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Green, FString("Session destroyed successfully"));
+		DestroyLobby();
 	}
 	else
 	{
@@ -544,6 +550,12 @@ void UWOGEpicOnlineServicesSubsystem::HandleJoinSessionComplete(FName SessionNam
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Green, FString("Session joined successfully"));
 
+		FOnlineSessionSettings* SessionSettings = Session->GetSessionSettings(SessionName);
+		FString OutLobbyID;
+		SessionSettings->Get(FName("LobbyID"), OutLobbyID);
+
+		JoinLobby(OutLobbyID);
+		
 		FString ConnectInfo;
 		Session->GetResolvedConnectString(SessionName, ConnectInfo, NAME_GamePort);
 		
@@ -563,7 +575,7 @@ void UWOGEpicOnlineServicesSubsystem::HandleJoinSessionComplete(FName SessionNam
 		//
 		// NOTE: You can also call GetResolvedConnectString at this point instead
 		// of in FindSessions, but it's recommended that you call it in
-		// FindSessions so you know the result is valid.
+		// FindSessions, so you know the result is valid.
 	}
 	else
 	{
@@ -665,7 +677,7 @@ void UWOGEpicOnlineServicesSubsystem::JoinFriendServer(const FOnlineSessionSearc
 	}
 }
 
-void UWOGEpicOnlineServicesSubsystem::UpdatePresence(const FString& NewPresenceStatus)
+void UWOGEpicOnlineServicesSubsystem::UpdatePresence(const FString& NewPresenceStatus) const
 {
 	IOnlineSubsystem *Subsystem = Online::GetSubsystem(this->GetWorld());
 	IOnlineIdentityPtr Identity = Subsystem->GetIdentityInterface();
