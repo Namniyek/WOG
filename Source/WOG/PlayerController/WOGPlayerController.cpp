@@ -14,7 +14,6 @@
 #include "AbilitySystemComponent.h"
 #include "ActorComponents/WOGUIManagerComponent.h"
 #include "GameMode/WOGGameMode.h"
-#include "Subsystems/WOGEpicOnlineServicesSubsystem.h"
 #include "Subsystems/WOGUIManagerSubsystem.h"
 
 AWOGPlayerController::AWOGPlayerController()

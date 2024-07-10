@@ -9,7 +9,6 @@
 #include "GameFramework/PlayerState.h"
 #include "GameMode/WOGLobbyGameMode.h"
 #include "Kismet/GameplayStatics.h"
-#include "Subsystems/WOGEpicOnlineServicesSubsystem.h"
 
 
 AWOGLobbyPlayerController::AWOGLobbyPlayerController()
