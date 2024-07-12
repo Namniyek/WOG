@@ -40,12 +40,12 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TSubclassOf<class AWOGAttacker> AttackerCharacter;
 
-	void PlayerEliminated(class AWOGBaseCharacter* ElimmedCharacter, class AWOGPlayerController* VictimController, AWOGPlayerController* AttackerController);
-	void PreLogout(APlayerController* InPlayerController);
+	void PlayerEliminated(class AWOGBaseCharacter* ElimmedCharacter, const class AWOGPlayerController* VictimController, const AWOGPlayerController* AttackerController) const;
+	void PreLogout(APlayerController* InPlayerController) const;
 
 private:
 	void HandleDropIn(APlayerController* NewPlayer);
-	void CreateRandomCharacter(APlayerController* NewPlayer);
+	void CreateRandomCharacter(const APlayerController* NewPlayer);
 
 	UPROPERTY()
 	class UWOGGameInstance* GameInstance;
@@ -56,7 +56,7 @@ public:
 	virtual void HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer) override;
 	virtual void Logout(AController* Exiting) override;
 
-	FTransform GetPlayerStart(FString StartIndex);
+	FTransform GetPlayerStart(const FString& StartIndex) const;
 
 	UFUNCTION(BlueprintCallable)
 	void RestartMatch();

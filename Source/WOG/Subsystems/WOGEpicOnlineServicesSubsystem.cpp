@@ -9,6 +9,7 @@
 #include "Interfaces/OnlineIdentityInterface.h"
 #include "Interfaces/OnlineSessionInterface.h"
 #include "GameFramework/PlayerController.h"
+#include "GameFramework/PlayerState.h"
 #include "GameMode/WOGLobbyGameMode.h"
 #include "Interfaces/OnlinePresenceInterface.h"
 #include "Kismet/GameplayStatics.h"
@@ -18,10 +19,12 @@ void UWOGEpicOnlineServicesSubsystem::Initialize(FSubsystemCollectionBase& Colle
 {
 	Super::Initialize(Collection);
 
-	const IOnlineSubsystem* Subsystem = Online::GetSubsystem(this->GetWorld());
+	IOnlineSubsystem* Subsystem = Online::GetSubsystem(this->GetWorld());
 	const IOnlineSessionPtr Session = Subsystem->GetSessionInterface();
+	TSharedPtr<IOnlineLobby> Lobby = Online::GetLobbyInterface(Subsystem);
 
 	Session->OnSessionUserInviteAcceptedDelegates.AddUObject(this, &ThisClass::OnSessionUserInviteAccepted);
+	Lobby->OnMemberDisconnectDelegates.AddUObject(this, &ThisClass::OnLobbyMemberDisconnected);
 }
 
 void UWOGEpicOnlineServicesSubsystem::Login()
@@ -154,51 +157,36 @@ void UWOGEpicOnlineServicesSubsystem::HandleCreateLobbyCompleted(const FOnlineEr
 void UWOGEpicOnlineServicesSubsystem::GetLobbyMembers()
 {
 	IOnlineSubsystem* Subsystem = Online::GetSubsystem(GetWorld());
-	TSharedPtr<IOnlineLobby> Lobby = Online::GetLobbyInterface(Subsystem);
 	const IOnlineIdentityPtr Identity = Subsystem->GetIdentityInterface();
-
 	TSharedPtr<const FUniqueNetId> LocalUserId = Identity->GetUniquePlayerId(0);
-	TSharedPtr<FOnlineLobbyId> CurrentLobbyID = Lobby->ParseSerializedLobbyId(LobbyIdString);
-
-	TArray<TSharedRef<const FUniqueNetId>> MemberIds;
-	int32 MemberCount = 0;
-	Lobby->GetMemberCount(*LocalUserId.Get(), *CurrentLobbyID.Get(), MemberCount);
-	GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Orange, FString("Lobby members count fetched: ") + FString::FromInt(MemberCount));
-
-	for (int32 i = 0; i < MemberCount; i++) 
+	
+	for (auto It = this->GetWorld()->GetPlayerControllerIterator(); It; ++It)
 	{
-		TSharedPtr<const FUniqueNetId> MemberId;
-		Lobby->GetMemberUserId(*LocalUserId, *CurrentLobbyID, i, MemberId);
-		if (MemberId.IsValid()) 
+		APlayerController* PlayerController = It->Get();
+		if (PlayerController->IsLocalPlayerController())
 		{
-			MemberIds.AddUnique(MemberId.ToSharedRef());
+			//We skip the host here. Might add the code here if needed
+			continue;
+		}
+
+		FUniqueNetIdRepl UniqueNetIdRepl;
+		UNetConnection *RemoteNetConnection = Cast<UNetConnection>(PlayerController->Player);
+		check(IsValid(RemoteNetConnection));
+		UniqueNetIdRepl = RemoteNetConnection->PlayerId;
+
+		// Get the unique player ID.
+		TSharedPtr<const FUniqueNetId> UniqueNetId = UniqueNetIdRepl.GetUniqueNetId();
+		check(UniqueNetId != nullptr);
+
+		if(!IsUserIdLobbyMember(UniqueNetId)) continue;
+		
+		FLobbyMemberData LobbyMemberData = FLobbyMemberData();
+		LobbyMemberData.MemberDisplayName = PlayerController->PlayerState->GetPlayerName();
+		LobbyMemberData.MemberUserIDString = UniqueNetId->ToString();
+
+		LobbyMemberFoundDelegate.Broadcast(LobbyMemberData);
 		}
 	}
-
-	if(MemberIds.IsEmpty())
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Red, FString("MembersID Array is empty"));
-		return;
-	}
-	
-	for(auto Member : MemberIds)
-	{
-		auto Account = Identity->GetUserAccount(*Member);
-		FString ProductUserID = FString();
-		Account->GetUserAttribute(FString("productUserId"), ProductUserID);
-		
-		GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Purple, FString("Lobby member fetched: ") + Member->ToString());
-		GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Purple, FString("Lobby member name: ") + Account->GetDisplayName());
-		GEngine->AddOnScreenDebugMessage(-1, 20, FColor::Purple, FString("ProductUserID: ") + ProductUserID);
-		UE_LOG(LogTemp, Display, TEXT("ProductUserID: %s"), *ProductUserID);
-
-		FVariantData HostName;
-		FString HostNameString = FString();
-		Lobby->GetLobbyMetadataValue(*LocalUserId, *CurrentLobbyID, FString("HostName"), HostName);
-		HostName.GetValue(HostNameString);
-		GEngine->AddOnScreenDebugMessage(-1, 5, FColor::Emerald, FString("Lobby Host name: ") + HostNameString);
-	}
-}
 
 void UWOGEpicOnlineServicesSubsystem::DestroyLobby()
 {
@@ -336,6 +324,74 @@ void UWOGEpicOnlineServicesSubsystem::JoinLobby(const FString& DesiredLobbyIdStr
 	}
 }
 
+void UWOGEpicOnlineServicesSubsystem::KickFromLobby(const FString& LobbyMemberIDString)
+{
+	IOnlineSubsystem* Subsystem = Online::GetSubsystem(this->GetWorld());
+	TSharedPtr<IOnlineLobby> Lobby = Online::GetLobbyInterface(Subsystem);
+	const IOnlineIdentityPtr Identity = Subsystem->GetIdentityInterface();
+	TSharedPtr<const FUniqueNetId> LocalUserId = Identity->GetUniquePlayerId(0);
+	TSharedPtr<FOnlineLobbyId> DesiredLobbyID = Lobby->ParseSerializedLobbyId(LobbyIdString);
+
+	TSharedPtr<const FUniqueNetId> MemberUserIdToKick = Identity->CreateUniquePlayerId(LobbyMemberIDString);
+	
+	if(!MemberUserIdToKick.IsValid() || !IsUserIdLobbyMember(MemberUserIdToKick))
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Red, FString("Invalid UserID for kicking OR UserID is not a valid Lobby member"));
+		return;
+	}
+	
+	if (!Lobby->KickMember(
+	*LocalUserId.Get(),
+	*DesiredLobbyID,
+	*MemberUserIdToKick,
+	FOnLobbyOperationComplete::CreateLambda([](
+		const FOnlineError & Error,
+		const FUniqueNetId & UserId)
+	{
+		if (Error.WasSuccessful())
+		{
+			// The member was kicked successfully.
+			GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Green, FString("Member Kicked successfully"));
+		}
+		else
+		{
+			// Member could not be kicked.
+			GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Red, FString("Member could not be kicked"));
+		}
+	})))
+	{
+		// Call failed to kick.
+		GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Red, FString("Kick Call failed"));
+	}
+}
+
+bool UWOGEpicOnlineServicesSubsystem::IsUserIdLobbyMember(const TSharedPtr<const FUniqueNetId>& UserID) const
+{
+	bool bIsValidMember = false;
+	
+	IOnlineSubsystem* Subsystem = Online::GetSubsystem(GetWorld());
+	TSharedPtr<IOnlineLobby> Lobby = Online::GetLobbyInterface(Subsystem);
+	const IOnlineIdentityPtr Identity = Subsystem->GetIdentityInterface();
+	TSharedPtr<const FUniqueNetId> LocalUserId = Identity->GetUniquePlayerId(0);
+	TSharedPtr<FOnlineLobbyId> CurrentLobbyID = Lobby->ParseSerializedLobbyId(LobbyIdString);
+
+	int32 MemberCount = 0;
+	Lobby->GetMemberCount(*LocalUserId.Get(), *CurrentLobbyID.Get(), MemberCount);
+
+	for (int32 i = 0; i < MemberCount; i++) 
+	{
+		TSharedPtr<const FUniqueNetId> MemberId;
+		Lobby->GetMemberUserId(*LocalUserId, *CurrentLobbyID, i, MemberId);
+		if (*MemberId == *UserID) 
+		{
+			bIsValidMember = true;
+			break;
+		}
+	}
+	
+	return bIsValidMember;
+}
+
 void UWOGEpicOnlineServicesSubsystem::DisconnectFromLobby()
 {
 	IOnlineSubsystem* Subsystem = Online::GetSubsystem(this->GetWorld());
@@ -374,6 +430,15 @@ void UWOGEpicOnlineServicesSubsystem::DisconnectFromLobby()
 	{
 		// Call failed to start.
 		GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Red, FString("Disconnect from lobby call failed to start"));
+	}
+}
+
+void UWOGEpicOnlineServicesSubsystem::OnLobbyMemberDisconnected(const FUniqueNetId& LocalUserId,
+	const FOnlineLobbyId& LobbyId, const FUniqueNetId& MemberId, bool bWasKicked)
+{
+	if(bWasKicked && LocalUserId == MemberId)
+	{
+		UGameplayStatics::OpenLevel(this->GetWorld(), FName("StartUp"), true);
 	}
 }
 

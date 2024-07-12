@@ -36,9 +36,23 @@ public:
 
 };
 
+USTRUCT(BlueprintType)
+struct FLobbyMemberData
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(BlueprintReadOnly)
+	FString MemberDisplayName = FString("");
+
+	UPROPERTY(BlueprintReadOnly)
+	FString MemberUserIDString = FString("");
+};
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnLoginProcessCompleteDelegate, bool, bWasSuccessful);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnLobbyCreatedDelegate, bool, bWasSuccessful);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FServerFoundDelegate, FServerItem, ServerInfo);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FLobbyMemberFoundDelegate, const FLobbyMemberData&, LobbyMemberData);
 
 UCLASS()
 class WOG_API UWOGEpicOnlineServicesSubsystem : public UGameInstanceSubsystem
@@ -56,6 +70,9 @@ public:
 
 	UPROPERTY(BlueprintAssignable)
 	FServerFoundDelegate ServerFoundDelegate;
+
+	UPROPERTY(BlueprintAssignable)
+	FLobbyMemberFoundDelegate LobbyMemberFoundDelegate;
 
 	UFUNCTION(BlueprintCallable)
 	void UnregisterPlayerFromSession(APlayerController* InPlayerController);
@@ -81,6 +98,9 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 	void JoinLobby(const FString& DesiredLobbyIdString);
+
+	UFUNCTION(BlueprintCallable)
+	void KickFromLobby(const FString& LobbyMemberIDString);
 
 	UFUNCTION(BlueprintCallable)
 	void CreateSession();
@@ -128,6 +148,9 @@ private:
 
 	//This function handles User invites
 	void OnSessionUserInviteAccepted(bool bWasSuccessful, int ControllerId, TSharedPtr<const FUniqueNetId> UserId, const FOnlineSessionSearchResult& InviteResult);
+
+	//This function handles user being disconnected from lobby
+	void OnLobbyMemberDisconnected(const FUniqueNetId & LocalUserId, const FOnlineLobbyId & LobbyId, const FUniqueNetId & MemberId,	bool bWasKicked);
 	#pragma endregion
 
 	#pragma region Delegate handles
@@ -143,12 +166,16 @@ private:
 	FDelegateHandle DestroySessionDelegateHandle;
 	// Delegate to bind callback event for when session is joined.
 	FDelegateHandle JoinSessionDelegateHandle;
+
+	
 	#pragma endregion
 
 	#pragma region Cached Variables
 	FString LobbyIdString = FString();
 
 	TArray<FOnlineSessionSearchResult> CachedSessionSearchResults = {};
+
+	TArray<TSharedPtr<const FUniqueNetId>> CachedMemberIds;
 
 	FString CachedMapName = FString();
 	#pragma endregion 
@@ -158,5 +185,5 @@ public:
 	UFUNCTION(BlueprintPure)
 	bool IsLocalUserLoggedIn() const;
 
-	
+	bool IsUserIdLobbyMember(const TSharedPtr<const FUniqueNetId>& UserID) const;
 };

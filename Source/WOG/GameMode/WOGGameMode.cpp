@@ -2,7 +2,6 @@
 
 
 #include "WOGGameMode.h"
-#include "WOG.h"
 #include "WOG/GameInstance/WOGGameInstance.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/PlayerState.h"
@@ -13,10 +12,8 @@
 #include "WOG/PlayerCharacter/WOGDefender.h"
 #include "WOG/PlayerController/WOGPlayerController.h"
 #include "WOG/PlayerState/WOGPlayerState.h"
-#include "WOG/UI/WOGMatchHUD.h"
 #include "WOG/GameState/WOGGameState.h"
 #include "Engine/Engine.h"
-#include "OnlineSubsystemUtils.h"
 #include "Subsystems/WOGEpicOnlineServicesSubsystem.h"
 
 
@@ -94,7 +91,7 @@ void AWOGGameMode::HandleDropIn(APlayerController* NewPlayer)
 	HandleStartingPlayer(NewPlayer);
 }
 
-void AWOGGameMode::CreateRandomCharacter(APlayerController* NewPlayer)
+void AWOGGameMode::CreateRandomCharacter(const APlayerController* NewPlayer)
 {
 	GameInstance = GetGameInstance<UWOGGameInstance>();
 	if (!GameInstance)
@@ -141,7 +138,7 @@ void AWOGGameMode::CreateRandomCharacter(APlayerController* NewPlayer)
 	return;
 }
 
-FTransform AWOGGameMode::GetPlayerStart(FString StartIndex)
+FTransform AWOGGameMode::GetPlayerStart(const FString& StartIndex) const
 {
 	FName StartIndexName = (*StartIndex);
 	TArray<AActor*> PlayerStartArray;
@@ -185,7 +182,7 @@ void AWOGGameMode::RestartMatch()
 	RestartGame();
 }
 
-void AWOGGameMode::PlayerEliminated(AWOGBaseCharacter* ElimmedCharacter, AWOGPlayerController* VictimController, AWOGPlayerController* AttackerController)
+void AWOGGameMode::PlayerEliminated(AWOGBaseCharacter* ElimmedCharacter, const AWOGPlayerController* VictimController, const AWOGPlayerController* AttackerController) const
 {
 	if (!VictimController || !AttackerController) return;
 	AWOGPlayerState* AttackerPlayerState = AttackerController ? AttackerController->GetPlayerState<AWOGPlayerState>() : nullptr;
@@ -205,7 +202,7 @@ void AWOGGameMode::PlayerEliminated(AWOGBaseCharacter* ElimmedCharacter, AWOGPla
 	}
 }
 
-void AWOGGameMode::PreLogout(APlayerController* InPlayerController)
+void AWOGGameMode::PreLogout(APlayerController* InPlayerController) const
 {
 	check(IsValid(InPlayerController));
 	
