@@ -20,6 +20,14 @@ UWOGGameInstance::UWOGGameInstance()
 	bIsLoggedIn = false;
 }
 
+void UWOGGameInstance::ClearPlayerMap()
+{
+	for (int32 i = 0; i < 5; i++)
+	{
+		PlayersMap.Add(i, FString("empty"));
+	}
+}
+
 void UWOGGameInstance::Init()
 {
 	Super::Init();
@@ -28,10 +36,7 @@ void UWOGGameInstance::Init()
 
 	if (!OnlineSubsystem) return;
 
-	for (int32 i = 0; i < 5; i++)
-	{
-		PlayersMap.Add(i, FString("empty"));
-	}
+	ClearPlayerMap();
 }
 
 void UWOGGameInstance::GetFriends()

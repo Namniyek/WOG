@@ -8,6 +8,7 @@
 #include "WOG/Lobby/WOGLobbyAvatar.h"
 #include "OnlineSubsystem.h"
 #include "OnlineSubsystemUtils.h"
+#include "GameInstance/WOGGameInstance.h"
 #include "Interfaces/OnlineSessionInterface.h"
 #include "Subsystems/WOGEpicOnlineServicesSubsystem.h"
 
@@ -61,9 +62,19 @@ void AWOGLobbyGameMode::HandleStartingNewPlayer_Implementation(APlayerController
 		IOnlineSessionPtr Session = Subsystem->GetSessionInterface();
 
 		// Register the player with the "MyLocalSessionName" session; this name should match the name you provided in CreateSession.
-		if (!Session->RegisterPlayer(WOG_SESSION_NAME, *UniqueNetId, false))
+		if (Session->RegisterPlayer(WOG_SESSION_NAME, *UniqueNetId, false))
+		{
+			UWOGEpicOnlineServicesSubsystem* WOGEpicSubsystem = GetGameInstance()->GetSubsystem<UWOGEpicOnlineServicesSubsystem>();
+			if(WOGEpicSubsystem)
+			{
+				WOGEpicSubsystem->CachedSessionMemberIds.AddUnique(UniqueNetId);
+			}
+		}
+		else
 		{
 			// The player could not be registered; typically you will want to kick the player from the server in this situation.
+			GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Red, FString("The player could not be registered"));
+			
 		}
 	}
 	
@@ -138,7 +149,33 @@ void AWOGLobbyGameMode::PreLogout(APlayerController* InPlayerController)
 	UWOGEpicOnlineServicesSubsystem* Subsystem = GetGameInstance()->GetSubsystem<UWOGEpicOnlineServicesSubsystem>();
 	if(!Subsystem) return;
 	
-	Subsystem->UnregisterPlayerFromSession(InPlayerController);
+	Subsystem->UnregisterFromSessionUsingPlayerController(InPlayerController);
+}
+
+void AWOGLobbyGameMode::BeginPlay()
+{
+	Super::BeginPlay();
+
+	UWOGGameInstance* GameInstance = GetGameInstance<UWOGGameInstance>();
+	if(GameInstance)
+	{
+		GameInstance->ClearPlayerMap();
+		
+		UWOGEpicOnlineServicesSubsystem* WOGEpicSubsystem = GameInstance->GetSubsystem<UWOGEpicOnlineServicesSubsystem>();
+		if(WOGEpicSubsystem)
+		{
+			if(WOGEpicSubsystem->UnregisterAllSessionMembers())
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Emerald, FString("Unregister all player successful"));
+			}
+			else
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Orange, FString("Unregister all player NOT successful"));
+			}
+			
+			WOGEpicSubsystem->CachedSessionMemberIds.Empty();
+		}
+	}
 }
 
 bool AWOGLobbyGameMode::GetAttackerPlayerSpot(AWOGLobbyPlayerSpot*& OutPlayerSpot)
@@ -215,6 +252,8 @@ bool AWOGLobbyGameMode::GetNextPlayerSpot(AWOGLobbyPlayerSpot* &OutPlayerSpot, i
 
 void AWOGLobbyGameMode::RegisterExistingPlayers()
 {
+	if(bAllExistingPlayersRegistered) return;
+	
 	for (auto It = this->GetWorld()->GetPlayerControllerIterator(); It; ++It)
 	{
 		APlayerController* PlayerController = It->Get();
@@ -250,7 +289,15 @@ void AWOGLobbyGameMode::RegisterExistingPlayers()
 		IOnlineSessionPtr Session = Subsystem->GetSessionInterface();
 
 		// Register the player with the name matching the name provided in CreateSession.
-		if (!Session->RegisterPlayer(WOG_SESSION_NAME, *UniqueNetId, false))
+		if (Session->RegisterPlayer(WOG_SESSION_NAME, *UniqueNetId, false))
+		{
+			UWOGEpicOnlineServicesSubsystem* WOGEpicSubsystem = GetGameInstance()->GetSubsystem<UWOGEpicOnlineServicesSubsystem>();
+			if(WOGEpicSubsystem)
+			{
+				WOGEpicSubsystem->CachedSessionMemberIds.AddUnique(UniqueNetId);
+			}
+		}
+		else
 		{
 			// The player could not be registered; typically you will want to kick the player from the server in this situation.
 			GEngine->AddOnScreenDebugMessage(0, 6.f, FColor::Red, FString("Failed to register player"));

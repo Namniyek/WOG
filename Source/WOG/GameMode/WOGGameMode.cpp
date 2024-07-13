@@ -14,13 +14,11 @@
 #include "WOG/PlayerState/WOGPlayerState.h"
 #include "WOG/GameState/WOGGameState.h"
 #include "Engine/Engine.h"
-#include "Subsystems/WOGEpicOnlineServicesSubsystem.h"
 
 
 void AWOGGameMode::HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer)
 {
 	Super::HandleStartingNewPlayer_Implementation(NewPlayer);
-	bHandleDropIn = bDebugMode;
 	if (!bHandleDropIn)
 	{
 		HandleStartingPlayer(NewPlayer);
@@ -48,6 +46,8 @@ void AWOGGameMode::HandleStartingPlayer(APlayerController* NewPlayer)
 		return;
 	}
 
+	int32 LastTeamIndex = bDebugMode ? LastDefenderIndex : 2;
+	
 	for (int32 i = 0; i < PlayerNameArray.Num(); i++)
 	{
 		FString PlayerName = PlayerNameArray[i];
@@ -56,7 +56,7 @@ void AWOGGameMode::HandleStartingPlayer(APlayerController* NewPlayer)
 			continue;
 		}
 
-		if (i <= LastDefenderIndex)
+		if (i <= LastTeamIndex)
 		{
 			FActorSpawnParameters SpawnParams;
 			SpawnParams.Owner = NewPlayer;
@@ -108,6 +108,8 @@ void AWOGGameMode::CreateRandomCharacter(const APlayerController* NewPlayer)
 		return;
 	}
 
+	int32 LastTeamIndex = bDebugMode ? LastDefenderIndex : 2;
+	
 	for (int32 i = 0; i < PlayerNameArray.Num(); i++)
 	{
 		FString PlayerName = PlayerNameArray[i];
@@ -120,7 +122,7 @@ void AWOGGameMode::CreateRandomCharacter(const APlayerController* NewPlayer)
 				FString CharIndex = FString::FromInt(DebugCharacterIndex);
 				SaveGameObject->PlayerProfile.CharacterIndex = FName(*CharIndex);
 				
-				SaveGameObject->PlayerProfile.bIsAttacker = (i>LastDefenderIndex);
+				SaveGameObject->PlayerProfile.bIsAttacker = (i > LastTeamIndex);
 				SaveGameObject->PlayerProfile.bIsMale = bIsDebugCharacterMale;
 				SaveGameObject->PlayerProfile.BodyPaintColor = "0";
 				SaveGameObject->PlayerProfile.HairColor = "0";
@@ -162,9 +164,7 @@ FTransform AWOGGameMode::GetPlayerStart(const FString& StartIndex) const
 
 void AWOGGameMode::Logout(AController* Exiting)
 {
-	Super::Logout(Exiting);
-
-	if (GetMatchState() != MatchState::InProgress) return;
+	/*if (GetMatchState() != MatchState::InProgress) return;
 
 	GameInstance = GetGameInstance<UWOGGameInstance>();
 	if (!GameInstance) return;
@@ -174,7 +174,9 @@ void AWOGGameMode::Logout(AController* Exiting)
 	{
 		GameInstance->PlayersMap.Add(PlayerController->UserIndex, FString("empty"));
 	}
-	bHandleDropIn = true;
+	bHandleDropIn = true;*/
+
+	Super::Logout(Exiting);
 }
 
 void AWOGGameMode::RestartMatch()
@@ -206,10 +208,10 @@ void AWOGGameMode::PreLogout(APlayerController* InPlayerController) const
 {
 	check(IsValid(InPlayerController));
 	
-	UWOGEpicOnlineServicesSubsystem* Subsystem = GetGameInstance()->GetSubsystem<UWOGEpicOnlineServicesSubsystem>();
+	/*UWOGEpicOnlineServicesSubsystem* Subsystem = GetGameInstance()->GetSubsystem<UWOGEpicOnlineServicesSubsystem>();
 	if(!Subsystem) return;
 	
-	Subsystem->UnregisterPlayerFromSession(InPlayerController);
+	Subsystem->UnregisterPlayerFromSession(InPlayerController);*/
 }
 
 void AWOGGameMode::RequestRespawn(ABasePlayerCharacter* ElimmedCharacter, APlayerController* ElimmedController)

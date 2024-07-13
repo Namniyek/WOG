@@ -52,6 +52,7 @@ public:
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnLoginProcessCompleteDelegate, bool, bWasSuccessful);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnLobbyCreatedDelegate, bool, bWasSuccessful);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FServerFoundDelegate, FServerItem, ServerInfo);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FReconnectSessionFoundDelegate, const bool, ReconnectSessionFound, const FString&, HostName);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FLobbyMemberFoundDelegate, const FLobbyMemberData&, LobbyMemberData);
 
 UCLASS()
@@ -74,8 +75,11 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FLobbyMemberFoundDelegate LobbyMemberFoundDelegate;
 
+	UPROPERTY(BlueprintAssignable)
+	FReconnectSessionFoundDelegate ReconnectSessionFoundDelegate;
+
 	UFUNCTION(BlueprintCallable)
-	void UnregisterPlayerFromSession(APlayerController* InPlayerController);
+	void UnregisterFromSessionUsingPlayerController(APlayerController* InPlayerController);
 
 	UFUNCTION(BlueprintCallable)
 	void DisconnectFromLobby();
@@ -114,6 +118,9 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void JoinSession(int32 SessionIndex);
 
+	UFUNCTION(BlueprintCallable)
+	void AttemptReconnectSession();
+
 	//true if the call succeeds, false otherwise
 	UFUNCTION(BlueprintCallable)
 	bool StartSession();
@@ -121,6 +128,9 @@ protected:
 	//true if the call succeeds, false otherwise
 	UFUNCTION(BlueprintCallable)
 	bool EndSession();
+
+	UFUNCTION(BlueprintCallable)
+	void SearchReconnectSession();
 
 	void JoinFriendServer(const FOnlineSessionSearchResult& InviteResult);
 
@@ -150,7 +160,9 @@ private:
 	void OnSessionUserInviteAccepted(bool bWasSuccessful, int ControllerId, TSharedPtr<const FUniqueNetId> UserId, const FOnlineSessionSearchResult& InviteResult);
 
 	//This function handles user being disconnected from lobby
-	void OnLobbyMemberDisconnected(const FUniqueNetId & LocalUserId, const FOnlineLobbyId & LobbyId, const FUniqueNetId & MemberId,	bool bWasKicked);
+	void OnLobbyMemberDisconnected(const FUniqueNetId & LocalUserId, const FOnlineLobbyId & LobbyId, const FUniqueNetId & MemberId,	bool bWasKicked) const;
+
+	void HandleFindFriendSessionComplete(int32 LocalUserNum, bool bWasSuccessful, const TArray<FOnlineSessionSearchResult> &Results);
 	#pragma endregion
 
 	#pragma region Delegate handles
@@ -166,8 +178,8 @@ private:
 	FDelegateHandle DestroySessionDelegateHandle;
 	// Delegate to bind callback event for when session is joined.
 	FDelegateHandle JoinSessionDelegateHandle;
-
-	
+	// Delegate to bind callback event for when find friend session is complete.
+	FDelegateHandle FindFriendSessionDelegateHandle;
 	#pragma endregion
 
 	#pragma region Cached Variables
@@ -175,9 +187,9 @@ private:
 
 	TArray<FOnlineSessionSearchResult> CachedSessionSearchResults = {};
 
-	TArray<TSharedPtr<const FUniqueNetId>> CachedMemberIds;
-
 	FString CachedMapName = FString();
+
+	FOnlineSessionSearchResult CachedReconnectSession = FOnlineSessionSearchResult();
 	#pragma endregion 
 
 public:
@@ -186,4 +198,8 @@ public:
 	bool IsLocalUserLoggedIn() const;
 
 	bool IsUserIdLobbyMember(const TSharedPtr<const FUniqueNetId>& UserID) const;
+	
+	bool UnregisterAllSessionMembers();
+
+	TArray<TSharedPtr<const FUniqueNetId>> CachedSessionMemberIds;
 };

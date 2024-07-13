@@ -53,7 +53,8 @@ private:
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<AWOGLobbyAvatar> AvatarBP;
 
-
+protected:
+	void BeginPlay() override;
 	
 public:
 
@@ -67,6 +68,7 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 	void DecreasePlayerReady();
 
+	UFUNCTION(BlueprintCallable)
 	void RegisterExistingPlayers();
 
 };

@@ -35,6 +35,9 @@ public:
 
 	void OnNetCleanup(UNetConnection* Connection) override;
 
+	UFUNCTION(Server, Reliable, BlueprintCallable)
+	void Server_RequestUnregisterFromSession(APlayerController* UserToUnregister);
+
 protected:
 	virtual void OnPossess(APawn* aPawn) override;
 	virtual void BeginPlay() override;

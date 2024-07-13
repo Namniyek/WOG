@@ -14,6 +14,7 @@
 #include "AbilitySystemComponent.h"
 #include "ActorComponents/WOGUIManagerComponent.h"
 #include "GameMode/WOGGameMode.h"
+#include "Subsystems/WOGEpicOnlineServicesSubsystem.h"
 #include "Subsystems/WOGUIManagerSubsystem.h"
 
 AWOGPlayerController::AWOGPlayerController()
@@ -50,6 +51,15 @@ void AWOGPlayerController::OnNetCleanup(UNetConnection* Connection)
 	}
 	
 	Super::OnNetCleanup(Connection);
+}
+
+void AWOGPlayerController::Server_RequestUnregisterFromSession_Implementation(APlayerController* UserToUnregister)
+{
+	UWOGEpicOnlineServicesSubsystem* Subsystem = GetGameInstance()->GetSubsystem<UWOGEpicOnlineServicesSubsystem>();
+	if(Subsystem)
+	{
+		Subsystem->UnregisterFromSessionUsingPlayerController(UserToUnregister);
+	}
 }
 
 void AWOGPlayerController::OnPossess(APawn* aPawn)

@@ -434,7 +434,7 @@ void UWOGEpicOnlineServicesSubsystem::DisconnectFromLobby()
 }
 
 void UWOGEpicOnlineServicesSubsystem::OnLobbyMemberDisconnected(const FUniqueNetId& LocalUserId,
-	const FOnlineLobbyId& LobbyId, const FUniqueNetId& MemberId, bool bWasKicked)
+	const FOnlineLobbyId& LobbyId, const FUniqueNetId& MemberId, bool bWasKicked) const
 {
 	if(bWasKicked && LocalUserId == MemberId)
 	{
@@ -463,7 +463,7 @@ void UWOGEpicOnlineServicesSubsystem::CreateSession()
 	SessionSettings->bIsDedicated = false;
 	SessionSettings->bIsLANMatch = false;
 	SessionSettings->bAllowJoinInProgress = false;
-	SessionSettings->bAllowJoinViaPresence = true;
+	SessionSettings->bAllowJoinViaPresence = false;
 	SessionSettings->bAllowInvites = true;
 	SessionSettings->bUseLobbiesIfAvailable = true;
 	SessionSettings->Set(SEARCH_KEYWORDS, FOnlineSessionSetting(WOG_SESSION_NAME.ToString(), EOnlineDataAdvertisementType::ViaOnlineService));
@@ -478,6 +478,12 @@ void UWOGEpicOnlineServicesSubsystem::CreateSession()
 	{
 		// Call didn't start, return error.
 		GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Red, FString("Create Session call failed to start"));
+
+		//Register existing players
+		if(AWOGLobbyGameMode* LobbyGameMode = Cast<AWOGLobbyGameMode>(GetWorld()->GetAuthGameMode()))
+		{
+			LobbyGameMode->RegisterExistingPlayers();
+		}
 	}
 }
 
@@ -642,6 +648,30 @@ void UWOGEpicOnlineServicesSubsystem::JoinSession(int32 SessionIndex)
 	}
 }
 
+void UWOGEpicOnlineServicesSubsystem::AttemptReconnectSession()
+{
+	if(!CachedReconnectSession.IsValid())
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Red, FString("Search result invalid"));
+		return;
+	}
+
+	IOnlineSubsystem* Subsystem = Online::GetSubsystem(this->GetWorld());
+	IOnlineSessionPtr Session = Subsystem->GetSessionInterface();
+	
+	JoinSessionDelegateHandle =
+	Session->AddOnJoinSessionCompleteDelegate_Handle(FOnJoinSessionComplete::FDelegate::CreateUObject(
+			this,
+			&ThisClass::HandleJoinSessionComplete));
+
+	// "WOG_SESSION_NAME" is the local name of the session for this player. It doesn't have to match the name the server gave their session.
+	if (!Session->JoinSession(0, WOG_SESSION_NAME, CachedReconnectSession))
+	{
+		// Call didn't start, return error.
+		GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Red, FString("Join Session call failed to start"));
+	}
+}
+
 void UWOGEpicOnlineServicesSubsystem::HandleJoinSessionComplete(FName SessionName,	EOnJoinSessionCompleteResult::Type JoinResult)
 {
 	IOnlineSubsystem *Subsystem = Online::GetSubsystem(GetWorld());
@@ -703,7 +733,62 @@ bool UWOGEpicOnlineServicesSubsystem::EndSession()
 	return Session->EndSession(WOG_SESSION_NAME);
 }
 
-void UWOGEpicOnlineServicesSubsystem::UnregisterPlayerFromSession(APlayerController* InPlayerController)
+void UWOGEpicOnlineServicesSubsystem::SearchReconnectSession()
+{
+	IOnlineSubsystem* Subsystem = Online::GetSubsystem(this->GetWorld());
+	IOnlineSessionPtr Session = Subsystem->GetSessionInterface();
+	const IOnlineIdentityPtr Identity = Subsystem->GetIdentityInterface();
+	TSharedPtr<const FUniqueNetId> LocalUserId = Identity->GetUniquePlayerId(0);
+
+	this->FindFriendSessionDelegateHandle =
+	Session->AddOnFindFriendSessionCompleteDelegate_Handle(
+		0, 
+		FOnFindFriendSessionComplete::FDelegate::CreateUObject(
+			this,
+			&ThisClass::HandleFindFriendSessionComplete));
+
+	if (!Session->FindFriendSession(0, *LocalUserId))
+	{
+		// Call didn't start, return error.
+		Session->ClearOnFindFriendSessionCompleteDelegate_Handle(0 /* LocalUserNum */, this->FindFriendSessionDelegateHandle);
+		GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Red, FString("Failed to call FindFriendSession"));
+	}
+}
+
+void UWOGEpicOnlineServicesSubsystem::HandleFindFriendSessionComplete(int32 LocalUserNum, bool bWasSuccessful,
+	const TArray<FOnlineSessionSearchResult>& Results)
+{
+	// NOTE: bWasSuccessful is only true if the call succeeded *AND* a session was found.
+	// It's normal for it to be false when the call succeeds if the user doesn't have
+	// a session to reconnect to. You should not treat a false value as an indication to
+	// retry the request.
+
+	IOnlineSubsystem* Subsystem = Online::GetSubsystem(this->GetWorld());
+	IOnlineSessionPtr Session = Subsystem->GetSessionInterface();
+	if (bWasSuccessful && Results.Num() > 0)
+	{
+		// The user has a session they can reconnect to. You can handle the (at most one)
+		// search result from the Results array the same way that search results
+		// are handled in "Finding a session".
+		GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Emerald, FString("Found friend session, caching it..."));
+		CachedReconnectSession = Results[0];
+		
+		FString OutHostName;
+		CachedReconnectSession.Session.SessionSettings.Get(FName("HostName"), OutHostName);
+		ReconnectSessionFoundDelegate.Broadcast(true, OutHostName);
+
+		Session->ClearOnFindFriendSessionCompleteDelegate_Handle(0, FindFriendSessionDelegateHandle);
+		FindFriendSessionDelegateHandle.Reset();
+		return;
+	}
+
+	// Otherwise, the user does not have a session to reconnect to.
+	Session->ClearOnFindFriendSessionCompleteDelegate_Handle(0, FindFriendSessionDelegateHandle);
+	FindFriendSessionDelegateHandle.Reset();
+	ReconnectSessionFoundDelegate.Broadcast(false, FString());
+}
+
+void UWOGEpicOnlineServicesSubsystem::UnregisterFromSessionUsingPlayerController(APlayerController* InPlayerController)
 {
 	check(IsValid(InPlayerController));
 	
@@ -749,6 +834,37 @@ void UWOGEpicOnlineServicesSubsystem::UnregisterPlayerFromSession(APlayerControl
 		// The player could not be unregistered.
 		GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Red, FString("Failed to call Unregister player"));
 	}
+	else
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Emerald, FString("Call to unregister player successful"));
+	}
+}
+
+bool UWOGEpicOnlineServicesSubsystem::UnregisterAllSessionMembers()
+{
+	if(CachedSessionMemberIds.IsEmpty()) return false;
+	
+	IOnlineSubsystem* Subsystem = Online::GetSubsystem(this->GetWorld());
+	IOnlineSessionPtr Session = Subsystem->GetSessionInterface();
+	const IOnlineIdentityPtr Identity = Subsystem->GetIdentityInterface();
+	TSharedPtr<const FUniqueNetId> LocalUserId = Identity->GetUniquePlayerId(0);
+
+	bool bWasSuccessful = true;
+	for (auto MemberID : CachedSessionMemberIds)
+	{
+		if(*LocalUserId == *MemberID)
+		{
+			continue;	
+		}
+		
+		if(!Session->UnregisterPlayer(WOG_SESSION_NAME, *MemberID))
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Orange, FString("Unregister failed: ") + *MemberID->ToString());
+			bWasSuccessful = false;
+		}
+	}
+
+	return bWasSuccessful;
 }
 
 void UWOGEpicOnlineServicesSubsystem::OnSessionUserInviteAccepted(bool bWasSuccessful, int ControllerId,

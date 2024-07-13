@@ -37,6 +37,7 @@ class WOG_API UWOGGameInstance : public UGameInstance
 
 public:
 	UWOGGameInstance();
+	void ClearPlayerMap();
 
 	virtual void Init() override;
 
