@@ -19,7 +19,7 @@
 void AWOGGameMode::HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer)
 {
 	Super::HandleStartingNewPlayer_Implementation(NewPlayer);
-	if (!bHandleDropIn)
+	if (!bDebugMode)
 	{
 		HandleStartingPlayer(NewPlayer);
 	}

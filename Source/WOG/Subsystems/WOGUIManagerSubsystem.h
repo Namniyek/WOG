@@ -32,7 +32,7 @@ public:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	void InitVariables();
 	virtual void Deinitialize() override;
-	
+
 private:
 
 	UPROPERTY()
@@ -175,4 +175,7 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void AddCountdownWidget(const FText& MainText, const FText& SecText, float CountdownDuration);
+
+	UFUNCTION(BlueprintCallable)
+	void AddFloatingDamageTextWidget(float DamageAmount, AActor* TargetActor);
 };

@@ -24,5 +24,5 @@ public:
 
 	FORCEINLINE UAGR_InventoryManager* GetInventoryComponent() const { return Inventory; }
 
-
+	void OnItemUpdated(AActor* Item);
 };

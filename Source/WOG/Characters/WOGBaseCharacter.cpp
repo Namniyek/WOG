@@ -30,6 +30,7 @@
 #include "Data/AGRLibrary.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputMappingContext.h"
+#include "ActorComponents/WOGUIManagerComponent.h"
 #include "Enemies/WOGHuntEnemy.h"
 
 AWOGBaseCharacter::AWOGBaseCharacter()
@@ -231,7 +232,32 @@ void AWOGBaseCharacter::OnHealthAttributeChanged(const FOnAttributeChangeData& D
 		OnAttributeChangedDelegate.Broadcast(AttributeSet->GetHealthAttribute(), Data.NewValue, MaxHealth);
 	}
 
-	if (Data.NewValue <= 0 && Data.OldValue >= 0 && Data.GEModData)
+	if(!Data.GEModData) return;
+	
+	/*
+	* Handle floating damage numbers 
+	*/
+	if(Data.GEModData->EffectSpec.GetEffectContext().GetInstigator())
+	{
+		ACharacter* Aggressor = Cast<ACharacter>(Data.GEModData->EffectSpec.GetEffectContext().GetInstigator());
+		if(Aggressor)
+		{
+			AWOGPlayerController* AggressorPC = Cast<AWOGPlayerController>(Aggressor->GetController());
+			if(AggressorPC)
+			{
+				float DamageAmount = -Data.GEModData->EvaluatedData.Magnitude;
+				AggressorPC->GetUIManagerComponent()->Client_AddFloatingDamageText(DamageAmount, this);
+			
+				FString DamageText = GetNameSafe(AggressorPC) + FString(" damaged: ") + GetNameSafe(this) + FString(" by: ") + FString::FromInt(DamageAmount);
+				UE_LOG(WOGLogCombat, Display, TEXT("%s"), *DamageText);				
+			}
+		}
+	}
+	
+	/*
+	 *Handle character death
+	 */
+	if (Data.NewValue <= 0 && Data.OldValue >= 0)
 	{
 		OnCharacterDeadDelegate.Broadcast(this);
 		

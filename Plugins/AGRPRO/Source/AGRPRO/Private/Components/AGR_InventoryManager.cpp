@@ -166,7 +166,8 @@ bool UAGR_InventoryManager::AddItemsOfClass(
                 /* All stacks added */
                 StacksToAdd = 0;
                 OnItemUpdated.Broadcast(ItemActor);
-                Multicast_OnItemUpdated(ItemActor);
+                Client_OnItemUpdated(ItemComponent->ItemTagSlotType, Quantity);
+                Multicast_OnItemUpdated(ItemComponent->ItemTagSlotType, Quantity);
                 break;
             }
 
@@ -254,7 +255,8 @@ bool UAGR_InventoryManager::AddItemsOfClass(
             StacksToAdd -= NewItemActorItemComponent->MaxStack;
         }
         OnItemUpdated.Broadcast(NewItemActor);
-        Multicast_OnItemUpdated(NewItemActor);
+        Client_OnItemUpdated(NewItemActorItemComponent->ItemTagSlotType, Quantity);
+        Multicast_OnItemUpdated(NewItemActorItemComponent->ItemTagSlotType, Quantity);
     }
 
     // Successfully added item to inventory
@@ -323,7 +325,8 @@ bool UAGR_InventoryManager::AddItemsOfClassWithOutItem(
                 /* All stacks added */
                 StacksToAdd = 0;
                 OnItemUpdated.Broadcast(ItemActor);
-                Multicast_OnItemUpdated(ItemActor);
+                Client_OnItemUpdated(ItemComponent->ItemTagSlotType, Quantity);
+                Multicast_OnItemUpdated(ItemComponent->ItemTagSlotType, Quantity);
                 break;
             }
 
@@ -412,7 +415,8 @@ bool UAGR_InventoryManager::AddItemsOfClassWithOutItem(
         }
         OutItem = NewItemActor;
         OnItemUpdated.Broadcast(NewItemActor);
-        Multicast_OnItemUpdated(NewItemActor);
+        Client_OnItemUpdated(NewItemActorItemComponent->ItemTagSlotType, Quantity);
+        Multicast_OnItemUpdated(NewItemActorItemComponent->ItemTagSlotType, Quantity);
     }
 
     // Successfully added item to inventory
@@ -893,7 +897,6 @@ void UAGR_InventoryManager::AddItemToInventoryDirectly(AActor* Item)
 
     ItemComponent->OnPickup.Broadcast(this);
     OnItemUpdated.Broadcast(Item);
-    Multicast_OnItemUpdated(Item);
 }
 
 bool UAGR_InventoryManager::HasExactItem(AActor* Item)
@@ -901,8 +904,14 @@ bool UAGR_InventoryManager::HasExactItem(AActor* Item)
     return GetAllItems().Contains(Item);
 }
 
-void UAGR_InventoryManager::Multicast_OnItemUpdated_Implementation(AActor* Item)
+void UAGR_InventoryManager::Multicast_OnItemUpdated_Implementation(const FGameplayTag& ItemTag, int32 AmountAdded)
 {
-    OnItemUpdated.Broadcast(Item);
-    UE_LOG(LogAGR, Display, TEXT("Multicast  OnItemUpdated.Broadcast(%s), %s"), *GetNameSafe(Item), *UEnum::GetValueAsString(GetOwner()->GetLocalRole()));
+    OnItemAddedLocal.Broadcast(ItemTag, AmountAdded);
+    UE_LOG(LogAGR, Display, TEXT("Multicast_OnItemAddedLocal.Broadcast(%s, %d, %s"), *ItemTag.ToString(), AmountAdded, *UEnum::GetValueAsString(GetOwner()->GetLocalRole()));
+}
+
+void UAGR_InventoryManager::Client_OnItemUpdated_Implementation(const FGameplayTag& ItemTag, int32 AmountAdded)
+{
+    OnItemAddedLocal.Broadcast(ItemTag, AmountAdded);
+    UE_LOG(LogAGR, Display, TEXT("Client_OnItemAddedLocal.Broadcast(%s, %d, %s"), *ItemTag.ToString(), AmountAdded, *UEnum::GetValueAsString(GetOwner()->GetLocalRole()));
 }

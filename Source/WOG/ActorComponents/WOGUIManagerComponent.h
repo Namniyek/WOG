@@ -85,4 +85,7 @@ public:
 	void Client_AddHuntWidget(AWOGHuntEnemy* HuntEnemy);
 	UFUNCTION(Client, Reliable, BlueprintCallable)
 	void Client_RemoveHuntWidget();
+
+	UFUNCTION(Client, Reliable, BlueprintCallable)
+	void Client_AddFloatingDamageText(const float& DamageAmount, AActor* TargetActor);
 };

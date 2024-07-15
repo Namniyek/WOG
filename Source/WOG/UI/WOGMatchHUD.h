@@ -6,6 +6,7 @@
 #include "GameFramework/HUD.h"
 #include "WOGMatchHUD.generated.h"
 
+class UWOGDamageTextComponent;
 class UWOGCountdownWidget;
 class UWOG_HUD;
 class UWOGRavenMarkerWidget;
@@ -91,6 +92,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Setup | WidgetClasses")
 	TSubclassOf<UWOGCountdownWidget> CountdownWidgetClass;
 
+
+	UPROPERTY(EditDefaultsOnly, Category = "Setup | WidgetClasses")
+	TSubclassOf<UWOGDamageTextComponent> DamageTextComponentClass;
 	#pragma endregion
 
 	#pragma region Widget References

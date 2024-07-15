@@ -33,7 +33,6 @@ void AWOGBaseDayNPC::BeginPlay()
 	}
 
 	GiveDefaultAbilities();
-	ApplyDefaultEffects();
 
 	InitCurrentState();
 }

@@ -3,6 +3,7 @@
 #include "Subsystems/WOGUIManagerSubsystem.h"
 
 #include "WOG.h"
+#include "ActorComponents/WOGDamageTextComponent.h"
 #include "Data/TODEnum.h"
 #include "UI/Vendors/WOGVendorBaseWidget.h"
 #include "Interfaces/InventoryInterface.h"
@@ -638,4 +639,20 @@ void UWOGUIManagerSubsystem::AddCountdownWidget(const FText& MainText, const FTe
 		MatchHUD->HUDWidget->GetCountdownContainer()->ClearChildren();
 		MatchHUD->HUDWidget->GetCountdownContainer()->AddChild(CountdownWidget);
 	}
+}
+
+void UWOGUIManagerSubsystem::AddFloatingDamageTextWidget(float DamageAmount, AActor* TargetActor)
+{
+	if (!OwnerPC) return;
+	MatchHUD == nullptr ? static_cast<TObjectPtr<AWOGMatchHUD>>(Cast<AWOGMatchHUD>(OwnerPC->GetHUD())) : MatchHUD;
+	if (!MatchHUD || !IsValid(MatchHUD->DamageTextComponentClass)) return;
+	if(!IsValid(TargetActor)) return;
+
+	UWOGDamageTextComponent* DamageTextComponent = NewObject<UWOGDamageTextComponent>(TargetActor, MatchHUD->DamageTextComponentClass);
+	DamageTextComponent->RegisterComponent();
+	USkeletalMeshComponent* Mesh = Cast<USkeletalMeshComponent>(TargetActor->GetComponentByClass(USkeletalMeshComponent::StaticClass()));
+	DamageTextComponent->AttachToComponent(Mesh, FAttachmentTransformRules::KeepRelativeTransform, FName("Head"));
+	DamageTextComponent->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
+	DamageTextComponent->SetDamageText(DamageAmount);
+	
 }

@@ -8,6 +8,7 @@
 #include "AGR_InventoryManager.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnItemUpdated, AActor*, Item);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnItemAddedLocal, const FGameplayTag&, ItemTag, int32, AmountAdded);
 
 UCLASS(BlueprintType, Blueprintable, ClassGroup=("AGR"), meta=(BlueprintSpawnableComponent))
 class AGRPRO_API UAGR_InventoryManager : public UActorComponent
@@ -30,6 +31,10 @@ public:
     UPROPERTY(BlueprintAssignable, Category = "AGR|Events")
     FOnItemUpdated OnItemUpdated;
 
+    //Called locally when an item is added to the inventory
+    UPROPERTY(BlueprintAssignable, Category = "AGR|Events")
+    FOnItemAddedLocal OnItemAddedLocal;
+    
 private:
     bool bHasPlayerState = false;
 
@@ -115,7 +120,10 @@ public:
     UPARAM(DisplayName = "Success") bool HasExactItem(AActor* Item);
 
     UFUNCTION(NetMulticast, reliable)
-    void Multicast_OnItemUpdated(AActor* Item);
+    void Multicast_OnItemUpdated(const FGameplayTag& ItemTag, int32 AmountAdded);
+
+    UFUNCTION(Client, Reliable)
+    void Client_OnItemUpdated(const FGameplayTag& ItemTag, int32 AmountAdded);
 
 protected:
     virtual void BeginPlay() override;

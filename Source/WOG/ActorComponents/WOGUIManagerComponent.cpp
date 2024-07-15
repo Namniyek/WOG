@@ -31,6 +31,15 @@ void UWOGUIManagerComponent::BeginPlay()
 	}
 }
 
+void UWOGUIManagerComponent::Client_AddFloatingDamageText_Implementation(const float& DamageAmount,
+	AActor* TargetActor)
+{
+	if(UIManager)
+	{
+		UIManager->AddFloatingDamageTextWidget(DamageAmount, TargetActor);
+	}
+}
+
 void UWOGUIManagerComponent::Client_ResetHUD_Implementation()
 {
 	if (UIManager)
