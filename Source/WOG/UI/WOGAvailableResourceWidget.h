@@ -21,7 +21,9 @@ class WOG_API UWOGAvailableResourceWidget : public UUserWidget
 	
 
 public:
-
+	UFUNCTION(BlueprintCallable)
+	void FinishInit();
+	
 	virtual bool Initialize() override;
 
 	UPROPERTY(meta = (BindWidget))

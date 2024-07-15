@@ -159,7 +159,6 @@ void AWOGPlayerController::Server_PossessMinion_Implementation(AActor* ActorToPo
 
 	UIManagerComponent->Client_RemoveBarsWidget();
 	UIManagerComponent->Client_CollapseAbilitiesWidget();
-	UIManagerComponent->Client_RemoveAvailableResourceWidget();
 }
 
 void AWOGPlayerController::Server_UnpossessMinion_Implementation(APawn* AIPawnLeft)

@@ -8,12 +8,10 @@
 #include "Components/Image.h"
 #include "Data/AGRLibrary.h"
 
-bool UWOGAvailableResourceWidget::Initialize()
+void UWOGAvailableResourceWidget::FinishInit()
 {
-	if (!Super::Initialize()) return false;
-	
 	TObjectPtr<AWOGPlayerController> OwnerPC = Cast<AWOGPlayerController>(GetOwningPlayer());
-	if (!OwnerPC) return false;
+	if (!OwnerPC) return;
 
 	if (OwnerPC->GetIsAttacker())
 	{
@@ -25,8 +23,13 @@ bool UWOGAvailableResourceWidget::Initialize()
 	}
 
 	TObjectPtr<ABasePlayerCharacter> PlayerCharacter = Cast<ABasePlayerCharacter>(GetOwningPlayerPawn());
-	if (!PlayerCharacter || !PlayerCharacter->GetCommonInventory()) return false;
+	if (!PlayerCharacter || !PlayerCharacter->GetCommonInventory()) return;
 
 	CommonInventory = UAGRLibrary::GetInventory((const AActor*) (PlayerCharacter->GetCommonInventory()));
+}
+
+bool UWOGAvailableResourceWidget::Initialize()
+{
+	if (!Super::Initialize()) return false;
 	return true;
 }
