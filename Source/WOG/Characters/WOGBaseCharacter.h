@@ -161,6 +161,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<UMotionWarpingComponent> MotionWarping;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<USceneComponent> OverheadWidgetLocation;
 	#pragma endregion
 
 	#pragma region Handle Elim

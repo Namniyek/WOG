@@ -45,7 +45,7 @@ AWOGBaseCharacter::AWOGBaseCharacter()
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetStaminaAttribute()).AddUObject(this, &ThisClass::OnStaminaAttributeChanged);
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetMaxMovementSpeedAttribute()).AddUObject(this, &ThisClass::OnMaxMovementSpeedAttributeChanged);
 	AbilitySystemComponent->OnGameplayEffectAppliedDelegateToSelf.AddUObject(this, &ThisClass::OnGameplayEffectAppliedToSelf);
-
+	
 	AttributeSet = CreateDefaultSubobject<UWOGAttributeSetBase>(TEXT("AttributeSet"));
 
 	AnimManager = CreateDefaultSubobject<UAGRAnimMasterComponent>(TEXT("AnimManager"));
@@ -72,6 +72,12 @@ AWOGBaseCharacter::AWOGBaseCharacter()
 	bAlwaysRelevant = true;
 
 	GetMesh()->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
+
+	OverheadWidgetLocation = CreateDefaultSubobject<USceneComponent>(TEXT("Overhead Widget Location"));
+	OverheadWidgetLocation->SetupAttachment(GetRootComponent());
+	FVector Location = FVector(0, 0, GetCapsuleComponent()->GetScaledCapsuleHalfHeight() + 10.f);
+	OverheadWidgetLocation->SetRelativeLocation(Location);
+	OverheadWidgetLocation->ComponentTags.Add(WOG_Overhead_Widget_Location);
 }
 
 void AWOGBaseCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

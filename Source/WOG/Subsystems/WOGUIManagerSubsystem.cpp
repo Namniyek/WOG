@@ -651,8 +651,11 @@ void UWOGUIManagerSubsystem::AddFloatingDamageTextWidget(float DamageAmount, AAc
 
 	UWOGDamageTextComponent* DamageTextComponent = NewObject<UWOGDamageTextComponent>(TargetActor, MatchHUD->DamageTextComponentClass);
 	DamageTextComponent->RegisterComponent();
-	USkeletalMeshComponent* Mesh = Cast<USkeletalMeshComponent>(TargetActor->GetComponentByClass(USkeletalMeshComponent::StaticClass()));
-	DamageTextComponent->AttachToComponent(Mesh, FAttachmentTransformRules::KeepRelativeTransform, FName("Head"));
+	TArray<UActorComponent*> Array = TargetActor->GetComponentsByTag(USceneComponent::StaticClass(), WOG_Overhead_Widget_Location);
+	if(Array.IsEmpty()) return;
+
+	USceneComponent* WidgetLocation = CastChecked<USceneComponent>(Array[0]);
+	DamageTextComponent->AttachToComponent(WidgetLocation, FAttachmentTransformRules::KeepRelativeTransform);
 	DamageTextComponent->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
 	DamageTextComponent->SetDamageText(DamageAmount);
 	
@@ -660,7 +663,6 @@ void UWOGUIManagerSubsystem::AddFloatingDamageTextWidget(float DamageAmount, AAc
 
 void UWOGUIManagerSubsystem::AddCharacterHealthBarWidget(float NewValue, float MaxValue, AActor* TargetActor)
 {
-	CharacterHealthBarTimer.Invalidate();
 	
 	if (!OwnerPC) return;
 	MatchHUD == nullptr ? static_cast<TObjectPtr<AWOGMatchHUD>>(Cast<AWOGMatchHUD>(OwnerPC->GetHUD())) : MatchHUD;
@@ -672,6 +674,7 @@ void UWOGUIManagerSubsystem::AddCharacterHealthBarWidget(float NewValue, float M
 	if(IsValid(CharacterHealthBarWidgetComponent))
 	{
 		CharacterHealthBarWidgetComponent->SetHealthBarPercent(HealthBarPercent);
+		GetWorld()->GetTimerManager().ClearTimer(CharacterHealthBarTimer);
 		GetWorld()->GetTimerManager().SetTimer(CharacterHealthBarTimer, this, &ThisClass::RemoveCharacterHealthBar, 3.f);
 		return;
 	}
@@ -680,9 +683,13 @@ void UWOGUIManagerSubsystem::AddCharacterHealthBarWidget(float NewValue, float M
 	if(IsValid(CharacterHealthBarWidgetComponent))
 	{
 		CharacterHealthBarWidgetComponent->RegisterComponent();
-		USkeletalMeshComponent* Mesh = Cast<USkeletalMeshComponent>(TargetActor->GetComponentByClass(USkeletalMeshComponent::StaticClass()));
-		CharacterHealthBarWidgetComponent->AttachToComponent(Mesh, FAttachmentTransformRules::KeepRelativeTransform, FName("Head"));
+		TArray<UActorComponent*> Array = TargetActor->GetComponentsByTag(USceneComponent::StaticClass(), WOG_Overhead_Widget_Location);
+		if(Array.IsEmpty()) return;
+
+		USceneComponent* WidgetLocation = CastChecked<USceneComponent>(Array[0]);
+		CharacterHealthBarWidgetComponent->AttachToComponent(WidgetLocation, FAttachmentTransformRules::KeepRelativeTransform);
 		CharacterHealthBarWidgetComponent->SetHealthBarPercent(HealthBarPercent);
+		GetWorld()->GetTimerManager().ClearTimer(CharacterHealthBarTimer);
 		GetWorld()->GetTimerManager().SetTimer(CharacterHealthBarTimer, this, &ThisClass::RemoveCharacterHealthBar, 3.f);
 	}
 }
@@ -692,5 +699,6 @@ void UWOGUIManagerSubsystem::RemoveCharacterHealthBar()
 	if(IsValid(CharacterHealthBarWidgetComponent))
 	{
 		CharacterHealthBarWidgetComponent->DestroyComponent();
+		CharacterHealthBarWidgetComponent = nullptr;
 	}
 }
