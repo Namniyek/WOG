@@ -6,6 +6,7 @@
 #include "Subsystems/LocalPlayerSubsystem.h"
 #include "WOGUIManagerSubsystem.generated.h"
 
+class UWOGHealthBarWidgetComponent;
 class ABasePlayerCharacter;
 struct FGameplayTag;
 class UUserWidget;
@@ -51,6 +52,7 @@ private:
 	TObjectPtr<UUserWidget> SquadOrderWidget;
 	TObjectPtr<UUserWidget> CrosshairWidget;
 	TObjectPtr<UWOGHuntProgressBar> HuntWidget;
+	TObjectPtr<UWOGHealthBarWidgetComponent> CharacterHealthBarWidgetComponent;
 
 	UPROPERTY()
 	TObjectPtr<UWOGHoldProgressBar> HoldProgressBarWidget = nullptr;
@@ -178,4 +180,11 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void AddFloatingDamageTextWidget(float DamageAmount, AActor* TargetActor);
+
+	UFUNCTION(BlueprintCallable)
+	void AddCharacterHealthBarWidget(float NewValue, float MaxValue, AActor* TargetActor);
+
+private:
+	FTimerHandle CharacterHealthBarTimer;
+	void RemoveCharacterHealthBar();
 };

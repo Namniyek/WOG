@@ -71,6 +71,7 @@ void AWOGBaseMagicProjectile::BeginPlay()
 
 void AWOGBaseMagicProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
+	UE_LOG(WOGLogCombat, Warning, TEXT("Projectile hit: %s on %s"), *GetNameSafe(OtherActor), *GetNameSafe(OtherComp));
 	if (OtherActor == GetOwner()) return;
 
 	TObjectPtr<AWOGBaseCharacter> OwnerCharacter = Cast<AWOGBaseCharacter>(GetOwner());

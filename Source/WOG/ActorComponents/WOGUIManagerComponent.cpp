@@ -31,8 +31,17 @@ void UWOGUIManagerComponent::BeginPlay()
 	}
 }
 
-void UWOGUIManagerComponent::Client_AddFloatingDamageText_Implementation(const float& DamageAmount,
+void UWOGUIManagerComponent::Client_AddCharacterHealthBarWidget_Implementation(float NewValue, float MaxValue,
 	AActor* TargetActor)
+{
+	if(UIManager)
+	{
+		UIManager->AddCharacterHealthBarWidget(NewValue, MaxValue, TargetActor);
+	}
+}
+
+void UWOGUIManagerComponent::Client_AddFloatingDamageText_Implementation(const float& DamageAmount,
+                                                                         AActor* TargetActor)
 {
 	if(UIManager)
 	{

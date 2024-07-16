@@ -4,6 +4,7 @@
 
 #include "WOG.h"
 #include "ActorComponents/WOGDamageTextComponent.h"
+#include "ActorComponents/WOGHealthBarWidgetComponent.h"
 #include "Data/TODEnum.h"
 #include "UI/Vendors/WOGVendorBaseWidget.h"
 #include "Interfaces/InventoryInterface.h"
@@ -655,4 +656,41 @@ void UWOGUIManagerSubsystem::AddFloatingDamageTextWidget(float DamageAmount, AAc
 	DamageTextComponent->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
 	DamageTextComponent->SetDamageText(DamageAmount);
 	
+}
+
+void UWOGUIManagerSubsystem::AddCharacterHealthBarWidget(float NewValue, float MaxValue, AActor* TargetActor)
+{
+	CharacterHealthBarTimer.Invalidate();
+	
+	if (!OwnerPC) return;
+	MatchHUD == nullptr ? static_cast<TObjectPtr<AWOGMatchHUD>>(Cast<AWOGMatchHUD>(OwnerPC->GetHUD())) : MatchHUD;
+	if (!MatchHUD || !IsValid(MatchHUD->CharacterHealthBarComponentClass)) return;
+	if(!IsValid(TargetActor)) return;
+
+	float HealthBarPercent = NewValue/MaxValue;
+
+	if(IsValid(CharacterHealthBarWidgetComponent))
+	{
+		CharacterHealthBarWidgetComponent->SetHealthBarPercent(HealthBarPercent);
+		GetWorld()->GetTimerManager().SetTimer(CharacterHealthBarTimer, this, &ThisClass::RemoveCharacterHealthBar, 3.f);
+		return;
+	}
+	
+	CharacterHealthBarWidgetComponent = NewObject<UWOGHealthBarWidgetComponent>(TargetActor, MatchHUD->CharacterHealthBarComponentClass);
+	if(IsValid(CharacterHealthBarWidgetComponent))
+	{
+		CharacterHealthBarWidgetComponent->RegisterComponent();
+		USkeletalMeshComponent* Mesh = Cast<USkeletalMeshComponent>(TargetActor->GetComponentByClass(USkeletalMeshComponent::StaticClass()));
+		CharacterHealthBarWidgetComponent->AttachToComponent(Mesh, FAttachmentTransformRules::KeepRelativeTransform, FName("Head"));
+		CharacterHealthBarWidgetComponent->SetHealthBarPercent(HealthBarPercent);
+		GetWorld()->GetTimerManager().SetTimer(CharacterHealthBarTimer, this, &ThisClass::RemoveCharacterHealthBar, 3.f);
+	}
+}
+
+void UWOGUIManagerSubsystem::RemoveCharacterHealthBar()
+{
+	if(IsValid(CharacterHealthBarWidgetComponent))
+	{
+		CharacterHealthBarWidgetComponent->DestroyComponent();
+	}
 }

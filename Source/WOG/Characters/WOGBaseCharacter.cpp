@@ -235,9 +235,9 @@ void AWOGBaseCharacter::OnHealthAttributeChanged(const FOnAttributeChangeData& D
 	if(!Data.GEModData) return;
 	
 	/*
-	* Handle floating damage numbers 
+	* Handle floating damage numbers && health bar
 	*/
-	if(Data.GEModData->EffectSpec.GetEffectContext().GetInstigator())
+	if(Data.NewValue < Data.OldValue && Data.GEModData->EffectSpec.GetEffectContext().GetInstigator())
 	{
 		ACharacter* Aggressor = Cast<ACharacter>(Data.GEModData->EffectSpec.GetEffectContext().GetInstigator());
 		if(Aggressor)
@@ -245,11 +245,13 @@ void AWOGBaseCharacter::OnHealthAttributeChanged(const FOnAttributeChangeData& D
 			AWOGPlayerController* AggressorPC = Cast<AWOGPlayerController>(Aggressor->GetController());
 			if(AggressorPC)
 			{
+				//Handle the floating damage number
 				float DamageAmount = -Data.GEModData->EvaluatedData.Magnitude;
 				AggressorPC->GetUIManagerComponent()->Client_AddFloatingDamageText(DamageAmount, this);
-			
-				FString DamageText = GetNameSafe(AggressorPC) + FString(" damaged: ") + GetNameSafe(this) + FString(" by: ") + FString::FromInt(DamageAmount);
-				UE_LOG(WOGLogCombat, Display, TEXT("%s"), *DamageText);				
+
+				//Handle the character health bar
+				float MaxHealthValue = AttributeSet->GetMaxHealth();
+				AggressorPC->GetUIManagerComponent()->Client_AddCharacterHealthBarWidget(Data.NewValue, MaxHealthValue, this);
 			}
 		}
 	}

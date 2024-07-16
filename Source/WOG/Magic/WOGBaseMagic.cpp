@@ -508,8 +508,8 @@ void AWOGBaseMagic::PrepareProjectileSpawn()
 	if (!OwnerCharacter || !OwnerCharacter->IsLocallyControlled()) return;
 	if (MagicData.AbilityType != EAbilityType::EAT_Projectile) return;
 	if (!UKismetSystemLibrary::IsValidClass(MagicData.ProjectileClass)) return;
-
-	FVector StartLocation = OwnerCharacter->GetActorLocation() + OwnerCharacter->GetActorForwardVector()*50.f;
+	
+	FVector StartLocation = OwnerCharacter->GetActorLocation() + FVector(0,0,20) + OwnerCharacter->GetActorForwardVector()*100.f;
 	FVector EndLocation;
 	if (OwnerCharacter->GetCurrentTarget())
 	{

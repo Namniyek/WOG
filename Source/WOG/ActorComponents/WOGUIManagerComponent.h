@@ -88,4 +88,7 @@ public:
 
 	UFUNCTION(Client, Reliable, BlueprintCallable)
 	void Client_AddFloatingDamageText(const float& DamageAmount, AActor* TargetActor);
+
+	UFUNCTION(Client, Reliable, BlueprintCallable)
+	void Client_AddCharacterHealthBarWidget(float NewValue, float MaxValue, AActor* TargetActor);
 };
