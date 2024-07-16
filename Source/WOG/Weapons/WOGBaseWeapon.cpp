@@ -6,24 +6,21 @@
 #include "Net/UnrealNetwork.h"
 #include "WOG/PlayerCharacter/BasePlayerCharacter.h"
 #include "WOG/Enemies/WOGBaseEnemy.h"
-#include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
-#include "Kismet/KismetMathLibrary.h"
-#include "Sound/SoundCue.h"
 #include "Components/SphereComponent.h"
 #include "Data/AGRLibrary.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "Data/WOGGameplayTags.h"
 #include "Types/CharacterTypes.h"
-#include "GameplayTags.h"
 #include "AbilitySystem/Abilities/WOGGameplayAbilityBase.h"
 #include "AbilitySystemComponent.h"
 #include "Weapons/WOGRangedWeaponBase.h"
 #include "Libraries/WOGBlueprintLibrary.h"
 #include "PlayerController/WOGPlayerController.h"
-#include "Resources/WOGCommonInventory.h"
 #include "ActorComponents/WOGUIManagerComponent.h"
 #include "GameplayTagContainer.h"
+#include "Magic/WOGBaseMagic.h"
+#include "Magic/Projectile/WOGBaseMagicProjectile.h"
 
 AWOGBaseWeapon::AWOGBaseWeapon()
 {
@@ -72,13 +69,8 @@ void AWOGBaseWeapon::BeginPlay()
 {
 	Super::BeginPlay();
 	OwnerCharacter = OwnerCharacter != nullptr ? OwnerCharacter : GetOwner() ? (TObjectPtr<ABasePlayerCharacter>) Cast<ABasePlayerCharacter>(GetOwner()) : nullptr;
-	if (!OwnerCharacter)
-	{
-		UE_LOG(LogTemp, Error, TEXT("NO OWNER CHARACTER AT BEGINPLAY"));
-	}
 
 	InitWeaponDefaults();
-
 }
 
 void AWOGBaseWeapon::InitData()
@@ -641,4 +633,17 @@ void AWOGBaseWeapon::StartCatchRangedWeaponTimer()
 
 	float CatchDelay = 5.f;
 	GetWorldTimerManager().SetTimer(CatchRangedWeaponTimerHandle, this, &ThisClass::CatchWeapon, CatchDelay, false);
+}
+
+void AWOGBaseWeapon::Server_SpawnMagicProjectile_Implementation(const FMagicDataTable& MagicData,
+	const FTransform& SpawnTransform)
+{
+	if(!MagicData.ProjectileClass) return;
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.Owner = GetOwnerCharacter();
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+	AWOGBaseMagicProjectile* Projectile = GetWorld()->SpawnActor<AWOGBaseMagicProjectile>(MagicData.ProjectileClass, SpawnTransform, SpawnParams);
+
+	if(!Projectile) return;
+	Projectile->SetMagicData(MagicData);
 }

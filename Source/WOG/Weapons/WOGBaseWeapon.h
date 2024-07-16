@@ -10,6 +10,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "GameplayTagContainer.h"
 #include "GameplayAbilitySpec.h"
+#include "Magic/WOGBaseMagic.h"
 #include "WOGBaseWeapon.generated.h"
 
 
@@ -21,6 +22,7 @@ class USphereComponent;
 class AWOGRangedWeaponBase;
 class AActor;
 class UCameraShakeBase;
+struct FMagicDataTable;
 
 
 USTRUCT(BlueprintType)
@@ -265,4 +267,7 @@ public:
 	FORCEINLINE int32 GetComboStreak() const { return ComboStreak; }
 
 	void StartCatchRangedWeaponTimer();
+
+	UFUNCTION(Server, Reliable, BlueprintCallable)
+	void Server_SpawnMagicProjectile(const FMagicDataTable& MagicData, const FTransform& SpawnTransform);
 };
