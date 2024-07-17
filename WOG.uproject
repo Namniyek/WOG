@@ -129,6 +129,11 @@
 			"SupportedTargetPlatforms": [
 				"Android"
 			]
+		},
+		{
+			"Name": "ObjectMarker",
+			"Enabled": true,
+			"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/product/7c32ba1287454d989545b7c29b536ad9"
 		}
 	]
 }
