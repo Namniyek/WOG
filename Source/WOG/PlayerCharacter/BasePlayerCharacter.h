@@ -13,6 +13,7 @@
 #include "BasePlayerCharacter.generated.h"
 
 
+class AWOGPingMarker;
 class AWOGCommonInventory;
 class AWOGVendor;
 class AWOGStashBase;
@@ -209,6 +210,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Base Match", meta = (AllowPrivateAccess = "true"))
 	UInputAction* WeaponRangedAction;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Base Match", meta = (AllowPrivateAccess = "true"))
+	UInputAction* PingAction;
+
 	/*
 	** Other variables
 	*/
@@ -299,6 +303,7 @@ protected:
 	virtual void ChangeActiveSquadActionPressed(const FInputActionValue& Value) { /*To be overriden in children*/ };
 	virtual void AlternativeActionPressed(const FInputActionValue& Value) { /*To be overriden in children*/ };
 
+	void PingActionPressed(const FInputActionValue& Value);
 	#pragma endregion
 
 	#pragma region Player Profile Section
@@ -522,6 +527,12 @@ public:
 
 	UPROPERTY(EditDefaultsOnly)
 	TObjectPtr<UWidgetComponent> StaminaWidgetContainer;
+
+	UFUNCTION(Server, Unreliable, BlueprintCallable)
+	void Server_SpawnPingActor(const FVector_NetQuantize& SpawnLocation);
+
+	UPROPERTY(EditDefaultsOnly, Category = "Setup | Ping")
+	TSubclassOf<AWOGPingMarker> PingMarkerClass; 
 	#pragma endregion
 
 	#pragma region Teleport

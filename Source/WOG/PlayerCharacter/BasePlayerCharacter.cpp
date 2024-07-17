@@ -46,6 +46,7 @@
 #include "UI/WOGCharacterWidgetContainer.h"
 #include "Enemies/WOGBaseEnemy.h"
 #include "AI/Combat/WOGBaseSquad.h"
+#include "UI/Ping/WOGPingMarker.h"
 
 
 void ABasePlayerCharacter::OnConstruction(const FTransform& Transform)
@@ -226,6 +227,8 @@ void ABasePlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 		EnhancedInputComponent->BindAction(AlternativeModeAction, ETriggerEvent::Triggered, this, &ThisClass::AlternativeModeActionReleased);
 		EnhancedInputComponent->BindAction(AlternativeAction, ETriggerEvent::Triggered, this, &ThisClass::AlternativeActionPressed);
 		EnhancedInputComponent->BindAction(ChangeActiveSquadAction, ETriggerEvent::Triggered, this, &ThisClass::ChangeActiveSquadActionPressed);
+
+		EnhancedInputComponent->BindAction(PingAction, ETriggerEvent::Triggered, this, &ThisClass::PingActionPressed);
 	}
 }
 
@@ -510,6 +513,11 @@ void ABasePlayerCharacter::AlternativeModeActionPressed(const FInputActionValue&
 void ABasePlayerCharacter::AlternativeModeActionReleased(const FInputActionValue& Value)
 {
 	AlternativeModeEnabled(false);
+}
+
+void ABasePlayerCharacter::PingActionPressed(const FInputActionValue& Value)
+{
+	SendAbilityLocalInput(EWOGAbilityInputID::Ping);
 }
 
 void ABasePlayerCharacter::Server_SetPlayerProfile_Implementation(const FPlayerData& NewPlayerProfile)
@@ -2084,6 +2092,23 @@ void ABasePlayerCharacter::RemoveHoldProgressBarWidget() const
 	if (UIManager)
 	{
 		UIManager->RemoveHoldProgressBar();
+	}
+}
+
+void ABasePlayerCharacter::Server_SpawnPingActor_Implementation(const FVector_NetQuantize& SpawnLocation)
+{
+	const FTransform SpawnTransform = FTransform(FQuat(0), SpawnLocation); 
+	
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.Owner = this;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+	if(!PingMarkerClass) return;
+	
+	AWOGPingMarker* PingMarker = GetWorld()->SpawnActor<AWOGPingMarker>(PingMarkerClass, SpawnTransform, SpawnParams);
+	if(!PingMarker)
+	{
+		UE_LOG(WOGLogUI, Error, TEXT("Could not spawn Ping Marker Actor"));
 	}
 }
 

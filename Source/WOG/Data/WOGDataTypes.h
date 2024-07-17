@@ -90,7 +90,10 @@ enum class EWOGAbilityInputID : uint8
 	//Character
 	Sprint			UMETA(DisplayName = "Sprint"),
 	Dodge			UMETA(DisplayName = "Dodge"),
-	Jump			UMETA(DisplayName = "Jump")
+	Jump			UMETA(DisplayName = "Jump"),
+
+	//Player
+	Ping			UMETA(DisplayName = "Ping")
 };
 
 USTRUCT(BlueprintType)
