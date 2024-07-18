@@ -2,6 +2,9 @@
 
 
 #include "WOGGameMode.h"
+
+#include "WOG.h"
+#include "ActorComponents/WOGUIManagerComponent.h"
 #include "WOG/GameInstance/WOGGameInstance.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/PlayerState.h"
@@ -14,6 +17,7 @@
 #include "WOG/PlayerState/WOGPlayerState.h"
 #include "WOG/GameState/WOGGameState.h"
 #include "Engine/Engine.h"
+#include "Libraries/WOGBlueprintLibrary.h"
 
 
 void AWOGGameMode::HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer)
@@ -27,6 +31,13 @@ void AWOGGameMode::HandleStartingNewPlayer_Implementation(APlayerController* New
 	{
 		HandleDropIn(NewPlayer);
 	}
+
+	/*UWOGUIManagerComponent* UIManager = UWOGBlueprintLibrary::GetUIManagerComponent(NewPlayer);
+	if(UIManager)
+	{
+		UIManager->Client_HandlePlayerOutlines();
+		UE_LOG(WOGLogUI, Display, TEXT("Client_HandlePlayerOutlines() called from game mode"));
+	}*/
 }
 
 void AWOGGameMode::HandleStartingPlayer(APlayerController* NewPlayer)

@@ -38,6 +38,12 @@ void AWOGPlayerController::AcknowledgePossession(APawn* P)
 	{
 		CharacterBase->GetAbilitySystemComponent()->InitAbilityActorInfo(CharacterBase, CharacterBase);
 	}
+	
+	if(UIManagerComponent)
+	{	
+		UIManagerComponent->Client_HandlePlayerOutlines();
+		UE_LOG(WOGLogUI, Display, TEXT("Client_HandlePlayerOutlines() called from AcknowledgePossession"));
+	}
 }
 
 void AWOGPlayerController::OnNetCleanup(UNetConnection* Connection)
@@ -118,6 +124,8 @@ void AWOGPlayerController::BeginPlay()
 	{
 		UE_LOG(WOGLogUI, Error, TEXT("Invalid UI Manager subsystem from WOGPlayerController class"));
 	}
+
+	Server_HandlePlayerOutlines();
 }
 
 void AWOGPlayerController::Server_PossessMinion_Implementation(AActor* ActorToPossess)
@@ -205,4 +213,55 @@ void AWOGPlayerController::FinishUnPossess(APawn* PawnToPossess, APawn* AIPawnLe
 	AIPawnLeft->SpawnDefaultController();
 
 	UIManagerComponent->Client_ResetHUD();
+}
+
+void AWOGPlayerController::HandlePlayerOutlines()
+{
+	TArray<ABasePlayerCharacter*> Players; 
+	for (auto It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		APlayerController* PlayerController = It->Get();
+		if(!PlayerController) continue;
+		UE_LOG(WOGLogUI, Display, TEXT("PlayerController: %s, iterated"), *GetNameSafe(PlayerController));
+
+		ABasePlayerCharacter* PlayerCharacter = Cast<ABasePlayerCharacter>(PlayerController->GetPawn());
+		if(!PlayerCharacter) continue;
+
+		Players.Add(PlayerCharacter);
+		Client_HandleLocalOutline();
+	}
+	
+	for (auto It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		AWOGPlayerController* PlayerController = Cast<AWOGPlayerController>(It->Get());
+		if(!PlayerController) continue;
+
+		PlayerController->Client_HandleTeamOutline(Players);
+	}
+}
+
+void AWOGPlayerController::Client_HandleLocalOutline_Implementation()
+{
+	ABasePlayerCharacter* PlayerCharacter = Cast<ABasePlayerCharacter>(GetPawn());
+	if(!PlayerCharacter) return;
+
+	PlayerCharacter->GetMesh()->SetCustomDepthStencilValue(0);
+}
+
+void AWOGPlayerController::Client_HandleTeamOutline_Implementation(
+	const TArray<ABasePlayerCharacter*>& PlayerCharacters)
+{
+	for(auto PlayerChar : PlayerCharacters)
+	{
+		if(PlayerChar && GetIsAttacker() != PlayerChar->GetCharacterData().bIsAttacker)
+		{
+			PlayerChar->GetMesh()->SetCustomDepthStencilValue(0);
+		}
+	}
+}
+
+
+void AWOGPlayerController::Server_HandlePlayerOutlines_Implementation()
+{
+	HandlePlayerOutlines();
 }

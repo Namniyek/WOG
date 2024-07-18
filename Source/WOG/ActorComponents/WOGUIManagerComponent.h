@@ -91,4 +91,7 @@ public:
 
 	UFUNCTION(Client, Reliable, BlueprintCallable)
 	void Client_AddCharacterHealthBarWidget(float NewValue, float MaxValue, AActor* TargetActor);
+
+	UFUNCTION(Client, Reliable, BlueprintCallable)
+	void Client_HandlePlayerOutlines();
 };

@@ -694,6 +694,34 @@ void UWOGUIManagerSubsystem::AddCharacterHealthBarWidget(float NewValue, float M
 	}
 }
 
+void UWOGUIManagerSubsystem::HandlePlayerOutlines() const
+{
+	// UE_LOG(WOGLogUI, Display, TEXT("HandlePlayerOutlines called"));
+	//
+	// if (!OwnerPC) return;
+	// for (auto It = OwnerPC->GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	// {
+	// 	APlayerController* PlayerController = It->Get();
+	// 	if(!PlayerController) continue;
+	// 	UE_LOG(WOGLogUI, Display, TEXT("PlayerController: %s, iterated"), *GetNameSafe(PlayerController));
+	//
+	// 	ABasePlayerCharacter* PlayerCharacter = Cast<ABasePlayerCharacter>(PlayerController->GetPawn());
+	// 	if(!PlayerCharacter) continue;
+	//
+	// 	if(PlayerController->IsLocalController())
+	// 	{
+	// 		PlayerCharacter->GetMesh()->SetCustomDepthStencilValue(0);
+	// 		UE_LOG(WOGLogUI, Display, TEXT("SetCustomDepthStencilValue(0) called for local player"));
+	// 	}
+	// 	
+	// 	if(OwnerPC->GetIsAttacker() != PlayerCharacter->GetCharacterData().bIsAttacker)
+	// 	{
+	// 		PlayerCharacter->GetMesh()->SetCustomDepthStencilValue(0);
+	// 		UE_LOG(WOGLogUI, Display, TEXT("SetCustomDepthStencilValue(0) called for teams"));
+	// 	}
+	// }
+}
+
 void UWOGUIManagerSubsystem::RemoveCharacterHealthBar()
 {
 	if(IsValid(CharacterHealthBarWidgetComponent))

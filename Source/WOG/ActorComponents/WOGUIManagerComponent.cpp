@@ -31,8 +31,17 @@ void UWOGUIManagerComponent::BeginPlay()
 	}
 }
 
+void UWOGUIManagerComponent::Client_HandlePlayerOutlines_Implementation()
+{
+// 	if(UIManager)
+// 	{
+// 		UIManager->HandlePlayerOutlines();
+// 		UE_LOG(WOGLogUI, Display, TEXT("Client_HandlePlayerOutlines called"));
+// 	}
+}
+
 void UWOGUIManagerComponent::Client_AddCharacterHealthBarWidget_Implementation(float NewValue, float MaxValue,
-	AActor* TargetActor)
+                                                                               AActor* TargetActor)
 {
 	if(UIManager)
 	{

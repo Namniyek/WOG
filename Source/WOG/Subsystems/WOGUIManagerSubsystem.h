@@ -184,6 +184,8 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void AddCharacterHealthBarWidget(float NewValue, float MaxValue, AActor* TargetActor);
 
+	void HandlePlayerOutlines() const;
+
 private:
 	FTimerHandle CharacterHealthBarTimer;
 	void RemoveCharacterHealthBar();
