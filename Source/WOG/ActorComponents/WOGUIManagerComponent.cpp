@@ -2,6 +2,7 @@
 
 #include "ActorComponents/WOGUIManagerComponent.h"
 #include "WOG.h"
+#include "PlayerCharacter/BasePlayerCharacter.h"
 #include "PlayerController/WOGPlayerController.h"
 #include "Subsystems/WOGUIManagerSubsystem.h"
 
@@ -31,17 +32,53 @@ void UWOGUIManagerComponent::BeginPlay()
 	}
 }
 
-void UWOGUIManagerComponent::Client_HandlePlayerOutlines_Implementation()
+void UWOGUIManagerComponent::Server_HandlePlayerOutlines_Implementation()
 {
-// 	if(UIManager)
-// 	{
-// 		UIManager->HandlePlayerOutlines();
-// 		UE_LOG(WOGLogUI, Display, TEXT("Client_HandlePlayerOutlines called"));
-// 	}
+	HandlePlayerOutlines();
 }
 
-void UWOGUIManagerComponent::Client_AddCharacterHealthBarWidget_Implementation(float NewValue, float MaxValue,
-                                                                               AActor* TargetActor)
+void UWOGUIManagerComponent::HandlePlayerOutlines() const
+{
+	TArray<ABasePlayerCharacter*> Players; 
+	for (auto It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		AWOGPlayerController* PlayerController = Cast<AWOGPlayerController>(It->Get());
+		if(!PlayerController) continue;
+		UE_LOG(WOGLogUI, Display, TEXT("PlayerController: %s, iterated"), *GetNameSafe(PlayerController));
+
+		ABasePlayerCharacter* PlayerCharacter = Cast<ABasePlayerCharacter>(PlayerController->GetPawn());
+		if(!PlayerCharacter) continue;
+
+		Players.Add(PlayerCharacter);
+		PlayerController->GetUIManagerComponent()->Client_HandleLocalOutline();
+	}
+	
+	for (auto It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		AWOGPlayerController* PlayerController = Cast<AWOGPlayerController>(It->Get());
+		if(!PlayerController) continue;
+
+		PlayerController->GetUIManagerComponent()->Client_HandleTeamOutlines(Players);
+	}
+}
+
+void UWOGUIManagerComponent::Client_HandleTeamOutlines_Implementation(const TArray<ABasePlayerCharacter*>& Players)
+{
+	if(UIManager)
+	{
+		UIManager->HandleTeamOutlines(Players);
+	}
+}
+
+void UWOGUIManagerComponent::Client_HandleLocalOutline_Implementation()
+{
+	if(UIManager)
+	{
+		UIManager->HandleLocalOutline();
+	}
+}
+
+void UWOGUIManagerComponent::Client_AddCharacterHealthBarWidget_Implementation(float NewValue, float MaxValue, AActor* TargetActor)
 {
 	if(UIManager)
 	{
@@ -49,8 +86,7 @@ void UWOGUIManagerComponent::Client_AddCharacterHealthBarWidget_Implementation(f
 	}
 }
 
-void UWOGUIManagerComponent::Client_AddFloatingDamageText_Implementation(const float& DamageAmount,
-                                                                         AActor* TargetActor)
+void UWOGUIManagerComponent::Client_AddFloatingDamageText_Implementation(const float& DamageAmount, AActor* TargetActor)
 {
 	if(UIManager)
 	{

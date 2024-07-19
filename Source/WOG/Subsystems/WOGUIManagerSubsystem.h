@@ -184,7 +184,8 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void AddCharacterHealthBarWidget(float NewValue, float MaxValue, AActor* TargetActor);
 
-	void HandlePlayerOutlines() const;
+	void HandleLocalOutline();
+	void HandleTeamOutlines(const TArray<ABasePlayerCharacter*>& Players);
 
 private:
 	FTimerHandle CharacterHealthBarTimer;

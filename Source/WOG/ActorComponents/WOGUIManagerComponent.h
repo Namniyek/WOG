@@ -28,8 +28,7 @@ protected:
 	TObjectPtr<AWOGPlayerController> OwnerPC;
 	TObjectPtr<UWOGUIManagerSubsystem> UIManager;
 
-public:	
-
+public:
 	UFUNCTION(Client, Reliable)
 	void Client_AddAbilityWidget(const int32& AbilityID, TSubclassOf<UUserWidget> Class, UTexture2D* Icon, const float& Cooldown, const FGameplayTag& Tag);
 
@@ -92,6 +91,14 @@ public:
 	UFUNCTION(Client, Reliable, BlueprintCallable)
 	void Client_AddCharacterHealthBarWidget(float NewValue, float MaxValue, AActor* TargetActor);
 
-	UFUNCTION(Client, Reliable, BlueprintCallable)
-	void Client_HandlePlayerOutlines();
+	UFUNCTION(Server, reliable)
+	void Server_HandlePlayerOutlines();
+
+	void HandlePlayerOutlines() const;
+
+	UFUNCTION(Client, reliable)
+	void Client_HandleLocalOutline();
+
+	UFUNCTION(Client, reliable)
+	void Client_HandleTeamOutlines(const TArray<ABasePlayerCharacter*>& Players);
 };

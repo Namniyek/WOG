@@ -61,16 +61,6 @@ private:
 
 	UFUNCTION()
 	void FinishUnPossess(APawn* PawnToPossess, APawn* AIPawnLeft);
-
-	UFUNCTION(Server, reliable, BlueprintCallable)
-	void Server_HandlePlayerOutlines();
-
-	void HandlePlayerOutlines();
-
-	UFUNCTION(Client, Reliable)
-	void Client_HandleTeamOutline(const TArray<ABasePlayerCharacter*>& PlayerCharacters);
-	UFUNCTION(Client, Reliable)
-	void Client_HandleLocalOutline();
 	
 public:
 	UFUNCTION(BlueprintPure)

@@ -694,39 +694,35 @@ void UWOGUIManagerSubsystem::AddCharacterHealthBarWidget(float NewValue, float M
 	}
 }
 
-void UWOGUIManagerSubsystem::HandlePlayerOutlines() const
-{
-	// UE_LOG(WOGLogUI, Display, TEXT("HandlePlayerOutlines called"));
-	//
-	// if (!OwnerPC) return;
-	// for (auto It = OwnerPC->GetWorld()->GetPlayerControllerIterator(); It; ++It)
-	// {
-	// 	APlayerController* PlayerController = It->Get();
-	// 	if(!PlayerController) continue;
-	// 	UE_LOG(WOGLogUI, Display, TEXT("PlayerController: %s, iterated"), *GetNameSafe(PlayerController));
-	//
-	// 	ABasePlayerCharacter* PlayerCharacter = Cast<ABasePlayerCharacter>(PlayerController->GetPawn());
-	// 	if(!PlayerCharacter) continue;
-	//
-	// 	if(PlayerController->IsLocalController())
-	// 	{
-	// 		PlayerCharacter->GetMesh()->SetCustomDepthStencilValue(0);
-	// 		UE_LOG(WOGLogUI, Display, TEXT("SetCustomDepthStencilValue(0) called for local player"));
-	// 	}
-	// 	
-	// 	if(OwnerPC->GetIsAttacker() != PlayerCharacter->GetCharacterData().bIsAttacker)
-	// 	{
-	// 		PlayerCharacter->GetMesh()->SetCustomDepthStencilValue(0);
-	// 		UE_LOG(WOGLogUI, Display, TEXT("SetCustomDepthStencilValue(0) called for teams"));
-	// 	}
-	// }
-}
-
 void UWOGUIManagerSubsystem::RemoveCharacterHealthBar()
 {
 	if(IsValid(CharacterHealthBarWidgetComponent))
 	{
 		CharacterHealthBarWidgetComponent->DestroyComponent();
 		CharacterHealthBarWidgetComponent = nullptr;
+	}
+}
+
+void UWOGUIManagerSubsystem::HandleLocalOutline()
+{
+	OwnerPC = Cast<AWOGPlayerController>(GetLocalPlayer()->GetPlayerController(GetLocalPlayer()->GetWorld()));
+	if(!OwnerPC) return;
+	
+	const ABasePlayerCharacter* PlayerCharacter = Cast<ABasePlayerCharacter>(OwnerPC->GetPawn());
+	if(!PlayerCharacter) return;
+
+	PlayerCharacter->GetMesh()->SetCustomDepthStencilValue(0);
+}
+
+void UWOGUIManagerSubsystem::HandleTeamOutlines(const TArray<ABasePlayerCharacter*>& Players)
+{
+	OwnerPC = Cast<AWOGPlayerController>(GetLocalPlayer()->GetPlayerController(GetLocalPlayer()->GetWorld()));
+
+	for(auto PlayerChar : Players)
+	{
+		if(PlayerChar && OwnerPC && OwnerPC->GetIsAttacker() != PlayerChar->GetCharacterData().bIsAttacker)
+		{
+			PlayerChar->GetMesh()->SetCustomDepthStencilValue(0);
+		}
 	}
 }
