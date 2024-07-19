@@ -185,7 +185,7 @@ public:
 	void AddCharacterHealthBarWidget(float NewValue, float MaxValue, AActor* TargetActor);
 
 	void HandleLocalOutline();
-	void HandleTeamOutlines(const TArray<ABasePlayerCharacter*>& Players);
+	void HandleTeamOutlines(TArray<ABasePlayerCharacter*> Players);
 
 private:
 	FTimerHandle CharacterHealthBarTimer;

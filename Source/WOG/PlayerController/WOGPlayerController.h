@@ -31,12 +31,16 @@ public:
 	UFUNCTION(Server, reliable)
 	void Server_UnpossessMinion(APawn* AIPawnLeft);
 
+	void OnOutlineTimerDone() const;
 	virtual void AcknowledgePossession(class APawn* P);
 
 	void OnNetCleanup(UNetConnection* Connection) override;
 
 	UFUNCTION(Server, Reliable, BlueprintCallable)
 	void Server_RequestUnregisterFromSession(APlayerController* UserToUnregister);
+
+	UFUNCTION(BlueprintNativeEvent)
+	void OnPlayerCharacterPossessAndSetupComplete();
 
 protected:
 	virtual void OnPossess(APawn* aPawn) override;

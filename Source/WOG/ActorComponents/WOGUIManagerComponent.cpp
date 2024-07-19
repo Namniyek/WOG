@@ -64,6 +64,16 @@ void UWOGUIManagerComponent::HandlePlayerOutlines() const
 
 void UWOGUIManagerComponent::Client_HandleTeamOutlines_Implementation(const TArray<ABasePlayerCharacter*>& Players)
 {
+	if(!OwnerPC)
+	{
+		OwnerPC = Cast<AWOGPlayerController>(GetOwner());
+	}
+	
+	if(!UIManager)
+	{
+		UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(OwnerPC->GetLocalPlayer());	
+	}
+	
 	if(UIManager)
 	{
 		UIManager->HandleTeamOutlines(Players);
@@ -72,6 +82,16 @@ void UWOGUIManagerComponent::Client_HandleTeamOutlines_Implementation(const TArr
 
 void UWOGUIManagerComponent::Client_HandleLocalOutline_Implementation()
 {
+	if(!OwnerPC)
+	{
+		OwnerPC = Cast<AWOGPlayerController>(GetOwner());
+	}
+	
+	if(!UIManager)
+	{
+		UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(OwnerPC->GetLocalPlayer());	
+	}
+	
 	if(UIManager)
 	{
 		UIManager->HandleLocalOutline();

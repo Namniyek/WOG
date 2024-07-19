@@ -39,6 +39,13 @@ void AWOGPlayerController::AcknowledgePossession(APawn* P)
 		CharacterBase->GetAbilitySystemComponent()->InitAbilityActorInfo(CharacterBase, CharacterBase);
 	}
 
+	 FTimerHandle OutlineTimerHandle;
+	 float TimerDelay = 1.f;
+	 GetWorldTimerManager().SetTimer(OutlineTimerHandle, this, &ThisClass::OnOutlineTimerDone, TimerDelay);
+}
+
+void AWOGPlayerController::OnOutlineTimerDone() const
+{
 	UIManagerComponent->Server_HandlePlayerOutlines();
 }
 
@@ -62,6 +69,11 @@ void AWOGPlayerController::Server_RequestUnregisterFromSession_Implementation(AP
 	{
 		Subsystem->UnregisterFromSessionUsingPlayerController(UserToUnregister);
 	}
+}
+
+void AWOGPlayerController::OnPlayerCharacterPossessAndSetupComplete_Implementation()
+{
+
 }
 
 void AWOGPlayerController::OnPossess(APawn* aPawn)

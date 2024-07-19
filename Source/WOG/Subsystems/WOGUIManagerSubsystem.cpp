@@ -714,7 +714,7 @@ void UWOGUIManagerSubsystem::HandleLocalOutline()
 	PlayerCharacter->GetMesh()->SetCustomDepthStencilValue(0);
 }
 
-void UWOGUIManagerSubsystem::HandleTeamOutlines(const TArray<ABasePlayerCharacter*>& Players)
+void UWOGUIManagerSubsystem::HandleTeamOutlines(TArray<ABasePlayerCharacter*> Players)
 {
 	OwnerPC = Cast<AWOGPlayerController>(GetLocalPlayer()->GetPlayerController(GetLocalPlayer()->GetWorld()));
 

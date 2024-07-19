@@ -541,6 +541,11 @@ void ABasePlayerCharacter::UpdatePlayerProfile_Implementation(const FPlayerData&
 
 	//Set the character default abilities and effects
 	SetDefaultAbilitiesAndEffects(NewPlayerProfile.bIsMale, NewPlayerProfile.CharacterIndex);
+
+	if(OwnerPC)
+	{
+		OwnerPC->OnPlayerCharacterPossessAndSetupComplete();
+	}
 }
 
 void ABasePlayerCharacter::SetColors(FName Primary, FName Skin, FName BodyPaint, FName HairColor)
