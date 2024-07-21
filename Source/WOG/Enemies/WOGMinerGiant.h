@@ -16,5 +16,9 @@ class WOG_API AWOGMinerGiant : public AWOGPossessableEnemy
 
 protected:
 
+	#pragma region TimeOfDay
+	virtual void HandleTODChange() override;
+	#pragma endregion
+
 	virtual void ProcessHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh) override;
 };

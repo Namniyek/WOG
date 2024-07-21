@@ -31,13 +31,6 @@ void AWOGGameMode::HandleStartingNewPlayer_Implementation(APlayerController* New
 	{
 		HandleDropIn(NewPlayer);
 	}
-
-	/*UWOGUIManagerComponent* UIManager = UWOGBlueprintLibrary::GetUIManagerComponent(NewPlayer);
-	if(UIManager)
-	{
-		UIManager->Client_HandlePlayerOutlines();
-		UE_LOG(WOGLogUI, Display, TEXT("Client_HandlePlayerOutlines() called from game mode"));
-	}*/
 }
 
 void AWOGGameMode::HandleStartingPlayer(APlayerController* NewPlayer)

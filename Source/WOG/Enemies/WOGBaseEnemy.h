@@ -8,7 +8,6 @@
 #include "WOGBaseEnemy.generated.h"
 
 class AWOGAttacker;
-class AWOGBaseSquad;
 class UWOGSpawnCosmetics;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnEnemyStateChanged);
@@ -20,6 +19,8 @@ class WOG_API AWOGBaseEnemy : public AWOGBaseCharacter, public ISpawnInterface
 
 public:
 	AWOGBaseEnemy();
+	friend class AWOGBaseSquad;
+	
 	virtual void OnConstruction(const FTransform& Transform) override;
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;

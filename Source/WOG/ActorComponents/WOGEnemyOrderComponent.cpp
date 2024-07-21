@@ -152,6 +152,18 @@ void UWOGEnemyOrderComponent::DecreaseCurrentlySelectedSquad()
 	}
 }
 
+void UWOGEnemyOrderComponent::DestroyAllSquads()
+{
+	if(!GetOwner() || !GetOwner()->HasAuthority()) return;
+	if(GetCurrentSquads().IsEmpty()) return;
+	
+	for (AWOGBaseSquad* Squad : GetCurrentSquads())
+	{
+		if(!Squad) continue;
+		Squad->DestroySquad();
+	}
+}
+
 void UWOGEnemyOrderComponent::Server_SendOrder_Implementation(AWOGBaseSquad* Squad, const EEnemyOrder& NewOrder, const FTransform& TargetTansform, AActor* TargetActor)
 {
 	Squad->SendOrder(NewOrder, TargetTansform, TargetActor);

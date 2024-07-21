@@ -40,7 +40,7 @@ public class WOG : ModuleRules
             "SlateCore",
             "GameplayAbilities",
             "GameplayTags",
-            "GameplayTasks", "UnrealUSDWrapper"
+            "GameplayTasks"
         });
 
         // Uncomment if you are using online features

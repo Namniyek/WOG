@@ -114,6 +114,7 @@ struct FCharacterMesh : public FTableRowBase
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInteractComplete, ABasePlayerCharacter*, Interactor);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPlayerInitComplete, const ABasePlayerCharacter*, InitCharacter);
 
 UCLASS()
 class WOG_API ABasePlayerCharacter : public AWOGBaseCharacter, public IInventoryInterface
@@ -144,7 +145,7 @@ public:
 	UFUNCTION()
 	void ElimTimerFinished();
 
-	#pragma endregion
+#pragma endregion
 
 	#pragma region Player Input Variables
 	/*
@@ -221,11 +222,9 @@ public:
 
 	UPROPERTY(BlueprintAssignable, BlueprintCallable)
 	FOnInteractComplete OnInteractComplete;
-
 	#pragma endregion
 
 protected:
-
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
@@ -314,12 +313,20 @@ public:
 	UFUNCTION(BlueprintNativeEvent)
 	void UpdatePlayerProfile(const FPlayerData& NewPlayerProfile);
 
+	UPROPERTY(BlueprintAssignable, BlueprintCallable)
+	FOnPlayerInitComplete OnPlayerInitComplete;
+
 protected:
 	UPROPERTY(ReplicatedUsing = OnRep_PlayerProfile, EditDefaultsOnly, BlueprintReadWrite)
 	FPlayerData PlayerProfile;
 
 	UFUNCTION()
 	void OnRep_PlayerProfile();
+
+	UFUNCTION(BlueprintNativeEvent)
+	void HandleOnPlayerInitComplete(const ABasePlayerCharacter* InitCharacter);
+
+	void HandleTeamUIElements() const;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Setup|Character Data")
 	FMeshDataTables CharacterDataTables;

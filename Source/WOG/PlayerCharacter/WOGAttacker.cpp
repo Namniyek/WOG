@@ -22,6 +22,7 @@
 #include "Interfaces/SpawnInterface.h"
 #include "Subsystems/WOGUIManagerSubsystem.h"
 #include "ActorComponents/WOGEnemyOrderComponent.h"
+#include "AI/Combat/WOGBaseSquad.h"
 #include "Camera/CameraComponent.h"
 #include "DayNightCycle/TimeOfDay.h"
 
@@ -73,6 +74,10 @@ void AWOGAttacker::HandleTODChange()
 		AbilitySystemComponent->AddLooseGameplayTag(TAG_State_Debuff_UnableToSpawn, 1);
 		GEngine->AddOnScreenDebugMessage(1, 5.f, FColor::Emerald, FString("Unable to Spawn tag Added"));
 		break;
+	/*case ETimeOfDay::TOD_Dawn1:
+		AbilitySystemComponent->AddLooseGameplayTag(TAG_State_Debuff_UnableToSpawn, 1);
+		GEngine->AddOnScreenDebugMessage(1, 5.f, FColor::Emerald, FString("Unable to Spawn tag Added"));
+		break;*/
 	case ETimeOfDay::TOD_Dusk1:
 		AbilitySystemComponent->RemoveLooseGameplayTag(TAG_State_Debuff_UnableToSpawn, 1);
 		GEngine->AddOnScreenDebugMessage(1, 5.f, FColor::Emerald, FString("Unable to Spawn tag removed"));
@@ -80,6 +85,7 @@ void AWOGAttacker::HandleTODChange()
 	case ETimeOfDay::TOD_Dawn2:
 		AbilitySystemComponent->AddLooseGameplayTag(TAG_State_Debuff_UnableToSpawn, 1);
 		GEngine->AddOnScreenDebugMessage(1, 5.f, FColor::Emerald, FString("Unable to Spawn tag Added"));
+		GetEnemyOrderComponent()->DestroyAllSquads();
 		break;
 	case ETimeOfDay::TOD_Dusk2:
 		AbilitySystemComponent->RemoveLooseGameplayTag(TAG_State_Debuff_UnableToSpawn, 1);
@@ -88,6 +94,7 @@ void AWOGAttacker::HandleTODChange()
 	case ETimeOfDay::TOD_Dawn3:
 		AbilitySystemComponent->AddLooseGameplayTag(TAG_State_Debuff_UnableToSpawn, 1);
 		GEngine->AddOnScreenDebugMessage(1, 5.f, FColor::Emerald, FString("Unable to Spawn tag Added"));
+		GetEnemyOrderComponent()->DestroyAllSquads();
 		break;
 	case ETimeOfDay::TOD_Dusk3:
 		AbilitySystemComponent->RemoveLooseGameplayTag(TAG_State_Debuff_UnableToSpawn, 1);
@@ -96,6 +103,7 @@ void AWOGAttacker::HandleTODChange()
 	case ETimeOfDay::TOD_Dawn4:
 		AbilitySystemComponent->AddLooseGameplayTag(TAG_State_Debuff_UnableToSpawn, 1);
 		GEngine->AddOnScreenDebugMessage(1, 5.f, FColor::Emerald, FString("Unable to Spawn tag Added"));
+		GetEnemyOrderComponent()->DestroyAllSquads();
 		break;
 	default:
 		break;
@@ -197,7 +205,15 @@ void AWOGAttacker::PossessActionPressed(const FInputActionValue& Value)
 	if (HasMatchingGameplayTag(TAG_State_Debuff_Knockback)) return;
 	if (HasMatchingGameplayTag(TAG_State_Debuff_KO)) return;
 	if (HasMatchingGameplayTag(TAG_State_Debuff_Stagger)) return;
+	if (HasMatchingGameplayTag(TAG_State_Debuff_UnableToSpawn)) return;
 
+
+	UWOGUIManagerSubsystem* UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(OwnerPC->GetLocalPlayer());
+	if(UIManager)
+	{
+		UIManager->SetLocalOutlineEnabled(true, 2);
+	}
+	
 	PossessMinion();
 }
 

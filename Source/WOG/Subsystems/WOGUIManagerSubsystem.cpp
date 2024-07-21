@@ -16,6 +16,7 @@
 #include "Components/VerticalBox.h"
 #include "UI/WOGCharacterWidgetContainer.h"
 #include "Components/SizeBox.h"
+#include "Kismet/GameplayStatics.h"
 #include "UI/WOGRoundProgressBar.h"
 #include "UI/WOGScreenDamage.h"
 #include "UI/WOGHoldProgressBar.h"
@@ -32,13 +33,11 @@
 void UWOGUIManagerSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
-	UE_LOG(WOGLogUI, Display, TEXT("UI Manager Initialized"));
 }
 
 void UWOGUIManagerSubsystem::Deinitialize()
 {
 	Super::Deinitialize();
-	UE_LOG(WOGLogUI, Display, TEXT("UI Manager Deinitialized"));
 }
 
 void UWOGUIManagerSubsystem::InitVariables()
@@ -703,26 +702,16 @@ void UWOGUIManagerSubsystem::RemoveCharacterHealthBar()
 	}
 }
 
-void UWOGUIManagerSubsystem::HandleLocalOutline()
+void UWOGUIManagerSubsystem::SetLocalOutlineEnabled(bool bEnableOutline, int32 NewStencilIndex)
 {
 	OwnerPC = Cast<AWOGPlayerController>(GetLocalPlayer()->GetPlayerController(GetLocalPlayer()->GetWorld()));
 	if(!OwnerPC) return;
+
+	int32 NewStencilValue = bEnableOutline ? NewStencilIndex : 0;
 	
-	const ABasePlayerCharacter* PlayerCharacter = Cast<ABasePlayerCharacter>(OwnerPC->GetPawn());
+	const AWOGBaseCharacter* PlayerCharacter = Cast<AWOGBaseCharacter>(OwnerPC->GetPawn());
 	if(!PlayerCharacter) return;
 
-	PlayerCharacter->GetMesh()->SetCustomDepthStencilValue(0);
+	PlayerCharacter->GetMesh()->SetCustomDepthStencilValue(NewStencilValue);
 }
 
-void UWOGUIManagerSubsystem::HandleTeamOutlines(TArray<ABasePlayerCharacter*> Players)
-{
-	OwnerPC = Cast<AWOGPlayerController>(GetLocalPlayer()->GetPlayerController(GetLocalPlayer()->GetWorld()));
-
-	for(auto PlayerChar : Players)
-	{
-		if(PlayerChar && OwnerPC && OwnerPC->GetIsAttacker() != PlayerChar->GetCharacterData().bIsAttacker)
-		{
-			PlayerChar->GetMesh()->SetCustomDepthStencilValue(0);
-		}
-	}
-}

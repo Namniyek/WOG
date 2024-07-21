@@ -71,6 +71,9 @@ protected:
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void UnpossessMinion_Implementation() override;
 
+	UPROPERTY(Replicated, BlueprintReadOnly)
+	bool bCanBePossessed;
+
 	#pragma region Components variables
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class USpringArmComponent* CameraBoom;

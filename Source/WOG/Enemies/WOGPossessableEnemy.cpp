@@ -17,6 +17,8 @@
 #include "TargetSystemComponent.h"
 #include "Subsystems/WOGUIManagerSubsystem.h"
 #include "ActorComponents/WOGAbilitySystemComponent.h"
+#include "ActorComponents/WOGUIManagerComponent.h"
+#include "AI/Combat/WOGBaseSquad.h"
 
 AWOGPossessableEnemy::AWOGPossessableEnemy()
 {
@@ -51,6 +53,8 @@ AWOGPossessableEnemy::AWOGPossessableEnemy()
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
+	bCanBePossessed = true;
+
 	TargetComponent = CreateDefaultSubobject<UTargetSystemComponent>(TEXT("TargetComponent"));
 	if (TargetComponent)
 	{
@@ -64,6 +68,7 @@ void AWOGPossessableEnemy::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AWOGPossessableEnemy, CurrentTarget);
+	DOREPLIFETIME(AWOGPossessableEnemy, bCanBePossessed);
 }
 
 void AWOGPossessableEnemy::PossessedBy(AController* NewController)
@@ -72,6 +77,12 @@ void AWOGPossessableEnemy::PossessedBy(AController* NewController)
 
 	SetOwner(NewController);
 	ToggleStrafeMovement(true);
+
+	if(NewController->IsPlayerController())
+	{
+		CurrentTarget = nullptr;
+		GetOwnerSquad()->SendOrder(EEnemyOrder::EEO_Hold);
+	}
 }
 
 void AWOGPossessableEnemy::BeginPlay()
@@ -83,6 +94,8 @@ void AWOGPossessableEnemy::BeginPlay()
 	{
 		WorldSubsystem->OnKeyTimeHitDelegate.AddDynamic(this, &ThisClass::KeyTimeHit);
 	}
+
+	bCanBePossessed = true;
 }
 
 void AWOGPossessableEnemy::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -225,6 +238,7 @@ void AWOGPossessableEnemy::UnpossessActionPressed(const FInputActionValue& Value
 	if (UIManager)
 	{
 		UIManager->RemoveCrosshairWidget();
+		UIManager->SetLocalOutlineEnabled(true, 3);
 	}
 	Server_UnpossessMinion();
 }
@@ -281,18 +295,29 @@ void AWOGPossessableEnemy::UnpossessMinion_Implementation()
 
 bool AWOGPossessableEnemy::CanBePossessed_Implementation() const
 {
-	return true;
+	return bCanBePossessed;
 }
 
 void AWOGPossessableEnemy::HandleTODChange()
 {
+	if(!HasAuthority()) return;
+	
 	switch (CurrentTOD)
 	{
+	case ETimeOfDay::TOD_Dusk1:
+		bCanBePossessed = true;
+		break;
 	case ETimeOfDay::TOD_Dawn2:
 		Destroy();
 		break;
+	case ETimeOfDay::TOD_Dusk2:
+		bCanBePossessed = true;
+		break;
 	case ETimeOfDay::TOD_Dawn3:
 		Destroy();
+		break;
+	case ETimeOfDay::TOD_Dusk3:
+		bCanBePossessed = true;
 		break;
 	case ETimeOfDay::TOD_Dawn4:
 		Destroy();
@@ -306,16 +331,32 @@ void AWOGPossessableEnemy::KeyTimeHit(int32 CurrentTime)
 {
 	if (CurrentTime == 350)
 	{
+		if(HasAuthority())
+		{
+			bCanBePossessed = false;
+		}
 		Server_UnpossessMinion();
+		
 	}
 	if (CurrentTime == 1040)
 	{
+		if(HasAuthority())
+		{
+			bCanBePossessed = false;
+		}
 		Server_UnpossessMinion();
 	}
 }
 
 void AWOGPossessableEnemy::Server_UnpossessMinion_Implementation()
 {
+	CurrentTarget = nullptr;
+	
+	if(GetOwnerSquad())
+	{
+		GetOwnerSquad()->SendOrder(EEnemyOrder::EEO_Hold);
+	}
+	
 	if (IsPlayerControlled())
 	{
 		const TObjectPtr<AWOGPlayerController> PlayerController = Cast<AWOGPlayerController>(GetController());

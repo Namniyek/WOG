@@ -6,6 +6,7 @@
 #include "GameFramework/HUD.h"
 #include "WOGMatchHUD.generated.h"
 
+class UWOGOverheadPlayerNameComponent;
 class UWOGHealthBarWidgetComponent;
 class UWOGDamageTextComponent;
 class UWOGCountdownWidget;
@@ -98,6 +99,9 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Setup | WidgetClasses")
 	TSubclassOf<UWOGHealthBarWidgetComponent> CharacterHealthBarComponentClass;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Setup | WidgetClasses")
+	TSubclassOf<UWOGOverheadPlayerNameComponent> OverheadPlayerNameComponentClass;
 	#pragma endregion
 
 	#pragma region Widget References

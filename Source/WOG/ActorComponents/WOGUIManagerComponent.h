@@ -91,14 +91,7 @@ public:
 	UFUNCTION(Client, Reliable, BlueprintCallable)
 	void Client_AddCharacterHealthBarWidget(float NewValue, float MaxValue, AActor* TargetActor);
 
-	UFUNCTION(Server, reliable)
-	void Server_HandlePlayerOutlines();
-
-	void HandlePlayerOutlines() const;
-
-	UFUNCTION(Client, reliable)
-	void Client_HandleLocalOutline();
-
-	UFUNCTION(Client, reliable)
-	void Client_HandleTeamOutlines(const TArray<ABasePlayerCharacter*>& Players);
+	//@param StencilIndex:
+	// 0 -> Disabled, 1 -> Defenders, 2 -> Attackers, 3 -> Summons
+	void Client_SetLocalOutlineEnabled(bool bEnableOutline = false, int32 NewStencilIndex = 2) const;
 };

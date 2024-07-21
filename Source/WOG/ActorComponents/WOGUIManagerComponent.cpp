@@ -32,69 +32,11 @@ void UWOGUIManagerComponent::BeginPlay()
 	}
 }
 
-void UWOGUIManagerComponent::Server_HandlePlayerOutlines_Implementation()
+void UWOGUIManagerComponent::Client_SetLocalOutlineEnabled(bool bEnableOutline, int32 NewStencilIndex) const
 {
-	HandlePlayerOutlines();
-}
-
-void UWOGUIManagerComponent::HandlePlayerOutlines() const
-{
-	TArray<ABasePlayerCharacter*> Players; 
-	for (auto It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
-	{
-		AWOGPlayerController* PlayerController = Cast<AWOGPlayerController>(It->Get());
-		if(!PlayerController) continue;
-		UE_LOG(WOGLogUI, Display, TEXT("PlayerController: %s, iterated"), *GetNameSafe(PlayerController));
-
-		ABasePlayerCharacter* PlayerCharacter = Cast<ABasePlayerCharacter>(PlayerController->GetPawn());
-		if(!PlayerCharacter) continue;
-
-		Players.Add(PlayerCharacter);
-		PlayerController->GetUIManagerComponent()->Client_HandleLocalOutline();
-	}
-	
-	for (auto It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
-	{
-		AWOGPlayerController* PlayerController = Cast<AWOGPlayerController>(It->Get());
-		if(!PlayerController) continue;
-
-		PlayerController->GetUIManagerComponent()->Client_HandleTeamOutlines(Players);
-	}
-}
-
-void UWOGUIManagerComponent::Client_HandleTeamOutlines_Implementation(const TArray<ABasePlayerCharacter*>& Players)
-{
-	if(!OwnerPC)
-	{
-		OwnerPC = Cast<AWOGPlayerController>(GetOwner());
-	}
-	
-	if(!UIManager)
-	{
-		UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(OwnerPC->GetLocalPlayer());	
-	}
-	
 	if(UIManager)
 	{
-		UIManager->HandleTeamOutlines(Players);
-	}
-}
-
-void UWOGUIManagerComponent::Client_HandleLocalOutline_Implementation()
-{
-	if(!OwnerPC)
-	{
-		OwnerPC = Cast<AWOGPlayerController>(GetOwner());
-	}
-	
-	if(!UIManager)
-	{
-		UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(OwnerPC->GetLocalPlayer());	
-	}
-	
-	if(UIManager)
-	{
-		UIManager->HandleLocalOutline();
+		UIManager->SetLocalOutlineEnabled(bEnableOutline, NewStencilIndex);
 	}
 }
 

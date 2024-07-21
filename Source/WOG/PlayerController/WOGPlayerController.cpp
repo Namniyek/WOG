@@ -38,15 +38,12 @@ void AWOGPlayerController::AcknowledgePossession(APawn* P)
 	{
 		CharacterBase->GetAbilitySystemComponent()->InitAbilityActorInfo(CharacterBase, CharacterBase);
 	}
-
-	 FTimerHandle OutlineTimerHandle;
-	 float TimerDelay = 1.f;
-	 GetWorldTimerManager().SetTimer(OutlineTimerHandle, this, &ThisClass::OnOutlineTimerDone, TimerDelay);
-}
-
-void AWOGPlayerController::OnOutlineTimerDone() const
-{
-	UIManagerComponent->Server_HandlePlayerOutlines();
+	
+	UWOGUIManagerSubsystem* UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(GetLocalPlayer());
+	if(UIManager)
+	{
+		UIManager->SetLocalOutlineEnabled(false);
+	}
 }
 
 void AWOGPlayerController::OnNetCleanup(UNetConnection* Connection)
@@ -71,15 +68,10 @@ void AWOGPlayerController::Server_RequestUnregisterFromSession_Implementation(AP
 	}
 }
 
-void AWOGPlayerController::OnPlayerCharacterPossessAndSetupComplete_Implementation()
-{
-
-}
-
 void AWOGPlayerController::OnPossess(APawn* aPawn)
 {
 	Super::OnPossess(aPawn);
-
+	
 	if (DefaultPawn) return;
 	DefaultPawn = Cast<ABasePlayerCharacter>(aPawn);
 
@@ -106,14 +98,12 @@ void AWOGPlayerController::OnPossess(APawn* aPawn)
 
 	ABasePlayerCharacter* PlayerCharacter = Cast<ABasePlayerCharacter>(aPawn);
 	if (!WOGSavegame || !PlayerCharacter) return;
-
-	PlayerCharacter->Server_SetPlayerProfile(WOGSavegame->PlayerProfile);
-	bIsAttacker = PlayerCharacter->GetPlayerProfile().bIsAttacker;
+	
 	SetPawn(PlayerCharacter);
 	PlayerCharacter->SetOwnerPC(this);
+	PlayerCharacter->Server_SetPlayerProfile(WOGSavegame->PlayerProfile);
 
 	Server_SetPlayerIndex(WOGSavegame->PlayerProfile.UserIndex);
-
 	UIManagerComponent->Client_ResetHUD();
 }
 

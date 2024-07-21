@@ -790,7 +790,6 @@ void AWOGBaseCharacter::UpdateDissolveMaterial(const float DissolveValue)
 
 void AWOGBaseCharacter::OnDissolveTimelineFinished()
 {
-	UE_LOG(LogTemp, Warning, TEXT("TimelineFinsihed"));
 	if (IsLocallyControlled() && Controller)
 	{
 		TObjectPtr<APlayerController> PC = Cast<APlayerController>(Controller);

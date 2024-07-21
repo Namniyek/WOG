@@ -533,6 +533,11 @@ void ABasePlayerCharacter::OnRep_PlayerProfile()
 
 void ABasePlayerCharacter::UpdatePlayerProfile_Implementation(const FPlayerData& NewPlayerProfile)
 {
+	if(!OnPlayerInitComplete.IsBound())
+	{
+		OnPlayerInitComplete.AddDynamic(this, &ThisClass::HandleOnPlayerInitComplete);
+	}
+	
 	//Set the character meshes
 	SetMeshesAndAnimations(NewPlayerProfile.bIsMale, NewPlayerProfile.CharacterIndex);
 
@@ -541,11 +546,8 @@ void ABasePlayerCharacter::UpdatePlayerProfile_Implementation(const FPlayerData&
 
 	//Set the character default abilities and effects
 	SetDefaultAbilitiesAndEffects(NewPlayerProfile.bIsMale, NewPlayerProfile.CharacterIndex);
-
-	if(OwnerPC)
-	{
-		OwnerPC->OnPlayerCharacterPossessAndSetupComplete();
-	}
+	
+	OnPlayerInitComplete.Broadcast(this);
 }
 
 void ABasePlayerCharacter::SetColors(FName Primary, FName Skin, FName BodyPaint, FName HairColor)
@@ -672,7 +674,38 @@ void ABasePlayerCharacter::SetDefaultAbilitiesAndEffects(bool bIsMale, FName Row
 	CharacterData.bIsMale = bIsMale;
 	CharacterData.CharacterName = FText::FromString(PlayerProfile.PlayerName);
 
+	if(OwnerPC)
+	{
+		OwnerPC->SetIsAttacker(MeshRow->CharacterData.bIsAttacker);
+	}
+	
 	FindCommonInventory();
+}
+
+void ABasePlayerCharacter::HandleOnPlayerInitComplete_Implementation(const ABasePlayerCharacter* InitCharacter)
+{
+	/*
+	 * Handle team outlines
+	 * TODO maybe figure out a way to do this without a delay
+	 */
+	FTimerHandle OutlineTimerHandle;
+	float OutlineDelay = 1.f;
+	GetWorldTimerManager().SetTimer(OutlineTimerHandle, this, &ThisClass::HandleTeamUIElements, OutlineDelay);
+	
+}
+
+void ABasePlayerCharacter::HandleTeamUIElements() const
+{
+	APawn* LocalPawn = UGameplayStatics::GetPlayerPawn(this, 0);
+	if(!LocalPawn || LocalPawn==this) return;
+
+	const bool bIsLocalPawnAttacker = UWOGBlueprintLibrary::GetCharacterData(LocalPawn).bIsAttacker;
+	
+	if(bIsLocalPawnAttacker != GetCharacterData().bIsAttacker)
+	{
+		GetMesh()->SetCustomDepthStencilValue(0);
+	}
+	
 }
 
 void ABasePlayerCharacter::FindCommonInventory()

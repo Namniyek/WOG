@@ -103,7 +103,7 @@ void AWOGBaseSquad::SendOrder(const EEnemyOrder& NewOrder, const FTransform& Tar
 {
 	/*
 	*
-	*TO-DO REFACTOR into smaller functions!!!!!!!!!!!!!!
+	*TODO REFACTOR into smaller functions!!!!!!!!!!!!!!
 	*This function is a monster
 	*	
 	*/
@@ -482,6 +482,19 @@ void AWOGBaseSquad::DeregisterDeadSquadMember(AWOGBaseEnemy* DeadEnemy)
 			UE_LOG(WOGLogCombat, Display, TEXT("%s is dead and deregistered from squad"), *GetNameSafe(SquadSlots[i].CurrentEnemy));
 			SquadSlots[i].CurrentEnemy = nullptr;
 			CheckIsSquadEmpty();
+		}
+	}
+}
+
+void AWOGBaseSquad::DestroySquad()
+{
+	if(!HasAuthority()) return;
+	
+	for (int32 i = 0; i < SquadSlots.Num(); i++)
+	{
+		if (SquadSlots[i].CurrentEnemy != nullptr)
+		{
+			SquadSlots[i].CurrentEnemy->Elim(false);
 		}
 	}
 }

@@ -30,17 +30,13 @@ public:
 	void Server_PossessMinion(AActor* ActorToPossess);
 	UFUNCTION(Server, reliable)
 	void Server_UnpossessMinion(APawn* AIPawnLeft);
-
-	void OnOutlineTimerDone() const;
+	
 	virtual void AcknowledgePossession(class APawn* P);
 
 	void OnNetCleanup(UNetConnection* Connection) override;
 
 	UFUNCTION(Server, Reliable, BlueprintCallable)
 	void Server_RequestUnregisterFromSession(APlayerController* UserToUnregister);
-
-	UFUNCTION(BlueprintNativeEvent)
-	void OnPlayerCharacterPossessAndSetupComplete();
 
 protected:
 	virtual void OnPossess(APawn* aPawn) override;
@@ -54,12 +50,12 @@ protected:
 	TObjectPtr<UWOGSoundtrackData> SoundtrackDataAsset;
 	#pragma endregion
 
-private:
+private:	
 	UFUNCTION(Server, reliable)
 	void Server_SetPlayerIndex(int32 NewIndex);
 
 	UPROPERTY(VisibleAnywhere, Replicated)
-	bool bIsAttacker = false; 
+	bool bIsAttacker = false;
 
 	TObjectPtr<ABasePlayerCharacter> DefaultPawn = nullptr;
 
@@ -69,6 +65,7 @@ private:
 public:
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE bool GetIsAttacker() const { return bIsAttacker; }
+	FORCEINLINE void SetIsAttacker(const bool bNewAttacker) { bIsAttacker = bNewAttacker; }
 	FORCEINLINE void SetDefaultPawn(ABasePlayerCharacter* PawnToSet) { DefaultPawn = PawnToSet; }
 	FORCEINLINE TObjectPtr<ABasePlayerCharacter> GetDefaultPawn() { return DefaultPawn; }
 

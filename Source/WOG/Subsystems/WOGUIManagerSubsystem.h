@@ -184,8 +184,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void AddCharacterHealthBarWidget(float NewValue, float MaxValue, AActor* TargetActor);
 
-	void HandleLocalOutline();
-	void HandleTeamOutlines(TArray<ABasePlayerCharacter*> Players);
+	//@param StencilIndex:
+	// 0 -> Disabled, 1 -> Defenders, 2 -> Attackers, 3 -> Summons
+	void SetLocalOutlineEnabled(bool bEnableOutline = false, int32 NewStencilIndex = 2);
 
 private:
 	FTimerHandle CharacterHealthBarTimer;

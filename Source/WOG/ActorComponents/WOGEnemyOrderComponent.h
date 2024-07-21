@@ -82,4 +82,7 @@ public:
 
 	UPROPERTY(BlueprintCallable, BlueprintAssignable)
 	FOnOrderSentDelegate OnOrderSentDelegate;
+
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
+	void DestroyAllSquads();
 };

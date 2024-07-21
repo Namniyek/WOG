@@ -119,4 +119,7 @@ public:
 
 	UPROPERTY(Replicated, BlueprintReadOnly)
 	TObjectPtr<UTexture2D> SquadIcon = nullptr;
+
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly)
+	void DestroySquad();
 };
