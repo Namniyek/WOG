@@ -1,0 +1,31 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "ObjectIndicator",
+	"Description": "Used To Indicate Object's Location On Screen/Off Screen",
+	"Category": "BabbyGames",
+	"CreatedBy": "BabbyGames",
+	"CreatedByURL": "",
+	"DocsURL": "",
+	"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/product/7c32ba1287454d989545b7c29b536ad9",
+	"SupportURL": "",
+	"EngineVersion": "5.4.0",
+	"CanContainContent": true,
+	"Installed": true,
+	"Modules": [
+		{
+			"Name": "ObjectMarker",
+			"Type": "Runtime",
+			"LoadingPhase": "PreLoadingScreen",
+			"PlatformAllowList": [
+				"Win64",
+				"Mac",
+				"Linux",
+				"LinuxArm64",
+				"Android",
+				"IOS"
+			]
+		}
+	]
+}
