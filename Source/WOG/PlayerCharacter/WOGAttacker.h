@@ -120,4 +120,10 @@ public:
 
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE UWOGEnemyOrderComponent* GetEnemyOrderComponent() const { return EnemyOrderComponent; }
+
+	UFUNCTION(Client, reliable, BlueprintCallable)
+	void Client_SetRavenMarkersVisibility(const bool bIsVisible);
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void SetRavenMarkersVisibility(const bool bIsVisible);
 };

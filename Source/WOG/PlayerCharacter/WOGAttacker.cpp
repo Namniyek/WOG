@@ -23,6 +23,7 @@
 #include "Subsystems/WOGUIManagerSubsystem.h"
 #include "ActorComponents/WOGEnemyOrderComponent.h"
 #include "AI/Combat/WOGBaseSquad.h"
+#include "Blueprint/WidgetBlueprintLibrary.h"
 #include "Camera/CameraComponent.h"
 #include "DayNightCycle/TimeOfDay.h"
 
@@ -709,4 +710,9 @@ void AWOGAttacker::SetCurrentExternalMinion(AActor* NewMinion)
 		UE_LOG(WOGLogSpawn, Display, TEXT("CurrentExternalMinion = nullptr -> %s"), *UEnum::GetValueAsString(GetLocalRole()));
 	}
 
+}
+
+void AWOGAttacker::Client_SetRavenMarkersVisibility_Implementation(const bool bIsVisible)
+{
+	SetRavenMarkersVisibility(bIsVisible);
 }
