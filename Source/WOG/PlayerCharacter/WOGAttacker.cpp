@@ -23,7 +23,6 @@
 #include "Subsystems/WOGUIManagerSubsystem.h"
 #include "ActorComponents/WOGEnemyOrderComponent.h"
 #include "AI/Combat/WOGBaseSquad.h"
-#include "Blueprint/WidgetBlueprintLibrary.h"
 #include "Camera/CameraComponent.h"
 #include "DayNightCycle/TimeOfDay.h"
 
@@ -254,7 +253,7 @@ void AWOGAttacker::SpawnActionPressed(const FInputActionValue& Value)
 void AWOGAttacker::AbilitiesButtonPressed(const FInputActionValue& Value)
 {
 	if (bIsAlternativeModeEnabled) return;
-	FVector2D AbilitiesVector = Value.Get<FVector2D>();
+	const FVector2D AbilitiesVector = Value.Get<FVector2D>();
 
 	if (AbilitiesVector.X > 0)
 	{
@@ -277,7 +276,7 @@ void AWOGAttacker::AbilitiesButtonPressed(const FInputActionValue& Value)
 		EquipmentManager->GetMagicShortcutReference(FName("1"), OutMagic);
 		if (!OutMagic) return;
 
-		TObjectPtr<AWOGBaseMagic> MagicToEquip = Cast<AWOGBaseMagic>(OutMagic);
+		const TObjectPtr<AWOGBaseMagic> MagicToEquip = Cast<AWOGBaseMagic>(OutMagic);
 		if (MagicToEquip && MagicToEquip->GetMagicData().AbilityInputType != EAbilityInputType::EAI_Instant) return;
 
 		//Check for Cooldown
@@ -288,10 +287,10 @@ void AWOGAttacker::AbilitiesButtonPressed(const FInputActionValue& Value)
 		}
 
 		//Check for resource
-		bool bSucessCheck = false;
-		if (AttributeSet && MagicToEquip && MagicToEquip->GetMagicData().Cost > UAbilitySystemBlueprintLibrary::GetFloatAttribute(this, AttributeSet->GetManaAttribute(), bSucessCheck))
+		bool bSuccessCheck = false;
+		if (AttributeSet && MagicToEquip && MagicToEquip->GetMagicData().Cost > UAbilitySystemBlueprintLibrary::GetFloatAttribute(this, AttributeSet->GetManaAttribute(), bSuccessCheck))
 		{
-			TObjectPtr<UWOGUIManagerSubsystem> UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(OwnerPC->GetLocalPlayer());
+			const TObjectPtr<UWOGUIManagerSubsystem> UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(OwnerPC->GetLocalPlayer());
 			if (UIManager)
 			{
 				UIManager->CreateResourceWarningWidget(FString("Mana"));
@@ -311,7 +310,7 @@ void AWOGAttacker::AbilitiesButtonPressed(const FInputActionValue& Value)
 		EquipmentManager->GetMagicShortcutReference(FName("2"), OutMagic);
 		if (!OutMagic) return;
 
-		TObjectPtr<AWOGBaseMagic> MagicToEquip = Cast<AWOGBaseMagic>(OutMagic);
+		const TObjectPtr<AWOGBaseMagic> MagicToEquip = Cast<AWOGBaseMagic>(OutMagic);
 		if (MagicToEquip && MagicToEquip->GetMagicData().AbilityInputType != EAbilityInputType::EAI_Instant) return;
 
 		//Check for Cooldown
@@ -322,10 +321,10 @@ void AWOGAttacker::AbilitiesButtonPressed(const FInputActionValue& Value)
 		}
 
 		//Check for Resource
-		bool bSucessCheck = false;
-		if (AttributeSet && MagicToEquip && MagicToEquip->GetMagicData().Cost > UAbilitySystemBlueprintLibrary::GetFloatAttribute(this, AttributeSet->GetManaAttribute(), bSucessCheck))
+		bool bSuccessCheck = false;
+		if (AttributeSet && MagicToEquip && MagicToEquip->GetMagicData().Cost > UAbilitySystemBlueprintLibrary::GetFloatAttribute(this, AttributeSet->GetManaAttribute(), bSuccessCheck))
 		{
-			TObjectPtr<UWOGUIManagerSubsystem> UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(OwnerPC->GetLocalPlayer());
+			const TObjectPtr<UWOGUIManagerSubsystem> UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(OwnerPC->GetLocalPlayer());
 			if (UIManager)
 			{
 				UIManager->CreateResourceWarningWidget(FString("Mana"));
@@ -369,8 +368,8 @@ void AWOGAttacker::Ability2HoldButtonTriggered(const FInputActionValue& Value)
 	}
 
 	//Check for resource
-	bool bSucessCheck = false;
-	if (AttributeSet && MagicToEquip && MagicToEquip->GetMagicData().Cost > UAbilitySystemBlueprintLibrary::GetFloatAttribute(this, AttributeSet->GetManaAttribute(), bSucessCheck))
+	bool bSuccessCheck = false;
+	if (AttributeSet && MagicToEquip && MagicToEquip->GetMagicData().Cost > UAbilitySystemBlueprintLibrary::GetFloatAttribute(this, AttributeSet->GetManaAttribute(), bSuccessCheck))
 	{
 		TObjectPtr<UWOGUIManagerSubsystem> UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(OwnerPC->GetLocalPlayer());
 		if (UIManager)
@@ -416,8 +415,8 @@ void AWOGAttacker::Ability3HoldButtonTriggered(const FInputActionValue& Value)
 	}
 
 	//Check for resource
-	bool bSucessCheck = false;
-	if (AttributeSet && MagicToEquip && MagicToEquip->GetMagicData().Cost > UAbilitySystemBlueprintLibrary::GetFloatAttribute(this, AttributeSet->GetManaAttribute(), bSucessCheck))
+	bool bSuccessCheck = false;
+	if (AttributeSet && MagicToEquip && MagicToEquip->GetMagicData().Cost > UAbilitySystemBlueprintLibrary::GetFloatAttribute(this, AttributeSet->GetManaAttribute(), bSuccessCheck))
 	{
 		TObjectPtr<UWOGUIManagerSubsystem> UIManager = ULocalPlayer::GetSubsystem<UWOGUIManagerSubsystem>(OwnerPC->GetLocalPlayer());
 		if (UIManager)
@@ -710,9 +709,4 @@ void AWOGAttacker::SetCurrentExternalMinion(AActor* NewMinion)
 		UE_LOG(WOGLogSpawn, Display, TEXT("CurrentExternalMinion = nullptr -> %s"), *UEnum::GetValueAsString(GetLocalRole()));
 	}
 
-}
-
-void AWOGAttacker::Client_SetRavenMarkersVisibility_Implementation(const bool bIsVisible)
-{
-	SetRavenMarkersVisibility(bIsVisible);
 }
