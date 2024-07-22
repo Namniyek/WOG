@@ -545,7 +545,7 @@ public:
 	#pragma region Teleport
 	UFUNCTION()
 	void FinishTeleportCharacter(const FTransform& Destination);
-
+	
 	UFUNCTION(BlueprintCallable, Server, reliable)
 	void Server_StartTeleportCharacter(const FTransform& Destination);
 	#pragma endregion

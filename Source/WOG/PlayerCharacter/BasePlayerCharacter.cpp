@@ -2266,6 +2266,7 @@ void ABasePlayerCharacter::Multicast_Elim_Implementation(bool bPlayerLeftGame)
 	// GetMesh()->SetCollisionProfileName(FName("Ragdoll"));
 	// GetMesh()->SetAllBodiesSimulatePhysics(true);
 	// GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	SetCapsulePawnCollision(false);
 	StartDissolve();
 	GetMesh()->bPauseAnims = true;
 	GetCharacterMovement()->DisableMovement();

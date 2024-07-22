@@ -747,7 +747,6 @@ void AWOGBaseCharacter::StartDissolve(bool bIsReversed)
 	if (!bIsReversed)
 	{
 		DissolveTimeline->PlayFromStart();
-		SetCapsulePawnCollision(false);
 	}
 	else
 	{
