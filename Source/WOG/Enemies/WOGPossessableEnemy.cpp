@@ -17,7 +17,6 @@
 #include "TargetSystemComponent.h"
 #include "Subsystems/WOGUIManagerSubsystem.h"
 #include "ActorComponents/WOGAbilitySystemComponent.h"
-#include "ActorComponents/WOGUIManagerComponent.h"
 #include "AI/Combat/WOGBaseSquad.h"
 
 AWOGPossessableEnemy::AWOGPossessableEnemy()

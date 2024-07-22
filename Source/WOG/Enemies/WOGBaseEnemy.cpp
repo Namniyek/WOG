@@ -441,6 +441,7 @@ void AWOGBaseEnemy::BroadcastMagicHit_Implementation(AActor* AggressorActor, con
 	{
 		FGameplayEffectContextHandle SecondaryContext = AbilitySystemComponent.Get()->MakeEffectContext();
 		SecondaryContext.AddInstigator(AggressorCharacter, AggressorCharacter);
+		// ReSharper disable once CppExpressionWithoutSideEffects
 		ApplyGameplayEffectToSelf(AggressorMagicData.SecondaryEffect, SecondaryContext, AggressorMagicData.SecondaryEffectDuration);
 	}
 
