@@ -1922,6 +1922,7 @@ void ABasePlayerCharacter::HandleHitFromEnemyCharacter(AActor* AggressorActor, c
 		{
 			FGameplayEffectContextHandle SecondaryContext = AbilitySystemComponent.Get()->MakeEffectContext();
 			SecondaryContext.AddInstigator(AgressorEnemy, AgressorEnemy);
+			// ReSharper disable once CppExpressionWithoutSideEffects
 			ApplyGameplayEffectToSelf(AgressorEnemy->GetSecondaryDamageEffect(), SecondaryContext, 5.f);
 			UE_LOG(WOGLogCombat, Display, TEXT("SecondaryDamageEffect applied to %s"), *GetNameSafe(this));
 		}
@@ -1958,6 +1959,7 @@ void ABasePlayerCharacter::BroadcastMagicHit_Implementation(AActor* AggressorAct
 	{
 		FGameplayEffectContextHandle SecondaryContext = AbilitySystemComponent.Get()->MakeEffectContext();
 		SecondaryContext.AddInstigator(AgressorCharacter, AgressorCharacter);
+		// ReSharper disable once CppExpressionWithoutSideEffects
 		ApplyGameplayEffectToSelf(AggressorMagicData.SecondaryEffect, SecondaryContext, AggressorMagicData.SecondaryEffectDuration);
 	}
 
