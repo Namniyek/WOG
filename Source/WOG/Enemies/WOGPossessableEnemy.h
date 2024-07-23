@@ -54,6 +54,9 @@ public:
 	UInputAction* RangedAttackAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Base Match")
+	UInputAction* AltRangedAttackAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Base Match")
 	UInputAction* CloseAttackAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup|Input|Base Match")
@@ -87,7 +90,7 @@ protected:
 	#pragma endregion
 
 	#pragma region Player Input Functions
-
+	
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
@@ -105,6 +108,7 @@ protected:
 	void MainAltAttackActionPressed(const FInputActionValue& Value);
 	void SecondaryAltAttackActionPressed(const FInputActionValue& Value);
 	void RangedAttackActionPressed(const FInputActionValue& Value);
+	void AltRangedAttackActionPressed(const FInputActionValue& Value);
 	void CloseAttackActionPressed(const FInputActionValue& Value);
 	void BlockActionPressed(const FInputActionValue& Value);
 	void BlockActionReleased(const FInputActionValue& Value);
@@ -153,6 +157,7 @@ protected:
 
 	#pragma region Interface functions
 	virtual bool CanBePossessed_Implementation() const override;
+	virtual AActor* GetSquadCurrentTargetActor_Implementation() override;
 	#pragma endregion
 
 public:

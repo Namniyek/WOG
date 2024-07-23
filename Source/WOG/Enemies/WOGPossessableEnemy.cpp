@@ -127,6 +127,7 @@ void AWOGPossessableEnemy::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 		EnhancedInputComponent->BindAction(MainAltAttackAction, ETriggerEvent::Triggered, this, &ThisClass::MainAltAttackActionPressed);
 		EnhancedInputComponent->BindAction(SecondaryAltAttackAction, ETriggerEvent::Triggered, this, &ThisClass::SecondaryAltAttackActionPressed);
 		EnhancedInputComponent->BindAction(RangedAttackAction, ETriggerEvent::Triggered, this, &ThisClass::RangedAttackActionPressed);
+		EnhancedInputComponent->BindAction(AltRangedAttackAction, ETriggerEvent::Triggered, this, &ThisClass::AltRangedAttackActionPressed);
 		EnhancedInputComponent->BindAction(CloseAttackAction, ETriggerEvent::Triggered, this, &ThisClass::CloseAttackActionPressed);
 		EnhancedInputComponent->BindAction(BlockAction, ETriggerEvent::Started, this, &ThisClass::BlockActionPressed);
 		EnhancedInputComponent->BindAction(BlockAction, ETriggerEvent::Triggered, this, &ThisClass::BlockActionReleased);
@@ -208,19 +209,21 @@ void AWOGPossessableEnemy::SecondaryAltAttackActionPressed(const FInputActionVal
 void AWOGPossessableEnemy::RangedAttackActionPressed(const FInputActionValue& Value)
 {
 	SendAbilityLocalInput(EWOGAbilityInputID::Ranged);
-	UE_LOG(WOGLogSpawn, Display, TEXT("Ranged Attack button pressed"));
+}
+
+void AWOGPossessableEnemy::AltRangedAttackActionPressed(const FInputActionValue& Value)
+{
+	SendAbilityLocalInput(EWOGAbilityInputID::AltRanged);
 }
 
 void AWOGPossessableEnemy::CloseAttackActionPressed(const FInputActionValue& Value)
 {
 	SendAbilityLocalInput(EWOGAbilityInputID::AttackClose);
-	UE_LOG(WOGLogSpawn, Display, TEXT("Close Attack button pressed"));
 }
 
 void AWOGPossessableEnemy::BlockActionPressed(const FInputActionValue& Value)
 {
 	SendAbilityLocalInput(EWOGAbilityInputID::Block);
-	UE_LOG(WOGLogSpawn, Display, TEXT("Block button pressed"));
 	bSecondaryButtonPressed = true;
 }
 
@@ -295,6 +298,13 @@ void AWOGPossessableEnemy::UnpossessMinion_Implementation()
 bool AWOGPossessableEnemy::CanBePossessed_Implementation() const
 {
 	return bCanBePossessed;
+}
+
+AActor* AWOGPossessableEnemy::GetSquadCurrentTargetActor_Implementation()
+{
+	if(IsPlayerControlled()) return CurrentTarget;
+	if(!OwnerSquad) return nullptr;
+	return OwnerSquad->GetCurrentTargetActor();
 }
 
 void AWOGPossessableEnemy::HandleTODChange()

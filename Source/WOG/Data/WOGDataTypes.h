@@ -86,6 +86,7 @@ enum class EWOGAbilityInputID : uint8
 	AttackAltSec	UMETA(DisplayName = "AttackAlternativeSecondary"),
 	Block			UMETA(DisplayName = "Block"),
 	Ranged			UMETA(DisplayName = "Ranged"),
+	AltRanged		UMETA(DisplayName = "AlternativeRanged"),
 
 	//Character
 	Sprint			UMETA(DisplayName = "Sprint"),

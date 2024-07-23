@@ -523,6 +523,7 @@ int32 AWOGBaseEnemy::GetEnemySquadUnitIndex_Implementation()
 
 AActor* AWOGBaseEnemy::GetSquadCurrentTargetActor_Implementation()
 {
+	if(!OwnerSquad) return nullptr;
 	return OwnerSquad->GetCurrentTargetActor();
 }
 
@@ -831,7 +832,7 @@ void AWOGBaseEnemy::SpawnProjectile(const FMagicDataTable& MagicData, const FNam
 	{
 		Projectile->SetMagicData(MagicData);
 		
-		if (bIsHoming)
+		if (bIsHoming && CurrentTarget)
 		{
 			Projectile->Target = CurrentTarget;
 			Projectile->GetProjectileMovementComponent()->HomingTargetComponent = CurrentTarget->GetRootComponent();
