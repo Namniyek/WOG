@@ -119,6 +119,7 @@ protected:
 	UFUNCTION(NetMulticast, Reliable, BlueprintCallable)
 	void Multicast_SpawnProjectile(const FMagicDataTable& MagicData, const FName& SpawnSocket, const FRotator& SpawnRotation, bool bIsHoming);
 
+	UFUNCTION(BlueprintCallable)
 	void SpawnProjectile(const FMagicDataTable& MagicData, const FName& SpawnSocket, const FRotator& SpawnRotation, bool bIsHoming);
 
 	#pragma endregion

@@ -13,6 +13,7 @@
 #include "PlayerCharacter/WOGAttacker.h"
 #include "AbilitySystemComponent.h"
 #include "ActorComponents/WOGUIManagerComponent.h"
+#include "Enemies/WOGPossessableEnemy.h"
 #include "GameMode/WOGGameMode.h"
 #include "Subsystems/WOGEpicOnlineServicesSubsystem.h"
 #include "Subsystems/WOGUIManagerSubsystem.h"
@@ -43,7 +44,13 @@ void AWOGPlayerController::AcknowledgePossession(APawn* P)
 	if(UIManager)
 	{
 		UIManager->SetLocalOutlineEnabled(false);
+		if(P->IsA<AWOGPossessableEnemy>())
+		{
+			UIManager->AddCrosshairWidget();
+		}
 	}
+
+	SetControlRotation(P->GetActorRotation());
 }
 
 void AWOGPlayerController::OnNetCleanup(UNetConnection* Connection)

@@ -242,6 +242,7 @@ void AWOGPossessableEnemy::UnpossessActionPressed(const FInputActionValue& Value
 		UIManager->RemoveCrosshairWidget();
 		UIManager->SetLocalOutlineEnabled(true, 3);
 	}
+	TargetComponent->TargetLockOff();
 	Server_UnpossessMinion();
 }
 
@@ -359,11 +360,9 @@ void AWOGPossessableEnemy::KeyTimeHit(int32 CurrentTime)
 
 void AWOGPossessableEnemy::Server_UnpossessMinion_Implementation()
 {
-	CurrentTarget = nullptr;
-	
 	if(GetOwnerSquad())
 	{
-		GetOwnerSquad()->SendOrder(EEnemyOrder::EEO_Hold);
+		GetOwnerSquad()->SendOrder(EEnemyOrder::EEO_Follow);
 	}
 	
 	if (IsPlayerControlled())
