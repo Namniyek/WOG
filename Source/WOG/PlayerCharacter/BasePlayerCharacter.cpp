@@ -1348,8 +1348,8 @@ void ABasePlayerCharacter::ProcessMagicHit(const FHitResult& Hit, const FMagicDa
 		DamageToApply = MagicData.Value * MagicData.ValueMultiplier;
 		UE_LOG(LogTemp, Warning, TEXT("Base DamageToApply : %f"), DamageToApply);
 
-		float StrenghtMultiplier = AttributeSet->GetStrengthMultiplier();
-		DamageToApply *= StrenghtMultiplier;
+		float StrengthMultiplier = AttributeSet->GetStrengthMultiplier();
+		DamageToApply *= StrengthMultiplier;
 		UE_LOG(LogTemp, Warning, TEXT("DamageToApply after StrengthMultiplier : %f"), DamageToApply);
 	}
 
@@ -1829,7 +1829,7 @@ void ABasePlayerCharacter::HandleHitFromEnemyCharacter(AActor* AggressorActor, c
 		AbilityActivationPayload.EventTag = TAG_Ability_Debuff_Knockback;
 
 		//Apply knockback to agressor
-		bool bAgressorSuccess = UWOGBlueprintLibrary::TryActivateAbilityByTagWithData(
+		bool bAggressorSuccess = UWOGBlueprintLibrary::TryActivateAbilityByTagWithData(
 			AggressorActor,
 			TAG_Ability_Debuff_Knockback,
 			AbilityActivationPayload);
@@ -1840,7 +1840,7 @@ void ABasePlayerCharacter::HandleHitFromEnemyCharacter(AActor* AggressorActor, c
 			TAG_Ability_Debuff_Knockback,
 			AbilityActivationPayload);
 
-		UE_LOG(WOGLogCombat, Display, TEXT("Agressor knockback applied: %s"), bAgressorSuccess ? *FString("True") : *FString("False"));
+		UE_LOG(WOGLogCombat, Display, TEXT("Agressor knockback applied: %s"), bAggressorSuccess ? *FString("True") : *FString("False"));
 		UE_LOG(WOGLogCombat, Display, TEXT("Victim knockback applied: %s"), bVictimSuccess ? *FString("True") : *FString("False"));
 		return;
 	}

@@ -22,6 +22,7 @@
 #include "Libraries/WOGBlueprintLibrary.h"
 #include "Magic/Projectile/WOGBaseMagicProjectile.h"
 #include "GameFramework/ProjectileMovementComponent.h"
+#include "PlayerCharacter/WOGDefender.h"
 
 AWOGBaseEnemy::AWOGBaseEnemy()
 {
@@ -406,7 +407,20 @@ void AWOGBaseEnemy::BroadcastHit_Implementation(AActor* AggressorActor, const FH
 		{
 			UE_LOG(WOGLogCombat, Error, TEXT("Damage to %s not applied"), *GetNameSafe(this));
 		}
+
+		//Give adrenaline or other effect to aggressor player
+		ABasePlayerCharacter* AggressorPlayer = Cast<ABasePlayerCharacter>(AggressorActor);
+		if(AggressorPlayer && AggressorPlayer->DamageEffectForSelf)
+		{
+			const FGameplayTag CallerTag = AggressorActor->IsA<AWOGDefender>() ? TAG_Data_Adrenaline : FGameplayTag();
+
+			const FGameplayEffectSpecHandle Spec = AbilitySystemComponent->MakeOutgoingSpec(AggressorPlayer->DamageEffectForSelf, 1, DamageContext);
+			UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(Spec, CallerTag, DamageToApply*0.5);
+			AggressorPlayer->GetAbilitySystemComponent()->ApplyGameplayEffectSpecToSelf(*Spec.Data);
+		}
 	}
+
+	
 }
 
 void AWOGBaseEnemy::BroadcastMagicHit_Implementation(AActor* AggressorActor, const FHitResult& Hit,

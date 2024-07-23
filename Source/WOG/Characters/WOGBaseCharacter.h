@@ -49,7 +49,7 @@ public:
 
 	#pragma region Handle Combat
 	//Line trace for item under the crosshair
-	bool TraceUnderCrosshair(FHitResult& OutHitResult, FVector& OutHitLocation);
+	bool TraceUnderCrosshair(FHitResult& OutHitResult, FVector& OutHitLocation) const;
 	UFUNCTION(BlueprintCallable)
 	void GetBeamEndLocation(const FVector& StartLocation, FHitResult& OutHitResult);
 	#pragma endregion 
@@ -68,7 +68,7 @@ protected:
 
 	#pragma region GAS functions
 public:
-	bool ApplyGameplayEffectToSelf(TSubclassOf<UGameplayEffect> Effect, const FGameplayEffectContextHandle& InEffectContext, float Duration = 1.f) const;
+	bool ApplyGameplayEffectToSelf(const TSubclassOf<UGameplayEffect>& Effect, const FGameplayEffectContextHandle& InEffectContext, float Duration = 1.f) const;
 
 	void GiveDefaultAbilities();
 	void ApplyDefaultEffects();

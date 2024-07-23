@@ -185,6 +185,7 @@ void AWOGBaseCharacter::ApplyDefaultEffects()
 
 	for (auto DefaultEffect : DefaultAbilitiesAndEffects.Effects)
 	{
+		// ReSharper disable once CppExpressionWithoutSideEffects
 		ApplyGameplayEffectToSelf(DefaultEffect, EffectContext);
 	}
 }
@@ -214,7 +215,7 @@ void AWOGBaseCharacter::GrantDefaultInventoryItems()
 	}
 }
 
-bool AWOGBaseCharacter::ApplyGameplayEffectToSelf(TSubclassOf<UGameplayEffect> Effect, const FGameplayEffectContextHandle& InEffectContext, float Duration) const
+bool AWOGBaseCharacter::ApplyGameplayEffectToSelf(const TSubclassOf<UGameplayEffect>& Effect, const FGameplayEffectContextHandle& InEffectContext, float Duration) const
 {
 	if (!Effect.Get()) return false;
 
@@ -256,7 +257,8 @@ void AWOGBaseCharacter::OnHealthAttributeChanged(const FOnAttributeChangeData& D
 				AggressorPC->GetUIManagerComponent()->Client_AddFloatingDamageText(DamageAmount, this);
 
 				//Handle the character health bar
-				float MaxHealthValue = AttributeSet->GetMaxHealth();
+				bool bFound = false;
+				float MaxHealthValue = AbilitySystemComponent->GetGameplayAttributeValue(AttributeSet->GetMaxHealthAttribute(), bFound);
 				AggressorPC->GetUIManagerComponent()->Client_AddCharacterHealthBarWidget(Data.NewValue, MaxHealthValue, this);
 			}
 		}
@@ -527,7 +529,7 @@ bool AWOGBaseCharacter::CanBePossessed_Implementation() const
 	return false;
 }
 
-bool AWOGBaseCharacter::TraceUnderCrosshair(FHitResult& OutHitResult, FVector& OutHitLocation)
+bool AWOGBaseCharacter::TraceUnderCrosshair(FHitResult& OutHitResult, FVector& OutHitLocation) const
 {
 	//Get Viewport size
 	FVector2D ViewportSize;
@@ -779,6 +781,7 @@ void AWOGBaseCharacter::SetCapsulePawnCollision(const bool& bEnable) const
 	}
 }
 
+// ReSharper disable once CppMemberFunctionMayBeConst
 void AWOGBaseCharacter::UpdateDissolveMaterial(const float DissolveValue)
 {
 	if (CharacterMI)
