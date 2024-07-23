@@ -804,6 +804,11 @@ void AWOGBaseEnemy::ElimTimerFinished()
 	Destroy();
 }
 
+void AWOGBaseEnemy::Server_SpawnProjectile_Implementation(const FMagicDataTable& MagicData, const FName& SpawnSocket, const FRotator& SpawnRotation, bool bIsHoming)
+{
+	Multicast_SpawnProjectile(MagicData, SpawnSocket, SpawnRotation, bIsHoming);
+}
+
 void AWOGBaseEnemy::Multicast_SpawnProjectile_Implementation(const FMagicDataTable& MagicData, const FName& SpawnSocket, const FRotator& SpawnRotation, bool bIsHoming)
 {
 	SpawnProjectile(MagicData, SpawnSocket, SpawnRotation, bIsHoming);

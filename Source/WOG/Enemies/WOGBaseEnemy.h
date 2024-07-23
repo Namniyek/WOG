@@ -116,6 +116,9 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnCharacterElimEvent();
 
+	UFUNCTION(Server, Reliable, BlueprintCallable)
+	void Server_SpawnProjectile(const FMagicDataTable& MagicData, const FName& SpawnSocket, const FRotator& SpawnRotation, bool bIsHoming);
+	
 	UFUNCTION(NetMulticast, Reliable, BlueprintCallable)
 	void Multicast_SpawnProjectile(const FMagicDataTable& MagicData, const FName& SpawnSocket, const FRotator& SpawnRotation, bool bIsHoming);
 
