@@ -131,8 +131,6 @@ ABasePlayerCharacter::ABasePlayerCharacter()
 	StaminaWidgetContainer->SetDrawAtDesiredSize(true);
 	StaminaWidgetContainer->SetupAttachment(GetRootComponent());
 
-	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
-
 	GetMesh()->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPose;
 }
 

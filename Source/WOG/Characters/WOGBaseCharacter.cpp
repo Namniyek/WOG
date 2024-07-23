@@ -45,6 +45,7 @@ AWOGBaseCharacter::AWOGBaseCharacter()
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetStaminaAttribute()).AddUObject(this, &ThisClass::OnStaminaAttributeChanged);
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetMaxMovementSpeedAttribute()).AddUObject(this, &ThisClass::OnMaxMovementSpeedAttributeChanged);
 	AbilitySystemComponent->OnGameplayEffectAppliedDelegateToSelf.AddUObject(this, &ThisClass::OnGameplayEffectAppliedToSelf);
+	AbilitySystemComponent->OnAnyGameplayEffectRemovedDelegate().AddUObject(this, &ThisClass::OnAnyGameplayEffectRemoved);
 	
 	AttributeSet = CreateDefaultSubobject<UWOGAttributeSetBase>(TEXT("AttributeSet"));
 
@@ -386,7 +387,28 @@ void AWOGBaseCharacter::OnGameplayEffectAppliedToSelf(UAbilitySystemComponent* S
 		if (Tag == TAG_State_Debuff_Freeze && !IsA<AWOGBaseEnemy>())
 		{
 			Server_SetCharacterFrozen(true);
-			UE_LOG(LogTemp, Display, TEXT("Server_SetCharacterFrozen(true) called"));
+		}
+		if (Tag == TAG_State_Debuff_Burn)
+		{
+			GEngine->AddOnScreenDebugMessage(1, 5.f, FColor::Orange, FString("Adding Burning cue to: ") + GetNameSafe(this));
+			FGameplayCueParameters CueParams;
+			AbilitySystemComponent->AddGameplayCue(TAG_Cue_Magic_Fire, CueParams);
+		}
+	}
+}
+
+void AWOGBaseCharacter::OnAnyGameplayEffectRemoved(const FActiveGameplayEffect& ActiveGameplayEffect)
+{
+	if(!HasAuthority()) return;
+	
+	FGameplayTagContainer GrantedTags;
+	ActiveGameplayEffect.Spec.GetAllGrantedTags(GrantedTags);
+	for (auto Tag : GrantedTags)
+	{
+		if (Tag == TAG_State_Debuff_Burn)
+		{
+			GEngine->AddOnScreenDebugMessage(1, 5.f, FColor::Orange, FString("Burning effect removed from: ") + GetNameSafe(this));
+			AbilitySystemComponent->RemoveGameplayCue(TAG_Cue_Magic_Fire);
 		}
 	}
 }

@@ -97,6 +97,7 @@ protected:
 	virtual void OnStaminaAttributeChanged(const FOnAttributeChangeData& Data);
 	virtual void OnMaxMovementSpeedAttributeChanged(const FOnAttributeChangeData& Data);
 	virtual void OnGameplayEffectAppliedToSelf(UAbilitySystemComponent* Source, const FGameplayEffectSpec& Spec, FActiveGameplayEffectHandle Handle);
+	virtual void OnAnyGameplayEffectRemoved(const FActiveGameplayEffect& ActiveGameplayEffect);
 	#pragma endregion
 	
 	#pragma region TimeOfDay

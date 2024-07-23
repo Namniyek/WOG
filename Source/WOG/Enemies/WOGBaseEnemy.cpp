@@ -83,11 +83,6 @@ void AWOGBaseEnemy::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLif
 	DOREPLIFETIME(AWOGBaseEnemy, CosmeticsDataAsset);
 }
 
-float AWOGBaseEnemy::DoStuff_Implementation_Implementation(const float& NewParam) const
-{
-	return 0.f;
-}
-
 void AWOGBaseEnemy::BeginPlay()
 {
 	Super::BeginPlay();

@@ -164,6 +164,8 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Cue_Movement_Jump, "GameplayCue.Movement.Jump");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Cue_KO, "GameplayCue.KO");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Cue_Elim, "GameplayCue.Elim");
 
+UE_DEFINE_GAMEPLAY_TAG(TAG_Cue_Magic_Fire, "GameplayCue.Magic.Fire");
+
 UE_DEFINE_GAMEPLAY_TAG(TAG_Cue_Vocal_Weapon_BlockImpact, "GameplayCue.Vocal.Weapon.BlockImpact");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Cue_Vocal_Weapon_AttackHeavy, "GameplayCue.Vocal.Weapon.AttackHeavy");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Cue_Vocal_Weapon_AttackLight, "GameplayCue.Vocal.Weapon.AttackLight");

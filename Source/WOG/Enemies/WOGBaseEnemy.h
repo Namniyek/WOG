@@ -26,9 +26,6 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 protected:
-	UFUNCTION(BlueprintNativeEvent)
-	float DoStuff_Implementation(const float& NewParam) const;
-	
 	virtual void BeginPlay() override;
 
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly)
