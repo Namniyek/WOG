@@ -2,6 +2,8 @@
 
 
 #include "Resources/WOGStashBase.h"
+
+#include "GameplayCueNotify_Actor.h"
 #include "WOG.h"
 #include "Components/SphereComponent.h"
 #include "Camera/CameraComponent.h"
@@ -362,6 +364,7 @@ void AWOGStashBase::OnCameraBlendOutFinished()
 		PlayerUsingStash->GetAttachedActors(OutActors, true, true);
 		for (auto Actor : OutActors)
 		{
+			if(Actor->IsA<AGameplayCueNotify_Actor>()) continue;
 			Actor->SetActorHiddenInGame(false);
 		}
 

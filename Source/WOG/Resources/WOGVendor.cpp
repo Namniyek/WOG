@@ -1,6 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Resources/WOGVendor.h"
+
+#include "GameplayCueNotify_Actor.h"
 #include "WOG.h"
 #include "Components/SphereComponent.h"
 #include "Camera/CameraComponent.h"
@@ -371,6 +373,7 @@ void AWOGVendor::OnCameraBlendOutFinished()
 		PlayerUsingVendor->GetAttachedActors(OutActors, true, true);
 		for (auto Actor : OutActors)
 		{
+			if(Actor->IsA<AGameplayCueNotify_Actor>()) continue;
 			Actor->SetActorHiddenInGame(false);
 		}
 
