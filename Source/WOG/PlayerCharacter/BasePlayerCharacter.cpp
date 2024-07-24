@@ -1261,7 +1261,12 @@ void ABasePlayerCharacter::HandleStateElimmed(AController* InstigatedBy)
 
 void ABasePlayerCharacter::ProcessHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh)
 {
-	if (!WeaponMesh) return;
+	if (!WeaponMesh || !Hit.GetActor()) return;
+	if (UWOGBlueprintLibrary::GetCharacterData(Hit.GetActor()).bIsAttacker == GetCharacterData().bIsAttacker)
+	{
+		UE_LOG(WOGLogCombat, Warning, TEXT("Friendly fire between %s and %s. Aborting hit"), *GetNameSafe(this), *GetNameSafe(Hit.GetActor()));
+		return;
+	}
 
 	AWOGBaseWeapon* AttackerWeapon = WeaponMesh->GetOwner() ? Cast<AWOGBaseWeapon>(WeaponMesh->GetOwner()) : nullptr;
 	if (!AttackerWeapon)
@@ -1339,6 +1344,12 @@ void ABasePlayerCharacter::ProcessMagicHit(const FHitResult& Hit, const FMagicDa
 		return;
 	}
 
+	if (!Hit.GetActor() || UWOGBlueprintLibrary::GetCharacterData(Hit.GetActor()).bIsAttacker == GetCharacterData().bIsAttacker)
+	{
+		UE_LOG(WOGLogCombat, Warning, TEXT("Friendly fire between %s and %s. Aborting hit"), *GetNameSafe(this), *GetNameSafe(Hit.GetActor()));
+		return;
+	}
+
 	//Get the Damage to apply values:
 	float DamageToApply = 0.f;;
 	if (HasAuthority())
@@ -1376,6 +1387,12 @@ void ABasePlayerCharacter::ProcessRangedHit(const FHitResult& Hit, const float& 
 		return;
 	}
 
+	if (UWOGBlueprintLibrary::GetCharacterData(Hit.GetActor()).bIsAttacker == GetCharacterData().bIsAttacker)
+	{
+		UE_LOG(WOGLogCombat, Warning, TEXT("Friendly fire between %s and %s. Aborting hit"), *GetNameSafe(this), *GetNameSafe(Hit.GetActor()));
+		return;
+	}
+	
 	//Get the Damage to apply values:
 	float LocalDamageToApply = DamageToApply;;
 	if (HasAuthority())

@@ -143,9 +143,15 @@ void AWOGBaseEnemy::OnAttackHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh)
 
 void AWOGBaseEnemy::ProcessHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh)
 {
-	if (!WeaponMesh)
+	if (!Hit.GetActor() || !WeaponMesh)
 	{
-		UE_LOG(WOGLogCombat, Error, TEXT("Invalid WeaponMesh"));
+		UE_LOG(WOGLogCombat, Error, TEXT("Invalid WeaponMesh or no valid hit actor"));
+		return;
+	}
+
+	if (UWOGBlueprintLibrary::GetCharacterData(Hit.GetActor()).bIsAttacker == GetCharacterData().bIsAttacker)
+	{
+		UE_LOG(WOGLogCombat, Warning, TEXT("Friendly fire between %s and %s. Aborting hit"), *GetNameSafe(this), *GetNameSafe(Hit.GetActor()));
 		return;
 	}
 
@@ -185,6 +191,11 @@ void AWOGBaseEnemy::ProcessRangedHit(const FHitResult& Hit, const float& DamageT
 		UE_LOG(LogTemp, Error, TEXT("No Victim actor"));
 		return;
 	}
+	if (UWOGBlueprintLibrary::GetCharacterData(Hit.GetActor()).bIsAttacker == GetCharacterData().bIsAttacker)
+	{
+		UE_LOG(WOGLogCombat, Warning, TEXT("Friendly fire between %s and %s. Aborting hit"), *GetNameSafe(this), *GetNameSafe(Hit.GetActor()));
+		return;
+	}
 	
 	//Get the Damage to apply values:
 	float LocalDamageToApply = BaseDamage;
@@ -220,6 +231,11 @@ void AWOGBaseEnemy::ProcessMagicHit(const FHitResult& Hit, const FMagicDataTable
 	if (!Hit.GetActor())
 	{
 		UE_LOG(WOGLogSpawn, Error, TEXT("No Victim actor for WOGBaseEnemy ProcessMagicHit()"));
+		return;
+	}
+	if (UWOGBlueprintLibrary::GetCharacterData(Hit.GetActor()).bIsAttacker == GetCharacterData().bIsAttacker)
+	{
+		UE_LOG(WOGLogCombat, Warning, TEXT("Friendly fire between %s and %s. Aborting hit"), *GetNameSafe(this), *GetNameSafe(Hit.GetActor()));
 		return;
 	}
 
