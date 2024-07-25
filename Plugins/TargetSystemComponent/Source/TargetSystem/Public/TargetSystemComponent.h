@@ -27,6 +27,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Target System")
 	float MinimumDistanceToEnable = 1200.0f;
 
+	// The radius for the sphere trace to find targetable actors.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Target System")
+	float TargetSphereTraceRadius = 300.f;
+
 	// The AActor Subclass to search for targetable Actors.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Target System")
 	TArray<TSubclassOf<AActor>> TargetableActors;
@@ -115,7 +119,7 @@ public:
 	// Only used when Sticky Target is enabled.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Target System|Sticky Feeling on Target Switch")
 	float StickyRotationThreshold = 30.0f;
-
+	
 	// Function to call to target a new actor.
 	UFUNCTION(BlueprintCallable, Category = "Target System")
 	void TargetActor();
@@ -132,6 +136,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Target System")
 	void TargetActorWithAxisInput(float AxisValue);
 
+	//Custom function to find target actor through sphere trace
+	AActor* FindTargetActor();
+	
 	// Function to get TargetLocked private variable status
 	UFUNCTION(BlueprintCallable, Category = "Target System")
 	bool GetTargetLockedStatus();

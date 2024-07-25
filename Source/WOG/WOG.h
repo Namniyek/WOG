@@ -6,6 +6,8 @@
 
 #define ECC_DamageTrace ECC_GameTraceChannel6
 #define ECC_Damageable ECC_GameTraceChannel10
+#define ECC_WoodAxeTrace ECC_GameTraceChannel8
+#define ECC_PicaxeTrace ECC_GameTraceChannel9
 
 static FName NAME_WeaponSlot_Primary = FName("Primary");
 static FName NAME_WeaponSlot_BackMain = FName("BackMain");

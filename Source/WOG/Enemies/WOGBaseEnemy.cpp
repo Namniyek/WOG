@@ -149,12 +149,6 @@ void AWOGBaseEnemy::ProcessHit(FHitResult Hit, UPrimitiveComponent* WeaponMesh)
 		return;
 	}
 
-	if (UWOGBlueprintLibrary::GetCharacterData(Hit.GetActor()).bIsAttacker == GetCharacterData().bIsAttacker)
-	{
-		UE_LOG(WOGLogCombat, Warning, TEXT("Friendly fire between %s and %s. Aborting hit"), *GetNameSafe(this), *GetNameSafe(Hit.GetActor()));
-		return;
-	}
-
 	//Get the Damage to apply values:
 	float DamageToApply = BaseDamage;
 	if (HasMatchingGameplayTag(TAG_State_Weapon_AttackHeavy) && HasAuthority())
@@ -191,12 +185,7 @@ void AWOGBaseEnemy::ProcessRangedHit(const FHitResult& Hit, const float& DamageT
 		UE_LOG(LogTemp, Error, TEXT("No Victim actor"));
 		return;
 	}
-	if (UWOGBlueprintLibrary::GetCharacterData(Hit.GetActor()).bIsAttacker == GetCharacterData().bIsAttacker)
-	{
-		UE_LOG(WOGLogCombat, Warning, TEXT("Friendly fire between %s and %s. Aborting hit"), *GetNameSafe(this), *GetNameSafe(Hit.GetActor()));
-		return;
-	}
-	
+
 	//Get the Damage to apply values:
 	float LocalDamageToApply = BaseDamage;
 	if (HasMatchingGameplayTag(TAG_State_Weapon_AttackHeavy) && HasAuthority())
@@ -233,11 +222,6 @@ void AWOGBaseEnemy::ProcessMagicHit(const FHitResult& Hit, const FMagicDataTable
 		UE_LOG(WOGLogSpawn, Error, TEXT("No Victim actor for WOGBaseEnemy ProcessMagicHit()"));
 		return;
 	}
-	if (UWOGBlueprintLibrary::GetCharacterData(Hit.GetActor()).bIsAttacker == GetCharacterData().bIsAttacker)
-	{
-		UE_LOG(WOGLogCombat, Warning, TEXT("Friendly fire between %s and %s. Aborting hit"), *GetNameSafe(this), *GetNameSafe(Hit.GetActor()));
-		return;
-	}
 
 	//Get the Damage to apply values:
 	float DamageToApply = 0.f;;
@@ -268,6 +252,12 @@ void AWOGBaseEnemy::BroadcastHit_Implementation(AActor* AggressorActor, const FH
 	if (HasMatchingGameplayTag(TAG_State_Dead)) return;
 	if (HasMatchingGameplayTag(TAG_State_Minion_Dodging)) return;
 	if (!AbilitySystemComponent.Get()) return;
+	//Handle friendly fire
+	if (UWOGBlueprintLibrary::GetCharacterData(AggressorActor).bIsAttacker == GetCharacterData().bIsAttacker)
+	{
+		UE_LOG(WOGLogCombat, Warning, TEXT("Friendly fire between %s and %s. Aborting hit"), *GetNameSafe(AggressorActor), *GetNameSafe(this));
+		return;
+	}
 
 	AWOGBaseCharacter* AggressorCharacter = Cast<AWOGBaseCharacter>(AggressorActor);
 	AWOGBaseWeapon* AggressorWeapon = Cast<AWOGBaseWeapon>(InstigatorWeapon);
@@ -441,6 +431,12 @@ void AWOGBaseEnemy::BroadcastMagicHit_Implementation(AActor* AggressorActor, con
 	if (HasMatchingGameplayTag(TAG_State_Dead)) return;
 	if (HasMatchingGameplayTag(TAG_State_Minion_Dodging)) return;
 	if (!AbilitySystemComponent.Get()) return;
+	//Handle friendly fire
+	if (UWOGBlueprintLibrary::GetCharacterData(AggressorActor).bIsAttacker == GetCharacterData().bIsAttacker)
+	{
+		UE_LOG(WOGLogCombat, Warning, TEXT("Friendly fire between %s and %s. Aborting hit"), *GetNameSafe(AggressorActor), *GetNameSafe(this));
+		return;
+	}
 
 	if (!AggressorActor) return;
 	TObjectPtr<AWOGBaseCharacter> AggressorCharacter = Cast<AWOGBaseCharacter>(AggressorActor);

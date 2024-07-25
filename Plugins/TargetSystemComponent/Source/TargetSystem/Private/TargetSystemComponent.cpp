@@ -8,10 +8,10 @@
 #include "Camera/CameraComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "TimerManager.h"
+#include "WOG.h"
 #include "Engine/World.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
-#include "GameFramework/SpringArmComponent.h"
 
 
 // Sets default values for this component's properties
@@ -97,9 +97,13 @@ void UTargetSystemComponent::TargetActor()
 	}
 	else
 	{
-		const TArray<AActor*> Actors = FindTargetableActors();
-		LockedOnTargetActor = FindNearestTarget(Actors);
+		// const TArray<AActor*> Actors = FindTargetableActors();
+		// LockedOnTargetActor = FindNearestTarget(Actors);
+
+		LockedOnTargetActor = FindTargetActor();
 		TargetLockOn(LockedOnTargetActor);
+
+		
 	}
 }
 
@@ -196,6 +200,87 @@ void UTargetSystemComponent::TargetActorWithAxisInput(const float AxisValue)
 
 		bIsSwitchingTarget = true;
 	}
+}
+
+AActor* UTargetSystemComponent::FindTargetActor()
+{
+	//Handle return if the TargetableActors class array is empty
+	if (TargetableActors.IsEmpty())
+	{
+		TS_LOG(Error, TEXT("No valid class for targeting specified"));
+		return nullptr;
+	}
+
+	/*
+	 * Handle the sphere trace from the player camera and forward
+	 */
+	FVector Start = FVector();
+	FVector End = FVector();
+	if(APlayerCameraManager* CameraManager = UGameplayStatics::GetPlayerCameraManager(OwnerPawn, 0))
+	{
+		Start = CameraManager->GetCameraLocation() + CameraManager->GetCameraRotation().Vector() * (TargetSphereTraceRadius*2);
+		End = CameraManager->GetCameraLocation() + CameraManager->GetCameraRotation().Vector() * MinimumDistanceToEnable;
+	}
+	
+	TArray<AActor*> IgnoredActors;
+	IgnoredActors.Init(OwnerActor, 1);
+	TArray<FHitResult> Hits;
+	TArray<TEnumAsByte<EObjectTypeQuery>> Objects;
+	Objects.Add(UEngineTypes::ConvertToObjectType(ECC_Damageable));
+	bool bTraceSuccess = UKismetSystemLibrary::SphereTraceMultiForObjects(
+		OwnerPawn,
+		Start,
+		End,
+		TargetSphereTraceRadius,
+		Objects,
+		true,
+		IgnoredActors,
+		EDrawDebugTrace::None,
+		Hits,
+		true);
+
+	//Handle return in case the trace failed
+	if(!bTraceSuccess || Hits.IsEmpty())
+	{
+		TS_LOG(Error, TEXT("No valid Trace Results from the sphere trace"));
+		return nullptr;
+	}
+
+	//Filters the trace results by keeping only actors of the correct class and targetable
+	TArray<AActor*> EligibleActors = {};
+	for(FHitResult Hit : Hits)
+	{
+		if(!Hit.GetActor()) continue;
+		for(TSubclassOf<AActor> Subclass : TargetableActors)
+		{
+			if(Hit.GetActor()->IsA(Subclass) && TargetIsTargetable(Hit.GetActor()) && !EligibleActors.Contains(Hit.GetActor()))
+			{
+				EligibleActors.AddUnique(Hit.GetActor());
+			}	
+		}
+	}
+
+	// From the hit actors, check distance and return the nearest
+	if (EligibleActors.IsEmpty())
+	{
+		TS_LOG(Error, TEXT("No valid EligibleActors after filtering the results"));
+		return nullptr;
+	}
+
+	//Loop through the EligibleActors array and pick the closest one
+	float ClosestDistance = ClosestTargetDistance;
+	AActor* Target = nullptr;
+	for (AActor* Actor : EligibleActors)
+	{
+		const float Distance = GetDistanceFromCharacter(Actor);
+		if (Distance < ClosestDistance)
+		{
+			ClosestDistance = Distance;
+			Target = Actor;
+		}
+	}
+
+	return Target;
 }
 
 bool UTargetSystemComponent::GetTargetLockedStatus()
