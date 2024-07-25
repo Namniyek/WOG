@@ -1651,12 +1651,13 @@ void ABasePlayerCharacter::HandleHitFromPlayerCharacter(AActor* AggressorActor, 
 
 		}
 
-		if (AgressorCharacter->HasMatchingGameplayTag(TAG_State_Weapon_AttackLight))
+		//Send hit react for light hit or arrow hit
+		if (AgressorCharacter->HasMatchingGameplayTag(TAG_State_Weapon_AttackLight) || AgressorCharacter->HasMatchingGameplayTag(TAG_State_Weapon_Ranged_Fire))
 		{
 			//Send Event light HitReact to victim
 			AbilityActivationPayload = FGameplayEventData();
 			AbilityActivationPayload.EventTag = TAG_Ability_Debuff_HitReact;
-			AbilityActivationPayload.Instigator = InstigatorWeapon;
+			AbilityActivationPayload.Instigator = InstigatorWeapon ? InstigatorWeapon : AggressorActor;
 
 			if (!InstigatorWeapon)
 			{

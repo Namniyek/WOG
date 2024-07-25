@@ -33,6 +33,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_State_Weapon_Parry, "State.Weapon.Parry");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Weapon_Aim, "State.Weapon.Aim");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Weapon_Ranged_Throw, "State.Weapon.Ranged.Throw");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Weapon_Ranged_AOE, "State.Weapon.Ranged.AOE");
+UE_DEFINE_GAMEPLAY_TAG(TAG_State_Weapon_Ranged_Fire, "State.Weapon.Ranged.Fire");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Magic_AOE, "State.Magic.AOE");
 UE_DEFINE_GAMEPLAY_TAG(TAG_State_Magic_Projectile, "State.Magic.Projectile");
