@@ -9,6 +9,9 @@
 #include "Interfaces/OnlineSessionInterface.h"
 #include "WOGEpicOnlineServicesSubsystem.generated.h"
 
+class IVoiceChatUser;
+struct FVoiceChatResult;
+
 /**
  * 
  */
@@ -135,6 +138,9 @@ protected:
 	void JoinFriendServer(const FOnlineSessionSearchResult& InviteResult);
 
 	void UpdatePresence(const FString& NewPresenceStatus = FString()) const;
+
+	void VoiceChatLogin();
+	void VoiceChatLogout();
 private:
 	
 	#pragma region Callback functions
@@ -160,9 +166,12 @@ private:
 	void OnSessionUserInviteAccepted(bool bWasSuccessful, int ControllerId, TSharedPtr<const FUniqueNetId> UserId, const FOnlineSessionSearchResult& InviteResult);
 
 	//This function handles user being disconnected from lobby
-	void OnLobbyMemberDisconnected(const FUniqueNetId & LocalUserId, const FOnlineLobbyId & LobbyId, const FUniqueNetId & MemberId,	bool bWasKicked) const;
+	void OnLobbyMemberDisconnected(const FUniqueNetId & LocalUserId, const FOnlineLobbyId & LobbyId, const FUniqueNetId & MemberId,	bool bWasKicked);
 
 	void HandleFindFriendSessionComplete(int32 LocalUserNum, bool bWasSuccessful, const TArray<FOnlineSessionSearchResult> &Results);
+
+	//This function handles user being logged in for the Voice Chat
+	void OnVoiceChatLoginComplete(const FString& PlayerName, const FVoiceChatResult& Result);
 	#pragma endregion
 
 	#pragma region Delegate handles
@@ -190,6 +199,8 @@ private:
 	FString CachedMapName = FString();
 
 	FOnlineSessionSearchResult CachedReconnectSession = FOnlineSessionSearchResult();
+	
+	IVoiceChatUser* VoiceChatUser;
 	#pragma endregion 
 
 public:

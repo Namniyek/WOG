@@ -13,6 +13,7 @@
 #include "Interfaces/OnlinePresenceInterface.h"
 #include "Kismet/GameplayStatics.h"
 #include "Online/OnlineSessionNames.h"
+#include "VoiceChat.h"
 
 void UWOGEpicOnlineServicesSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -21,7 +22,7 @@ void UWOGEpicOnlineServicesSubsystem::Initialize(FSubsystemCollectionBase& Colle
 	IOnlineSubsystem* Subsystem = Online::GetSubsystem(this->GetWorld());
 	const IOnlineSessionPtr Session = Subsystem->GetSessionInterface();
 	TSharedPtr<IOnlineLobby> Lobby = Online::GetLobbyInterface(Subsystem);
-
+	
 	Session->OnSessionUserInviteAcceptedDelegates.AddUObject(this, &ThisClass::OnSessionUserInviteAccepted);
 	Lobby->OnMemberDisconnectDelegates.AddUObject(this, &ThisClass::OnLobbyMemberDisconnected);
 }
@@ -91,6 +92,9 @@ void UWOGEpicOnlineServicesSubsystem::CreateLobby(bool bIsPublic, bool bVoiceCha
 	// TODO - To enable voice chat on a lobby, set the special "EOSVoiceChat_Enabled" metadata value.
 	LobbyTransaction->SetMetadata.Add(TEXT("EOSVoiceChat_Enabled"), bVoiceChat);
 
+	//Debug echo setting for the lobby
+	LobbyTransaction->SetMetadata.Add(TEXT("EOSVoiceChat_Echo"), true);
+
 	// To allow clients connecting to the listen server to join the lobby based on just the ID, we need
 	// to set it to public.
 	LobbyTransaction->Public = bIsPublic;
@@ -144,6 +148,8 @@ void UWOGEpicOnlineServicesSubsystem::HandleCreateLobbyCompleted(const FOnlineEr
 	
 		UGameplayStatics::OpenLevel(this, *CachedMapName, true, FString("listen"));
 		// You'll need to store IdStr somewhere, as that is what needs to be sent to connecting clients.
+
+		VoiceChatLogin();
 	}
 	else
 	{
@@ -310,6 +316,7 @@ void UWOGEpicOnlineServicesSubsystem::JoinLobby(const FString& DesiredLobbyIdStr
 		{
 			// The lobby was joined successfully.
 			GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Green, FString("Lobby joined successfully"));
+			VoiceChatLogin();
 		}
 		else
 		{
@@ -433,11 +440,17 @@ void UWOGEpicOnlineServicesSubsystem::DisconnectFromLobby()
 }
 
 void UWOGEpicOnlineServicesSubsystem::OnLobbyMemberDisconnected(const FUniqueNetId& LocalUserId,
-	const FOnlineLobbyId& LobbyId, const FUniqueNetId& MemberId, bool bWasKicked) const
+	const FOnlineLobbyId& LobbyId, const FUniqueNetId& MemberId, bool bWasKicked)
 {
-	if(bWasKicked && LocalUserId == MemberId)
+	if(LocalUserId == MemberId)
 	{
-		UGameplayStatics::OpenLevel(this->GetWorld(), FName("StartUp"), true);
+		//Logout user from the lobby voice chat
+		VoiceChatLogout();
+		
+		if(bWasKicked)
+		{
+			UGameplayStatics::OpenLevel(this->GetWorld(), FName("StartUp"), true);
+		}
 	}
 }
 
@@ -787,6 +800,20 @@ void UWOGEpicOnlineServicesSubsystem::HandleFindFriendSessionComplete(int32 Loca
 	ReconnectSessionFoundDelegate.Broadcast(false, FString());
 }
 
+void UWOGEpicOnlineServicesSubsystem::OnVoiceChatLoginComplete(const FString& PlayerName,
+	const FVoiceChatResult& Result)
+{
+	if (Result.IsSuccess())
+	{
+		// You can now use this->VoiceChatUser to control the user's voice chat.
+		GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Green, PlayerName + FString(" logged in VoiceChat successfully"));
+	}
+	else
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Red, Result.ErrorDesc);
+	}
+}
+
 void UWOGEpicOnlineServicesSubsystem::UnregisterFromSessionUsingPlayerController(APlayerController* InPlayerController)
 {
 	check(IsValid(InPlayerController));
@@ -922,4 +949,33 @@ void UWOGEpicOnlineServicesSubsystem::UpdatePresence(const FString& NewPresenceS
 					GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, FString("Presence Status failed to update"));
 				}
 			}));
+}
+
+void UWOGEpicOnlineServicesSubsystem::VoiceChatLogin()
+{
+	IVoiceChat* VoiceChat = IVoiceChat::Get();
+	VoiceChatUser = VoiceChat->CreateUser();
+
+	IOnlineSubsystem *Subsystem = Online::GetSubsystem(this->GetWorld());
+	IOnlineIdentityPtr Identity = Subsystem->GetIdentityInterface();
+
+	TSharedPtr<const FUniqueNetId> UserId = Identity->GetUniquePlayerId(0);
+	FPlatformUserId PlatformUserId = Identity->GetPlatformUserIdFromUniqueNetId(*UserId);
+
+	VoiceChatUser->Login(
+		PlatformUserId,
+		UserId->ToString(),
+		TEXT(""),
+		FOnVoiceChatLoginCompleteDelegate::CreateUObject(this, &ThisClass::OnVoiceChatLoginComplete));
+}
+
+void UWOGEpicOnlineServicesSubsystem::VoiceChatLogout()
+{
+	IVoiceChat* VoiceChat = IVoiceChat::Get();
+	if (VoiceChatUser != nullptr && VoiceChat != nullptr)
+	{
+		VoiceChat->ReleaseUser(this->VoiceChatUser);
+		VoiceChatUser = nullptr;
+		GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Orange, FString("VoiceChatLogout called"));
+	}
 }

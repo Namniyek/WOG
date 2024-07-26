@@ -30,7 +30,8 @@ public class WOG : ModuleRules
             "CommonUI",
             "MetasoundEngine",
             "GeometryCollectionEngine",
-            "AIModule"
+            "AIModule",
+            "VoiceChat"
         });
 
         PublicIncludePaths.Add("WOG/");
