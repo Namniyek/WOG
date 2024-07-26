@@ -7,14 +7,26 @@
 #include "RedpointInterfaces/OnlineLobbyInterface.h"
 #include "OnlineSessionSettings.h"
 #include "Interfaces/OnlineSessionInterface.h"
+#include "VoiceChat.h"
 #include "WOGEpicOnlineServicesSubsystem.generated.h"
 
-class IVoiceChatUser;
-struct FVoiceChatResult;
 
 /**
  * 
  */
+USTRUCT(BlueprintType)
+struct FWOGVoiceChatDeviceData
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(BlueprintReadOnly)
+	FString DeviceName = FString("");
+
+	UPROPERTY(BlueprintReadOnly)
+	FString DeviceID = FString("");
+};
+
 USTRUCT(BlueprintType)
 struct FServerItem
 {
@@ -88,27 +100,17 @@ public:
 	void DisconnectFromLobby();
 
 protected:
+
+	#pragma region User
+	
 	UFUNCTION(BlueprintCallable)
 	void Login();
-
-	UFUNCTION(BlueprintCallable)
-	void CreateLobby(bool bIsPublic, bool bVoiceChat, const FString& MapName);
-
-	UFUNCTION(BlueprintCallable)
-	void GetLobbyMembers();
-
-	UFUNCTION(BlueprintCallable)
-	void DestroyLobby();
-
-	UFUNCTION(BlueprintCallable)
-	void SearchLobbies();
-
-	UFUNCTION(BlueprintCallable)
-	void JoinLobby(const FString& DesiredLobbyIdString);
-
-	UFUNCTION(BlueprintCallable)
-	void KickFromLobby(const FString& LobbyMemberIDString);
-
+	
+	void UpdatePresence(const FString& NewPresenceStatus = FString()) const;
+	#pragma endregion
+	
+	#pragma region Sessions
+	
 	UFUNCTION(BlueprintCallable)
 	void CreateSession();
 
@@ -136,11 +138,52 @@ protected:
 	void SearchReconnectSession();
 
 	void JoinFriendServer(const FOnlineSessionSearchResult& InviteResult);
+	
+	#pragma endregion
 
-	void UpdatePresence(const FString& NewPresenceStatus = FString()) const;
+	#pragma region Lobbies
+	UFUNCTION(BlueprintCallable)
+	void CreateLobby(bool bIsPublic, bool bVoiceChat, const FString& MapName);
 
+	UFUNCTION(BlueprintCallable)
+	void GetLobbyMembers();
+
+	UFUNCTION(BlueprintCallable)
+	void DestroyLobby();
+
+	UFUNCTION(BlueprintCallable)
+	void SearchLobbies();
+
+	UFUNCTION(BlueprintCallable)
+	void JoinLobby(const FString& DesiredLobbyIdString);
+
+	UFUNCTION(BlueprintCallable)
+	void KickFromLobby(const FString& LobbyMemberIDString);
+	#pragma endregion
+
+	#pragma region VoiceChat
 	void VoiceChatLogin();
 	void VoiceChatLogout();
+
+	UFUNCTION(BlueprintCallable)
+	TArray<FWOGVoiceChatDeviceData> GetAvailableInputDeviceInfos();
+
+	UFUNCTION(BlueprintCallable)
+	TArray<FWOGVoiceChatDeviceData> GetAvailableOutputDeviceInfos();
+
+	UFUNCTION(BlueprintCallable)
+	FWOGVoiceChatDeviceData GetCurrentInputDeviceInfo();
+	
+	UFUNCTION(BlueprintCallable)
+	FWOGVoiceChatDeviceData GetCurrentOutputDeviceInfo();
+	
+	UFUNCTION(BlueprintCallable)
+	void SetCurrentInputDevice(const FWOGVoiceChatDeviceData& NewDevice);
+
+	UFUNCTION(BlueprintCallable)
+	void SetCurrentOutputDevice(const FWOGVoiceChatDeviceData& NewDevice);
+	#pragma endregion
+	
 private:
 	
 	#pragma region Callback functions

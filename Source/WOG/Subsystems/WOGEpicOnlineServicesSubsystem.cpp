@@ -13,7 +13,6 @@
 #include "Interfaces/OnlinePresenceInterface.h"
 #include "Kismet/GameplayStatics.h"
 #include "Online/OnlineSessionNames.h"
-#include "VoiceChat.h"
 
 void UWOGEpicOnlineServicesSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -979,3 +978,119 @@ void UWOGEpicOnlineServicesSubsystem::VoiceChatLogout()
 		GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Orange, FString("VoiceChatLogout called"));
 	}
 }
+
+TArray<FWOGVoiceChatDeviceData> UWOGEpicOnlineServicesSubsystem::GetAvailableInputDeviceInfos()
+{
+	TArray<FWOGVoiceChatDeviceData> InputDevices = {};
+	if(VoiceChatUser == nullptr)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString("Invalid VoiceChat user"));
+		return InputDevices;
+	}
+
+	TArray<FVoiceChatDeviceInfo> InputDevicesInfos = VoiceChatUser->GetAvailableInputDeviceInfos();
+	for(const FVoiceChatDeviceInfo& DeviceInfo : InputDevicesInfos)
+	{
+		FWOGVoiceChatDeviceData DeviceData;
+		DeviceData.DeviceName = DeviceInfo.DisplayName;
+		DeviceData.DeviceID = DeviceInfo.Id;
+		InputDevices.Add(DeviceData);
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Emerald, FString("Input device: ") + DeviceInfo.DisplayName);
+	}
+
+	return InputDevices;
+}
+
+TArray<FWOGVoiceChatDeviceData> UWOGEpicOnlineServicesSubsystem::GetAvailableOutputDeviceInfos()
+{
+	TArray<FWOGVoiceChatDeviceData> OutputDevices = {};
+	if(VoiceChatUser == nullptr)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString("Invalid VoiceChat user"));
+		return OutputDevices;
+	}
+
+	TArray<FVoiceChatDeviceInfo> OutputDevicesInfos = VoiceChatUser->GetAvailableOutputDeviceInfos();
+	for(const FVoiceChatDeviceInfo& DeviceInfo : OutputDevicesInfos)
+	{
+		FWOGVoiceChatDeviceData DeviceData;
+		DeviceData.DeviceName = DeviceInfo.DisplayName;
+		DeviceData.DeviceID = DeviceInfo.Id;
+		OutputDevices.Add(DeviceData);
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Emerald, FString("Output device: ") + DeviceInfo.DisplayName);
+	}
+	
+	return OutputDevices;
+}
+
+FWOGVoiceChatDeviceData UWOGEpicOnlineServicesSubsystem::GetCurrentInputDeviceInfo()
+{
+	FWOGVoiceChatDeviceData CurrentDevice = FWOGVoiceChatDeviceData();
+	if(VoiceChatUser == nullptr)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString("Invalid VoiceChat user"));
+		return CurrentDevice;
+	}
+
+	FVoiceChatDeviceInfo CurrentDeviceInfo = VoiceChatUser->GetInputDeviceInfo();
+	CurrentDevice.DeviceID = CurrentDeviceInfo.Id;
+	CurrentDevice.DeviceName = CurrentDeviceInfo.DisplayName;
+	
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Emerald, FString("Current Input device: ") + CurrentDevice.DeviceName);
+	return CurrentDevice;
+}
+
+FWOGVoiceChatDeviceData UWOGEpicOnlineServicesSubsystem::GetCurrentOutputDeviceInfo()
+{
+	FWOGVoiceChatDeviceData CurrentDevice = FWOGVoiceChatDeviceData();
+	if(VoiceChatUser == nullptr)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString("Invalid VoiceChat user"));
+		return CurrentDevice;
+	}
+
+	FVoiceChatDeviceInfo CurrentDeviceInfo = VoiceChatUser->GetOutputDeviceInfo();
+	CurrentDevice.DeviceID = CurrentDeviceInfo.Id;
+	CurrentDevice.DeviceName = CurrentDeviceInfo.DisplayName;
+	
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Emerald, FString("Current Output device: ") + CurrentDevice.DeviceName);
+	return CurrentDevice;
+}
+
+void UWOGEpicOnlineServicesSubsystem::SetCurrentInputDevice(const FWOGVoiceChatDeviceData& NewDevice)
+{
+	if(VoiceChatUser == nullptr)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString("Invalid VoiceChat user"));
+		return;
+	}
+
+	FVoiceChatDeviceInfo CurrentDeviceInfo = VoiceChatUser->GetInputDeviceInfo();
+	if(CurrentDeviceInfo.Id == NewDevice.DeviceID)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString("Picked device is the same as the current one. Returning"));
+		return;
+	}
+
+	VoiceChatUser->SetInputDeviceId(NewDevice.DeviceID);
+}
+
+void UWOGEpicOnlineServicesSubsystem::SetCurrentOutputDevice(const FWOGVoiceChatDeviceData& NewDevice)
+{
+	if(VoiceChatUser == nullptr)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString("Invalid VoiceChat user"));
+		return;
+	}
+
+	FVoiceChatDeviceInfo CurrentDeviceInfo = VoiceChatUser->GetOutputDeviceInfo();
+	if(CurrentDeviceInfo.Id == NewDevice.DeviceID)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString("Picked device is the same as the current one. Returning"));
+		return;
+	}
+
+	VoiceChatUser->SetOutputDeviceId(NewDevice.DeviceID);
+}
+
+
