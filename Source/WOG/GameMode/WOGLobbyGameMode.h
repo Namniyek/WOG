@@ -6,12 +6,14 @@
 #include "GameFramework/GameMode.h"
 #include "WOGLobbyGameMode.generated.h"
 
+
 /**
  * 
  */
 class AWOGLobbyPlayerSpot;
 class AWOGLobbyPlayerController;
 class AWOGLobbyAvatar;
+struct FVoiceAdminChannelCredentials;
 
 UCLASS()
 class WOG_API AWOGLobbyGameMode : public AGameMode

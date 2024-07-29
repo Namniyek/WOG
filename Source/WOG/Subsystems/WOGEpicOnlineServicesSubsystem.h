@@ -8,12 +8,39 @@
 #include "OnlineSessionSettings.h"
 #include "Interfaces/OnlineSessionInterface.h"
 #include "VoiceChat.h"
+#include "RedpointInterfaces/OnlineVoiceAdminInterface.h"
 #include "WOGEpicOnlineServicesSubsystem.generated.h"
 
 
 /**
  * 
  */
+/*Voice chat channel section
+
+UENUM(BlueprintType)
+enum class EWOGResultCodes :uint8
+{
+	Success = 0,
+	Failed = 1
+};
+
+struct FWOGChannelCredentials : public FJsonSerializable
+{
+	FString OverrideUserId;
+	FString ClientBaseUrl;
+	FString ParticipantToken;
+
+	BEGIN_JSON_SERIALIZER
+	JSON_SERIALIZE("override_userid", OverrideUserId);
+	JSON_SERIALIZE("client_base_url", ClientBaseUrl);
+	JSON_SERIALIZE("participant_token", ParticipantToken);
+	END_JSON_SERIALIZER
+};*/
+//DECLARE_DYNAMIC_DELEGATE_TwoParams(FWOGResultDelegate, bool, bWasSuccess, EWOGResultCodes, Result);
+//DECLARE_DYNAMIC_DELEGATE_ThreeParams(FWOGChannelTokenResultDelegate, bool, bWasSuccess, FString, ChannelCredentials, APlayerController*, PlayerController);
+//DECLARE_DELEGATE_FourParams(FWOGChannelTokenResultCppDelegate, bool, /*bWasSuccess,*/ const FString&, /*ChannelCredentials*/ const FString&, /*ChannelName*/ APlayerController* /*PlayerController*/);
+//DECLARE_DELEGATE_TwoParams(FWOGResultCppDelegate, bool, /*bWasSuccess*/ EWOGResultCodes /*Result*/);
+
 USTRUCT(BlueprintType)
 struct FWOGVoiceChatDeviceData
 {
@@ -69,6 +96,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnLobbyCreatedDelegate, bool, bWasS
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FServerFoundDelegate, FServerItem, ServerInfo);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FReconnectSessionFoundDelegate, const bool, ReconnectSessionFound, const FString&, HostName);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FLobbyMemberFoundDelegate, const FLobbyMemberData&, LobbyMemberData);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnVoiceChatPlayerIsTalkingUpdated, const FString&, ChannelName, const FString&, PlayerName, bool, bIsTalking);
 
 UCLASS()
 class WOG_API UWOGEpicOnlineServicesSubsystem : public UGameInstanceSubsystem
@@ -161,7 +189,7 @@ protected:
 	void KickFromLobby(const FString& LobbyMemberIDString);
 	#pragma endregion
 
-	#pragma region VoiceChat
+	#pragma region VoiceChat	
 	void VoiceChatLogin();
 	void VoiceChatLogout();
 
@@ -182,6 +210,56 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 	void SetCurrentOutputDevice(const FWOGVoiceChatDeviceData& NewDevice);
+
+	//Value between 0.0 and 200.0
+	UFUNCTION(BlueprintCallable)
+	void SetVoiceChatInputVolume(float NewVolume);
+
+	//Value between 0.0 and 200.0
+	UFUNCTION(BlueprintCallable)
+	void SetVoiceChatOutputVolume(float NewVolume);
+
+	UFUNCTION(BlueprintPure)
+	float GetVoiceChatInputVolume() const;
+
+	UFUNCTION(BlueprintPure)
+	float GetVoiceChatOutputVolume() const;
+
+	UFUNCTION(BlueprintCallable)
+	void SetVoiceChatInputDeviceMuted(bool bIsMuted);
+
+	UFUNCTION(BlueprintCallable)
+	void SetVoiceChatOutputDeviceMuted(bool bIsMuted);
+
+	UFUNCTION(BlueprintPure)
+	bool GetVoiceChatInputDeviceMuted() const;
+
+	UFUNCTION(BlueprintPure)
+	bool GetVoiceChatOutputDeviceMuted() const;
+	
+	#pragma region VoiceChat channels - NOT WORKING
+	/*
+	void OnResultDelegateFired(bool bWasSuccess,  EWOGResultCodes Result);
+	void ConnectToEOSVoiceChat(const FWOGResultCppDelegate& ResultDelegate) const;
+	void LoginToEOSVoiceChat(const FWOGResultCppDelegate& Result);
+
+	void CredentialsComplete(const FOnlineError& OnlineError, const FUniqueNetId& UniqueNetId, const TArray<FVoiceAdminChannelCredentials>& VoiceAdminChannelCredentialses) const;
+	void HandleVoiceChannelsCredentials(APlayerController* NewPlayer);
+	void OnChannelTokenRetrieved(bool bWasSuccessful, const FString& ChannelCredentials, const FString& ChannelName, APlayerController* PlayerController) const;
+	
+	//Requests a channel token for the specified voice channel.
+	void GetWOGChannelToken(
+		APlayerController* PlayerController,
+		const FString& VoiceRoomName,
+		const FString& PlayerName,
+		const FString& ClientIP,
+		const FWOGChannelTokenResultCppDelegate& Result);
+	
+	//Joins the specified voice channel.
+	void JoinWOGVoiceChannel(APlayerController* PlayerController, const FString& VoiceChannelName, const FString& ChannelCredentials, const FWOGResultCppDelegate& Result);
+	*/
+	#pragma endregion 
+
 	#pragma endregion
 	
 private:
@@ -244,7 +322,9 @@ private:
 	FOnlineSessionSearchResult CachedReconnectSession = FOnlineSessionSearchResult();
 	
 	IVoiceChatUser* VoiceChatUser;
-	#pragma endregion 
+
+private:
+#pragma endregion 
 
 public:
 
@@ -256,4 +336,6 @@ public:
 	bool UnregisterAllSessionMembers();
 
 	TArray<TSharedPtr<const FUniqueNetId>> CachedSessionMemberIds;
+	
+	FORCEINLINE IVoiceChatUser* GetVoiceChatUser() const { return VoiceChatUser; }
 };

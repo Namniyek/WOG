@@ -79,7 +79,7 @@ void AWOGLobbyGameMode::HandleStartingNewPlayer_Implementation(APlayerController
 	}
 	
 	Super::HandleStartingNewPlayer_Implementation(NewPlayer);
-
+	
 	FTimerHandle RegisterDelay;
 	FTimerDelegate RegisterDelayDelegate;
 	RegisterDelayDelegate.BindUFunction(this, "RegisterPlayer", NewPlayer);

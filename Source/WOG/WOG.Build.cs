@@ -31,7 +31,10 @@ public class WOG : ModuleRules
             "MetasoundEngine",
             "GeometryCollectionEngine",
             "AIModule",
-            "VoiceChat"
+            "VoiceChat",
+            "Json",
+            "HTTP", 
+            "RedpointEOSCore"
         });
 
         PublicIncludePaths.Add("WOG/");

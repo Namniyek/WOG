@@ -13,6 +13,9 @@
 #include "Interfaces/OnlinePresenceInterface.h"
 #include "Kismet/GameplayStatics.h"
 #include "Online/OnlineSessionNames.h"
+#include "Misc/ConfigCacheIni.h"
+#include "VoiceChatErrors.h"
+#include "RedpointInterfaces/OnlineVoiceAdminInterface.h"
 
 void UWOGEpicOnlineServicesSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -92,7 +95,7 @@ void UWOGEpicOnlineServicesSubsystem::CreateLobby(bool bIsPublic, bool bVoiceCha
 	LobbyTransaction->SetMetadata.Add(TEXT("EOSVoiceChat_Enabled"), bVoiceChat);
 
 	//Debug echo setting for the lobby
-	LobbyTransaction->SetMetadata.Add(TEXT("EOSVoiceChat_Echo"), true);
+	LobbyTransaction->SetMetadata.Add(TEXT("EOSVoiceChat_Echo"), false);
 
 	// To allow clients connecting to the listen server to join the lobby based on just the ID, we need
 	// to set it to public.
@@ -708,16 +711,6 @@ void UWOGEpicOnlineServicesSubsystem::HandleJoinSessionComplete(FName SessionNam
 		{
 			GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Red, FString("Failed to start browse: ") + BrowseError);
 		}
-		
-		// Use the connection string that you got from FindSessions in order
-		// to connect to the server.
-		//
-		// Refer to "Connecting to a game server" under the "Networking & Anti-Cheat"
-		// section of the documentation for more information on how to do this.
-		//
-		// NOTE: You can also call GetResolvedConnectString at this point instead
-		// of in FindSessions, but it's recommended that you call it in
-		// FindSessions, so you know the result is valid.
 	}
 	else
 	{
@@ -797,20 +790,6 @@ void UWOGEpicOnlineServicesSubsystem::HandleFindFriendSessionComplete(int32 Loca
 	Session->ClearOnFindFriendSessionCompleteDelegate_Handle(0, FindFriendSessionDelegateHandle);
 	FindFriendSessionDelegateHandle.Reset();
 	ReconnectSessionFoundDelegate.Broadcast(false, FString());
-}
-
-void UWOGEpicOnlineServicesSubsystem::OnVoiceChatLoginComplete(const FString& PlayerName,
-	const FVoiceChatResult& Result)
-{
-	if (Result.IsSuccess())
-	{
-		// You can now use this->VoiceChatUser to control the user's voice chat.
-		GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Green, PlayerName + FString(" logged in VoiceChat successfully"));
-	}
-	else
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Red, Result.ErrorDesc);
-	}
 }
 
 void UWOGEpicOnlineServicesSubsystem::UnregisterFromSessionUsingPlayerController(APlayerController* InPlayerController)
@@ -968,6 +947,19 @@ void UWOGEpicOnlineServicesSubsystem::VoiceChatLogin()
 		FOnVoiceChatLoginCompleteDelegate::CreateUObject(this, &ThisClass::OnVoiceChatLoginComplete));
 }
 
+void UWOGEpicOnlineServicesSubsystem::OnVoiceChatLoginComplete(const FString& PlayerName, const FVoiceChatResult& Result)
+{
+	if (Result.IsSuccess())
+	{
+		// You can now use this->VoiceChatUser to control the user's voice chat.
+		GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Green, PlayerName + FString(" logged in VoiceChat successfully"));
+	}
+	else
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Red, Result.ErrorDesc);
+	}
+}
+
 void UWOGEpicOnlineServicesSubsystem::VoiceChatLogout()
 {
 	IVoiceChat* VoiceChat = IVoiceChat::Get();
@@ -1092,5 +1084,338 @@ void UWOGEpicOnlineServicesSubsystem::SetCurrentOutputDevice(const FWOGVoiceChat
 
 	VoiceChatUser->SetOutputDeviceId(NewDevice.DeviceID);
 }
+
+void UWOGEpicOnlineServicesSubsystem::SetVoiceChatInputVolume(float NewVolume)
+{
+	check(VoiceChatUser);
+	VoiceChatUser->SetAudioInputVolume(NewVolume);
+}
+
+void UWOGEpicOnlineServicesSubsystem::SetVoiceChatOutputVolume(float NewVolume)
+{
+	check(VoiceChatUser);
+	VoiceChatUser->SetAudioOutputVolume(NewVolume);
+}
+
+float UWOGEpicOnlineServicesSubsystem::GetVoiceChatInputVolume() const
+{
+	check(VoiceChatUser);
+	return VoiceChatUser->GetAudioInputVolume();
+}
+
+float UWOGEpicOnlineServicesSubsystem::GetVoiceChatOutputVolume() const
+{
+	check(VoiceChatUser);
+	return VoiceChatUser->GetAudioOutputVolume();
+}
+
+void UWOGEpicOnlineServicesSubsystem::SetVoiceChatInputDeviceMuted(bool bIsMuted)
+{
+	check(VoiceChatUser);
+	VoiceChatUser->SetAudioInputDeviceMuted(bIsMuted);
+}
+
+void UWOGEpicOnlineServicesSubsystem::SetVoiceChatOutputDeviceMuted(bool bIsMuted)
+{
+	check(VoiceChatUser);
+	VoiceChatUser->SetAudioOutputDeviceMuted(bIsMuted);
+}
+
+bool UWOGEpicOnlineServicesSubsystem::GetVoiceChatInputDeviceMuted() const
+{
+	check(VoiceChatUser);
+	return VoiceChatUser->GetAudioInputDeviceMuted();
+}
+
+bool UWOGEpicOnlineServicesSubsystem::GetVoiceChatOutputDeviceMuted() const
+{
+	check(VoiceChatUser);
+	return VoiceChatUser->GetAudioOutputDeviceMuted();
+}
+
+#pragma region VoiceChat channels - NOT WORKING
+/*void UWOGEpicOnlineServicesSubsystem::ConnectToEOSVoiceChat(const FWOGResultCppDelegate& ResultDelegate) const
+{
+	IVoiceChat* VoiceChat = IVoiceChat::Get();
+	check(VoiceChat);
+
+	VoiceChat->Connect(FOnVoiceChatConnectCompleteDelegate::CreateLambda([this, ResultDelegate](const FVoiceChatResult& Result)
+	{
+		if(Result.IsSuccess())
+		{
+			ResultDelegate.ExecuteIfBound(true, EWOGResultCodes::Success);
+		}
+		else
+		{
+			ResultDelegate.ExecuteIfBound(false, EWOGResultCodes::Failed);
+		}
+	}
+	));
+}
+
+void UWOGEpicOnlineServicesSubsystem::OnResultDelegateFired(bool bWasSuccess, EWOGResultCodes Result)
+{
+	if(!bWasSuccess)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString("Action failed!"));
+	}
+}
+
+void UWOGEpicOnlineServicesSubsystem::LoginToEOSVoiceChat(const FWOGResultCppDelegate& Result)
+{
+	IVoiceChat* VoiceChat = IVoiceChat::Get();
+	check(VoiceChat);
+
+	IOnlineSubsystem *Subsystem = Online::GetSubsystem(this->GetWorld());
+	IOnlineIdentityPtr Identity = Subsystem->GetIdentityInterface();
+
+	TSharedPtr<const FUniqueNetId> UserId = Identity->GetUniquePlayerId(0);
+	FPlatformUserId PlatformUserId = Identity->GetPlatformUserIdFromUniqueNetId(*UserId);
+	
+	VoiceChat->Login(PlatformUserId, UserId->ToString(), "",
+		FOnVoiceChatLoginCompleteDelegate::CreateUObject(this, &ThisClass::OnVoiceChatLoginComplete));
+}
+
+void UWOGEpicOnlineServicesSubsystem::HandleVoiceChannelsCredentials(APlayerController* NewPlayer)
+{
+	FString ChannelName = FString("Defenders");
+
+	IOnlineSubsystem *Subsystem = Online::GetSubsystem(this->GetWorld());
+	IOnlineIdentityPtr Identity = Subsystem->GetIdentityInterface();
+
+	TSharedPtr<const FUniqueNetId> UserId = Identity->GetUniquePlayerId(0);
+	
+	GetWOGChannelToken(NewPlayer, ChannelName, UserId->ToString(), FString("10.0.0.1"), FWOGChannelTokenResultCppDelegate::CreateUObject(this, &ThisClass::OnChannelTokenRetrieved));
+	
+	/*TSharedPtr<IOnlineVoiceAdmin, ESPMode::ThreadSafe> VoiceAdmin = Online::GetVoiceAdminInterface(Subsystem);
+	if(VoiceAdmin)
+	{
+		TArray<TSharedRef<const FUniqueNetId>> Array = {};
+		Array.Add(UserId.ToSharedRef());
+		VoiceAdmin->CreateChannelCredentials(*UserId, ChannelName, Array, FOnVoiceAdminCreateChannelCredentialsComplete::CreateUObject(this, &ThisClass::CredentialsComplete));
+	}#1#
+
+}
+
+void UWOGEpicOnlineServicesSubsystem::GetWOGChannelToken(
+	APlayerController* PlayerController,
+	const FString& VoiceRoomName,
+	const FString& PlayerName,
+	const FString& ClientIP,
+	const FWOGChannelTokenResultCppDelegate& Result)
+{
+	 FString ProductId, SandboxId, DeploymentId, ClientId, ClientSecret;
+    bool bEnabled;
+    if (!GConfig->GetBool(TEXT("EOSVoiceChat"), TEXT("bEnabled"), bEnabled, GEngineIni) || !bEnabled)
+    {
+    	Result.ExecuteIfBound(false, "Error", "NULL", nullptr);
+    	UE_LOG(LogTemp, Error, TEXT("Failed to get EOSVoiceChat bEnabled bool"));
+        return;
+    }
+
+    bool bSuccess = true;
+    bSuccess &= GConfig->GetString(TEXT("EOSVoiceChat"), TEXT("ProductId"), ProductId, GEngineIni);
+    bSuccess &= GConfig->GetString(TEXT("EOSVoiceChat"), TEXT("SandboxId"), SandboxId, GEngineIni);
+    bSuccess &= GConfig->GetString(TEXT("EOSVoiceChat"), TEXT("DeploymentId"), DeploymentId, GEngineIni);
+    bSuccess &= GConfig->GetString(TEXT("EOSVoiceChat"), TEXT("ClientId"), ClientId, GEngineIni);
+    bSuccess &= GConfig->GetString(TEXT("EOSVoiceChat"), TEXT("ClientSecret"), ClientSecret, GEngineIni);
+
+    if (!bSuccess)
+    {
+        UE_LOG(LogTemp, Error, TEXT("Missing values in DefaultEngine.ini"));
+    	Result.ExecuteIfBound(false, "Error", "NULL", nullptr);
+        return;
+    }
+
+    auto HttpRequest = FHttpModule::Get().CreateRequest();
+    const FString Base64Credentials = FBase64::Encode(FString::Printf(TEXT("%s:%s"), *ClientId, *ClientSecret));
+    const FString ContentString = FString::Printf(TEXT("grant_type=client_credentials&deployment_id=%s"), *DeploymentId);
+
+    HttpRequest->SetHeader(TEXT("Content-Type"), TEXT("application/x-www-form-urlencoded"));
+    HttpRequest->AppendToHeader(TEXT("Accept"), TEXT("application/json"));
+    HttpRequest->AppendToHeader(TEXT("Authorization"), *FString::Printf(TEXT("Basic %s"), *Base64Credentials));
+    HttpRequest->SetContentAsString(ContentString);
+    HttpRequest->SetURL("https://api.epicgames.dev/auth/v1/oauth/token");
+    HttpRequest->SetVerb("POST");
+
+    HttpRequest->OnProcessRequestComplete().BindLambda([=](FHttpRequestPtr RequestPtr, FHttpResponsePtr ResponsePtr, bool bConnectedSuccessfully)
+    {
+    	UE_LOG(LogTemp, Warning, TEXT("Response -> %s"), *ResponsePtr->GetContentAsString());
+        FString AccessTokenString;
+        TSharedPtr<FJsonObject> JsonObject;
+
+        if (bConnectedSuccessfully && FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(ResponsePtr->GetContentAsString()), JsonObject) && JsonObject.IsValid())
+        {
+            TSharedPtr<FJsonValue> AccessTokenObject = JsonObject->TryGetField(TEXT("access_token"));
+            AccessTokenString = AccessTokenObject ? AccessTokenObject->AsString() : FString();
+        }
+        else
+        {
+        	Result.ExecuteIfBound(false, "Error", "NULL", nullptr);
+        	return;
+        }
+
+		if (!AccessTokenString.IsEmpty())
+		{
+			auto RoomTokenRequest = FHttpModule::Get().CreateRequest();
+
+			RoomTokenRequest->SetHeader(TEXT("Content-Type"), TEXT("application/json"));
+			RoomTokenRequest->AppendToHeader(TEXT("Accept"), TEXT("application/json"));
+			RoomTokenRequest->AppendToHeader(TEXT("Authorization"), *FString::Printf(TEXT("Bearer %s"), *AccessTokenString));
+
+			const FString ProductUserId = PlayerName;
+			bool bHardMuted = false; 
+
+			const FString JsonRequestString = FString::Printf(TEXT("{\"participants\":[{\"puid\":\"%s\",\"clientIp\":\"%s\",\"hardMuted\":%s}] }"), *ProductUserId, *ClientIP, bHardMuted ? TEXT("true") : TEXT("false"));
+			UE_LOG(LogTemp, Warning, TEXT("Fd -> %s"), *JsonRequestString);
+			RoomTokenRequest->SetContentAsString(JsonRequestString);
+			RoomTokenRequest->SetURL(FString::Printf(TEXT("https://api.epicgames.dev/rtc/v1/%s/room/%s"), *DeploymentId, *VoiceRoomName));
+			RoomTokenRequest->SetVerb("POST");
+
+			RoomTokenRequest->OnProcessRequestComplete().BindLambda([=](FHttpRequestPtr HttpRequestPtr, FHttpResponsePtr HttpResponsePtr, bool bNewConnectedSuccessfully)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Response -> %s"), *HttpResponsePtr->GetContentAsString());
+				FString TokenString, ClientBaseUrlString;
+
+				if (bNewConnectedSuccessfully)
+				{
+					TSharedPtr<FJsonObject> NewJsonObject;
+					const TSharedRef<TJsonReader<>> JsonReader = TJsonReaderFactory<>::Create(HttpResponsePtr->GetContentAsString());
+					UE_LOG(LogTemp, Warning, TEXT("roken d2ew2e232sds"));
+					if (FJsonSerializer::Deserialize(JsonReader, NewJsonObject) && NewJsonObject.IsValid())
+					{
+						const TSharedPtr<FJsonValue> ClientBaseUrlObject = NewJsonObject->TryGetField(TEXT("clientBaseUrl"));
+						const TSharedPtr<FJsonValue> ParticipantsObject = NewJsonObject->TryGetField(TEXT("participants"));
+						UE_LOG(LogTemp, Warning, TEXT("roken dsds"));
+
+						if (ParticipantsObject)
+						{
+							ClientBaseUrlString = ClientBaseUrlObject->AsString();
+							UE_LOG(LogTemp, Warning, TEXT("ClientUrl -> %s"), *ClientBaseUrlString);
+							TArray<TSharedPtr<FJsonValue>> ParticipantsArray = ParticipantsObject->AsArray();
+
+							for (const auto& Element : ParticipantsArray)
+							{
+								if (Element->Type != EJson::Object)
+									continue;
+
+								auto& Object = Element->AsObject();
+								TokenString = Object->GetStringField(FString("token"));
+								UE_LOG(LogTemp, Warning, TEXT("Token -> %s"), *TokenString);
+							}
+						}
+					}
+					else
+					{
+						UE_LOG(LogTemp, Warning, TEXT("Code 17"));
+						Result.ExecuteIfBound(false, "Error", "NULL", nullptr);
+						return;
+					}
+				}
+				else
+				{
+					UE_LOG(LogTemp, Warning, TEXT("Code 97"));
+					Result.ExecuteIfBound(false, "Error", "NULL", nullptr);
+					return;
+				}
+
+				if (!TokenString.IsEmpty())
+				{
+					FWOGChannelCredentials ChannelCredentials;
+					ChannelCredentials.OverrideUserId = PlayerName;
+					ChannelCredentials.ClientBaseUrl = ClientBaseUrlString;
+					ChannelCredentials.ParticipantToken = TokenString;
+					Result.ExecuteIfBound(true, ChannelCredentials.ToJson(false), VoiceRoomName, PlayerController);
+					return;
+				}
+				else
+				{
+					UE_LOG(LogTemp, Warning, TEXT("Code 1345"));
+					Result.ExecuteIfBound(false, "Error", "NULL", nullptr);
+				}
+			});
+
+			RoomTokenRequest->ProcessRequest();
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Code 12241"));
+			Result.ExecuteIfBound(false, "Error", "NULL", nullptr);
+		}
+    });
+
+    HttpRequest->ProcessRequest();
+}
+
+void UWOGEpicOnlineServicesSubsystem::OnChannelTokenRetrieved(bool bWasSuccessful, const FString& ChannelCredentials,
+	const FString& ChannelName, APlayerController* PlayerController) const
+{
+	if(!bWasSuccessful)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Failed to retrieve channel token"))
+		return;
+	}
+
+	AWOGLobbyPlayerController* PC = Cast<AWOGLobbyPlayerController>(PlayerController);
+	check(PC);
+
+	PC->Client_JoinWOGVoiceChannel(PlayerController, ChannelName, ChannelCredentials);
+	
+}
+
+void UWOGEpicOnlineServicesSubsystem::JoinWOGVoiceChannel(APlayerController* PlayerController, const FString& VoiceChannelName,
+	const FString& ChannelCredentials, const FWOGResultCppDelegate& Result)
+{
+	if (!PlayerController) return;
+	IVoiceChat* VoiceChat = IVoiceChat::Get();
+    if (!VoiceChat)
+    {
+    	UE_LOG(LogTemp, Error, TEXT("Invalid VoiceChat interface when joining room"));
+    }
+	
+    /*FVoiceChatChannel3dProperties Properties;
+    Properties.AttenuationModel = EVoiceChatAttenuationModel::InverseByDistance;
+    Properties.MaxDistance = 100.f;
+    Properties.MinDistance = 1.f;
+    Properties.Rolloff = 0.5f;#1#
+
+    TSharedPtr<FJsonObject> ChannelCredentialsObject;
+    TSharedRef<TJsonReader<>> JsonReader = TJsonReaderFactory<>::Create(ChannelCredentials);
+    if (FJsonSerializer::Deserialize(JsonReader, ChannelCredentialsObject) && ChannelCredentialsObject.IsValid())
+    {
+        const char* ClientBaseUrl = TCHAR_TO_ANSI(*ChannelCredentialsObject->GetStringField(TEXT("client_base_url")));
+        const char*  ParticipantToken = TCHAR_TO_ANSI(*ChannelCredentialsObject->GetStringField(TEXT("participant_token")));
+
+    	FString FormattedChannelCredentials = FString::Printf(
+		TEXT("%s?token=%s"), *EOSString_AnsiUnlimited::FromAnsiString(ClientBaseUrl), *EOSString_AnsiUnlimited::FromAnsiString(ParticipantToken));
+    	
+        VoiceChat->JoinChannel(VoiceChannelName, ChannelCredentials, EVoiceChatChannelType::NonPositional, FOnVoiceChatChannelJoinCompleteDelegate::CreateLambda([Result](const FString& ChannelName, const FVoiceChatResult& JoinResult)
+        {
+            if(JoinResult.IsSuccess())
+            {
+				Result.ExecuteIfBound(true,EWOGResultCodes::Success);
+			}
+			else
+			{
+				Result.ExecuteIfBound(false,EWOGResultCodes::Failed);
+			}
+        }));
+    }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("Failed to parse ChannelCredentials"));
+    }
+}
+
+
+void UWOGEpicOnlineServicesSubsystem::CredentialsComplete(const FOnlineError& OnlineError,
+	const FUniqueNetId& UniqueNetId, const TArray<FVoiceAdminChannelCredentials>& VoiceAdminChannelCredentialses) const
+{
+	if(!OnlineError.bSucceeded)
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s"), *OnlineError.ErrorMessage.ToString());
+	}
+}*/
+#pragma endregion
 
 

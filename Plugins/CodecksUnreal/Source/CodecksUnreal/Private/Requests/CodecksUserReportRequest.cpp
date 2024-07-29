@@ -210,7 +210,7 @@ void UCodecksUserReportRequest::CreateReport(const TFunction<void(UCodecksUserRe
 		FJsonSerializer::Deserialize(JsonReader, JsonObject);
 
 		const TArray<TSharedPtr<FJsonValue>>* UploadUrls = nullptr;
-		JsonObject->TryGetArrayField("uploadUrls", UploadUrls);
+		JsonObject->TryGetArrayField(FString("uploadUrls"), UploadUrls);
 
 		this->UploadAttachments(UploadUrls, UpdateCall, /*OnComplete=*/ [JsonObject, UpdateCall, this]() {
 			FJsonObjectWrapper WrappedJson;
@@ -230,7 +230,7 @@ void UCodecksUserReportRequest::CreateReport(const TFunction<void(UCodecksUserRe
 	// Calculate total bytes
 	TotalBytesToSend = HttpRequest->GetContentLength();
 
-	HttpRequest->OnRequestProgress().BindWeakLambda(this, [this](FHttpRequestPtr Request, int32 BytesSent, int32 /*BytesReceived*/) {
+	HttpRequest->OnRequestProgress64().BindWeakLambda(this, [this](FHttpRequestPtr Request, int32 BytesSent, int32 /*BytesReceived*/) {
 		const float Progress = static_cast<float>(BytesSent) / TotalBytesToSend;
 		OnProgress.Broadcast(Progress);
 	});
@@ -283,11 +283,11 @@ void UCodecksUserReportRequest::UploadAttachments(const TArray<TSharedPtr<FJsonV
 			{
 				TSharedPtr<FJsonObject> UploadObject = UploadUrl->AsObject();
 
-				const FString UploadFilename = UploadObject->GetStringField("fileName");
-				const FString UploadURL = UploadObject->GetStringField("url");
+				const FString UploadFilename = UploadObject->GetStringField(FString("fileName"));
+				const FString UploadURL = UploadObject->GetStringField(FString("url"));
 
 				// Those get copied to the final request
-				const TSharedPtr<FJsonObject> UploadMetaFields = UploadObject->GetObjectField("fields");
+				const TSharedPtr<FJsonObject> UploadMetaFields = UploadObject->GetObjectField(FString("fields"));
 
 				// Has data for file?
 				if (FAttachedFile* AttachedFile = AttachedFiles.FindByPredicate([&UploadFilename](const FAttachedFile& A) { return A.Filename.Compare(UploadFilename) == 0; }))
@@ -381,7 +381,7 @@ void UCodecksUserReportRequest::UploadAttachments(const TArray<TSharedPtr<FJsonV
 
 						uint32 BytesSentTillNow = TotalBytesSent;
 
-						UploadRequest->OnRequestProgress().BindLambda([this, BytesSentTillNow](FHttpRequestPtr Request, int32 BytesSent, int32 /*BytesReceived*/) {
+						UploadRequest->OnRequestProgress64().BindLambda([this, BytesSentTillNow](FHttpRequestPtr Request, int32 BytesSent, int32 /*BytesReceived*/) {
 							const float Progress = static_cast<float>(BytesSentTillNow + BytesSent) / TotalBytesToSend;
 							AsyncTask(ENamedThreads::GameThread, [Progress, &ProgressDelegate(OnProgress)] {
 								ProgressDelegate.Broadcast(Progress);

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
+#include "Subsystems/WOGEpicOnlineServicesSubsystem.h"
 #include "WOG/Data/PlayerProfileSaveGame.h"
 #include "WOGLobbyPlayerController.generated.h"
 
