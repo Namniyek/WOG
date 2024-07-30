@@ -13,9 +13,7 @@
 #include "Interfaces/OnlinePresenceInterface.h"
 #include "Kismet/GameplayStatics.h"
 #include "Online/OnlineSessionNames.h"
-#include "Misc/ConfigCacheIni.h"
 #include "VoiceChatErrors.h"
-#include "RedpointInterfaces/OnlineVoiceAdminInterface.h"
 
 void UWOGEpicOnlineServicesSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {

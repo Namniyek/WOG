@@ -8,7 +8,6 @@
 #include "OnlineSessionSettings.h"
 #include "Interfaces/OnlineSessionInterface.h"
 #include "VoiceChat.h"
-#include "RedpointInterfaces/OnlineVoiceAdminInterface.h"
 #include "WOGEpicOnlineServicesSubsystem.generated.h"
 
 
