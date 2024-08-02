@@ -121,6 +121,9 @@ public:
 	void ResetHUD();
 
 	UFUNCTION(BlueprintCallable)
+	void ClearHUD();
+
+	UFUNCTION(BlueprintCallable)
 	void AddBarsWidget();
 	UFUNCTION(BlueprintCallable)
 	void RemoveBarsWidget();

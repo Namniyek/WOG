@@ -351,6 +351,20 @@ void UWOGUIManagerSubsystem::ResetHUD()
 	RestoreTODWidget();
 }
 
+void UWOGUIManagerSubsystem::ClearHUD()
+{
+	if(!OwnerPC || !OwnerPC->GetHUD()) return;
+	MatchHUD == nullptr ? (TObjectPtr<AWOGMatchHUD>) Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
+	
+	RemoveStaminaWidget();
+	RemoveBarsWidget();
+	RemoveMinimapWidget();
+	CollapseAbilitiesWidget();
+	CollapseObjectiveWidget();
+	RemoveAvailableResourcesWidget();
+	CollapseTODWidget();
+}
+
 void UWOGUIManagerSubsystem::AddBarsWidget()
 {
 	MatchHUD == nullptr ? (TObjectPtr<AWOGMatchHUD>) Cast<AWOGMatchHUD>(OwnerPC->GetHUD()) : MatchHUD;
