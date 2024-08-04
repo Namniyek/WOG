@@ -3,12 +3,22 @@
 
 #include "UI/Components/WOGSettingRotator.h"
 #include "Components/NamedSlot.h"
+#include "UI/SettingControls/SelectSetting.h"
 
 bool UWOGSettingRotator::Initialize()
 {
 	if (Super::Initialize())
 	{
 		OnNavigation.BindUObject(this, &ThisClass::HandleNavigation);
+
+		if(SettingSlot->GetChildAt(0))
+		{
+			UAutoSettingWidget* ChildWidget = Cast<UAutoSettingWidget>(SettingSlot->GetChildAt(0));
+			if(ChildWidget)
+			{
+				ChildWidget->OnSelectionChanged.AddDynamic(this, &ThisClass::OnSelectionChanged);
+			}
+		}
 
 		return true;
 	}
@@ -77,4 +87,10 @@ void UWOGSettingRotator::RotateRightInternal(bool bFromNavigation) const
 	{
 		OnRotatedRight.Broadcast();
 	}
+}
+
+void UWOGSettingRotator::OnSelectionChanged(const FString& NewValue)
+{
+	CurrentSelection = NewValue;
+	OnRotatorSelectionChanged.Broadcast(NewValue);
 }

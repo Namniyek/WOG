@@ -37,7 +37,7 @@ public:
 	// Select the option with the specified index
 	UFUNCTION(BlueprintCallable, Category = "Spinner")
 	void SelectIndex(int32 Index);
-
+	
 	// Select the next option
 	UFUNCTION(BlueprintCallable, Category = "Spinner")
 	void Next();

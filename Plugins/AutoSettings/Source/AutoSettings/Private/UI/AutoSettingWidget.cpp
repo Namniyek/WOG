@@ -110,6 +110,7 @@ void UAutoSettingWidget::ConsoleVariableSink()
 
 void UAutoSettingWidget::UpdateSelection_Implementation(const FString & Value)
 {
+	OnSelectionChanged.Broadcast(Value);
 }
 
 void UAutoSettingWidget::ApplySettingValue(FString Value, bool bSaveIfPossible)

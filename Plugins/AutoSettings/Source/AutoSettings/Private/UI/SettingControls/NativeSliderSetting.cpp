@@ -2,6 +2,8 @@
 
 #include "UI/SettingControls/NativeSliderSetting.h"
 
+#include <string>
+
 void UNativeSliderSetting::NativeConstruct()
 {
 	Super::NativeConstruct();

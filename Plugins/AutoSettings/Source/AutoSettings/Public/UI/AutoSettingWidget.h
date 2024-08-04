@@ -7,6 +7,8 @@
 #include "GameplayTagContainer.h"
 #include "AutoSettingWidget.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSelectionChanged, const FString&, NewValue);
+
 /**
  * Widget that encapsulates a console variable to represent a setting
  */
@@ -16,7 +18,6 @@ class AUTOSETTINGS_API UAutoSettingWidget : public UUserWidget
 	GENERATED_BODY()
 	
 public:
-
 	UAutoSettingWidget(const FObjectInitializer& ObjectInitializer);
 
 	//Decide if setting will use a CVar or not to avoid needless errors and warnings
@@ -70,6 +71,9 @@ public:
 	// Cancel unsaved changes, reverting to the value saved in config 
 	UFUNCTION(BlueprintCallable, Category = "Setting")
 	void Cancel();
+
+	UPROPERTY(BlueprintAssignable, BlueprintCallable)
+	FOnSelectionChanged OnSelectionChanged; 
 
 protected:
 

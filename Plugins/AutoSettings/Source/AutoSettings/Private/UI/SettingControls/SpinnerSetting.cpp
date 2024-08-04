@@ -17,15 +17,21 @@ void USpinnerSetting::SelectPreviousOption()
 void USpinnerSetting::NativeConstruct()
 {
 	Super::NativeConstruct();
-
+	
 	if(IsValid(Spinner))
 		Spinner->SelectionChangedEvent.AddUniqueDynamic(this, &USpinnerSetting::SpinnerSelectionChanged);
+	
+	if(!bUseCVar && Spinner && !Options.IsEmpty())
+	{
+		Spinner->SelectIndex(0);
+	}
 }
 
 void USpinnerSetting::UpdateSelection_Implementation(const FString & Value)
 {
 	if (IsValid(Spinner))
 		Spinner->SelectValue(Value);
+	
 }
 
 void USpinnerSetting::UpdateOptions_Implementation(const TArray<FSettingOption>& InOptions)
@@ -37,4 +43,5 @@ void USpinnerSetting::UpdateOptions_Implementation(const TArray<FSettingOption>&
 void USpinnerSetting::SpinnerSelectionChanged(FString Value)
 {
 	ApplySettingValue(Value);
+	OnSelectionChanged.Broadcast(Value);
 }
