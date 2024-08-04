@@ -16,7 +16,6 @@
 #include "Components/VerticalBox.h"
 #include "UI/WOGCharacterWidgetContainer.h"
 #include "Components/SizeBox.h"
-#include "Kismet/GameplayStatics.h"
 #include "UI/WOGRoundProgressBar.h"
 #include "UI/WOGScreenDamage.h"
 #include "UI/WOGHoldProgressBar.h"

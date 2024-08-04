@@ -10,6 +10,7 @@ UAutoSettingWidget::UAutoSettingWidget(const FObjectInitializer& ObjectInitializ
 	: UUserWidget(ObjectInitializer),
 	bAutoSave(true),
 	bAutoApply(true),
+	bUseCVar(true),
 	bUpdatingSettingSelection(false)
 {
 	bIsVariable = false;
@@ -52,26 +53,29 @@ void UAutoSettingWidget::NativePreConstruct()
 {
 	Super::NativePreConstruct();
 
-	if (!UConsoleUtils::IsCVarRegistered(CVarName))
+	if(bUseCVar)
 	{
-		if(IsDesignTime())
+		if (!UConsoleUtils::IsCVarRegistered(CVarName))
 		{
-			// Just silently fail at design time
-			// CVar might not be registered because PIE hasn't run yet
-			return;
+			if(IsDesignTime())
+			{
+				// Just silently fail at design time
+				// CVar might not be registered because PIE hasn't run yet
+				return;
+			}
+			else
+			{
+				// Log and keep going
+				FAutoSettingsError::LogMissingCVar(GetName(), CVarName);
+			}
 		}
-		else
-		{
-			// Log and keep going
-			FAutoSettingsError::LogMissingCVar(GetName(), CVarName);
-		}
+
+		// Set widget to the value of the CVar
+		SetToSettingValue();
+
+		// Register sink
+		IConsoleManager::Get().RegisterConsoleVariableSink_Handle(FConsoleCommandDelegate::CreateUObject(this, &UAutoSettingWidget::ConsoleVariableSink));
 	}
-
-	// Set widget to the value of the CVar
-	SetToSettingValue();
-
-	// Register sink
-	IConsoleManager::Get().RegisterConsoleVariableSink_Handle(FConsoleCommandDelegate::CreateUObject(this, &UAutoSettingWidget::ConsoleVariableSink));
 }
 
 void UAutoSettingWidget::NativeConstruct()
@@ -113,6 +117,10 @@ void UAutoSettingWidget::ApplySettingValue(FString Value, bool bSaveIfPossible)
 	// Don't try to apply or save in design time
 	// Some widgets can potentially get here through PreConstruct
 	if (IsDesignTime())
+		return;
+
+	//Don't try to apply setting if we're not using the CVar
+	if(!bUseCVar)
 		return;
 
 	if (CurrentValue != Value)

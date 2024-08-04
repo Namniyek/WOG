@@ -13,6 +13,15 @@ UCLASS(abstract)
 class AUTOSETTINGS_API USpinnerSetting : public USelectSetting
 {
 	GENERATED_BODY()
+
+public:
+	// Select the next option
+	UFUNCTION(BlueprintCallable, Category = "Spinner Setting")
+	void SelectNextOption();
+
+	// Select the previous option
+	UFUNCTION(BlueprintCallable, Category = "Spinner Setting")
+	void SelectPreviousOption();
 		
 protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Spinner Setting", meta = (BindWidget))

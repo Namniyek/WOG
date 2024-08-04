@@ -2,6 +2,18 @@
 
 #include "UI/SettingControls/SpinnerSetting.h"
 
+void USpinnerSetting::SelectNextOption()
+{
+	if (IsValid(Spinner))
+		Spinner->Next();
+}
+
+void USpinnerSetting::SelectPreviousOption()
+{
+	if (IsValid(Spinner))
+		Spinner->Previous();
+}
+
 void USpinnerSetting::NativeConstruct()
 {
 	Super::NativeConstruct();

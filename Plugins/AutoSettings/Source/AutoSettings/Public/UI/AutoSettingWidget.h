@@ -19,9 +19,13 @@ public:
 
 	UAutoSettingWidget(const FObjectInitializer& ObjectInitializer);
 
+	//Decide if setting will use a CVar or not to avoid needless errors and warnings
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setting")
+	bool bUseCVar;
+	
 	// Console variable to turn into a setting
 	// e.g. "r.vsync"
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setting")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Setting", meta = (EditCondition = "bUseCVar", EditConditionHides))
 	FName CVarName;		
 
 	// Transformations to apply to the value to get the subsection that this setting cares about

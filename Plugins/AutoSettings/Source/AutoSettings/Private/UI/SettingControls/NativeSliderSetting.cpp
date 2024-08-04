@@ -37,3 +37,14 @@ void UNativeSliderSetting::SliderMouseCaptureEnd()
 	// Call SliderValueUpdated after released to trigger a save if we need one
 	SliderValueUpdated(Slider->GetValue());
 }
+
+void UNativeSliderSetting::PreviousValue(const float Increment)
+{
+	
+	Slider->SetValue(FMath::Clamp(Slider->GetValue()-Increment, LeftValue, RightValue));
+}
+
+void UNativeSliderSetting::NextValue(const float Increment)
+{
+	Slider->SetValue(FMath::Clamp(Slider->GetValue()+Increment, LeftValue, RightValue));
+}

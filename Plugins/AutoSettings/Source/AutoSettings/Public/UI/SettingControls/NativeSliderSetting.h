@@ -14,6 +14,12 @@ class AUTOSETTINGS_API UNativeSliderSetting : public USliderSetting
 {
 	GENERATED_BODY()
 
+	UFUNCTION(BlueprintCallable)
+	void PreviousValue(const float Increment);
+
+	UFUNCTION(BlueprintCallable)
+	void NextValue(const float Increment);
+
 protected:
 
 	UPROPERTY(BlueprintReadOnly, Category = "Native Slider Setting", meta = (BindWidget))

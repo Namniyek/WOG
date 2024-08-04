@@ -3,7 +3,8 @@
 #include "Utility/ResolutionStringUtils.h"
 #include "Internationalization/Regex.h"
 
-FString UResolutionStringUtils::GetPixelsString(FString ResolutionString)
+FString UResolutionStringUtils::
+GetPixelsString(FString ResolutionString)
 {
 	return PointToString(GetPixels(ResolutionString));
 }
