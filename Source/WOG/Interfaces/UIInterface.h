@@ -6,6 +6,7 @@
 #include "UObject/Interface.h"
 #include "UIInterface.generated.h"
 
+class UCommonTextStyle;
 // This class does not need to be modified.
 UINTERFACE(MinimalAPI)
 class UUIInterface : public UInterface
@@ -28,4 +29,7 @@ public:
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void SelectPrevious();
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void SetTextStyle(TSubclassOf<UCommonTextStyle> NewStyle);
 };
