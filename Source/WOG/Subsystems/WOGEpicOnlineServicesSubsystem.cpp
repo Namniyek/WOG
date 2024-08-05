@@ -570,9 +570,18 @@ void UWOGEpicOnlineServicesSubsystem::HandleFindSessionsComplete(bool bWasSucces
 		if (Search->SearchResults.IsEmpty())
 		{
 			GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Red, FString("No sessions found"));
+			if(ServerSearchCompleteDelegate.IsBound())
+			{
+				ServerSearchCompleteDelegate.Broadcast(false);
+			}
 			return;
 		}
 
+		if(ServerSearchCompleteDelegate.IsBound())
+		{
+			ServerSearchCompleteDelegate.Broadcast(true);
+		}
+		
 		int8 ArrayIndex = -1;
 
 		//Caching the search results for future access
@@ -594,6 +603,13 @@ void UWOGEpicOnlineServicesSubsystem::HandleFindSessionsComplete(bool bWasSucces
 			ServerInfo.SetCurrentPlayers();
 
 			ServerFoundDelegate.Broadcast(ServerInfo);
+		}
+	}
+	else
+	{
+		if(ServerSearchCompleteDelegate.IsBound())
+		{
+			ServerSearchCompleteDelegate.Broadcast(false);
 		}
 	}
 

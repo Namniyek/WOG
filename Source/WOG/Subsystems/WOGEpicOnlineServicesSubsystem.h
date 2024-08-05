@@ -93,6 +93,7 @@ public:
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnLoginProcessCompleteDelegate, bool, bWasSuccessful);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnLobbyCreatedDelegate, bool, bWasSuccessful);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FServerFoundDelegate, FServerItem, ServerInfo);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FServerSearchCompleteDelegate, const bool, bFoundResults);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FReconnectSessionFoundDelegate, const bool, ReconnectSessionFound, const FString&, HostName);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FLobbyMemberFoundDelegate, const FLobbyMemberData&, LobbyMemberData);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnVoiceChatPlayerIsTalkingUpdated, const FString&, ChannelName, const FString&, PlayerName, bool, bIsTalking);
@@ -113,6 +114,9 @@ public:
 
 	UPROPERTY(BlueprintAssignable)
 	FServerFoundDelegate ServerFoundDelegate;
+
+	UPROPERTY(BlueprintAssignable)
+	FServerSearchCompleteDelegate ServerSearchCompleteDelegate;
 
 	UPROPERTY(BlueprintAssignable)
 	FLobbyMemberFoundDelegate LobbyMemberFoundDelegate;
