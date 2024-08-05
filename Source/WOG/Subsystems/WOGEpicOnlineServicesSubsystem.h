@@ -170,7 +170,7 @@ protected:
 
 	#pragma region Lobbies
 	UFUNCTION(BlueprintCallable)
-	void CreateLobby(bool bIsPublic, bool bVoiceChat, const FString& MapName);
+	void CreateLobby(bool bIsPublic, bool bVoiceChat, const FString& LobbyMapName, const FString& MatchMapPath);
 
 	UFUNCTION(BlueprintCallable)
 	void GetLobbyMembers();
@@ -316,7 +316,8 @@ private:
 
 	TArray<FOnlineSessionSearchResult> CachedSessionSearchResults = {};
 
-	FString CachedMapName = FString();
+	FString CachedLobbyMapName = FString();
+	FString CachedMatchMapPath = FString();
 
 	FOnlineSessionSearchResult CachedReconnectSession = FOnlineSessionSearchResult();
 	
@@ -337,4 +338,7 @@ public:
 	TArray<TSharedPtr<const FUniqueNetId>> CachedSessionMemberIds;
 	
 	FORCEINLINE IVoiceChatUser* GetVoiceChatUser() const { return VoiceChatUser; }
+
+	UFUNCTION(BlueprintPure)
+	FORCEINLINE FString GetCachedMatchMapPath() const { return CachedMatchMapPath; }
 };

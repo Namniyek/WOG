@@ -77,7 +77,7 @@ bool UWOGEpicOnlineServicesSubsystem::IsLocalUserLoggedIn() const
 	return Identity && Identity->GetLoginStatus(0) == ELoginStatus::LoggedIn; 
 }
 
-void UWOGEpicOnlineServicesSubsystem::CreateLobby(bool bIsPublic, bool bVoiceChat, const FString& MapName)
+void UWOGEpicOnlineServicesSubsystem::CreateLobby(bool bIsPublic, bool bVoiceChat, const FString& LobbyMapName, const FString& MatchMapPath)
 {
 	IOnlineSubsystem* Subsystem = Online::GetSubsystem(GetWorld());
 	TSharedPtr<IOnlineLobby> LobbyInterface = Online::GetLobbyInterface(Subsystem);
@@ -112,10 +112,12 @@ void UWOGEpicOnlineServicesSubsystem::CreateLobby(bool bIsPublic, bool bVoiceCha
 	FString HostName = Identity->GetUserAccount(*LocalUserId)->GetDisplayName();
 	LobbyTransaction->SetMetadata.Add(TEXT("HostName"), FVariantData(HostName));
 
-	//Clear previous cached map name
-	CachedMapName = FString();
-	//Cache the desired map name
-	CachedMapName = MapName;
+	//Clear previous cached map names
+	CachedLobbyMapName = FString();
+	CachedMatchMapPath = FString();
+	//Cache the desired map name and paths
+	CachedLobbyMapName = LobbyMapName;
+	CachedMatchMapPath = MatchMapPath;
 
 	/*
 	 * Create the Lobby
@@ -146,7 +148,7 @@ void UWOGEpicOnlineServicesSubsystem::HandleCreateLobbyCompleted(const FOnlineEr
 		LobbyIdString = CreatedLobby->Id->ToString();
 		OnLobbyCreatedDelegate.Broadcast(true);
 	
-		UGameplayStatics::OpenLevel(this, *CachedMapName, true, FString("listen"));
+		UGameplayStatics::OpenLevel(this, *CachedLobbyMapName, true, FString("listen"));
 		// You'll need to store IdStr somewhere, as that is what needs to be sent to connecting clients.
 
 		VoiceChatLogin();
