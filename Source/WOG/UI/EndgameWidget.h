@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Blueprint/UserWidget.h"
+#include "CommonActivatableWidget.h"
 #include "WOG/PlayerState/WOGPlayerState.h"
 #include "EndgameWidget.generated.h"
 
@@ -11,26 +11,26 @@
  * 
  */
 UCLASS()
-class WOG_API UEndgameWidget : public UUserWidget
+class WOG_API UEndgameWidget : public UCommonActivatableWidget
 {
 	GENERATED_BODY()
 
 public:
 
 	UPROPERTY(meta = (BindWidget), BlueprintReadOnly)
-	class UTextBlock* ResultText;
+	class UCommonTextBlock* ResultText;
 
 	UPROPERTY(meta = (BindWidget))
-	UTextBlock* TimesElimmed;
+	UCommonTextBlock* TimesElimmed;
 
 	UPROPERTY(meta = (BindWidget))
-	UTextBlock* TotalElimms;
+	UCommonTextBlock* TotalElimms;
 
 	UPROPERTY(meta = (BindWidget))
-	UTextBlock* MostElimmedPlayer;
+	UCommonTextBlock* MostElimmedPlayer;
 
 	UPROPERTY(meta = (BindWidget))
-	UTextBlock* PlayerWithMostElimms;
+	UCommonTextBlock* PlayerWithMostElimms;
 	
 	UPROPERTY(BlueprintReadOnly)
 	FPlayerStats PlayerStats;

@@ -2,6 +2,8 @@
 
 
 #include "EndgameWidget.h"
+
+#include "CommonTextBlock.h"
 #include "WOG/GameState/WOGGameState.h"
 #include "Components/TextBlock.h"
 
@@ -40,8 +42,8 @@ bool UEndgameWidget::IsWinnerAttacker()
 void UEndgameWidget::SetResults()
 {
     PlayerStats = GetPlayerStats();
-    FString LocalTimesElimmed = FString::FromInt(PlayerStats.TimesElimmed);
-    FString LocalTotalElimms = FString::FromInt(PlayerStats.TotalElimms);
+    const FString LocalTimesElimmed = FString::FromInt(PlayerStats.TimesElimmed);
+    const FString LocalTotalElimms = FString::FromInt(PlayerStats.TotalElimms);
 
     TimesElimmed->SetText(FText::FromString(LocalTimesElimmed));
     TotalElimms->SetText(FText::FromString(LocalTotalElimms));
