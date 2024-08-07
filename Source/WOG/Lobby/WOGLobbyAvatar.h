@@ -35,7 +35,7 @@ public:
 	FText PlayerName;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	class UAnimMontage* LobbyMontage;
+	UAnimMontage* LobbyMontage;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	UStaticMeshComponent* RuneMesh;
@@ -132,12 +132,6 @@ public:
 
 	UFUNCTION(Server, Reliable, BlueprintCallable)
 	void Server_SetMeshProperties(FPlayerData NewMeshProperties);
-
-	UFUNCTION(Server, Reliable, BlueprintCallable)
-	void Server_IncreasePlayerReady();
-
-	UFUNCTION(Server, Reliable, BlueprintCallable)
-	void ServerDecreasePlayerReady();
 
 	UFUNCTION(Server, Reliable, BlueprintCallable)
 	void Server_ChangeTeams();

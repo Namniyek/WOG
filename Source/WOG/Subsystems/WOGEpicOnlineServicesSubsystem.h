@@ -129,6 +129,7 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void DisconnectFromLobby();
+	void HandleVoiceChatInit(const FOnlineLobbyId& LobbyId, const FUniqueNetId& MemberId);
 
 protected:
 
@@ -289,8 +290,12 @@ private:
 	//This function handles User invites
 	void OnSessionUserInviteAccepted(bool bWasSuccessful, int ControllerId, TSharedPtr<const FUniqueNetId> UserId, const FOnlineSessionSearchResult& InviteResult);
 
+	//This function handles user being connected to lobby
+	void OnLobbyMemberConnected(const FUniqueNetId& LocalUserId, const FOnlineLobbyId& LobbyId, const FUniqueNetId& MemberId);
+	
 	//This function handles user being disconnected from lobby
-	void OnLobbyMemberDisconnected(const FUniqueNetId & LocalUserId, const FOnlineLobbyId & LobbyId, const FUniqueNetId & MemberId,	bool bWasKicked);
+	void OnLobbyMemberDisconnected(const FUniqueNetId & LocalUserId, const FOnlineLobbyId & LobbyId, const FUniqueNetId& MemberId,	bool bWasKicked);
+	
 
 	void HandleFindFriendSessionComplete(int32 LocalUserNum, bool bWasSuccessful, const TArray<FOnlineSessionSearchResult> &Results);
 
@@ -322,6 +327,7 @@ private:
 
 	FString CachedLobbyMapName = FString();
 	FString CachedMatchMapPath = FString();
+	bool bCachedVoiceChatEnabled = false;
 
 	FOnlineSessionSearchResult CachedReconnectSession = FOnlineSessionSearchResult();
 	
@@ -345,4 +351,7 @@ public:
 
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE FString GetCachedMatchMapPath() const { return CachedMatchMapPath; }
+
+	UFUNCTION(BlueprintPure)
+	FORCEINLINE bool GetIsVoiceChatEnabled() const { return bCachedVoiceChatEnabled; }
 };

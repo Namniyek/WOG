@@ -15,6 +15,8 @@ class AWOGLobbyPlayerController;
 class AWOGLobbyAvatar;
 struct FVoiceAdminChannelCredentials;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAllLobbyPlayersReadyChanged, const bool, bAllPlayersReady);
+
 UCLASS()
 class WOG_API AWOGLobbyGameMode : public AGameMode
 {
@@ -45,6 +47,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	int32 PlayersReady;
 
+	UPROPERTY(BlueprintAssignable, BlueprintCallable)
+	FOnAllLobbyPlayersReadyChanged OnAllLobbyPlayersReadyChanged;
+
 private:
 	bool bAllExistingPlayersRegistered;
 
@@ -65,9 +70,9 @@ public:
 	bool GetNextPlayerSpot(AWOGLobbyPlayerSpot* &OutPlayerSpot, int32 &OutTeamIndex);
 
 	//Implemented in BP
-	UFUNCTION(BlueprintImplementableEvent)
+	UFUNCTION(BlueprintNativeEvent)
 	void IncreasePlayerReady();
-	UFUNCTION(BlueprintImplementableEvent)
+	UFUNCTION(BlueprintNativeEvent)
 	void DecreasePlayerReady();
 
 	UFUNCTION(BlueprintCallable)

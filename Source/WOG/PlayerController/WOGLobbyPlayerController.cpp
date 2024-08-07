@@ -112,6 +112,18 @@ void AWOGLobbyPlayerController::SaveGame()
 void AWOGLobbyPlayerController::Server_SetPlayerReady_Implementation(bool bPlayerReady)
 {
 	bIsPlayerReady = bPlayerReady;
+
+	AWOGLobbyGameMode* GameMode = Cast<AWOGLobbyGameMode>(GetWorld()->GetAuthGameMode());
+	if (!GameMode) return;
+
+	if(bPlayerReady)
+	{
+		GameMode->IncreasePlayerReady();
+	}
+	else
+	{
+		GameMode->DecreasePlayerReady();
+	}
 }
 
 void AWOGLobbyPlayerController::Server_SetIsAttacker_Implementation(bool NewIsAttacker)

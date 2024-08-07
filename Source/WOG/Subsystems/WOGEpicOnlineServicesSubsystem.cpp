@@ -25,6 +25,7 @@ void UWOGEpicOnlineServicesSubsystem::Initialize(FSubsystemCollectionBase& Colle
 	
 	Session->OnSessionUserInviteAcceptedDelegates.AddUObject(this, &ThisClass::OnSessionUserInviteAccepted);
 	Lobby->OnMemberDisconnectDelegates.AddUObject(this, &ThisClass::OnLobbyMemberDisconnected);
+	Lobby->OnMemberConnectDelegates.AddUObject(this, &ThisClass::OnLobbyMemberConnected);
 }
 
 void UWOGEpicOnlineServicesSubsystem::Login()
@@ -151,7 +152,7 @@ void UWOGEpicOnlineServicesSubsystem::HandleCreateLobbyCompleted(const FOnlineEr
 		UGameplayStatics::OpenLevel(this, *CachedLobbyMapName, true, FString("listen"));
 		// You'll need to store IdStr somewhere, as that is what needs to be sent to connecting clients.
 
-		VoiceChatLogin();
+		HandleVoiceChatInit(*CreatedLobby->Id, UserId);
 	}
 	else
 	{
@@ -318,7 +319,7 @@ void UWOGEpicOnlineServicesSubsystem::JoinLobby(const FString& DesiredLobbyIdStr
 		{
 			// The lobby was joined successfully.
 			GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Green, FString("Lobby joined successfully"));
-			VoiceChatLogin();
+			HandleVoiceChatInit(*CreatedLobby->Id, UserId);
 		}
 		else
 		{
@@ -439,6 +440,31 @@ void UWOGEpicOnlineServicesSubsystem::DisconnectFromLobby()
 		// Call failed to start.
 		GEngine->AddOnScreenDebugMessage(-1, 6.f, FColor::Red, FString("Disconnect from lobby call failed to start"));
 	}
+}
+
+void UWOGEpicOnlineServicesSubsystem::HandleVoiceChatInit(const FOnlineLobbyId& LobbyId, const FUniqueNetId& MemberId)
+{
+	IOnlineSubsystem* Subsystem = Online::GetSubsystem(this->GetWorld());
+	TSharedPtr<IOnlineLobby> Lobby = Online::GetLobbyInterface(Subsystem);
+	check(Lobby);
+
+	FVariantData OutVoiceChatEnabledData;
+	Lobby->GetLobbyMetadataValue(MemberId, LobbyId, TEXT("EOSVoiceChat_Enabled"), OutVoiceChatEnabledData);
+
+	bCachedVoiceChatEnabled = false;
+	OutVoiceChatEnabledData.GetValue(bCachedVoiceChatEnabled);
+
+	if(bCachedVoiceChatEnabled)
+	{
+		VoiceChatLogin();
+	}
+}
+
+void UWOGEpicOnlineServicesSubsystem::OnLobbyMemberConnected(const FUniqueNetId& LocalUserId,
+                                                             const FOnlineLobbyId& LobbyId, const FUniqueNetId& MemberId)
+{
+	// The lobby join callback successful.
+	// Seems to be triggered on server only.
 }
 
 void UWOGEpicOnlineServicesSubsystem::OnLobbyMemberDisconnected(const FUniqueNetId& LocalUserId,

@@ -250,6 +250,26 @@ bool AWOGLobbyGameMode::GetNextPlayerSpot(AWOGLobbyPlayerSpot* &OutPlayerSpot, i
 	return false;
 }
 
+void AWOGLobbyGameMode::IncreasePlayerReady_Implementation()
+{
+	PlayersReady++;
+	
+	if(PlayersReady == AllLobbyPlayers.Num() && OnAllLobbyPlayersReadyChanged.IsBound())
+	{
+		OnAllLobbyPlayersReadyChanged.Broadcast(true);
+	}
+}
+
+void AWOGLobbyGameMode::DecreasePlayerReady_Implementation()
+{
+	if(PlayersReady == AllLobbyPlayers.Num() && OnAllLobbyPlayersReadyChanged.IsBound())
+	{
+		OnAllLobbyPlayersReadyChanged.Broadcast(false);
+	}
+	
+	PlayersReady--;
+}
+
 void AWOGLobbyGameMode::RegisterExistingPlayers()
 {
 	if(bAllExistingPlayersRegistered) return;

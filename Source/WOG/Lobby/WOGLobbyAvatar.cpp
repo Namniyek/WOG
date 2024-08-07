@@ -154,24 +154,6 @@ void AWOGLobbyAvatar::OnRep_AvatarTransform()
 	SetTransform(AvatarTransform);
 }
 
-void AWOGLobbyAvatar::Server_IncreasePlayerReady_Implementation()
-{
-	AWOGLobbyGameMode* GameMode = Cast<AWOGLobbyGameMode>(GetWorld()->GetAuthGameMode());
-	if (GameMode)
-	{
-		GameMode->IncreasePlayerReady();
-	}
-}
-
-void AWOGLobbyAvatar::ServerDecreasePlayerReady_Implementation()
-{
-	AWOGLobbyGameMode* GameMode = Cast<AWOGLobbyGameMode>(GetWorld()->GetAuthGameMode());
-	if (GameMode)
-	{
-		GameMode->DecreasePlayerReady();
-	}
-}
-
 void AWOGLobbyAvatar::Server_ChangeTeams_Implementation()
 {
 	bool bWasSucessful = ChangeTeams(OwnerPC);
