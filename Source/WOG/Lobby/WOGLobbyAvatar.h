@@ -7,6 +7,8 @@
 #include "WOG/Data/PlayerProfileSaveGame.h"
 #include "WOGLobbyAvatar.generated.h"
 
+class AWOGLobbyPlayerController;
+
 UCLASS()
 class WOG_API AWOGLobbyAvatar : public AActor
 {
@@ -107,7 +109,7 @@ protected:
 
 private:
 	UPROPERTY()
-	class AWOGLobbyPlayerController* OwnerPC;
+	AWOGLobbyPlayerController* OwnerPC;
 
 	UFUNCTION()
 	void OnRep_MeshProperties();
@@ -115,20 +117,27 @@ private:
 	UFUNCTION()
 	void OnRep_AvatarTransform();
 
+	UFUNCTION()
+	void OnRep_IsPlayerReady();
+
 	UFUNCTION(BlueprintCallable)
 	void SetPlayerName(FText NewPlayerName);
 
-	void SetTransform(FTransform NewTransform);
+	void SetTransform(const FTransform& NewTransform);
 
 	void OnStartDelayFinished();
 
-	bool ChangeTeams(AWOGLobbyPlayerController* OwnerPlayerController);
+	bool ChangeTeams(AWOGLobbyPlayerController* OwnerPlayerController) const;
 
-
-public:	
+public:
+	UPROPERTY(ReplicatedUsing="OnRep_IsPlayerReady")
+	bool bIsPlayerReady;
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void UpdateCharacterMesh(FPlayerData NewMeshProperties);
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void UpdateIsPlayerReady(const bool bPlayerReady);
 
 	UFUNCTION(Server, Reliable, BlueprintCallable)
 	void Server_SetMeshProperties(FPlayerData NewMeshProperties);

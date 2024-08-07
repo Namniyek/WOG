@@ -54,6 +54,12 @@ void AWOGLobbyPlayerController::BeginPlay()
 	SetShowMouseCursor(true);
 }
 
+void AWOGLobbyPlayerController::OnRep_IsPlayerReady()
+{
+	if(!LobbyAvatar) return;
+	LobbyAvatar->UpdateIsPlayerReady(bIsPlayerReady);
+}
+
 void AWOGLobbyPlayerController::SetViewTargetCamera(AActor* NewViewTarget)
 {
 	SetViewTargetWithBlend(NewViewTarget, 0.35f);
@@ -124,6 +130,10 @@ void AWOGLobbyPlayerController::Server_SetPlayerReady_Implementation(bool bPlaye
 	{
 		GameMode->DecreasePlayerReady();
 	}
+
+	if(!LobbyAvatar) return;
+	LobbyAvatar->bIsPlayerReady = bIsPlayerReady;
+	LobbyAvatar->UpdateIsPlayerReady(bIsPlayerReady);
 }
 
 void AWOGLobbyPlayerController::Server_SetIsAttacker_Implementation(bool NewIsAttacker)

@@ -31,9 +31,12 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
-	UPROPERTY(Replicated)
+	UPROPERTY(ReplicatedUsing = "OnRep_IsPLayerReady")
 	bool bIsPlayerReady;
 
+	UFUNCTION()
+	void OnRep_IsPlayerReady();
+	
 private:
 	UPROPERTY(Replicated)
 	class AWOGLobbyAvatar* LobbyAvatar;

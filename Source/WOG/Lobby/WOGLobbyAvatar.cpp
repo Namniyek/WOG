@@ -96,6 +96,7 @@ void AWOGLobbyAvatar::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 
 	DOREPLIFETIME(AWOGLobbyAvatar, MeshProperties);
 	DOREPLIFETIME(AWOGLobbyAvatar, AvatarTransform);
+	DOREPLIFETIME(AWOGLobbyAvatar, bIsPlayerReady);
 }
 
 void AWOGLobbyAvatar::BeginPlay()
@@ -144,7 +145,7 @@ void AWOGLobbyAvatar::SetPlayerName(FText NewPlayerName)
 	PlayerNameText->SetText(NewPlayerName);
 }
 
-void AWOGLobbyAvatar::SetTransform(FTransform NewTransform)
+void AWOGLobbyAvatar::SetTransform(const FTransform& NewTransform)
 {
 	SetActorTransform(NewTransform, false, nullptr, ETeleportType::ResetPhysics);
 }
@@ -154,12 +155,17 @@ void AWOGLobbyAvatar::OnRep_AvatarTransform()
 	SetTransform(AvatarTransform);
 }
 
-void AWOGLobbyAvatar::Server_ChangeTeams_Implementation()
+void AWOGLobbyAvatar::OnRep_IsPlayerReady()
 {
-	bool bWasSucessful = ChangeTeams(OwnerPC);
+	UpdateIsPlayerReady(bIsPlayerReady);
 }
 
-bool AWOGLobbyAvatar::ChangeTeams(AWOGLobbyPlayerController* OwnerPlayerController)
+void AWOGLobbyAvatar::Server_ChangeTeams_Implementation()
+{
+	ChangeTeams(OwnerPC);
+}
+
+bool AWOGLobbyAvatar::ChangeTeams(AWOGLobbyPlayerController* OwnerPlayerController) const
 {
 	if (!OwnerPlayerController) return false;
 
@@ -201,6 +207,8 @@ bool AWOGLobbyAvatar::ChangeTeams(AWOGLobbyPlayerController* OwnerPlayerControll
 				OwnerPlayerController->Server_SetIsAttacker(false);
 				return true;
 			}
+			break;
+		default:
 			break;
 	}
 	return false;
