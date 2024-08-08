@@ -343,7 +343,7 @@ void UWOGUIManagerSubsystem::ResetHUD()
 	}
 
 	AddBarsWidget();
-	AddMinimapWidget();
+	//AddMinimapWidget();
 	RestoreAbilitiesWidget();
 	AddAvailableResourcesWidget();
 	RestoreObjectiveWidget();
@@ -357,7 +357,7 @@ void UWOGUIManagerSubsystem::ClearHUD()
 	
 	RemoveStaminaWidget();
 	RemoveBarsWidget();
-	RemoveMinimapWidget();
+	//RemoveMinimapWidget();
 	CollapseAbilitiesWidget();
 	CollapseObjectiveWidget();
 	RemoveAvailableResourcesWidget();
