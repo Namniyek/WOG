@@ -210,10 +210,10 @@ protected:
 	FWOGVoiceChatDeviceData GetCurrentOutputDeviceInfo();
 	
 	UFUNCTION(BlueprintCallable)
-	void SetCurrentInputDevice(const FWOGVoiceChatDeviceData& NewDevice);
+	void SetCurrentInputDevice(const FString& NewDeviceID);
 
 	UFUNCTION(BlueprintCallable)
-	void SetCurrentOutputDevice(const FWOGVoiceChatDeviceData& NewDevice);
+	void SetCurrentOutputDevice(const FString& NewDeviceID);
 
 	//Value between 0.0 and 200.0
 	UFUNCTION(BlueprintCallable)

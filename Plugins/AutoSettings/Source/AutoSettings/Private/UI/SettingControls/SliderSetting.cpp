@@ -2,6 +2,8 @@
 
 #include "UI/SettingControls/SliderSetting.h"
 
+#include <string>
+
 USliderSetting::USliderSetting(const FObjectInitializer& ObjectInitializer) : UAutoSettingWidget(ObjectInitializer), RightValue(1.0f)
 {
 }
@@ -47,6 +49,7 @@ void USliderSetting::SliderValueUpdated(float NormalizedValue)
 	ApplySettingValue(FString::SanitizeFloat(RawValue), ShouldSaveCurrentValue());
 
 	OnSliderValueUpdated(NormalizedValue, RawValue);
+	OnSelectionChanged.Broadcast(std::to_string(NormalizedValue).data());
 }
 
 bool USliderSetting::ShouldSaveCurrentValue_Implementation() const

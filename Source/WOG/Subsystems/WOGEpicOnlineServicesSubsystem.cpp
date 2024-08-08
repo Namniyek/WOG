@@ -1070,7 +1070,6 @@ FWOGVoiceChatDeviceData UWOGEpicOnlineServicesSubsystem::GetCurrentInputDeviceIn
 	CurrentDevice.DeviceID = CurrentDeviceInfo.Id;
 	CurrentDevice.DeviceName = CurrentDeviceInfo.DisplayName;
 	
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Emerald, FString("Current Input device: ") + CurrentDevice.DeviceName);
 	return CurrentDevice;
 }
 
@@ -1087,11 +1086,10 @@ FWOGVoiceChatDeviceData UWOGEpicOnlineServicesSubsystem::GetCurrentOutputDeviceI
 	CurrentDevice.DeviceID = CurrentDeviceInfo.Id;
 	CurrentDevice.DeviceName = CurrentDeviceInfo.DisplayName;
 	
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Emerald, FString("Current Output device: ") + CurrentDevice.DeviceName);
 	return CurrentDevice;
 }
 
-void UWOGEpicOnlineServicesSubsystem::SetCurrentInputDevice(const FWOGVoiceChatDeviceData& NewDevice)
+void UWOGEpicOnlineServicesSubsystem::SetCurrentInputDevice(const FString& NewDeviceID)
 {
 	if(VoiceChatUser == nullptr)
 	{
@@ -1100,16 +1098,15 @@ void UWOGEpicOnlineServicesSubsystem::SetCurrentInputDevice(const FWOGVoiceChatD
 	}
 
 	FVoiceChatDeviceInfo CurrentDeviceInfo = VoiceChatUser->GetInputDeviceInfo();
-	if(CurrentDeviceInfo.Id == NewDevice.DeviceID)
+	if(CurrentDeviceInfo.Id == NewDeviceID)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString("Picked device is the same as the current one. Returning"));
 		return;
 	}
 
-	VoiceChatUser->SetInputDeviceId(NewDevice.DeviceID);
+	VoiceChatUser->SetInputDeviceId(NewDeviceID);
 }
 
-void UWOGEpicOnlineServicesSubsystem::SetCurrentOutputDevice(const FWOGVoiceChatDeviceData& NewDevice)
+void UWOGEpicOnlineServicesSubsystem::SetCurrentOutputDevice(const FString& NewDeviceID)
 {
 	if(VoiceChatUser == nullptr)
 	{
@@ -1118,13 +1115,12 @@ void UWOGEpicOnlineServicesSubsystem::SetCurrentOutputDevice(const FWOGVoiceChat
 	}
 
 	FVoiceChatDeviceInfo CurrentDeviceInfo = VoiceChatUser->GetOutputDeviceInfo();
-	if(CurrentDeviceInfo.Id == NewDevice.DeviceID)
+	if(CurrentDeviceInfo.Id == NewDeviceID)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString("Picked device is the same as the current one. Returning"));
 		return;
 	}
 
-	VoiceChatUser->SetOutputDeviceId(NewDevice.DeviceID);
+	VoiceChatUser->SetOutputDeviceId(NewDeviceID);
 }
 
 void UWOGEpicOnlineServicesSubsystem::SetVoiceChatInputVolume(float NewVolume)

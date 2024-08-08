@@ -21,7 +21,7 @@ void USpinnerSetting::NativeConstruct()
 	if(IsValid(Spinner))
 		Spinner->SelectionChangedEvent.AddUniqueDynamic(this, &USpinnerSetting::SpinnerSelectionChanged);
 	
-	if(!bUseCVar && Spinner && !Options.IsEmpty())
+	if(!bUseCVar && Spinner && !Options.IsEmpty() && SettingTags.IsEmpty())
 	{
 		Spinner->SelectIndex(0);
 	}
