@@ -195,7 +195,7 @@ void AWOGGameMode::PlayerEliminated(AWOGBaseCharacter* ElimmedCharacter, const A
 	AWOGPlayerState* VictimPlayerState = VictimController ? VictimController->GetPlayerState<AWOGPlayerState>() : nullptr;
 
 	if (!AttackerPlayerState || !VictimPlayerState) return;
-	AttackerPlayerState->IncreaseTotalElimms();
+	AttackerPlayerState->IncreaseTotalElims();
 	VictimPlayerState->IncreaseTimesElimmed();
 
 	AWOGGameState* WOGGameState = GetGameState<AWOGGameState>();

@@ -42,6 +42,8 @@ AWOGBaseCharacter::AWOGBaseCharacter()
 	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
 
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetHealthAttribute()).AddUObject(this, &ThisClass::OnHealthAttributeChanged);
+	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetManaAttribute()).AddUObject(this, &ThisClass::OnManaAttributeChanged);
+	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetAdrenalineAttribute()).AddUObject(this, &ThisClass::OnAdrenalineAttributeChanged);
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetStaminaAttribute()).AddUObject(this, &ThisClass::OnStaminaAttributeChanged);
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetMaxMovementSpeedAttribute()).AddUObject(this, &ThisClass::OnMaxMovementSpeedAttributeChanged);
 	AbilitySystemComponent->OnGameplayEffectAppliedDelegateToSelf.AddUObject(this, &ThisClass::OnGameplayEffectAppliedToSelf);
@@ -235,7 +237,7 @@ void AWOGBaseCharacter::OnHealthAttributeChanged(const FOnAttributeChangeData& D
 	if (AbilitySystemComponent && AttributeSet)
 	{
 		bool bFound = false;
-		float MaxHealth = AbilitySystemComponent->GetGameplayAttributeValue(AttributeSet->GetMaxHealthAttribute(), bFound);
+		const float MaxHealth = AbilitySystemComponent->GetGameplayAttributeValue(AttributeSet->GetMaxHealthAttribute(), bFound);
 
 		OnAttributeChangedDelegate.Broadcast(AttributeSet->GetHealthAttribute(), Data.NewValue, MaxHealth);
 	}
@@ -328,6 +330,28 @@ void AWOGBaseCharacter::OnHealthAttributeChanged(const FOnAttributeChangeData& D
 
 			GiveDeathResources(InstigatorEnemy->GetOwnerAttacker());
 		}
+	}
+}
+
+void AWOGBaseCharacter::OnManaAttributeChanged(const FOnAttributeChangeData& Data)
+{
+	if (AbilitySystemComponent && AttributeSet)
+	{
+		bool bFound = false;
+		const float MaxMana = AbilitySystemComponent->GetGameplayAttributeValue(AttributeSet->GetMaxManaAttribute(), bFound);
+		
+		OnAttributeChangedDelegate.Broadcast(AttributeSet->GetHealthAttribute(), Data.NewValue, MaxMana);
+	}
+}
+
+void AWOGBaseCharacter::OnAdrenalineAttributeChanged(const FOnAttributeChangeData& Data)
+{
+	if (AbilitySystemComponent && AttributeSet)
+	{
+		bool bFound = false;
+		const float MaxAdrenaline = AbilitySystemComponent->GetGameplayAttributeValue(AttributeSet->GetMaxAdrenalineAttribute(), bFound);
+
+		OnAttributeChangedDelegate.Broadcast(AttributeSet->GetHealthAttribute(), Data.NewValue, MaxAdrenaline);
 	}
 }
 

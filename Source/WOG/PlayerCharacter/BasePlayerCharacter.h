@@ -323,6 +323,9 @@ protected:
 	UFUNCTION()
 	void OnRep_PlayerProfile();
 
+	void HandlePlayerInitDelay();
+	FTimerHandle PlayerInitTimerHandle;
+	
 	UFUNCTION(BlueprintNativeEvent)
 	void HandleOnPlayerInitComplete(const ABasePlayerCharacter* InitCharacter);
 

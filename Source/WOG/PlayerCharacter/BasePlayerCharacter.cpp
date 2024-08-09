@@ -46,6 +46,7 @@
 #include "UI/WOGCharacterWidgetContainer.h"
 #include "Enemies/WOGBaseEnemy.h"
 #include "AI/Combat/WOGBaseSquad.h"
+#include "GameState/WOGGameState.h"
 #include "UI/Ping/WOGPingMarker.h"
 
 
@@ -545,6 +546,30 @@ void ABasePlayerCharacter::UpdatePlayerProfile_Implementation(const FPlayerData&
 	//Set the character default abilities and effects
 	SetDefaultAbilitiesAndEffects(NewPlayerProfile.bIsMale, NewPlayerProfile.CharacterIndex);
 	
+	HandlePlayerInitDelay();
+}
+
+void ABasePlayerCharacter::HandlePlayerInitDelay()
+{
+	PlayerInitTimerHandle.Invalidate();
+	
+	AWOGPlayerState* WOGPlayerState  = Cast<AWOGPlayerState>(GetPlayerState());
+	const AWOGGameState* WOGGameState = Cast<AWOGGameState>(UGameplayStatics::GetGameState(this));
+	if(!WOGGameState || !WOGPlayerState || WOGPlayerState->GetPlayerName() == FString("Default"))
+	{
+		GetWorldTimerManager().SetTimerForNextTick(this, &ThisClass::HandlePlayerInitDelay);
+		UE_LOG(WOGLogSpawn, Display, TEXT("PlayerInitDelay() Called"));
+		return;
+	}
+
+	WOGPlayerState->SetIsAttacker(PlayerProfile.bIsAttacker);
+	WOGPlayerState->SetPlayerCharacter(this);
+
+	if(WOGGameState->OnPlayerInitComplete.IsBound())
+	{
+		WOGGameState->OnPlayerInitComplete.Broadcast(WOGPlayerState, this);
+	}
+	
 	OnPlayerInitComplete.Broadcast(this);
 }
 
@@ -686,10 +711,11 @@ void ABasePlayerCharacter::HandleOnPlayerInitComplete_Implementation(const ABase
 	 * Handle team outlines
 	 * TODO maybe figure out a way to do this without a delay
 	 */
-	FTimerHandle OutlineTimerHandle;
+	/*FTimerHandle OutlineTimerHandle;
 	float OutlineDelay = 1.f;
-	GetWorldTimerManager().SetTimer(OutlineTimerHandle, this, &ThisClass::HandleTeamUIElements, OutlineDelay);
-	
+	GetWorldTimerManager().SetTimer(OutlineTimerHandle, this, &ThisClass::HandleTeamUIElements, OutlineDelay);*/
+
+	HandleTeamUIElements();
 }
 
 void ABasePlayerCharacter::HandleTeamUIElements() const

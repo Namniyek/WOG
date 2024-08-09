@@ -221,7 +221,7 @@ void AWOGGameState::SetEndgamePlayerStats()
 		}
 
 		WOGPlayerState->SetMostElimmedPlayer(MostElimmedPlayer);
-		WOGPlayerState->SetPlayerWithMostElimms(PlayerWithMostElimms);
+		WOGPlayerState->SetPlayerWithMostElims(PlayerWithMostElimms);
 	}
 }
 

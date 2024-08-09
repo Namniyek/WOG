@@ -86,13 +86,15 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FOnCharacterDeadDelegate OnCharacterDeadDelegate;
 
-	//TO-DO find another way to pass data to abilities. I don't like this
+	//TODO find another way to pass data to abilities. I don't like this
 	UPROPERTY(BlueprintReadWrite)
 	FGameplayEventData AbilityActivationPayload;
 
 protected:
 	void SendAbilityLocalInput(const EWOGAbilityInputID InInputID) const;
 	virtual void OnHealthAttributeChanged(const FOnAttributeChangeData& Data);
+	virtual void OnManaAttributeChanged(const FOnAttributeChangeData& Data);
+	virtual void OnAdrenalineAttributeChanged(const FOnAttributeChangeData& Data);
 	void GiveDeathResources(AActor* InActor);
 	virtual void OnStaminaAttributeChanged(const FOnAttributeChangeData& Data);
 	virtual void OnMaxMovementSpeedAttributeChanged(const FOnAttributeChangeData& Data);

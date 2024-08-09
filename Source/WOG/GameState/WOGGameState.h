@@ -7,11 +7,13 @@
 #include "WOG/DayNightCycle/TimeOfDay.h"
 #include "WOGGameState.generated.h"
 
-
+class AWOGPlayerState;
+class ABasePlayerCharacter;
 /**
  * 
  */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnCurrentTargetScoreChanged);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPlayerInitCompleteDelegate, const AWOGPlayerState*, InitPlayerState, const ABasePlayerCharacter*, InitPlayerCharacter);
 
 UCLASS()
 class WOG_API AWOGGameState : public AGameState
@@ -35,6 +37,9 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = Setup)
 	float EndGameDelay;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnPlayerInitCompleteDelegate OnPlayerInitComplete;
 
 protected:
 	virtual void HandleMatchHasStarted() override;
@@ -60,6 +65,7 @@ private:
 	UFUNCTION()
 	void DayChanged(int32 DayNumber);
 
+	UPROPERTY()
 	class ATimeOfDay* TODActor;
 
 	UPROPERTY(Replicated)

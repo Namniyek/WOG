@@ -4,9 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerState.h"
+#include "PlayerCharacter/BasePlayerCharacter.h"
 #include "Types/CharacterTypes.h"
 #include "WOGPlayerState.generated.h"
 
+
+class ABasePlayerCharacter;
 
 USTRUCT(BlueprintType)
 struct FPlayerStats
@@ -39,10 +42,14 @@ public:
 	AWOGPlayerState();
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-protected:
-
 private:
 
+	UPROPERTY(Replicated)
+	bool bIsAttacker;
+
+	UPROPERTY(Replicated)
+	TObjectPtr<ABasePlayerCharacter> PlayerCharacter;
+	
 	UPROPERTY(Replicated, VisibleAnywhere) 
 	FPlayerStats PlayerStats;
 
@@ -54,12 +61,18 @@ public:
 	FORCEINLINE FPlayerStats GetPlayerStats() { return PlayerStats; }
 
 	void IncreaseTimesElimmed();
-	void IncreaseTotalElimms();
+	void IncreaseTotalElims();
 	void SetMostElimmedPlayer(FString Player);
-	void SetPlayerWithMostElimms(FString Player);
+	void SetPlayerWithMostElims(FString Player);
 
 	UFUNCTION(BlueprintCallable)
 	FORCEINLINE void SetEquipmentSnapshot(const FPlayerCharacterEquipmentSnapshot& NewEquipment) { EquipmentSnapshot = NewEquipment; }
 	UFUNCTION(BlueprintPure)
 	FORCEINLINE FPlayerCharacterEquipmentSnapshot GetEquipmentSnapshot() const { return EquipmentSnapshot; }
+	UFUNCTION(BlueprintPure)
+	FORCEINLINE bool GetIsAttacker() const { return bIsAttacker; }
+	void SetIsAttacker(const bool bNewAttacker);
+	UFUNCTION(BlueprintPure)
+	FORCEINLINE ABasePlayerCharacter* GetPlayerCharacter() const { return PlayerCharacter; }
+	void SetPlayerCharacter(ABasePlayerCharacter* NewPlayerChar); 
 };
